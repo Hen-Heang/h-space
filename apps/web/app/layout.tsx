@@ -24,9 +24,9 @@ export const viewport: Viewport = {
   ],
 }
 
-const title = "Hengo — Korean for Developers"
+const title = "H-Space — My Projects. One Space."
 const description =
-  "Practice workplace Korean, prepare for interviews, and build consistent learning habits with an AI coach made for developers."
+  "A personal software ecosystem for learning, finance, AI engineering, productivity, and development projects."
 
 // Absolute base for resolving relative OG/Twitter image URLs. Without it Next
 // falls back to http://localhost:3000 and every social card points at a machine
@@ -36,13 +36,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://hengo.henheang.site"),
   title: {
     default: title,
-    template: "%s · Hengo",
+    template: "%s · H-Space",
   },
   description,
   openGraph: {
     title,
     description,
-    siteName: "Hengo",
+    siteName: "H-Space",
     type: "website",
     locale: "en_US",
   },

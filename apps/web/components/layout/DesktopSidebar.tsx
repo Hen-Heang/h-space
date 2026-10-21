@@ -56,7 +56,7 @@ export function DesktopSidebar({
       <div className={cn("flex items-center gap-2 px-3 py-4", collapsed && "flex-col gap-3")}>
         <Link
           href={todayItem.href}
-          aria-label="Hengo home"
+          aria-label="H-Space home"
           className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg ring-1 ring-border">
@@ -65,10 +65,10 @@ export function DesktopSidebar({
           {!collapsed && (
             <span className="min-w-0">
               <span className="block truncate text-[15px] font-semibold leading-tight text-foreground">
-                Hengo
+                H-Space
               </span>
               <span className="block truncate text-xs leading-tight text-muted-foreground">
-                Learn Korean.
+                My Projects. One Space.
               </span>
             </span>
           )}

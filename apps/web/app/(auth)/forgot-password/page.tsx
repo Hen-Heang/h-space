@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
           <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl shadow-sm">
             <Image src="/hengo-icon.png" alt="" width={36} height={36} className="h-full w-full" />
           </span>
-          <span className="text-lg font-semibold tracking-tight text-foreground">Hengo</span>
+          <span className="text-lg font-semibold tracking-tight text-foreground">H-Space</span>
         </Link>
         <ThemeToggle />
       </div>

@@ -55,7 +55,7 @@ export function MobileHeader({
 
   const section = getSectionForPath(pathname, searchParams)
   const navLabel = getActiveNavItem(pathname, searchParams)?.label
-  const title = publishedTitle ?? navLabel ?? section?.label ?? "Hengo"
+  const title = publishedTitle ?? navLabel ?? section?.label ?? "H-Space"
 
   return (
     <header className="sticky top-0 z-30 flex items-center gap-1 border-b border-border bg-background/95 px-2 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-sm">

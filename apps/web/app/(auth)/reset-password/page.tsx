@@ -71,7 +71,7 @@ export default function ResetPasswordPage() {
           <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl shadow-sm">
             <Image src="/hengo-icon.png" alt="" width={36} height={36} className="h-full w-full" />
           </span>
-          <span className="text-lg font-semibold tracking-tight text-foreground">Hengo</span>
+          <span className="text-lg font-semibold tracking-tight text-foreground">H-Space</span>
         </Link>
         <ThemeToggle />
       </div>
@@ -91,7 +91,9 @@ export default function ResetPasswordPage() {
               <h1 className="text-[1.75rem] font-semibold leading-tight tracking-tight text-foreground">
                 Password updated
               </h1>
-              <p className="text-sm leading-relaxed text-muted-foreground">Taking you to Hengo…</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Taking you to H-Space…
+              </p>
             </div>
           </div>
         ) : invalidLink ? (

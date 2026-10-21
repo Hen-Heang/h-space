@@ -449,7 +449,7 @@ describe("DesktopSidebar", () => {
 
   it("keeps branding in the sidebar only once", () => {
     setup("/practice", false)
-    expect(screen.getAllByRole("link", { name: "Hengo home" })).toHaveLength(1)
+    expect(screen.getAllByRole("link", { name: "H-Space home" })).toHaveLength(1)
   })
 
   it("still gives Account access to Settings", () => {

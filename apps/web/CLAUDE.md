@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**Hengo** — frontend for a Korean language-learning platform aimed at software developers working in Korea (workplace/technical Korean). Next.js 16 App Router, React 19, TypeScript, Tailwind CSS v4, shadcn/ui. `README.md` is the full feature map; `GuideLineNew.md` holds the original product vision.
+**H-Space** — a personal software ecosystem and portfolio built with Next.js 16, React 19, TypeScript, Tailwind CSS v4, and shadcn/ui. The existing Korean-learning product remains a first-class area named **Hengo Learning**. `README.md` is the full feature map; `GuideLineNew.md` holds the original learning-product vision.
 
 > **Hengo V2 (2026-08-31)** narrowed the _product surface_ to Korean learning. Visible navigation is five destinations — Today (`/home`), Vocabulary (`/vocab`), Practice (`/practice`), Coach (`/korean-coach`), Study (`/learn`) — driven by `primaryNavItems` in `lib/navigation.ts`. The productivity, growth, second-brain, progress, general-AI, and exam-prep surfaces described throughout this file are **hidden, not deleted**: every route, component, and table still exists and still works by direct URL, and the full route registry still drives titles/breadcrumbs/matching. Don't treat "it's not in the nav" as "it's gone" — and don't delete those implementations. See [`../../docs/HENGO_V2.md`](../../docs/HENGO_V2.md).
 
-> The product was renamed **KoriAI → Hengo**, but the old prefix is load-bearing and stays: Supabase tables are `kori_*`, the auth storage key is `koriai-auth`, and various localStorage keys start with `koriai`. Don't "fix" those — use Hengo in user-facing copy and `kori_`/`koriai-` in storage identifiers.
+> H-Space is the umbrella product and **Hengo Learning** is its Korean-learning area. The old prefix is load-bearing and stays: Supabase tables are `kori_*`, the auth storage key is `koriai-auth`, and various localStorage keys start with `koriai`. Don't rename those storage identifiers during branding work.
 
 ## Commands
 

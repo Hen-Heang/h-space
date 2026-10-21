@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og"
 
 export const runtime = "edge"
-export const alt = "Hengo — Korean for Developers"
+export const alt = "H-Space — My Projects. One Space."
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
@@ -29,7 +29,7 @@ export default function OpengraphImage() {
             background: "linear-gradient(135deg, #3b82f6, #6366f1)",
           }}
         />
-        <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff" }}>Hengo</div>
+        <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff" }}>H-Space</div>
       </div>
 
       <div
@@ -43,7 +43,7 @@ export default function OpengraphImage() {
           maxWidth: 980,
         }}
       >
-        Thrive on a Korean dev team.
+        My Projects.
       </div>
       <div
         style={{
@@ -58,14 +58,14 @@ export default function OpengraphImage() {
           maxWidth: 980,
         }}
       >
-        Learn the Korean that matters.
+        One Space.
       </div>
 
       <div
         style={{ display: "flex", marginTop: 40, fontSize: 28, color: "#94a3b8", maxWidth: 820 }}
       >
-        AI coach, workplace scenarios, and developer vocabulary — built for foreign engineers in
-        Korea.
+        A personal software ecosystem for learning, finance, AI engineering, productivity, and
+        development.
       </div>
     </div>,
     { ...size },

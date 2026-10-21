@@ -23,6 +23,8 @@ import {
 import { motion } from "motion/react"
 
 import { ThemeToggle } from "@/components/theme-toggle"
+import { AboutHSpace } from "@/components/home/AboutHSpace"
+import { MyAppsSection } from "@/components/home/MyAppsSection"
 import { Button } from "@/components/ui/button"
 import { isAuthenticated } from "@/lib/auth-store"
 
@@ -153,11 +155,7 @@ const chatMessages = [
   },
 ]
 
-const statsData = [
-  { value: "400+", label: "Dev vocab terms" },
-  { value: "10+", label: "Learning tools" },
-  { value: "24/7", label: "AI Coach" },
-]
+const workspaceAreas = ["Learning", "Finance", "AI engineering", "Productivity", "Development"]
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -214,7 +212,7 @@ export default function Home() {
                   className="h-full w-full"
                 />
               </div>
-              <span className="text-lg font-bold tracking-tight text-foreground">Hengo</span>
+              <span className="text-lg font-bold tracking-tight text-foreground">H-Space</span>
             </Link>
 
             <div className="flex items-center gap-2">
@@ -255,17 +253,17 @@ export default function Home() {
                   className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-blue-700 dark:text-blue-400"
                 >
                   <BrainCircuit size={14} strokeWidth={2.5} />
-                  Workplace Korean for developers
+                  Personal software ecosystem
                 </motion.div>
 
                 <motion.h1
                   variants={itemVariants}
                   className="mt-6 text-[2.8rem] font-bold leading-[1.08] tracking-tight text-foreground sm:text-[4.2rem]"
                 >
-                  Thrive on a Korean dev team. Learn the{" "}
+                  My Projects.{" "}
                   <span className="relative inline-block">
                     <span className="bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-500 bg-clip-text text-transparent">
-                      Korean that matters.
+                      One Space.
                     </span>
                     <motion.span
                       initial={{ scaleX: 0 }}
@@ -280,15 +278,9 @@ export default function Home() {
                   variants={itemVariants}
                   className="mt-7 text-lg leading-relaxed text-muted-foreground sm:text-xl sm:leading-relaxed max-w-[520px]"
                 >
-                  Hengo is built for{" "}
-                  <span className="font-semibold text-foreground/80">
-                    foreign engineers in Korea
-                  </span>
-                  . Practice{" "}
-                  <span className="font-semibold text-foreground/80">standups and meetings</span>{" "}
-                  with an AI coach, drill{" "}
-                  <span className="font-semibold text-foreground/80">developer vocabulary</span>,
-                  and rehearse real workplace scenarios.
+                  H-Space is my personal software workspace and engineering portfolio. It brings
+                  together the real applications I build for everyday learning, finance, AI,
+                  productivity, and software development.
                 </motion.p>
 
                 <motion.div
@@ -300,8 +292,8 @@ export default function Home() {
                     size="lg"
                     className="h-14 rounded-2xl bg-blue-600 px-8 text-base font-bold text-white shadow-xl shadow-blue-500/25 transition-all hover:bg-blue-500 hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    <Link href="/register">
-                      Get started — it&apos;s free
+                    <Link href="#my-apps">
+                      Explore my apps
                       <ArrowRight size={18} className="ml-2" />
                     </Link>
                   </Button>
@@ -311,46 +303,20 @@ export default function Home() {
                     variant="outline"
                     className="h-14 rounded-2xl border-border bg-background/50 px-8 text-base font-medium backdrop-blur-sm transition-all hover:bg-accent hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    <Link href="/dashboard">See the dashboard</Link>
+                    <Link href="/login">Open H-Space</Link>
                   </Button>
                 </motion.div>
 
-                {/* Stats row */}
-                <motion.div
-                  variants={itemVariants}
-                  className="mt-10 flex items-center gap-6 sm:gap-8"
-                >
-                  {statsData.map((stat, i) => (
-                    <div key={stat.label} className="flex items-center gap-4">
-                      {i > 0 && <div className="h-8 w-px bg-border/60" />}
-                      <div>
-                        <p className="text-2xl font-bold leading-none text-foreground">
-                          {stat.value}
-                        </p>
-                        <p className="mt-1 text-xs font-medium text-muted-foreground">
-                          {stat.label}
-                        </p>
-                      </div>
-                    </div>
+                {/* Workspace areas */}
+                <motion.div variants={itemVariants} className="mt-10 flex flex-wrap gap-2">
+                  {workspaceAreas.map((area) => (
+                    <span
+                      key={area}
+                      className="rounded-full border border-border bg-card/70 px-3 py-1.5 text-xs font-semibold text-muted-foreground"
+                    >
+                      {area}
+                    </span>
                   ))}
-                </motion.div>
-
-                {/* Trust signals */}
-                <motion.div variants={itemVariants} className="mt-8 flex items-center gap-3">
-                  <div className="flex -space-x-2">
-                    {["🇰🇭", "🇻🇳", "🇮🇩", "🇵🇭"].map((flag, i) => (
-                      <div
-                        key={i}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-accent text-sm shadow-sm"
-                      >
-                        {flag}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">Developers across Asia</span>{" "}
-                    learning Korean for their jobs in Korea
-                  </p>
                 </motion.div>
               </motion.div>
 
@@ -498,7 +464,12 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Features */}
+        <div className="mx-auto max-w-7xl space-y-10 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <MyAppsSection />
+          <AboutHSpace />
+        </div>
+
+        {/* Hengo Learning features */}
         <section className="relative px-4 py-24 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <motion.div
@@ -509,15 +480,16 @@ export default function Home() {
               className="mb-16 text-center"
             >
               <p className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">
-                One app, every tool
+                Hengo Learning
               </p>
               <h2 className="mt-4 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-                Everything you need for{" "}
+                Hengo Learning stays focused on{" "}
                 <span className="text-muted-foreground italic font-medium">workplace</span> Korean.
               </h2>
               <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
                 From an AI coach and workplace scenarios to developer vocabulary, listening,
-                reading, and interview prep — Hengo covers the Korean you actually use on the job.
+                reading, and interview prep — Hengo Learning covers the Korean you actually use on
+                the job as one dedicated part of H-Space.
               </p>
             </motion.div>
 
@@ -581,7 +553,7 @@ export default function Home() {
               </h2>
               <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
                 Do real work in Korean, get AI feedback, and let everything sync between your phone
-                and PC — Hengo turns your mistakes into personalized practice.
+                and PC — Hengo Learning turns your mistakes into personalized practice.
               </p>
             </motion.div>
 
@@ -804,9 +776,9 @@ export default function Home() {
                     className="h-full w-full"
                   />
                 </div>
-                <span className="text-sm font-bold tracking-tight text-foreground">Hengo</span>
+                <span className="text-sm font-bold tracking-tight text-foreground">H-Space</span>
                 <span className="text-xs text-muted-foreground ml-4">
-                  © 2026 Hengo. All rights reserved.
+                  © 2026 H-Space. All rights reserved.
                 </span>
               </div>
               <div className="flex items-center gap-6 text-sm font-medium text-muted-foreground">

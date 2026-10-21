@@ -9,6 +9,62 @@ its old content here as a dated entry before overwriting.
 
 ---
 
+## 2026-10-21 (a)
+
+### Snapshot
+
+- **Updated:** 2026-09-22
+- **Branch:** `main` (synced with `origin/main` at the time)
+- **Last commit:** f629870 — Merge pull request #25 from
+  Hen-Heang/docs/handoff-post-api-removal
+
+### Current focus
+
+The Spring Boot backend had been removed, leaving `apps/web` as the repository's
+only application. The removed `apps/api` subtree, API workflow, Maven scripts,
+and API-only infrastructure remain recoverable from git history and the
+untouched `Hen-Heang/hengo-api` backup repository.
+
+Root commands and documentation had been rewired to the Next.js/Supabase app.
+The app uses hosted Supabase for auth and data plus authenticated Next.js AI
+route handlers; there is no separate backend service to run.
+
+### Verification
+
+- `pnpm test` had 1129 passes and one load-related timeout in
+  `navigation-shell.test.tsx`; the same 56-test file passed by itself.
+- `pnpm lint` passed with five pre-existing warnings.
+- Repository scans found no stale Spring application references outside the
+  migration history and the unrelated embedded `dev-learning-notes` project.
+
+PRs #24 and #25 had been merged, and `main` was the only remaining local and
+remote branch.
+
+### Vercel follow-up
+
+`apps/web` was linked to the existing `koriai-frontend` Vercel project. Dead
+Spring/Railway environment variables were removed from Production and Preview.
+Supabase variables were still Production-only, so Preview deploys remained
+broken. VAPID/Telegram variables and integration-managed database variables
+were deliberately left in place pending separate review.
+
+### Open items
+
+- Delete or repoint the old Railway service whose root was `/apps/api`.
+- Copy the Supabase URL and publishable key to Vercel Preview.
+- Optionally remove stale IntelliJ MCP configuration and reconcile the duplicate
+  Supabase seed layout.
+
+### Notes for future sessions
+
+- One app remains: `apps/web`, using Next.js, Supabase, and `app/api/ai/*`.
+- Hidden routes and features are not safe to delete.
+- Query live Supabase before making schema claims.
+- Run jsdom suites on Node 25 with
+  `NODE_OPTIONS=--no-experimental-webstorage`.
+
+---
+
 ## 2026-09-04 (b)
 
 ### Snapshot

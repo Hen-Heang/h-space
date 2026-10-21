@@ -29,10 +29,10 @@ test.describe("public responsive shell", () => {
       await page.goto("/")
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
       await page
-        .getByRole("heading", { name: "Everything you need for workplace Korean." })
+        .getByRole("heading", { name: "Hengo Learning stays focused on workplace Korean." })
         .scrollIntoViewIfNeeded()
       await expect(
-        page.getByRole("heading", { name: "Everything you need for workplace Korean." }),
+        page.getByRole("heading", { name: "Hengo Learning stays focused on workplace Korean." }),
       ).toBeVisible()
       await expectNoDocumentOverflow(page)
 
@@ -84,7 +84,7 @@ test.describe("public responsive shell", () => {
   test("all landing sections reveal during real scrolling", async ({ page }) => {
     await page.goto("/")
     for (const name of [
-      "Everything you need for workplace Korean.",
+      "Hengo Learning stays focused on workplace Korean.",
       "One loop, from real work to fluency.",
       "Made for engineers, not tourists.",
       "Ready to speak Korean at work?",

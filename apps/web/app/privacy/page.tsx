@@ -4,7 +4,7 @@ import type { Metadata } from "next"
 import { ArrowLeft } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Hengo",
+  title: "Privacy Policy — H-Space",
 }
 
 export default function PrivacyPage() {
@@ -15,7 +15,7 @@ export default function PrivacyPage() {
           <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl shadow-sm">
             <Image src="/hengo-icon.png" alt="" width={36} height={36} className="h-full w-full" />
           </span>
-          <span className="text-lg font-semibold tracking-tight text-foreground">Hengo</span>
+          <span className="text-lg font-semibold tracking-tight text-foreground">H-Space</span>
         </Link>
         <Link
           href="/login"
@@ -30,8 +30,8 @@ export default function PrivacyPage() {
         <p className="text-muted-foreground">Last updated: 2026</p>
 
         <p>
-          This describes what Hengo collects and how it&apos;s used. Hengo is built for a focused
-          purpose — helping you learn workplace Korean — and only collects what that purpose needs.
+          This describes what H-Space collects and how it&apos;s used. H-Space supports personal
+          learning and productivity features and only collects what those features need.
         </p>
 
         <h2>What we collect</h2>
@@ -56,7 +56,7 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Google Calendar events</strong> — if you connect Google Calendar from Settings,
-            we read your event titles and times (read-only) to display them in Hengo.
+            we read your event titles and times (read-only) to display them in H-Space.
           </li>
         </ul>
 
@@ -76,13 +76,13 @@ export default function PrivacyPage() {
           <li>
             <strong>OpenAI</strong> processes the text and audio you submit to AI features (chat,
             analyzer, message generator, interview simulator, listening generator, text-to-speech)
-            in order to generate a response. It is not used to train Hengo&apos;s own product beyond
-            that request.
+            in order to generate a response. It is not used to train H-Space&apos;s own product
+            beyond that request.
           </li>
           <li>
             <strong>Google</strong> is used if you choose &quot;Sign in with Google,&quot; to verify
             your identity. If you connect Google Calendar from Settings, we request read-only access
-            (<code>calendar.readonly</code>) to your calendar events so we can show them in Hengo;
+            (<code>calendar.readonly</code>) to your calendar events so we can show them in H-Space;
             we don&apos;t modify or delete your Google Calendar data. You can disconnect this access
             at any time from Settings or from your{" "}
             <a
@@ -117,9 +117,7 @@ export default function PrivacyPage() {
         </p>
 
         <h2>Contact</h2>
-        <p>
-          Questions about this policy can be sent to the Hengo team through your account settings.
-        </p>
+        <p>Questions about this policy can be sent through your H-Space account settings.</p>
       </article>
     </main>
   )

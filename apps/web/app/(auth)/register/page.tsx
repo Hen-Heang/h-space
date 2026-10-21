@@ -136,7 +136,7 @@ export default function RegisterPage() {
                 className="h-full w-full"
               />
             </span>
-            <span className="text-lg font-semibold tracking-tight text-foreground">Hengo</span>
+            <span className="text-lg font-semibold tracking-tight text-foreground">H-Space</span>
           </Link>
           <ThemeToggle />
         </div>
@@ -486,7 +486,7 @@ function BrandPanel() {
         <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/20 backdrop-blur">
           <Image src="/hengo-icon.png" alt="" width={40} height={40} className="h-full w-full" />
         </span>
-        <span className="text-xl font-semibold tracking-tight">Hengo</span>
+        <span className="text-xl font-semibold tracking-tight">H-Space</span>
       </div>
 
       <div className="relative z-10 max-w-md space-y-8">

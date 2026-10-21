@@ -1,7 +1,7 @@
 {
-  "name": "Hengo",
-  "short_name": "Hengo",
-  "description": "Set goals, track to-dos, and learn — your AI companion for daily growth.",
+  "name": "H-Space",
+  "short_name": "H-Space",
+  "description": "My Projects. One Space. A personal software ecosystem for learning, finance, AI, productivity, and development.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#10131A",

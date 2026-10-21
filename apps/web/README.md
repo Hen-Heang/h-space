@@ -1,10 +1,14 @@
 <div align="center">
 
-<img src="public/hengo-icon.png" alt="Hengo logo" width="88" height="88" />
+<img src="public/hengo-icon.png" alt="H-Space logo" width="88" height="88" />
 
-# Hengo
+# H-Space
 
-**An AI-powered Korean learning platform for software engineers and international professionals working in Korea.**
+**My Projects. One Space.**
+
+H-Space is a personal software ecosystem for learning, finance, AI engineering,
+productivity, and development projects. The original Korean-learning product is
+preserved inside it as **Hengo Learning**.
 
 [![Version](https://img.shields.io/badge/version-0.1.0-blue)](package.json)
 [![License](https://img.shields.io/badge/license-private-lightgrey)](#18-license)
@@ -21,9 +25,9 @@
 
 ---
 
-> ### Hengo V2 — focused Korean learning
+> ### Hengo Learning — focused Korean learning inside H-Space
 >
-> As of **2026-08-31**, Hengo's product surface is deliberately narrowed to Korean learning. Visible navigation is five destinations: **Today · Vocabulary · Practice · Coach · Study**.
+> Hengo Learning retains the existing Korean-learning routes, data, and functionality. Its visible learning navigation remains **Today · Vocabulary · Practice · Coach · Study**.
 >
 > This README still documents the full V1 feature set below, and that documentation remains accurate as an _implementation_ reference — the productivity, growth, second-brain, progress, general-AI, and K-Specialist exam-prep features all still exist and still work by direct URL. They are simply no longer part of the primary product surface: hidden from navigation and the home page, not deleted, with all data intact.
 >
@@ -92,11 +96,11 @@ Existing apps stop at step 1. Hengo is the loop.
 
 ## 3. Product Vision
 
-Hengo is not only a Korean app. It is an **AI learning and growth platform** whose first vertical is Korean for professionals — the same engine (AI conversation, structured feedback, spaced repetition, goal tracking, progress analytics) generalizes to any skill you practice through language.
+H-Space is a personal software ecosystem rather than a single Korean-learning app. It connects real work across learning, finance, AI engineering, productivity, and software development. **Hengo Learning** remains the focused Korean-learning area, using AI conversation, structured feedback, spaced repetition, goal tracking, and progress analytics.
 
 Today it already combines what would normally be seven separate apps:
 
-| Pillar                   | What Hengo does                                                                                                                         |
+| Pillar                   | What Hengo Learning does                                                                                                                |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
 | Language tutor           | AI conversation, vocabulary SRS, reading, listening, foundations                                                                        |
 | Interview coach          | Full K-Specialist mock interview simulator with scoring                                                                                 |
@@ -740,7 +744,7 @@ The UI follows one calm, consistent visual language — keep new screens on the 
 
 - `components/ui/*` are generic, owned primitives (shadcn model: copy in, then own).
 - Feature components live in `components/<feature>/` and may compose primitives but stay out of other features' folders.
-- Brand: product name **Hengo**; logo at `public/hengo-icon.png` (used for the AI Coach avatar and auth/landing marks).
+- Brand: umbrella product **H-Space**; Korean-learning area **Hengo Learning**. The existing mark remains at `public/hengo-icon.png` and is used for auth, landing, and the AI Coach avatar.
 
 ---
 

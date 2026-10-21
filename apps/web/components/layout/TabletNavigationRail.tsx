@@ -37,7 +37,7 @@ export function TabletNavigationRail({
       <div className="flex justify-center px-2 py-4">
         <Link
           href={todayItem.href}
-          aria-label="Hengo home"
+          aria-label="H-Space home"
           className="flex size-11 items-center justify-center overflow-hidden rounded-lg outline-none ring-1 ring-border focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Image src="/hengo-icon.png" alt="" width={44} height={44} className="size-full" />

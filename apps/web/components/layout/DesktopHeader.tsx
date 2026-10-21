@@ -26,7 +26,7 @@ export function DesktopHeader({
 }) {
   const section = getSectionForPath(pathname, searchParams)
   const item = getActiveNavItem(pathname, searchParams)
-  const title = item?.label ?? section?.label ?? "Hengo"
+  const title = item?.label ?? section?.label ?? "H-Space"
 
   // Don't repeat the title as its own parent crumb (e.g. Today, or a section
   // whose landing route is the item itself).

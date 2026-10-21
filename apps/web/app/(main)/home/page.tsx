@@ -6,6 +6,8 @@ import { BookOpen, Flame, GraduationCap, Mic } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 import { TodayMissionCard } from "@/components/home/TodayMissionCard"
+import { AboutHSpace } from "@/components/home/AboutHSpace"
+import { MyAppsSection } from "@/components/home/MyAppsSection"
 import { useDailyMission } from "@/hooks/useDailyMission"
 import { useStreak } from "@/hooks/useStreak"
 import { getLastVisited } from "@/lib/last-visited"
@@ -117,12 +119,17 @@ export default function HomePage() {
       variants={staggerContainer}
       initial="hidden"
       animate="show"
-      className="mx-auto max-w-6xl space-y-5 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] sm:space-y-6 sm:px-6 sm:pt-6 lg:px-8"
+      className="mx-auto max-w-6xl space-y-8 px-4 pb-10 pt-[max(1.25rem,env(safe-area-inset-top))] sm:space-y-10 sm:px-6 sm:pt-6 lg:px-8"
     >
-      {/* ── Greeting ── */}
-      <motion.div variants={fadeUp}>
-        <h1 className="text-2xl font-semibold tracking-[-0.025em] text-foreground sm:text-3xl">
-          {getGreeting()}{" "}
+      <motion.header
+        variants={fadeUp}
+        className="rounded-3xl border border-border bg-gradient-to-br from-blue-500/10 via-background to-indigo-500/5 p-6 shadow-sm sm:p-8"
+      >
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">
+          My Projects. One Space.
+        </p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] text-foreground sm:text-4xl">
+          {getGreeting()} from H-Space{" "}
           <motion.span
             className="inline-block origin-[70%_70%]"
             animate={{ rotate: [0, 14, -8, 14, -4, 10, 0] }}
@@ -131,32 +138,47 @@ export default function HomePage() {
             👋
           </motion.span>
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {getTodayLabel()} · <span className="italic">오늘도 화이팅!</span> Keep it small and
-          steady.
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+          {getTodayLabel()} · A personal workspace for learning, finance, AI engineering,
+          productivity, and the software I build.
         </p>
-      </motion.div>
+      </motion.header>
 
-      {/* ── Primary: today's personalized practice ── */}
-      <motion.div variants={fadeUp}>
+      <motion.section
+        variants={fadeUp}
+        aria-labelledby="hengo-learning-title"
+        className="space-y-4"
+      >
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
+            Everyday learning
+          </p>
+          <h2 id="hengo-learning-title" className="mt-1 text-xl font-semibold text-foreground">
+            Hengo Learning
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Continue your Korean practice without leaving the H-Space dashboard.
+          </p>
+        </div>
+
         <TodayMissionCard mission={mission} loading={missionLoading} error={missionError} />
-      </motion.div>
-
-      {/* ── Secondary destinations ── */}
-      <motion.div variants={fadeUp}>
         <SecondaryShortcuts shortcuts={shortcuts} />
+
+        {streakDays != null && streakDays > 0 && (
+          <p className="flex items-center gap-1.5 px-1 text-xs font-medium text-muted-foreground">
+            <Flame size={13} className="shrink-0 text-orange-500" />
+            {streakDays} day streak
+          </p>
+        )}
+      </motion.section>
+
+      <motion.div variants={fadeUp}>
+        <MyAppsSection />
       </motion.div>
 
-      {/* ── Streak ── */}
-      {streakDays != null && streakDays > 0 && (
-        <motion.p
-          variants={fadeUp}
-          className="flex items-center gap-1.5 px-1 text-xs font-medium text-muted-foreground"
-        >
-          <Flame size={13} className="shrink-0 text-orange-500" />
-          {streakDays} day streak
-        </motion.p>
-      )}
+      <motion.div variants={fadeUp}>
+        <AboutHSpace />
+      </motion.div>
     </motion.div>
   )
 }

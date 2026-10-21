@@ -4,7 +4,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## Project
 
-KoriAI — frontend for a Korean language-learning platform aimed at software developers working in Korea (workplace/technical Korean). Next.js 16 App Router, React 19, TypeScript, Tailwind CSS v4, shadcn/ui. The full product vision and module list live in `GuideLineNew.md`.
+H-Space is a personal software ecosystem and portfolio built with Next.js 16, React 19, TypeScript, Tailwind CSS v4, and shadcn/ui. The existing Korean-learning product remains a first-class area named Hengo Learning. The full learning vision and module list live in `GuideLineNew.md`.
 
 ## Commands
 

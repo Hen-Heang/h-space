@@ -23,7 +23,7 @@ export default function AppError({
       <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl shadow-sm ring-1 ring-border/50">
         <Image
           src="/hengo-icon.png"
-          alt="Hengo Logo"
+          alt="H-Space logo"
           width={56}
           height={56}
           className="h-full w-full"
