@@ -170,19 +170,20 @@ export interface OccurrenceAmounts {
  * each insert hits the unique (recurring_id, date) index with ON CONFLICT
  * DO NOTHING, so an occurrence can exist at most once; and next_date only
  * moves if it still holds the value this run read, so a slower overlapping
- * run can't drag it backwards. Returns the dates actually inserted.
+ * run can't drag it backwards. Each occurrence carries its own amounts, so a
+ * caught-up USD date is converted at that date's rate. Returns the dates
+ * actually inserted.
  */
 export async function applyOccurrences(
   rule: RecurringRule & { userId: string },
-  dates: string[],
-  newNextDate: string,
-  amounts: OccurrenceAmounts
+  occurrences: { date: string; amounts: OccurrenceAmounts }[],
+  newNextDate: string
 ): Promise<string[]> {
-  if (dates.length === 0) return [];
+  if (occurrences.length === 0) return [];
 
   const results = (await sql.transaction([
-    ...dates.map(
-      (date) => sql`
+    ...occurrences.map(
+      ({ date, amounts }) => sql`
         insert into finance_transactions (
           user_id, recurring_id, date, type, category_id, description, amount_krw, currency,
           amount_usd, exchange_rate, payment_method_id, note
@@ -198,10 +199,10 @@ export async function applyOccurrences(
     ),
     sql`
       update finance_recurring_transactions
-      set next_date = ${newNextDate}, last_applied = ${dates[dates.length - 1]}
+      set next_date = ${newNextDate}, last_applied = ${occurrences[occurrences.length - 1].date}
       where id = ${rule.id} and next_date = ${rule.nextDate}
     `,
   ])) as { date: string }[][];
 
-  return results.slice(0, dates.length).flatMap((rows) => rows.map((row) => row.date));
+  return results.slice(0, occurrences.length).flatMap((rows) => rows.map((row) => row.date));
 }

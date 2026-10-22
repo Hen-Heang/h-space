@@ -15,6 +15,7 @@ import {
   type OccurrenceAmounts,
   type RecurringRuleWrite,
 } from "@/lib/repositories/finance-recurring-repository";
+import { findRateOnOrBefore } from "@/lib/repositories/finance-exchange-rate-repository";
 import { findAccountByUserId } from "@/lib/repositories/telegram-account-repository";
 import { isWithinQuietHours } from "@/lib/services/finance-alert-service";
 import { getUsdToKrwRate } from "@/lib/services/finance-exchange-rate-service";
@@ -62,39 +63,65 @@ async function toWrite(input: RecurringRuleInput, today: string): Promise<Recurr
   };
 }
 
-/** Lazily fetches the USD rate at most once per run, and only if a USD rule is due. */
-function rateLoader(): () => Promise<number> {
-  let rate: Promise<number> | undefined;
-  return () => (rate ??= getUsdToKrwRate().then((result) => result.rate));
+/**
+ * USD→KRW rate for an occurrence date, looked up at most once per date per
+ * run and only if a USD rule is due. Today uses the live/cached rate; a
+ * caught-up past date uses the last rate Luyra recorded on or before that
+ * day, falling back to today's when none was recorded that far back.
+ */
+function rateLoader(today: string): (date: string) => Promise<number> {
+  const rates = new Map<string, Promise<number>>();
+  const current = () => getUsdToKrwRate().then((result) => result.rate);
+  return (date) => {
+    let rate = rates.get(date);
+    if (!rate) {
+      rate =
+        date >= today
+          ? current()
+          : findRateOnOrBefore("USD", "KRW", date).then((stored) => (stored ? stored.rate : current()));
+      rates.set(date, rate);
+    }
+    return rate;
+  };
 }
 
-async function amountsFor(rule: RecurringRule, usdRate: () => Promise<number>): Promise<OccurrenceAmounts> {
+async function amountsFor(
+  rule: RecurringRule,
+  date: string,
+  usdRate: (date: string) => Promise<number>
+): Promise<OccurrenceAmounts> {
   if (rule.currency !== "USD" || rule.originalAmount === null) {
     return { amountKrw: rule.amountKrw, originalAmount: null, exchangeRate: null };
   }
-  const rate = await usdRate();
+  const rate = await usdRate(date);
   return { amountKrw: Math.round(rule.originalAmount * rate), originalAmount: rule.originalAmount, exchangeRate: rate };
 }
 
 interface AppliedEntry {
   rule: RecurringRule;
   dates: string[];
-  amountKrw: number;
+  /** KRW across every inserted occurrence — USD dates may each convert differently. */
+  totalKrw: number;
 }
 
 async function applyDue(today: string, userId?: string): Promise<{ scanned: number; applied: Map<string, AppliedEntry[]> }> {
   const due = await findDueRules(today, userId);
-  const usdRate = rateLoader();
+  const usdRate = rateLoader(today);
   const applied = new Map<string, AppliedEntry[]>();
 
   for (const rule of due) {
     const { dates, nextDate } = dueOccurrences(rule.nextDate, rule.frequency, rule.anchorDay, today);
     try {
-      const amounts = await amountsFor(rule, usdRate);
-      const inserted = await applyOccurrences(rule, dates, nextDate, amounts);
-      if (inserted.length === 0) continue;
+      const occurrences = await Promise.all(
+        dates.map(async (date) => ({ date, amounts: await amountsFor(rule, date, usdRate) }))
+      );
+      const inserted = new Set(await applyOccurrences(rule, occurrences, nextDate));
+      if (inserted.size === 0) continue;
+      const totalKrw = occurrences
+        .filter((occurrence) => inserted.has(occurrence.date))
+        .reduce((sum, occurrence) => sum + occurrence.amounts.amountKrw, 0);
       const list = applied.get(rule.userId) ?? [];
-      list.push({ rule, dates: inserted, amountKrw: amounts.amountKrw });
+      list.push({ rule, dates: [...inserted], totalKrw });
       applied.set(rule.userId, list);
     } catch (error) {
       // One bad rule must not stop everyone else's from applying.
@@ -150,14 +177,16 @@ export async function deleteRecurringRule(userId: string, id: string): Promise<v
 }
 
 function summaryMessage(entries: AppliedEntry[]): string {
-  const lines = entries.map(({ rule, dates, amountKrw }) => {
+  // "×3" entries show the combined KRW, since caught-up USD dates can each
+  // have converted at a different rate.
+  const lines = entries.map(({ rule, dates, totalKrw }) => {
     const sign = rule.type === "income" ? "+" : "−";
+    const times = dates.length > 1 ? ` ×${dates.length}` : "";
     const amount =
       rule.currency === "USD" && rule.originalAmount !== null
-        ? `${usd.format(rule.originalAmount)} (${krw.format(amountKrw)})`
-        : krw.format(amountKrw);
-    const times = dates.length > 1 ? ` ×${dates.length}` : "";
-    return `• ${escapeTelegramHtml(rule.description)} ${sign}${amount}${times}`;
+        ? `${usd.format(rule.originalAmount)}${times} (${krw.format(totalKrw)})`
+        : `${krw.format(rule.amountKrw)}${times}${dates.length > 1 ? ` (${krw.format(totalKrw)})` : ""}`;
+    return `• ${escapeTelegramHtml(rule.description)} ${sign}${amount}`;
   });
   const total = entries.reduce((sum, entry) => sum + entry.dates.length, 0);
   return [`🔁 <b>Recurring added</b> (${total})`, "", ...lines].join("\n");
