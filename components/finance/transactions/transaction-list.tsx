@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, ListChecks, Plus, ReceiptText, Repeat, Search, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FinanceEmptyState, FinanceErrorState, MonthSelector } from "@/components/finance/ui/finance-primitives";
@@ -17,6 +18,7 @@ import { krw } from "@/lib/finance-format";
 import { ApiError } from "@/lib/api/client";
 import { bulkTransactionAction, createTransaction, deleteTransaction, updateTransaction } from "@/lib/api/finance";
 import {
+  placeTransactionInLists,
   useCategories,
   usePaymentMethods,
   useTemplateActions,
@@ -108,6 +110,7 @@ export function TransactionList() {
   const { data: templates = [] } = useTemplates();
   const { saveTemplate, removeTemplate } = useTemplateActions();
   const [sheet, setSheet] = useState<{ mode: "create" | "edit"; transaction?: Transaction } | null>(null);
+  const queryClient = useQueryClient();
   const [recurringOpen, setRecurringOpen] = useState(false);
   // null = not selecting; otherwise the ids picked in selection mode.
   const [selection, setSelection] = useState<Set<string> | null>(null);
@@ -203,13 +206,14 @@ export function TransactionList() {
     setAmountMax(undefined);
   }
 
-  // The emitted event is what refreshes the cached lists (see QueryProvider).
+  // The saved row shows at once; the emitted event then refreshes every
+  // cached list (see QueryProvider), which has the final say.
   async function handleSave(input: CreateTransactionInput) {
-    if (sheet?.mode === "edit" && sheet.transaction) {
-      await updateTransaction(sheet.transaction.id, input);
-    } else {
-      await createTransaction(input);
-    }
+    const saved =
+      sheet?.mode === "edit" && sheet.transaction
+        ? await updateTransaction(sheet.transaction.id, input)
+        : await createTransaction(input);
+    placeTransactionInLists(queryClient, saved);
     emitTransactionChanged();
   }
 

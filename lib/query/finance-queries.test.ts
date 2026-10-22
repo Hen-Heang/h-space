@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
-import { financeKeys, invalidateAfter, transactionListQuery, type FinanceWriteKind } from "@/lib/query/finance-queries";
+import {
+  financeKeys,
+  invalidateAfter,
+  placeTransactionInLists,
+  transactionListQuery,
+  type FinanceWriteKind,
+  type TransactionListFilters,
+} from "@/lib/query/finance-queries";
 import type { Transaction } from "@/types/finance";
 
 const filters = { start: "2026-10-01", end: "2026-11-01", sort: "date_desc" as const };
@@ -72,5 +79,106 @@ describe("invalidateAfter", () => {
 
   it.each<FinanceWriteKind>(["lookup", "preferences"])("a %s write refreshes everything", async (kind) => {
     expect(await staleAfter(kind)).toEqual(Object.keys(seeded).sort());
+  });
+});
+
+describe("placeTransactionInLists", () => {
+  const tx = (id: string, date: string, overrides: Partial<Transaction> = {}): Transaction => ({
+    id,
+    date,
+    type: "expense",
+    categoryId: null,
+    categoryName: null,
+    categoryIcon: null,
+    categoryColor: null,
+    description: `Row ${id}`,
+    amountKrw: 1000,
+    currency: "KRW",
+    originalAmount: null,
+    exchangeRate: null,
+    paymentMethodId: null,
+    paymentMethodName: null,
+    note: null,
+    createdAt: `${date}T09:00:00Z`,
+    updatedAt: `${date}T09:00:00Z`,
+    ...overrides,
+  });
+
+  function seed(listFilters: TransactionListFilters, pages: { transactions: Transaction[]; hasMore: boolean }[]) {
+    const client = new QueryClient();
+    const key = financeKeys.transactionList(listFilters);
+    client.setQueryData(key, { pages, pageParams: pages.map((_, i) => i) });
+    const ids = () =>
+      client
+        .getQueryData<{ pages: { transactions: Transaction[] }[] }>(key)!
+        .pages.map((page) => page.transactions.map((t) => t.id));
+    return { client, ids };
+  }
+
+  it("inserts a new row at its date_desc position", () => {
+    const { client, ids } = seed(filters, [{ transactions: [tx("a", "2026-10-20"), tx("b", "2026-10-05")], hasMore: false }]);
+    placeTransactionInLists(client, tx("new", "2026-10-12"));
+    expect(ids()).toEqual([["a", "new", "b"]]);
+  });
+
+  it("puts a same-day row ahead of older entries that day", () => {
+    const { client, ids } = seed(filters, [{ transactions: [tx("a", "2026-10-20")], hasMore: false }]);
+    placeTransactionInLists(client, tx("new", "2026-10-20", { createdAt: "2026-10-20T10:00:00Z" }));
+    expect(ids()).toEqual([["new", "a"]]);
+  });
+
+  it("follows the list's sort", () => {
+    const sorted = { ...filters, sort: "amount_desc" as const };
+    const { client, ids } = seed(sorted, [
+      { transactions: [tx("big", "2026-10-02", { amountKrw: 9000 }), tx("small", "2026-10-20", { amountKrw: 500 })], hasMore: false },
+    ]);
+    placeTransactionInLists(client, tx("new", "2026-10-10", { amountKrw: 3000 }));
+    expect(ids()).toEqual([["big", "new", "small"]]);
+  });
+
+  it("leaves out lists whose filters it doesn't match", () => {
+    const narrowed = { ...filters, type: "income" as const, search: "salary" };
+    const { client, ids } = seed(narrowed, [{ transactions: [], hasMore: false }]);
+    placeTransactionInLists(client, tx("new", "2026-10-12"));
+    placeTransactionInLists(client, tx("other-month", "2026-11-01", { type: "income", description: "Salary" }));
+    expect(ids()).toEqual([[]]);
+  });
+
+  it("matches the search case-insensitively, like the server's ilike", () => {
+    const { client, ids } = seed({ ...filters, search: "coffee" }, [{ transactions: [], hasMore: false }]);
+    placeTransactionInLists(client, tx("new", "2026-10-12", { description: "Morning Coffee" }));
+    expect(ids()).toEqual([["new"]]);
+  });
+
+  it("doesn't append past the loaded rows while more pages remain unloaded", () => {
+    const { client, ids } = seed(filters, [{ transactions: [tx("a", "2026-10-20")], hasMore: true }]);
+    placeTransactionInLists(client, tx("old", "2026-10-01"));
+    expect(ids()).toEqual([["a"]]);
+  });
+
+  it("appends to the end once every page is loaded", () => {
+    const { client, ids } = seed(filters, [
+      { transactions: [tx("a", "2026-10-20")], hasMore: true },
+      { transactions: [tx("b", "2026-10-10")], hasMore: false },
+    ]);
+    placeTransactionInLists(client, tx("old", "2026-10-01"));
+    expect(ids()).toEqual([["a"], ["b", "old"]]);
+  });
+
+  it("moves an edited row, or drops it from a list it no longer matches", () => {
+    const rows = [tx("a", "2026-10-20"), tx("b", "2026-10-10"), tx("c", "2026-10-05")];
+    const { client, ids } = seed(filters, [{ transactions: rows, hasMore: false }]);
+    placeTransactionInLists(client, tx("a", "2026-10-07"));
+    expect(ids()).toEqual([["b", "a", "c"]]);
+    placeTransactionInLists(client, tx("b", "2026-09-30"));
+    expect(ids()).toEqual([["a", "c"]]);
+  });
+
+  it("leaves description suggestions under the same prefix alone", () => {
+    const client = new QueryClient();
+    const suggestionsKey = [...financeKeys.transactions(), "suggestions", "all", "row"];
+    client.setQueryData(suggestionsKey, []);
+    placeTransactionInLists(client, tx("new", "2026-10-12"));
+    expect(client.getQueryData(suggestionsKey)).toEqual([]);
   });
 });
