@@ -1,22 +1,39 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
+import { LayoutGrid } from "lucide-react"
 
-import { isNavigationItemActive, primaryNavItems, type NavSearchParams } from "@/lib/navigation"
+import { SpacesSheet } from "@/components/layout/SpacesSheet"
+import {
+  isNavigationItemActive,
+  isSpacesRoute,
+  primaryNavItems,
+  type NavSearchParams,
+} from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
 const TAB =
   "relative flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-lg py-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
 
+function TabLabel({ active, children }: { active: boolean; children: React.ReactNode }) {
+  return (
+    <span
+      className={cn(
+        "w-full truncate px-0.5 text-center text-xs leading-none",
+        active ? "font-semibold" : "font-medium",
+      )}
+    >
+      {children}
+    </span>
+  )
+}
+
 /**
- * The hub's five mobile destinations, filling the bar exactly — Today, Goals,
- * Korean, Notes, Progress (`primaryNavItems`), one per module. No "More"
- * trigger: everything else the app still supports (Vocabulary, Practice,
- * Habits, Recovery, Settings, general AI chat, …) stays a real, registered
- * route reachable from those hubs, by direct URL, and — for Settings — the
- * mobile header's action row; it simply has no tab here. Hengo Coach's own floating
- * launcher (`components/chat/FloatingAiCoach`) still gives one-tap access to
- * the general assistant without needing a slot in this bar.
+ * Mobile bottom bar: four workspace tabs — Today, Goals, Learning, Notes
+ * (`primaryNavItems`) — plus a "Spaces" trigger that opens every workspace
+ * (`SpacesSheet`). Spaces reads as current on any route none of the four
+ * tabs owns (Growth, My Apps, AI Assistant, Settings, …).
  *
  * A stable elevated bottom surface — one border, one shadow, no glass
  * container, no sliding pill, no per-icon scaling.
@@ -31,6 +48,9 @@ export function MobileBottomNav({
   pathname: string
   searchParams: NavSearchParams
 }) {
+  const [spacesOpen, setSpacesOpen] = useState(false)
+  const spacesActive = isSpacesRoute(pathname, searchParams)
+
   return (
     <nav
       aria-label="Primary"
@@ -53,19 +73,35 @@ export function MobileBottomNav({
                   aria-hidden
                   className={cn("shrink-0", item.color, !active && "opacity-70")}
                 />
-                <span
-                  className={cn(
-                    "w-full truncate px-0.5 text-center text-xs leading-none",
-                    active ? "font-semibold" : "font-medium",
-                  )}
-                >
-                  {item.shortLabel ?? item.label}
-                </span>
+                <TabLabel active={active}>{item.shortLabel ?? item.label}</TabLabel>
               </Link>
             </li>
           )
         })}
+        <li className="flex min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={() => setSpacesOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={spacesOpen}
+            className={cn(TAB, spacesActive ? "text-primary" : "text-muted-foreground")}
+          >
+            <LayoutGrid
+              size={21}
+              strokeWidth={spacesActive ? 2.4 : 2}
+              aria-hidden
+              className={cn("shrink-0", !spacesActive && "opacity-70")}
+            />
+            <TabLabel active={spacesActive}>Spaces</TabLabel>
+          </button>
+        </li>
       </ul>
+      <SpacesSheet
+        open={spacesOpen}
+        onOpenChange={setSpacesOpen}
+        pathname={pathname}
+        searchParams={searchParams}
+      />
     </nav>
   )
 }

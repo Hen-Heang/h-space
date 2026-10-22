@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 
 // Single source of truth for the `/learn` (Study) hub's cards. `/learn` is the
-// landing page of the mobile/tablet "Korean" tab (see `primaryNavItems` in
+// landing page of the mobile/tablet "Learning" tab (see `primaryNavItems` in
 // lib/navigation.ts), which is the only Korean slot in that nav — so this hub
 // is the front door to every Korean area: practice, vocabulary, the voice
 // coach, phrases, foundations, reading, and listening. Foundations and Reading are modes of the merged Phrasebook hub

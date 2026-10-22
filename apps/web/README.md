@@ -27,7 +27,7 @@ preserved inside it as **Hengo Learning**.
 
 > ### Hengo Learning — focused Korean learning inside H-Space
 >
-> Hengo Learning retains the existing Korean-learning routes, data, and functionality. It is one module of the hub: the mobile and tablet navigation is **Today · Goals · Korean · Notes · Progress**, and the desktop sidebar lists Korean Learning after the personal tools.
+> Hengo Learning retains the existing Korean-learning routes, data, and functionality. It is the Learning workspace of the hub: the mobile and tablet navigation is **Today · Goals · Learning · Notes · Spaces** (Spaces opens every workspace), and the desktop sidebar lists the seven workspaces — Today, Learning, Goals & Tasks, Growth, Notes & Knowledge, My Apps, AI Assistant.
 >
 > This README still documents the full V1 feature set below, and that documentation remains accurate as an _implementation_ reference — the productivity, growth, second-brain, progress, general-AI, and K-Specialist exam-prep features all still exist and still work by direct URL. Goals, Notes, and Progress have mobile/tablet tabs again, and every section is listed in the desktop sidebar; pages without a tab of their own are reached from those hubs or the ⌘K Quick Switcher. Nothing was deleted, and all data is intact.
 >
@@ -242,7 +242,7 @@ Two safety properties are deliberate and worth calling out: retrieved content is
   | **AI Coach** | Chat · Analyze · Generate · Corrections · Ask Hengo                                                           |
 
 - **Query-aware matching.** `NavMatch` (`pathname` + `query` / `absentQuery` / `includeChildren`) is what lets `/chat?mode=analyze` and bare `/chat` be different nav items with independent active states — pathname-only matching cannot express that.
-- **The shell is `components/layout/*`, not the route layout.** `app/(main)/layout.tsx` owns only what must live at the route boundary (auth gate, onboarding wizard, last-visited tracking) and delegates all visual chrome to `AppShell`: `DesktopSidebar` + `WorkspaceFlyout`, `TabletNavigationRail`, `DesktopHeader` / `MobileHeader`, `MobileBottomNav`, `MoreNavigationSheet`, `PageHeader`, `ProfileMenu`.
+- **The shell is `components/layout/*`, not the route layout.** `app/(main)/layout.tsx` owns only what must live at the route boundary (auth gate, onboarding wizard, last-visited tracking) and delegates all visual chrome to `AppShell`: `DesktopSidebar`, `TabletNavigationRail`, `DesktopHeader` / `MobileHeader`, `MobileBottomNav`, `SpacesSheet` (opened from the bottom bar and rail), `PageHeader`, `ProfileMenu`.
 - **Desktop:** a contextual sidebar — a section switcher plus only the active section's links, so one section shows at a time. **Tablet** gets an icon rail with a flyout instead.
 - **Header:** a compact level/XP badge linking to `/achievements`, plus the Quick Capture button and ⌘K palette.
 - **Mobile:** a four-tab bottom bar — Today · Learn · Goals · Growth — with a fifth "More" slot opening a sheet that groups everything else (Progress, Tools, Learn more, Growth, Account) so nothing is unreachable on a phone.

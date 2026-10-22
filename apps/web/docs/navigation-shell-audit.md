@@ -1,5 +1,16 @@
 # Navigation shell audit & redesign
 
+> **Current (2026-10-22): seven workspaces.** The registry in
+> `lib/navigation.ts` is organized as Today · Learning · Goals & Tasks ·
+> Growth · Notes & Knowledge · My Apps · AI Assistant (section ids unchanged
+> except `history` → `apps`; `/history` moved into Learning, `/timeline` into
+> Notes & Knowledge, Ask Hengo into AI Assistant). The desktop sidebar lists all
+> seven. Mobile and tablet show four tabs (Today · Goals · Learning · Notes)
+> plus a **Spaces** trigger that opens `components/layout/SpacesSheet.tsx` — the
+> same `sidebarSections` data as the desktop sidebar, so every shipped route has
+> a tappable entry on every screen size. No route was removed or renamed. The
+> notes below are historical.
+
 > **Superseded (2026-08-31).** This document records the V1 grouped-workspace
 > shell — expandable Plan/Grow sections, four mobile tabs plus a "More" sheet.
 > Hengo V2 replaced that with five flat destinations (Today · Vocabulary ·
