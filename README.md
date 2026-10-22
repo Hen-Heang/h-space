@@ -71,8 +71,6 @@ Copy `.env.example` to `.env.local` and fill in real values. Never commit
 | `NEXT_PUBLIC_SUPABASE_URL` | browser + server | safe to expose |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | browser + server | safe to expose |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Primary Google Identity Services login | safe to expose |
-| `NEXT_PUBLIC_MONEY_FLOW_SUPABASE_URL` | unused — see below | safe to expose |
-| `NEXT_PUBLIC_MONEY_FLOW_SUPABASE_PUBLISHABLE_KEY` | unused — see below | safe to expose |
 | `DATABASE_URL` | server only | Neon connection string — never prefix with `NEXT_PUBLIC_` |
 
 `.env.example` is the authoritative list and also documents the optional
@@ -86,12 +84,6 @@ keys, each of which degrades gracefully when unset:
   `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` — Telegram reports and alerts
 - `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` — AI Money Coach
 - `RESEND_API_KEY`, `RESEND_FROM_EMAIL` — email reports
-
-The two `NEXT_PUBLIC_MONEY_FLOW_SUPABASE_*` variables are no longer read by
-any route. Only `lib/integrations/money-flow/client.ts` reads them, and it is
-used only by `components/finance/money-flow-dashboard.tsx` and
-`money-flow-session.tsx`, which nothing imports — Finance runs entirely on the
-native Neon API now. They can be left blank.
 
 ## Supabase Auth setup
 
