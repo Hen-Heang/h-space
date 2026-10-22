@@ -51,7 +51,17 @@ function ProjectLink({ link }: { link: HSpaceProject["links"][number] }) {
   )
 }
 
-export function MyAppsSection({ className }: { className?: string }) {
+/**
+ * `compact` is the private /home variant: the same catalog without the
+ * portfolio intro and stack chips that the public landing page shows.
+ */
+export function MyAppsSection({
+  className,
+  compact = false,
+}: {
+  className?: string
+  compact?: boolean
+}) {
   return (
     <section id="my-apps" aria-labelledby="my-apps-title" className={cn("scroll-mt-24", className)}>
       <div className="mb-6 max-w-3xl">
@@ -64,11 +74,13 @@ export function MyAppsSection({ className }: { className?: string }) {
         >
           My Apps
         </h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">
-          Real applications I use, maintain, and discuss in engineering interviews. Each project
-          solves a different problem while documenting the product and technical decisions behind
-          it.
-        </p>
+        {!compact && (
+          <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">
+            Real applications I use, maintain, and discuss in engineering interviews. Each project
+            solves a different problem while documenting the product and technical decisions behind
+            it.
+          </p>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -93,19 +105,21 @@ export function MyAppsSection({ className }: { className?: string }) {
                 {project.description}
               </p>
 
-              <ul
-                aria-label={`${project.name} technology stack`}
-                className="mt-4 flex flex-wrap gap-1.5"
-              >
-                {project.stack.map((technology) => (
-                  <li
-                    key={technology}
-                    className="rounded-md bg-muted/60 px-2 py-1 text-[11px] font-medium text-muted-foreground"
-                  >
-                    {technology}
-                  </li>
-                ))}
-              </ul>
+              {!compact && (
+                <ul
+                  aria-label={`${project.name} technology stack`}
+                  className="mt-4 flex flex-wrap gap-1.5"
+                >
+                  {project.stack.map((technology) => (
+                    <li
+                      key={technology}
+                      className="rounded-md bg-muted/60 px-2 py-1 text-[11px] font-medium text-muted-foreground"
+                    >
+                      {technology}
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               <div className="mt-5 flex flex-wrap gap-1 border-t border-border pt-3">
                 {project.links.map((link) => (
