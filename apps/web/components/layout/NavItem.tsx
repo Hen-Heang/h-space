@@ -31,7 +31,7 @@ const ROW_STATE = {
 }
 
 /** Thin left indicator — the only "chrome" an active row gets. */
-function ActiveIndicator() {
+export function ActiveIndicator() {
   return (
     <span
       aria-hidden

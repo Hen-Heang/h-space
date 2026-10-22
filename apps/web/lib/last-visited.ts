@@ -8,7 +8,7 @@ const RECENTS_KEY = "hengo-recent-routes"
 const MAX_RECENTS = 5
 
 /** Section ids that get "continue where you left off" tracking. */
-export type WorkspaceId = "learn" | "plan" | "grow" | "history" | "memory" | "ai"
+export type WorkspaceId = "learn" | "plan" | "grow" | "memory" | "apps" | "ai"
 
 type LastVisited = Partial<Record<WorkspaceId, string>>
 

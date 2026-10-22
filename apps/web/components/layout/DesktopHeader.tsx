@@ -7,7 +7,12 @@ import { NotificationBell } from "@/components/notifications/NotificationBell"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { openHengoCoach } from "@/lib/hengo-coach-bus"
-import { getActiveNavItem, getSectionForPath, type NavSearchParams } from "@/lib/navigation"
+import {
+  getActiveNavItem,
+  getSectionForPath,
+  linkPath,
+  type NavSearchParams,
+} from "@/lib/navigation"
 
 import { BreadcrumbTrail } from "./PageHeader"
 import { ProfileMenu } from "./ProfileMenu"
@@ -28,10 +33,13 @@ export function DesktopHeader({
   const item = getActiveNavItem(pathname, searchParams)
   const title = item?.label ?? section?.label ?? "H-Space"
 
-  // Don't repeat the title as its own parent crumb (e.g. Today, or a section
-  // whose landing route is the item itself).
+  // Don't repeat the title as its own parent crumb (e.g. Today), and don't
+  // show a crumb that links back to the page you're on (e.g. "Korean
+  // Learning" on /learn, the section's own landing route).
   const crumbs =
-    section && section.label !== title ? [{ label: section.label, href: section.href }] : []
+    section && section.label !== title && linkPath(section.href) !== pathname
+      ? [{ label: section.label, href: section.href }]
+      : []
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border bg-background/90 px-6 py-3 backdrop-blur-sm">

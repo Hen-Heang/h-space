@@ -14,6 +14,7 @@ import {
   Home,
   Inbox,
   Languages,
+  LayoutGrid,
   ListChecks,
   Map,
   MessageCircle,
@@ -64,6 +65,13 @@ export type NavMatch = {
    * share a common path with the hub itself.
    */
   sectionId?: NavSectionId
+  /**
+   * Extra route prefixes that also activate the item — for a hub whose child
+   * routes live elsewhere but whose section holds unrelated siblings too, so
+   * `sectionId` would over-match (e.g. Progress → /statistics, but not
+   * Recovery).
+   */
+  alsoPathnames?: string[]
 }
 
 export type NavItem = {
@@ -100,7 +108,7 @@ export type NavItem = {
   showInSidebar?: boolean
 }
 
-export type NavSectionId = "today" | "learn" | "plan" | "grow" | "history" | "memory" | "ai"
+export type NavSectionId = "today" | "learn" | "plan" | "grow" | "memory" | "apps" | "ai"
 
 export type NavSection = {
   id: NavSectionId
@@ -249,10 +257,9 @@ export const progressHubItem: NavItem = {
 }
 
 /**
- * Standalone top-level destination (peer of Today, not nested in a group) —
- * merges the old separate Timeline entry (see `timelineItem`) under one row.
- * Both routes are preserved and unchanged; History is just the one a reader
- * lands on first, with Timeline reachable from inside it.
+ * Korean correction history (`/history` reads `correctionApi`/`progressApi`),
+ * so it lives in the Learning section. Timeline — the cross-app activity log
+ * it used to share a section with — moved to Notes & Knowledge.
  */
 export const historyItem: NavItem = {
   id: "history-hub",
@@ -275,6 +282,17 @@ const timelineItem: NavItem = {
   showInSidebar: false,
 }
 
+/** The in-app catalog of the projects H-Space links to (`lib/projects.ts`). */
+export const appsItem: NavItem = {
+  id: "apps-catalog",
+  href: "/apps",
+  label: "My Apps",
+  icon: LayoutGrid,
+  color: "text-cyan-500",
+  description: "The applications in H-Space and what each one solves",
+  keywords: ["apps", "projects", "portfolio", "money flow", "catalog"],
+}
+
 // ─── Sections ─────────────────────────────────────────────────────────────────
 
 export const navSections: NavSection[] = [
@@ -287,8 +305,11 @@ export const navSections: NavSection[] = [
     items: [todayItem],
   },
   {
+    // The Learning workspace. Korean is its only module today, so the items
+    // keep their Korean-specific names and the mobile tab still lands on the
+    // Korean hub (`/learn`).
     id: "learn",
-    label: "Learn",
+    label: "Learning",
     icon: Sparkles,
     color: "text-violet-500",
     href: "/learn",
@@ -406,6 +427,7 @@ export const navSections: NavSection[] = [
         keywords: ["topik", "interview", "test", "exam"],
         showInSidebar: false,
       },
+      historyItem,
       {
         id: "learn-hub",
         href: "/learn",
@@ -430,7 +452,7 @@ export const navSections: NavSection[] = [
     // highlighting. Inbox lives here too (not a "Memory" browsing tool — it's
     // where a stray idea becomes a goal or task).
     id: "plan",
-    label: "Plan",
+    label: "Goals & Tasks",
     icon: ClipboardList,
     color: "text-sky-500",
     href: "/goals",
@@ -509,7 +531,7 @@ export const navSections: NavSection[] = [
     // original URLs with their own data untouched, same pattern as Plan's
     // Overview/Tasks.
     id: "grow",
-    label: "Grow",
+    label: "Growth",
     icon: TreeDeciduous,
     color: "text-emerald-500",
     href: "/growth/recovery",
@@ -580,44 +602,37 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    // Standalone top-level destination, not a collapsible group — rendered
-    // via `secondaryNavItems`, same as Learn. Merges the old separate
-    // Timeline entry (`timelineItem`) under one row — Timeline stays a real,
-    // hidden, searchable route (surfaced from inside the History page), but
-    // visiting it directly does not light up the History row (a minor,
-    // accepted gap — same as Roadmap not lighting up Plan).
-    id: "history",
-    label: "History",
-    icon: History,
-    color: "text-amber-500",
-    href: "/history",
-    items: [historyItem, timelineItem],
-  },
-  {
-    // "Memory" owns everything Hengo remembers about you: freeform Notes and
-    // the Memories hub that surfaces facts extracted from notes/goals/
-    // habits/journal, plus the "Ask Hengo" action. No dedicated sidebar/rail/
-    // bottom-nav presence at all now (Inbox moved to Plan) — every item here
-    // is `showInSidebar: false`, reachable via Quick Switcher (desktop) and
-    // the More sheet's Memory group (mobile). Same zero-chrome pattern the
-    // "ai" section below already used.
+    // Notes & Knowledge: what you've written down and what Hengo remembers —
+    // freeform Notes, the Memories hub (facts extracted from notes/goals/
+    // habits/journal), and the cross-app Timeline. The "memory" id is kept
+    // because last-visited tracking stores it in localStorage.
     id: "memory",
-    label: "Memory",
+    label: "Notes & Knowledge",
     icon: BrainCircuit,
     color: "text-indigo-500",
-    href: memoryHubItem.href,
-    items: [notesItem, memoryHubItem, askHengoItem],
+    href: notesItem.href,
+    items: [notesItem, memoryHubItem, timelineItem],
   },
   {
-    // Preserved routes, no primary sidebar/rail presence — see the
-    // `showInSidebar: false` note on `aiCoachItem` above.
+    id: "apps",
+    label: "My Apps",
+    icon: LayoutGrid,
+    color: "text-cyan-500",
+    href: appsItem.href,
+    items: [appsItem],
+  },
+  {
+    // AI Assistant: the general Hengo Coach chat, its modes, and Ask Hengo
+    // (answers from your own data). All share `/chat`; `NavMatch` query rules
+    // keep exactly one of them active.
     id: "ai",
-    label: "Hengo Coach",
+    label: "AI Assistant",
     icon: MessageCircle,
     color: "text-teal-500",
     href: aiCoachItem.href,
     items: [
       aiCoachItem,
+      askHengoItem,
       {
         id: "ai-analyze",
         href: "/chat?mode=analyze",
@@ -648,9 +663,6 @@ export const navSections: NavSection[] = [
         match: { pathname: "/chat", query: { mode: "corrections" } },
         showInSidebar: false,
       },
-      // Not listed here again — `askHengoItem` above (a child of the "memory"
-      // section) already registers `/chat?mode=memory` as a route. Duplicating
-      // it here would register the same id twice.
     ],
   },
 ]
@@ -683,25 +695,23 @@ function section(id: NavSectionId): NavSection {
   return navSections.find((s) => s.id === id)!
 }
 
-// ─── V2 primary navigation ─────────────────────────────────────────────────────
+// ─── Hub primary navigation ────────────────────────────────────────────────────
 //
-// Hengo V2 narrows the whole product to Korean learning. `primaryNavItems` is
-// the ONLY list the desktop sidebar, tablet rail, and mobile bottom bar render
-// as their own row — five flat destinations, no expandable workspace groups,
-// no "More" overflow. Everything else in `navSections` above (Goals, Habits,
-// Recovery, Journal, Progress, Achievements, Statistics, History, Notes,
-// Memories, Ask Hengo, general AI chat, Scenarios, Exam Prep, …) stays a real,
-// registered route — used for page titles, breadcrumbs, active-state
-// matching, and the Quick Switcher — it just has no chrome row anymore.
-// Coach and Study reuse their registry item's href/icon/match via spread,
-// only overriding `id` (so the display variant doesn't collide with the
-// registry item elsewhere) and `label` (a shorter, V2-only display name — the
-// underlying route's own page title/breadcrumb is untouched), the same
-// pattern the old `bottomTabs`'s `tab-learn` override used.
+// H-Space is a personal hub of several apps, so the tablet rail and mobile
+// bottom bar give each module one tab instead of spending all five on Korean
+// learning (Hengo V2's original Today · Vocabulary · Practice · Coach · Study).
+// Each tab reuses its registry item's href/icon via spread, overriding only
+// `id` (so the display variant doesn't collide with the registry item),
+// `label`, and — for hub tabs — `match`, the same pattern the old
+// `bottomTabs`'s `tab-learn` override used. Everything not given a tab stays a
+// real, registered route reachable from those hubs, the desktop sidebar, and
+// the Quick Switcher.
 /**
  * Shorter display names for the two destinations whose registry labels are
- * longer than a nav row wants. One map so the sidebar, tablet rail and mobile
- * bottom bar can't drift into calling the same route different things — the
+ * longer than a nav row wants, used by the desktop sidebar. The one
+ * deliberate exception is the rail/bottom bar's "Learning" tab: it also lands
+ * on `/learn` but stands for the whole Learning workspace (section-wide
+ * match), so it takes the workspace's name rather than the page's "Study". The
  * underlying page title and breadcrumb still come from the registry label.
  */
 const NAV_DISPLAY_LABELS: Record<string, string> = {
@@ -716,10 +726,46 @@ function withDisplayLabel(item: NavItem): NavItem {
 
 export const primaryNavItems: NavItem[] = [
   todayItem,
-  navItem("learn-vocab"),
-  navItem("learn-practice"),
-  { ...withDisplayLabel(navItem("learn-korean-coach")), id: "primary-coach" },
-  { ...withDisplayLabel(navItem("learn-hub")), id: "primary-study" },
+  // Section-wide match so Calendar, Tasks, Inbox and Roadmap keep Goals lit
+  // instead of going dark — none of them has a tab of its own here.
+  {
+    ...navItem("goals-goals"),
+    id: "primary-goals",
+    match: { pathname: "/goals", sectionId: "plan" },
+  },
+  // `/vocab`, `/korean-coach`, `/phrasebook`, … don't share the `/learn`
+  // prefix, so the whole Learning section lights this tab.
+  {
+    ...navItem("learn-hub"),
+    id: "primary-learning",
+    label: "Learning",
+    match: { pathname: "/learn", sectionId: "learn" },
+  },
+  // Section-wide so Memories and Timeline keep Notes lit too.
+  { ...notesItem, id: "primary-notes", match: { pathname: "/notes", sectionId: "memory" } },
+]
+// The fifth slot is the "Spaces" sheet trigger (`SpacesSheet`), rendered by
+// the bottom bar and rail themselves — it opens every workspace in
+// `sidebarSections`, so Growth, My Apps and AI Assistant are one tap away.
+
+/** Whether the Spaces trigger should read as current: no primary tab owns the route. */
+export function isSpacesRoute(pathname: string, searchParams?: NavSearchParams): boolean {
+  return !primaryNavItems.some((item) => isNavigationItemActive({ pathname, searchParams, item }))
+}
+
+/**
+ * Desktop sidebar and Spaces sheet section order — the seven workspaces. The
+ * registry order in `navSections` is left alone because `getActiveNavItem` /
+ * `getSectionForPath` are first-match.
+ */
+const SIDEBAR_SECTION_ORDER: NavSectionId[] = [
+  "today",
+  "learn",
+  "plan",
+  "grow",
+  "memory",
+  "apps",
+  "ai",
 ]
 
 /**
@@ -729,14 +775,14 @@ export const primaryNavItems: NavItem[] = [
  * This deliberately ignores `showInSidebar`. That flag was V2's way of hiding
  * ~28 built, working routes behind Quick Switcher search only; the audit found
  * that leaves most of the product with no front door you can click. Sections
- * and order come straight from `navSections`, so a new route still only needs
- * registering there.
+ * come straight from `navSections` (ordered by `SIDEBAR_SECTION_ORDER`), so a
+ * new route still only needs registering there.
  *
  * `soon` placeholders are filtered out: they have no page behind them, so a
  * row would be a dead end. They stay in `navSections` (and in `moreComingSoon`)
  * for whoever builds them.
  */
-export const sidebarSections: NavSection[] = navSections
+export const sidebarSections: NavSection[] = SIDEBAR_SECTION_ORDER.map(section)
   .map((section) => ({ ...section, items: shippedItems(section.items).map(withDisplayLabel) }))
   .filter((section) => section.items.length > 0)
 
@@ -830,6 +876,10 @@ export function isNavigationItemActive({
   // `/reading` aren't under `/learn`, but should still light it up).
   if (match.sectionId) {
     return getSectionForPath(pathname, searchParams)?.id === match.sectionId
+  }
+
+  if (match.alsoPathnames?.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return true
   }
 
   const includeChildren = match.includeChildren ?? true
@@ -933,9 +983,8 @@ export function getActiveBottomTabIndex(pathname: string, searchParams?: NavSear
   return isMoreRoute(pathname, searchParams) ? bottomTabs.length : -1
 }
 
-// ─── "More" sheet grouping (V1 — superseded, `MoreNavigationSheet` is no
-// longer mounted by `AppShell`; V2's five `primaryNavItems` need no overflow
-// sheet) ────────────────────────────────────────────────────────────────────
+// ─── "More" sheet grouping (V1 — superseded; the mounted overflow sheet is
+// now `SpacesSheet`, which renders `sidebarSections` instead) ───────────────
 
 export type MoreGroup = {
   id: string

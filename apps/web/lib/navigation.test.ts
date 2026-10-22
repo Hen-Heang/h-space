@@ -11,6 +11,7 @@ import {
   getSectionForPath,
   isMoreRoute,
   isNavigationItemActive,
+  isSpacesRoute,
   memoryHubItem,
   moreComingSoon,
   moreGroups,
@@ -21,6 +22,7 @@ import {
   secondaryNavItems,
   sectionRoutePrefixes,
   shippedItems,
+  sidebarSections,
   todayItem,
   visibleSidebarItems,
   workspaceNavSections,
@@ -42,9 +44,21 @@ describe("nav model integrity", () => {
       "learn",
       "plan",
       "grow",
-      "history",
       "memory",
+      "apps",
       "ai",
+    ])
+  })
+
+  it("labels the sections as the seven H-Space workspaces", () => {
+    expect(navSections.map((s) => s.label)).toEqual([
+      "Today",
+      "Learning",
+      "Goals & Tasks",
+      "Growth",
+      "Notes & Knowledge",
+      "My Apps",
+      "AI Assistant",
     ])
   })
 
@@ -95,6 +109,7 @@ describe("nav model integrity", () => {
       "/chat?mode=corrections",
       "/chat?mode=memory",
       "/settings",
+      "/apps",
     ]) {
       expect(hrefs).toContain(href)
     }
@@ -213,8 +228,11 @@ describe("section (workspace) selection", () => {
     expect(getSectionForPath("/growth/recovery")?.id).toBe("grow")
     expect(getSectionForPath("/statistics")?.id).toBe("grow")
     expect(getSectionForPath("/ask-hengo/memories")?.id).toBe("memory")
-    expect(getSectionForPath("/chat", "mode=memory")?.id).toBe("memory")
+    expect(getSectionForPath("/chat", "mode=memory")?.id).toBe("ai")
     expect(getSectionForPath("/notes")?.id).toBe("memory")
+    expect(getSectionForPath("/timeline")?.id).toBe("memory")
+    expect(getSectionForPath("/history")?.id).toBe("learn")
+    expect(getSectionForPath("/apps")?.id).toBe("apps")
     expect(getSectionForPath("/inbox")?.id).toBe("plan")
     expect(getSectionForPath("/chat")?.id).toBe("ai")
     expect(getSectionForPath("/home")?.id).toBe("today")
@@ -232,8 +250,8 @@ describe("section (workspace) selection", () => {
   it("gives every primary section a route prefix list for last-visited tracking", () => {
     expect(Object.keys(sectionRoutePrefixes).sort()).toEqual([
       "ai",
+      "apps",
       "grow",
-      "history",
       "learn",
       "memory",
       "plan",
@@ -284,22 +302,28 @@ describe("Simplified AI + Memory/Progress navigation", () => {
     expect(askHengoItem.showInSidebar).toBe(false)
   })
 
-  it("activates the Memory workspace for /ask-hengo/memories, /chat?mode=memory and /notes — Inbox moved to Plan", () => {
+  it("activates Notes & Knowledge for /ask-hengo/memories, /notes and /timeline — Ask Hengo moved to AI Assistant, Inbox to Plan", () => {
     expect(getSectionForPath("/ask-hengo/memories")?.id).toBe("memory")
-    expect(getSectionForPath("/chat", "mode=memory")?.id).toBe("memory")
     expect(getSectionForPath("/notes")?.id).toBe("memory")
     expect(getSectionForPath("/notes/abc-123")?.id).toBe("memory")
+    expect(getSectionForPath("/timeline")?.id).toBe("memory")
+    expect(getSectionForPath("/chat", "mode=memory")?.id).toBe("ai")
     expect(getSectionForPath("/inbox")?.id).toBe("plan")
   })
 
-  it("keeps Memory as a hidden-but-real registry — Notes, Memories and Ask Hengo, none visible in chrome", () => {
+  it("groups Notes, Memories and Timeline under Notes & Knowledge", () => {
     const memory = navSections.find((s) => s.id === "memory")!
-    expect(memory.items.map((i) => i.id)).toEqual([
-      "memory-notes",
-      "memory-hub",
-      "memory-ask-hengo",
-    ])
-    expect(memory.items.every((i) => i.showInSidebar === false)).toBe(true)
+    expect(memory.label).toBe("Notes & Knowledge")
+    expect(memory.href).toBe("/notes")
+    expect(memory.items.map((i) => i.id)).toEqual(["memory-notes", "memory-hub", "review-timeline"])
+  })
+
+  it("puts Ask Hengo in AI Assistant next to Hengo Coach, active only for ?mode=memory", () => {
+    const ai = navSections.find((s) => s.id === "ai")!
+    expect(ai.items.map((i) => i.id).slice(0, 2)).toEqual(["ai-chat", "memory-ask-hengo"])
+    expect(active("/chat", "memory-ask-hengo", "mode=memory")).toBe(true)
+    expect(active("/chat", "ai-chat", "mode=memory")).toBe(false)
+    expect(active("/chat", "memory-ask-hengo")).toBe(false)
   })
 
   it("folds the old Progress workspace's routes into Grow, hidden alongside the merged Progress row", () => {
@@ -322,12 +346,16 @@ describe("Simplified AI + Memory/Progress navigation", () => {
     expect(getActiveNavItem("/progress")?.label).toBe("Progress")
   })
 
-  it("merges Timeline into History as one standalone destination", () => {
-    expect(getSectionForPath("/history")?.id).toBe("history")
-    expect(getSectionForPath("/timeline")?.id).toBe("history")
+  it("files Korean correction History under Learning and keeps its title", () => {
+    expect(getSectionForPath("/history")?.id).toBe("learn")
     expect(getActiveNavItem("/history")?.label).toBe("History")
-    const history = navSections.find((s) => s.id === "history")!
-    expect(history.items.find((i) => i.id === "review-timeline")?.showInSidebar).toBe(false)
+    expect(getActiveNavItem("/timeline")?.label).toBe("Timeline")
+  })
+
+  it("gives My Apps its own workspace at /apps", () => {
+    const apps = navSections.find((s) => s.id === "apps")!
+    expect(apps).toMatchObject({ label: "My Apps", href: "/apps" })
+    expect(getActiveNavItem("/apps")?.label).toBe("My Apps")
   })
 })
 
@@ -364,7 +392,8 @@ describe("Learning Hub consolidation", () => {
 
   it("hides every Learn child from the sidebar/rail while keeping it a real, searchable route", () => {
     const learn = navSections.find((s) => s.id === "learn")!
-    const hidden = learn.items.filter((i) => i.id !== "learn-hub")
+    // History is a standalone row of its own, not a hidden hub child.
+    const hidden = learn.items.filter((i) => i.id !== "learn-hub" && i.id !== "history-hub")
     expect(hidden).toHaveLength(9)
     expect(hidden.every((i) => i.showInSidebar === false)).toBe(true)
     expect(hidden.every((i) => allNavItems.includes(i))).toBe(true)
@@ -577,51 +606,69 @@ describe("Coming Soon filtering", () => {
   })
 })
 
-describe("Hengo V2 primary navigation (Phase 1: product shell)", () => {
-  it("has exactly five destinations, in the required order", () => {
-    expect(primaryNavItems.map((i) => i.label)).toEqual([
-      "Today",
-      "Vocabulary",
-      "Practice",
-      "Coach",
-      "Study",
-    ])
-    expect(primaryNavItems.map((i) => i.href)).toEqual([
-      "/home",
-      "/vocab",
-      "/practice",
-      "/korean-coach",
-      "/learn",
-    ])
+describe("Hub primary navigation (tablet rail + mobile bottom bar)", () => {
+  it("has four workspace tabs in order — the fifth slot is the Spaces trigger", () => {
+    expect(primaryNavItems.map((i) => i.label)).toEqual(["Today", "Goals", "Learning", "Notes"])
+    expect(primaryNavItems.map((i) => i.href)).toEqual(["/home", "/goals", "/learn", "/notes"])
   })
 
-  it("keeps Study pointed at /learn — same route, only the display label changes", () => {
-    const study = primaryNavItems.find((i) => i.label === "Study")!
-    expect(study.href).toBe("/learn")
+  it("keeps Learning pointed at /learn — same route, only the display label changes", () => {
+    const learning = primaryNavItems.find((i) => i.label === "Learning")!
+    expect(learning.href).toBe("/learn")
     // The underlying registry item keeps its own title for page headers/breadcrumbs.
     expect(getActiveNavItem("/learn")?.label).toBe("Learn")
   })
 
-  it("keeps Coach pointed at /korean-coach — same route, only the display label changes", () => {
-    const coach = primaryNavItems.find((i) => i.label === "Coach")!
-    expect(coach.href).toBe("/korean-coach")
-    expect(getActiveNavItem("/korean-coach")?.label).toBe("Korean Coach")
-  })
-
-  it("resolves active state per item, matching each item's own route", () => {
-    expect(isNavigationItemActive({ pathname: "/vocab", item: navItem("learn-vocab") })).toBe(true)
-    for (const route of ["/home", "/vocab", "/practice", "/korean-coach", "/learn"]) {
+  it("resolves active state to exactly one tab on each tab-owned route", () => {
+    for (const route of [
+      "/home",
+      "/goals",
+      "/goals/calendar",
+      "/inbox",
+      "/learn",
+      "/vocab",
+      "/practice",
+      "/korean-coach",
+      "/history",
+      "/notes",
+      "/ask-hengo/memories",
+      "/timeline",
+    ]) {
       const activeCount = primaryNavItems.filter((item) =>
         isNavigationItemActive({ pathname: route, item }),
       ).length
       expect(activeCount).toBe(1)
+      expect(isSpacesRoute(route)).toBe(false)
     }
+  })
+
+  it("lights Spaces on every route no tab owns", () => {
+    for (const route of ["/growth/habits", "/growth/recovery", "/progress", "/apps", "/settings"]) {
+      expect(isSpacesRoute(route)).toBe(true)
+    }
+    expect(isSpacesRoute("/chat")).toBe(true)
+    expect(isSpacesRoute("/chat", "mode=memory")).toBe(true)
   })
 
   it("keeps every route it points to fully registered — reachable, titled, matchable — beyond just this list", () => {
     for (const item of primaryNavItems) {
       expect(getActiveNavItem(item.href)).toBeDefined()
     }
+  })
+
+  it("orders the desktop sidebar as the seven workspaces and drops no section", () => {
+    expect(sidebarSections.map((s) => s.label)).toEqual([
+      "Today",
+      "Learning",
+      "Goals & Tasks",
+      "Growth",
+      "Notes & Knowledge",
+      "My Apps",
+      "AI Assistant",
+    ])
+    // A section added to the registry must also get a place in the sidebar order.
+    const withShippedItems = navSections.filter((s) => shippedItems(s.items).length > 0)
+    expect(sidebarSections).toHaveLength(withShippedItems.length)
   })
 
   it("still leaves every removed-from-chrome route registered and reachable by URL", () => {
