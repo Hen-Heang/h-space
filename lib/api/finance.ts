@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api/client";
 import type {
+  ApplyBudgetPlanInput,
   CreateCategoryInput,
   CreateContributionInput,
   CreatePaymentMethodInput,
@@ -220,6 +221,10 @@ export function getFinanceOverview(month: string): Promise<FinanceOverviewSummar
 
 export function getReviewSummary(month: string): Promise<ReviewSummary> {
   return apiFetch<ReviewSummary>(`/api/finance/review?month=${month}`);
+}
+
+export function applyBudgetPlan(input: ApplyBudgetPlanInput): Promise<{ applied: number }> {
+  return apiFetch<{ applied: number }>("/api/finance/review/plan", { method: "POST", body: JSON.stringify(input) });
 }
 
 export function getWeeklySummary(): Promise<WeeklySummary> {

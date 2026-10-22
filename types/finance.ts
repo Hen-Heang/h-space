@@ -371,6 +371,41 @@ export interface ReviewSummary {
   subscriptionsMonthlyKrw: number;
   savingsProgress: SavingsProgress;
   observations: ReviewObservation[];
+  /** Null unless the reviewed month is the most recent complete month. */
+  nextMonthPlan: NextMonthBudgetPlan | null;
+}
+
+export type BudgetRecommendationReason = "raise_unrealistic" | "gradual_reduction" | "hold_steady" | "first_budget";
+
+export interface BudgetRecommendation {
+  categoryId: string;
+  categoryName: string;
+  categoryIcon: string | null;
+  categoryColor: string | null;
+  spendingClass: SpendingClass | null;
+  currentBudgetKrw: number;
+  averageKrw: number;
+  medianKrw: number;
+  recommendedBudgetKrw: number;
+  reason: BudgetRecommendationReason;
+  rationale: string;
+}
+
+export interface NextMonthBudgetPlan {
+  /** YYYY-MM the plan is for — the month after the reviewed one. */
+  planMonth: string;
+  /** Complete months the plan is built from, oldest first. */
+  monthsAnalyzed: string[];
+  recommendations: BudgetRecommendation[];
+  totalRecommendedKrw: number;
+  /** Average monthly spending no recommendation covers (uncategorized or too sporadic), counted in the projection. */
+  otherSpendingKrw: number;
+  averageIncomeKrw: number;
+  /** Null when there was no income in the analyzed months. */
+  projectedSavingsRatePct: number | null;
+  targetSavingsRatePct: number;
+  /** How much more the plan would need to trim to reach the target; 0 when it already does. */
+  additionalTrimNeededKrw: number;
 }
 
 export interface ReportCategoryAmount {

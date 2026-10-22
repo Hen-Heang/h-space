@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const userId = await ensureAppUserId();
     const month = monthQuerySchema.parse(request.nextUrl.searchParams.get("month"));
 
-    const summary = await getReviewSummary(userId, month);
+    const summary = await getReviewSummary(userId, month, { withPlan: true });
     return apiSuccess(summary);
   } catch (error) {
     return apiError(error);
