@@ -67,6 +67,23 @@ export const recurringRuleSchema = z
   });
 export type RecurringRuleInput = z.infer<typeof recurringRuleSchema>;
 
+const bulkIdsSchema = z
+  .array(z.string().uuid())
+  .min(1, "Select at least one transaction")
+  .max(200, "Select at most 200 transactions at a time")
+  .refine((ids) => new Set(ids).size === ids.length, "Duplicate transaction");
+
+export const bulkTransactionActionSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("delete"), ids: bulkIdsSchema }),
+  z.object({ action: z.literal("recategorize"), ids: bulkIdsSchema, categoryId: z.string().uuid().nullable() }),
+]);
+export type BulkTransactionActionInput = z.infer<typeof bulkTransactionActionSchema>;
+
+export const descriptionSuggestionsQuerySchema = z.object({
+  q: z.string().trim().min(1).max(100),
+  type: transactionTypeSchema.optional(),
+});
+
 export const transactionSortSchema = z.enum(["date_desc", "date_asc", "amount_desc", "amount_asc"]);
 export type TransactionSort = z.infer<typeof transactionSortSchema>;
 

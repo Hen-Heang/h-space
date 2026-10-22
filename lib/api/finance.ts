@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api/client";
 import type {
   ApplyBudgetPlanInput,
+  BulkTransactionActionInput,
   CreateCategoryInput,
   CreateContributionInput,
   CreatePaymentMethodInput,
@@ -110,6 +111,25 @@ export function updateTransaction(id: string, input: UpdateTransactionInput): Pr
 
 export async function deleteTransaction(id: string): Promise<void> {
   await apiFetch<{ id: string }>(`/api/finance/transactions/${id}`, { method: "DELETE" });
+}
+
+/** Bulk delete or recategorize; `affected` is how many rows actually changed. */
+export function bulkTransactionAction(input: BulkTransactionActionInput): Promise<{ affected: number }> {
+  return apiFetch("/api/finance/transactions/bulk", { method: "POST", body: JSON.stringify(input) });
+}
+
+export interface DescriptionSuggestion {
+  description: string;
+  type: TransactionType;
+  categoryId: string | null;
+  paymentMethodId: string | null;
+  uses: number;
+}
+
+export function getDescriptionSuggestions(q: string, type?: TransactionType): Promise<DescriptionSuggestion[]> {
+  const query = new URLSearchParams({ q });
+  if (type) query.set("type", type);
+  return apiFetch<DescriptionSuggestion[]>(`/api/finance/transactions/suggestions?${query.toString()}`);
 }
 
 export function listTemplates(): Promise<TransactionTemplate[]> {

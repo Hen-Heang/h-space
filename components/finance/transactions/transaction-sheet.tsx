@@ -9,7 +9,8 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { Textarea } from "@/components/ui/textarea";
 import { AmountField, CategoryIcon } from "@/components/finance/ui/finance-primitives";
 import { TemplateStrip } from "@/components/finance/transactions/template-strip";
-import { getExchangeRate } from "@/lib/api/finance";
+import { DescriptionSuggestions } from "@/components/finance/transactions/description-suggestions";
+import { getExchangeRate, type DescriptionSuggestion } from "@/lib/api/finance";
 import { krw, usd } from "@/lib/finance-format";
 import { cn } from "@/lib/utils";
 import type { CreateTransactionInput, CreateTransactionTemplateInput } from "@/lib/validation/finance";
@@ -111,6 +112,9 @@ function TransactionSheetFields({
   });
   const [categoryId, setCategoryId] = useState(transaction?.categoryId ?? "");
   const [description, setDescription] = useState(transaction?.description ?? "");
+  // Opens on typing, closes on pick or Escape — so suggestions don't show for
+  // a pre-filled edit until the user actually changes the text.
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [date, setDate] = useState(transaction?.date ?? localToday());
   // New transactions default to "Bank" — the most common way spending is paid.
   const [paymentMethodId, setPaymentMethodId] = useState(
@@ -167,6 +171,21 @@ function TransactionSheetFields({
         ? current
         : ""
     );
+  }
+
+  // A new entry takes the suggestion's last category (when it fits this type)
+  // and payment method too. Editing an existing entry only swaps the text, so
+  // a suggestion never silently refiles something already recorded.
+  function applySuggestion(suggestion: DescriptionSuggestion) {
+    setDescription(suggestion.description);
+    setSuggestionsOpen(false);
+    if (mode !== "create") return;
+    if (suggestion.categoryId && availableCategories.some((category) => category.id === suggestion.categoryId)) {
+      setCategoryId(suggestion.categoryId);
+    }
+    if (suggestion.paymentMethodId && paymentMethods.some((method) => method.id === suggestion.paymentMethodId)) {
+      setPaymentMethodId(suggestion.paymentMethodId);
+    }
   }
 
   function applyTemplate(template: TransactionTemplate) {
@@ -451,9 +470,26 @@ function TransactionSheetFields({
           <Input
             id="transaction-description"
             value={description}
-            onChange={(event) => setDescription(event.target.value)}
+            onChange={(event) => {
+              setDescription(event.target.value);
+              setSuggestionsOpen(true);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape" && suggestionsOpen) {
+                event.stopPropagation();
+                setSuggestionsOpen(false);
+              }
+            }}
             placeholder="What was this for?"
+            autoComplete="off"
             required
+          />
+          <DescriptionSuggestions
+            query={description}
+            type={type}
+            open={suggestionsOpen}
+            categories={categories}
+            onPick={applySuggestion}
           />
         </div>
 
