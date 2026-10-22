@@ -47,6 +47,32 @@ export async function upsertBudget(userId: string, categoryId: string, amountKrw
   }
 }
 
+// Several budgets in one transaction, so applying a reviewed plan either
+// lands completely or not at all. Same update-then-insert shape as
+// upsertBudget above, for the same missing-constraint reason.
+export async function upsertBudgets(
+  userId: string,
+  entries: { categoryId: string; amountKrw: number }[]
+): Promise<void> {
+  if (entries.length === 0) return;
+
+  await sql.transaction(
+    entries.flatMap(({ categoryId, amountKrw }) => [
+      sql`
+        update finance_budgets set amount_krw = ${amountKrw}, updated_at = now()
+        where user_id = ${userId} and category_id = ${categoryId}
+      `,
+      sql`
+        insert into finance_budgets (user_id, category_id, amount_krw)
+        select ${userId}, ${categoryId}, ${amountKrw}
+        where not exists (
+          select 1 from finance_budgets where user_id = ${userId} and category_id = ${categoryId}
+        )
+      `,
+    ])
+  );
+}
+
 export async function deleteBudget(userId: string, categoryId: string): Promise<void> {
   await sql`delete from finance_budgets where user_id = ${userId} and category_id = ${categoryId}`;
 }

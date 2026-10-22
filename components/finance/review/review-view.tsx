@@ -10,7 +10,9 @@ import { ReviewBudgetPerformance } from "@/components/finance/review/review-budg
 import { ReviewCategoryChanges } from "@/components/finance/review/review-category-changes";
 import { ReviewSavingsProgressCard } from "@/components/finance/review/review-savings-progress";
 import { ReviewObservations } from "@/components/finance/review/review-observations";
+import { ReviewNextMonthPlan } from "@/components/finance/review/review-next-month-plan";
 import { getPreferences, getReviewSummary } from "@/lib/api/finance";
+import { monthKeyLabel } from "@/lib/finance-cron-time";
 import { krw } from "@/lib/finance-format";
 import { monthKey, monthLabel } from "@/lib/finance-month";
 import type { ReviewSummary } from "@/types/finance";
@@ -41,6 +43,9 @@ export function ReviewView() {
     error: null,
   });
   const [reviewEnabled, setReviewEnabled] = useState<boolean | null>(null);
+  // Lives here rather than in the plan section so the confirmation survives
+  // the refetch that follows an apply.
+  const [appliedCount, setAppliedCount] = useState<number | null>(null);
   const loading = result.key !== requestKey;
   const summary = loading ? null : result.summary;
   const error = loading ? null : result.error;
@@ -75,6 +80,11 @@ export function ReviewView() {
     };
   }, []);
 
+  function changeMonth(nextOffset: number) {
+    setMonthOffset(nextOffset);
+    setAppliedCount(null);
+  }
+
   if (reviewEnabled === false) {
     return (
       <FinanceEmptyState
@@ -96,8 +106,8 @@ export function ReviewView() {
         <p className="max-w-xl text-sm leading-5 text-muted-foreground">How income, spending, budgets, and savings changed.</p>
         <MonthSelector
           label={monthLabel(monthOffset)}
-          onPrevious={() => setMonthOffset((offset) => offset - 1)}
-          onNext={() => setMonthOffset((offset) => offset + 1)}
+          onPrevious={() => changeMonth(monthOffset - 1)}
+          onNext={() => changeMonth(monthOffset + 1)}
           nextDisabled={monthOffset >= 0}
           ariaLabel="Review month selector"
         />
@@ -150,6 +160,25 @@ export function ReviewView() {
           <FinanceSection id="review-observations" title="Key observations" description="Deterministic changes worth knowing about — no AI involved.">
             <ReviewObservations observations={summary.observations} />
           </FinanceSection>
+
+          {summary.nextMonthPlan && (
+            <FinanceSection
+              id="review-next-month-plan"
+              title={`Plan for ${monthKeyLabel(summary.nextMonthPlan.planMonth)}`}
+              description="Suggested budgets from your recent spending. Nothing changes until you confirm."
+            >
+              <ReviewNextMonthPlan
+                key={requestKey}
+                month={summary.month}
+                plan={summary.nextMonthPlan}
+                appliedCount={appliedCount}
+                onApplied={(count) => {
+                  setAppliedCount(count);
+                  setRefreshKey((key) => key + 1);
+                }}
+              />
+            </FinanceSection>
+          )}
         </>
       )}
     </div>

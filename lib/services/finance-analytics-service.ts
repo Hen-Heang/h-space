@@ -11,6 +11,7 @@ import { findBudgetsByUser } from "@/lib/repositories/finance-budget-repository"
 import { findPreferences } from "@/lib/repositories/finance-preferences-repository";
 import { findContributionsForUser, findSavingsGoalsByUser } from "@/lib/repositories/finance-savings-repository";
 import { computeBudgetPerformance, toBudgetPerformance, toBudgetThresholds } from "@/lib/services/finance-budget-service";
+import { getNextMonthPlan } from "@/lib/services/finance-budget-plan-service";
 import { getUsdToKrwRate } from "@/lib/services/finance-exchange-rate-service";
 import { computeSavingsProgress } from "@/lib/services/finance-savings-service";
 import { listDetectedSubscriptions } from "@/lib/services/finance-subscription-service";
@@ -291,12 +292,18 @@ export function buildReviewObservations(
   return observations;
 }
 
-export async function getReviewSummary(userId: string, month: string): Promise<ReviewSummary> {
+// The next-month plan is opt-in: the Review screen asks for it, while the
+// Monthly Report (which composes this summary) has no use for it.
+export async function getReviewSummary(
+  userId: string,
+  month: string,
+  { withPlan = false }: { withPlan?: boolean } = {}
+): Promise<ReviewSummary> {
   const { start, end } = monthBounds(month);
   const prevMonth = previousMonth(month);
   const { start: prevStart, end: prevEnd } = monthBounds(prevMonth);
 
-  const [totalsRaw, prevTotalsRaw, categories, prevCategories, budgetPerformance, subscriptions, savingsGoals] =
+  const [totalsRaw, prevTotalsRaw, categories, prevCategories, budgetPerformance, subscriptions, savingsGoals, nextMonthPlan] =
     await Promise.all([
       sumTotalsForRange(userId, start, end),
       sumTotalsForRange(userId, prevStart, prevEnd),
@@ -305,6 +312,7 @@ export async function getReviewSummary(userId: string, month: string): Promise<R
       computeBudgetPerformance(userId, start, end),
       listDetectedSubscriptions(userId),
       findSavingsGoalsByUser(userId),
+      withPlan ? getNextMonthPlan(userId, month) : null,
     ]);
 
   const prevByCategory = new Map(prevCategories.map((c) => [c.categoryId ?? c.categoryName, c.amountKrw]));
@@ -336,5 +344,6 @@ export async function getReviewSummary(userId: string, month: string): Promise<R
     subscriptionsMonthlyKrw,
     savingsProgress,
     observations: buildReviewObservations(totals, previousTotals, categoryComparison, budgetPerformance),
+    nextMonthPlan,
   };
 }

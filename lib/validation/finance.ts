@@ -71,6 +71,16 @@ export const upsertBudgetSchema = z.object({
 });
 export type UpsertBudgetInput = z.infer<typeof upsertBudgetSchema>;
 
+export const applyBudgetPlanSchema = z.object({
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Expected YYYY-MM"),
+  changes: z
+    .array(z.object({ categoryId: z.string().uuid(), amountKrw: z.number().int().min(0) }))
+    .min(1, "Select at least one budget to apply")
+    .max(100)
+    .refine((changes) => new Set(changes.map((c) => c.categoryId)).size === changes.length, "Duplicate category"),
+});
+export type ApplyBudgetPlanInput = z.infer<typeof applyBudgetPlanSchema>;
+
 export const savingsGoalPurposeSchema = z.enum(["emergency_fund", "sinking_fund", "goal", "investment", "other"]);
 
 export const createSavingsGoalSchema = z.object({
