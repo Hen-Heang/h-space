@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 
 import { TransactionSheet } from "@/components/finance/transactions/transaction-sheet";
 import { createTransaction } from "@/lib/api/finance";
 import { emitTransactionChanged } from "@/lib/finance-events";
-import { useCategories, usePaymentMethods, useTemplateActions, useTemplates } from "@/lib/query/finance-queries";
+import {
+  placeTransactionInLists,
+  useCategories,
+  usePaymentMethods,
+  useTemplateActions,
+  useTemplates,
+} from "@/lib/query/finance-queries";
 import type { CreateTransactionInput } from "@/lib/validation/finance";
 
 /**
@@ -23,9 +30,10 @@ export function QuickAddTransaction() {
   const { data: paymentMethods = [] } = usePaymentMethods({ enabled: open });
   const { data: templates = [] } = useTemplates({ enabled: open });
   const { saveTemplate, removeTemplate } = useTemplateActions();
+  const queryClient = useQueryClient();
 
   async function handleSave(input: CreateTransactionInput) {
-    await createTransaction(input);
+    placeTransactionInLists(queryClient, await createTransaction(input));
     emitTransactionChanged();
   }
 

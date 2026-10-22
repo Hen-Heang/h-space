@@ -71,11 +71,11 @@ const TRANSACTION_SELECT = `
   t.payment_method_id, pm.name as payment_method_name, t.note,
   t.created_at, t.updated_at
 `;
-const TRANSACTION_FROM = `
-  from finance_transactions t
+const TRANSACTION_JOINS = `
   left join finance_categories c on c.id = t.category_id
   left join finance_payment_methods pm on pm.id = t.payment_method_id
 `;
+const TRANSACTION_FROM = `from finance_transactions t ${TRANSACTION_JOINS}`;
 
 const PAGE_SIZE = 20;
 
@@ -184,23 +184,29 @@ export async function findAllTransactionsForExport(userId: string): Promise<Tran
   return rows.map(toTransaction);
 }
 
+// Writes return the joined row from the same statement — the data-modifying
+// CTE is named `t`, so TRANSACTION_SELECT and TRANSACTION_JOINS apply to it
+// unchanged. One statement instead of write-then-read saves a full Neon round
+// trip (~200ms from icn1 to us-east-2) on every save.
 export async function createTransaction(userId: string, input: ResolvedTransactionInput): Promise<Transaction> {
   const rows = (await sql`
-    insert into finance_transactions (
-      user_id, date, type, category_id, description, amount_krw, currency, amount_usd, exchange_rate,
-      payment_method_id, note
+    with t as (
+      insert into finance_transactions (
+        user_id, date, type, category_id, description, amount_krw, currency, amount_usd, exchange_rate,
+        payment_method_id, note
+      )
+      values (
+        ${userId}, ${input.date}, ${input.type}, ${input.categoryId ?? null},
+        ${input.description}, ${input.amountKrw}, ${input.currency}, ${input.originalAmount}, ${input.exchangeRate},
+        ${input.paymentMethodId ?? null}, ${input.note ?? null}
+      )
+      returning *
     )
-    values (
-      ${userId}, ${input.date}, ${input.type}, ${input.categoryId ?? null},
-      ${input.description}, ${input.amountKrw}, ${input.currency}, ${input.originalAmount}, ${input.exchangeRate},
-      ${input.paymentMethodId ?? null}, ${input.note ?? null}
-    )
-    returning id
-  `) as { id: string }[];
+    select ${sql.unsafe(TRANSACTION_SELECT)} from t ${sql.unsafe(TRANSACTION_JOINS)}
+  `) as TransactionRow[];
 
-  const created = await findTransactionById(rows[0].id, userId);
-  if (!created) throw new Error("Failed to load the transaction just created");
-  return created;
+  if (!rows[0]) throw new Error("Failed to load the transaction just created");
+  return toTransaction(rows[0]);
 }
 
 export async function updateTransaction(
@@ -209,24 +215,26 @@ export async function updateTransaction(
   input: ResolvedTransactionInput
 ): Promise<Transaction | null> {
   const rows = (await sql`
-    update finance_transactions set
-      date = ${input.date},
-      type = ${input.type},
-      category_id = ${input.categoryId ?? null},
-      description = ${input.description},
-      amount_krw = ${input.amountKrw},
-      currency = ${input.currency},
-      amount_usd = ${input.originalAmount},
-      exchange_rate = ${input.exchangeRate},
-      payment_method_id = ${input.paymentMethodId ?? null},
-      note = ${input.note ?? null},
-      updated_at = now()
-    where id = ${id} and user_id = ${userId}
-    returning id
-  `) as { id: string }[];
+    with t as (
+      update finance_transactions set
+        date = ${input.date},
+        type = ${input.type},
+        category_id = ${input.categoryId ?? null},
+        description = ${input.description},
+        amount_krw = ${input.amountKrw},
+        currency = ${input.currency},
+        amount_usd = ${input.originalAmount},
+        exchange_rate = ${input.exchangeRate},
+        payment_method_id = ${input.paymentMethodId ?? null},
+        note = ${input.note ?? null},
+        updated_at = now()
+      where id = ${id} and user_id = ${userId}
+      returning *
+    )
+    select ${sql.unsafe(TRANSACTION_SELECT)} from t ${sql.unsafe(TRANSACTION_JOINS)}
+  `) as TransactionRow[];
 
-  if (!rows[0]) return null;
-  return findTransactionById(id, userId);
+  return rows[0] ? toTransaction(rows[0]) : null;
 }
 
 export async function deleteTransaction(id: string, userId: string): Promise<boolean> {

@@ -6,6 +6,7 @@ import {
   useInfiniteQuery,
   useQuery,
   useQueryClient,
+  type InfiniteData,
   type QueryClient,
 } from "@tanstack/react-query";
 import {
@@ -13,6 +14,7 @@ import {
   deleteTemplate,
   getAnalyticsSummary,
   getDescriptionSuggestions,
+  getExchangeRate,
   getFinanceOverview,
   getPreferences,
   listBudgets,
@@ -23,8 +25,8 @@ import {
   listTemplates,
   listTransactions,
 } from "@/lib/api/finance";
-import type { CreateTransactionTemplateInput } from "@/lib/validation/finance";
-import type { TransactionTemplate, TransactionType } from "@/types/finance";
+import type { CreateTransactionTemplateInput, TransactionSort } from "@/lib/validation/finance";
+import type { Transaction, TransactionTemplate, TransactionType } from "@/types/finance";
 
 // Shared Finance lookups, cached across pages so moving between Finance
 // screens (or opening quick-add) doesn't refetch the same lists every time.
@@ -47,6 +49,7 @@ export const financeKeys = {
     [...financeKeys.all, "budgets", ...(range ? [range] : [])] as const,
   savingsGoals: () => [...financeKeys.all, "savings-goals"] as const,
   recurring: () => [...financeKeys.all, "recurring"] as const,
+  exchangeRate: () => [...financeKeys.all, "exchange-rate"] as const,
 };
 
 // What each kind of write makes stale. Writes call invalidateAfter(kind) so
@@ -97,6 +100,77 @@ export function transactionListQuery(filters: TransactionListFilters) {
 
 export function useTransactionList(filters: TransactionListFilters) {
   return useInfiniteQuery(transactionListQuery(filters));
+}
+
+type TransactionPage = { transactions: Transaction[]; hasMore: boolean };
+
+// Client mirrors of the server's list filter and ORDER BY clauses
+// (findTransactionsByUser), so a just-saved row lands where a refetch would
+// put it.
+function matchesListFilters(transaction: Transaction, filters: TransactionListFilters): boolean {
+  if (transaction.date < filters.start || transaction.date >= filters.end) return false;
+  if (filters.type && transaction.type !== filters.type) return false;
+  if (filters.categoryId && transaction.categoryId !== filters.categoryId) return false;
+  if (filters.paymentMethodId && transaction.paymentMethodId !== filters.paymentMethodId) return false;
+  if (filters.amountMin !== undefined && transaction.amountKrw < filters.amountMin) return false;
+  if (filters.amountMax !== undefined && transaction.amountKrw > filters.amountMax) return false;
+  const search = filters.search?.trim().toLowerCase();
+  if (search && !transaction.description.toLowerCase().includes(search)) return false;
+  return true;
+}
+
+const byText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+
+const SORT_COMPARE: Record<TransactionSort, (a: Transaction, b: Transaction) => number> = {
+  date_desc: (a, b) => byText(b.date, a.date) || byText(b.createdAt, a.createdAt),
+  date_asc: (a, b) => byText(a.date, b.date) || byText(a.createdAt, b.createdAt),
+  amount_desc: (a, b) => b.amountKrw - a.amountKrw || byText(b.date, a.date),
+  amount_asc: (a, b) => a.amountKrw - b.amountKrw || byText(b.date, a.date),
+};
+
+function placeInPages(pages: TransactionPage[], transaction: Transaction, filters: TransactionListFilters): TransactionPage[] {
+  const next = pages.map((page) => ({
+    ...page,
+    transactions: page.transactions.filter((row) => row.id !== transaction.id),
+  }));
+  if (!matchesListFilters(transaction, filters)) return next;
+
+  const compare = SORT_COMPARE[filters.sort ?? "date_desc"];
+  for (const page of next) {
+    const at = page.transactions.findIndex((row) => compare(transaction, row) < 0);
+    if (at !== -1) {
+      page.transactions.splice(at, 0, transaction);
+      return next;
+    }
+  }
+  // It sorts after every loaded row, so it's only on screen when nothing is
+  // left unloaded; otherwise it belongs to a page "Load more" will fetch.
+  const last = next.at(-1);
+  if (last && !last.hasMore) last.transactions.push(transaction);
+  return next;
+}
+
+/**
+ * Shows a saved transaction in every loaded list right away, from the
+ * server's response, instead of after the refetch the save triggers. Any
+ * old copy (an edit) is dropped first, so an edited row moves to its new
+ * place or leaves a list it no longer matches. The refetch still runs and
+ * has the final say.
+ */
+export function placeTransactionInLists(queryClient: QueryClient, transaction: Transaction): void {
+  const lists = queryClient.getQueriesData<InfiniteData<TransactionPage>>({
+    queryKey: financeKeys.transactions(),
+    // Only the filtered lists — not the description suggestions under the same prefix.
+    predicate: (query) => query.queryKey.length === 3 && typeof query.queryKey[2] === "object",
+  });
+  for (const [queryKey, data] of lists) {
+    if (!data) continue;
+    const filters = queryKey[2] as TransactionListFilters;
+    queryClient.setQueryData<InfiniteData<TransactionPage>>(queryKey, {
+      ...data,
+      pages: placeInPages(data.pages, transaction, filters),
+    });
+  }
 }
 
 /**
@@ -169,6 +243,18 @@ export const preferencesQuery = queryOptions({
   queryKey: financeKeys.preferences(),
   queryFn: getPreferences,
   staleTime: LOOKUP_STALE_MS,
+});
+
+/**
+ * USD→KRW rate for the transaction sheet. The server already caches it for an
+ * hour, so re-asking on every sheet open only bought an auth check and a Neon
+ * round trip each time; once loaded, reopening the sheet fills it instantly.
+ * The sheet's refresh button bypasses this with staleTime: 0.
+ */
+export const exchangeRateQuery = queryOptions({
+  queryKey: financeKeys.exchangeRate(),
+  queryFn: getExchangeRate,
+  staleTime: 15 * 60_000,
 });
 
 export function useCategories({ enabled = true }: { enabled?: boolean } = {}) {

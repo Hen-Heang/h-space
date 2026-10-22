@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRightLeft, Check, Loader2, RefreshCw, Save, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { AmountField, CategoryIcon } from "@/components/finance/ui/finance-primitives";
 import { TemplateStrip } from "@/components/finance/transactions/template-strip";
 import { DescriptionSuggestions } from "@/components/finance/transactions/description-suggestions";
-import { getExchangeRate, type DescriptionSuggestion } from "@/lib/api/finance";
+import type { DescriptionSuggestion } from "@/lib/api/finance";
 import { krw, usd } from "@/lib/finance-format";
+import { exchangeRateQuery } from "@/lib/query/finance-queries";
 import { cn } from "@/lib/utils";
 import type { CreateTransactionInput, CreateTransactionTemplateInput } from "@/lib/validation/finance";
 import type { Category, Currency, PaymentMethod, Transaction, TransactionTemplate, TransactionType } from "@/types/finance";
@@ -104,11 +106,19 @@ function TransactionSheetFields({
   const [amount, setAmount] = useState(
     transaction ? String(transaction.currency === "USD" ? transaction.originalAmount : transaction.amountKrw) : ""
   );
-  const [exchangeRate, setExchangeRate] = useState(transaction?.exchangeRate != null ? formatRate(transaction.exchangeRate) : "");
+  const queryClient = useQueryClient();
   const hasStoredRate = transaction?.currency === "USD" && transaction.exchangeRate != null;
+  // A rate already in the cache fills the field on first render, with no
+  // loading flash; the effect below still revalidates it once it goes stale.
+  const [cachedRate] = useState(() =>
+    hasStoredRate ? undefined : queryClient.getQueryData(exchangeRateQuery.queryKey)
+  );
+  const [exchangeRate, setExchangeRate] = useState(
+    transaction?.exchangeRate != null ? formatRate(transaction.exchangeRate) : cachedRate ? formatRate(cachedRate.rate) : ""
+  );
   const [rateFetch, setRateFetch] = useState<{ state: "idle" | "loading" | "error"; fallback: boolean }>({
-    state: hasStoredRate ? "idle" : "loading",
-    fallback: false,
+    state: hasStoredRate || cachedRate ? "idle" : "loading",
+    fallback: cachedRate?.fallback ?? false,
   });
   const [categoryId, setCategoryId] = useState(transaction?.categoryId ?? "");
   const [description, setDescription] = useState(transaction?.description ?? "");
@@ -148,7 +158,8 @@ function TransactionSheetFields({
     if (hasStoredRate) return;
 
     let active = true;
-    void getExchangeRate()
+    void queryClient
+      .query(exchangeRateQuery)
       .then((result) => {
         if (!active) return;
         setExchangeRate(formatRate(result.rate));
@@ -162,7 +173,7 @@ function TransactionSheetFields({
     return () => {
       active = false;
     };
-  }, [hasStoredRate]);
+  }, [hasStoredRate, queryClient]);
 
   function handleTypeChange(nextType: TransactionType) {
     setType(nextType);
@@ -202,7 +213,7 @@ function TransactionSheetFields({
   async function fetchLiveRate() {
     setRateFetch({ state: "loading", fallback: false });
     try {
-      const result = await getExchangeRate();
+      const result = await queryClient.query({ ...exchangeRateQuery, staleTime: 0 });
       setExchangeRate(formatRate(result.rate));
       setRateFetch({ state: "idle", fallback: result.fallback });
     } catch {
