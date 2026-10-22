@@ -101,16 +101,17 @@ touches them. Verified with a repo-wide grep across `lib/`, `app/`, and
 Luyra already has debounced search, a filter panel, and templates
 (`components/finance/transactions/`). Still missing:
 
-- **Bulk actions** — no multi-select and no equivalent of
-  `transactions/_components/BulkActionBar.tsx` (bulk delete, bulk
-  recategorize).
+- ~~**Bulk actions**~~ `DONE` — **Select** on Transactions; bulk delete and
+  recategorize via `POST /api/finance/transactions/bulk` (user-scoped, ≤200
+  rows, category must fit every selected row).
 - **Swipe row actions** — `components/transactions/SwipeableRow.tsx`. Luyra is
   tap-to-edit plus a dropdown menu. Deliberately deferred in the parity doc
   (needs on-device testing, and there is no harness in this repo).
 - **Search history** — `transactions/_hooks/useSearchHistory.ts`.
-- **Description suggestions** — `hooks/useDescriptionSuggestions.ts` plus
-  `AddTransactionSheet/DescriptionSuggestions.tsx`, autocompleting from past
-  entries.
+- ~~**Description suggestions**~~ `DONE` — chips under the description field
+  from `GET /api/finance/transactions/suggestions` (last 12 months, frequency
+  with prefix matches weighted ×3); picking one also fills the last category
+  and payment method on a new entry.
 - **Shared mobile UI primitives** — Money Flow has `NumericKeypad`,
   `usePullToRefresh`, `useKeyboardShortcuts`, `OfflineBanner`,
   `AnimatedNumber`, `FAB`, and `Skeleton`. Luyra has none of these.

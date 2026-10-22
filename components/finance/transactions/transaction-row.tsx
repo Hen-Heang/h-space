@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Check, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,10 +22,13 @@ export function TransactionRow({
   transaction,
   onEdit,
   onDeleteRequest,
+  selection,
 }: {
   transaction: Transaction;
   onEdit: (transaction: Transaction) => void;
   onDeleteRequest: (transaction: Transaction) => void;
+  /** Present while the list is in selection mode: a tap toggles instead of opening the editor. */
+  selection?: { selected: boolean; onToggle: (transaction: Transaction) => void };
 }) {
   const isIncome = transaction.type === "income";
   const time = formatTime(transaction.createdAt);
@@ -35,19 +38,25 @@ export function TransactionRow({
     transaction.note,
   ].filter(Boolean);
   const meta = metaParts.join(" · ");
+  const activate = () => (selection ? selection.onToggle(transaction) : onEdit(transaction));
 
   return (
     <div
-      role="button"
+      role={selection ? "checkbox" : "button"}
+      aria-checked={selection ? selection.selected : undefined}
+      aria-label={selection ? `Select ${transaction.description}` : undefined}
       tabIndex={0}
-      onClick={() => onEdit(transaction)}
+      onClick={activate}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          onEdit(transaction);
+          activate();
         }
       }}
-      className="flex min-h-16 cursor-pointer items-start gap-2 px-3 py-3 transition-colors hover:bg-secondary/50 active:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:items-center sm:gap-3 sm:px-4"
+      className={cn(
+        "flex min-h-16 cursor-pointer items-start gap-2 px-3 py-3 transition-colors hover:bg-secondary/50 active:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:items-center sm:gap-3 sm:px-4",
+        selection?.selected && "bg-primary/5 hover:bg-primary/10"
+      )}
     >
       <CategoryIcon icon={transaction.categoryIcon} color={transaction.categoryColor} />
 
@@ -83,28 +92,47 @@ export function TransactionRow({
         </div>
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            onClick={(event) => event.stopPropagation()}
-            className="flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary active:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label={`Actions for ${transaction.description}`}
+      {selection ? (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "flex size-11 shrink-0 items-center justify-center",
+            selection.selected ? "text-primary" : "text-muted-foreground"
+          )}
+        >
+          <span
+            className={cn(
+              "flex size-5 items-center justify-center rounded border-2",
+              selection.selected ? "border-primary bg-primary text-primary-foreground" : "border-input"
+            )}
           >
-            <MoreHorizontal className="size-4" aria-hidden="true" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
-          <DropdownMenuItem onSelect={() => onEdit(transaction)}>
-            <Pencil className="size-4" aria-hidden="true" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" onSelect={() => onDeleteRequest(transaction)}>
-            <Trash2 className="size-4" aria-hidden="true" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            {selection.selected && <Check className="size-3.5" strokeWidth={3} />}
+          </span>
+        </span>
+      ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              onClick={(event) => event.stopPropagation()}
+              className="flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary active:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={`Actions for ${transaction.description}`}
+            >
+              <MoreHorizontal className="size-4" aria-hidden="true" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
+            <DropdownMenuItem onSelect={() => onEdit(transaction)}>
+              <Pencil className="size-4" aria-hidden="true" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" onSelect={() => onDeleteRequest(transaction)}>
+              <Trash2 className="size-4" aria-hidden="true" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 }

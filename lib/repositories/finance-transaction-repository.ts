@@ -237,6 +237,82 @@ export async function deleteTransaction(id: string, userId: string): Promise<boo
   return rows.length > 0;
 }
 
+// Bulk actions. Every statement is scoped by user_id, so ids belonging to
+// someone else (or already gone) are simply not matched; the returned count
+// is what actually changed.
+
+export async function findTransactionTypesByIds(userId: string, ids: string[]): Promise<TransactionType[]> {
+  const rows = (await sql`
+    select distinct type from finance_transactions where user_id = ${userId} and id = any(${ids}::uuid[])
+  `) as { type: string }[];
+  return rows.map((row) => row.type as TransactionType);
+}
+
+export async function deleteTransactionsByIds(userId: string, ids: string[]): Promise<number> {
+  const rows = (await sql`
+    delete from finance_transactions where user_id = ${userId} and id = any(${ids}::uuid[]) returning id
+  `) as { id: string }[];
+  return rows.length;
+}
+
+export async function setCategoryForTransactions(userId: string, ids: string[], categoryId: string | null): Promise<number> {
+  const rows = (await sql`
+    update finance_transactions set category_id = ${categoryId}, updated_at = now()
+    where user_id = ${userId} and id = any(${ids}::uuid[])
+    returning id
+  `) as { id: string }[];
+  return rows.length;
+}
+
+export interface DescriptionSuggestionRow {
+  description: string;
+  type: TransactionType;
+  categoryId: string | null;
+  paymentMethodId: string | null;
+  uses: number;
+}
+
+/**
+ * Past descriptions containing `query`, for autocomplete, ranked by how often
+ * each was used with a prefix match counting triple: near-ties go to what
+ * starts with the typed text, but a habit used 24 times still beats a one-off
+ * that merely starts with the same letter. Recency breaks ties. The category
+ * and payment method come from the most recent use. Only the last year
+ * counts, so old one-offs don't crowd out current habits.
+ */
+export async function findDescriptionSuggestions(
+  userId: string,
+  query: string,
+  type: TransactionType | undefined,
+  limit: number
+): Promise<DescriptionSuggestionRow[]> {
+  const escaped = query.replace(/[\\%_]/g, (char) => `\\${char}`);
+  const rows = (await sql`
+    select description,
+      (array_agg(type order by date desc, created_at desc))[1] as type,
+      (array_agg(category_id order by date desc, created_at desc))[1] as category_id,
+      (array_agg(payment_method_id order by date desc, created_at desc))[1] as payment_method_id,
+      count(*)::int as uses
+    from finance_transactions
+    where user_id = ${userId}
+      and description ilike ${`%${escaped}%`}
+      and (${type ?? null}::text is null or type = ${type ?? null})
+      and date >= current_date - 365
+    group by description
+    order by count(*) * (case when bool_or(description ilike ${`${escaped}%`}) then 3 else 1 end) desc,
+      max(date) desc
+    limit ${limit}
+  `) as { description: string; type: string; category_id: string | null; payment_method_id: string | null; uses: number }[];
+
+  return rows.map((row) => ({
+    description: row.description,
+    type: row.type as TransactionType,
+    categoryId: row.category_id,
+    paymentMethodId: row.payment_method_id,
+    uses: row.uses,
+  }));
+}
+
 export async function sumTotalsForRange(
   userId: string,
   start: string,

@@ -12,6 +12,7 @@ import {
   createTemplate,
   deleteTemplate,
   getAnalyticsSummary,
+  getDescriptionSuggestions,
   getFinanceOverview,
   getPreferences,
   listBudgets,
@@ -23,7 +24,7 @@ import {
   listTransactions,
 } from "@/lib/api/finance";
 import type { CreateTransactionTemplateInput } from "@/lib/validation/finance";
-import type { TransactionTemplate } from "@/types/finance";
+import type { TransactionTemplate, TransactionType } from "@/types/finance";
 
 // Shared Finance lookups, cached across pages so moving between Finance
 // screens (or opening quick-add) doesn't refetch the same lists every time.
@@ -96,6 +97,22 @@ export function transactionListQuery(filters: TransactionListFilters) {
 
 export function useTransactionList(filters: TransactionListFilters) {
   return useInfiniteQuery(transactionListQuery(filters));
+}
+
+/**
+ * Autocomplete for the description field. Keyed under the transactions
+ * prefix, so any transaction write refreshes it with the lists. Previous
+ * results stay on screen while the next keystroke's request is in flight.
+ */
+export function useDescriptionSuggestions(query: string, type: TransactionType | undefined, enabled: boolean) {
+  const q = query.trim();
+  return useQuery({
+    queryKey: [...financeKeys.transactions(), "suggestions", type ?? "all", q.toLowerCase()] as const,
+    queryFn: () => getDescriptionSuggestions(q, type),
+    enabled: enabled && q.length > 0,
+    staleTime: 5 * 60_000,
+    placeholderData: (previous) => previous,
+  });
 }
 
 // Month views revalidate on every mount (no staleTime) for the same reason

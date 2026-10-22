@@ -1,19 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, ReceiptText, Repeat, Search, SlidersHorizontal, X } from "lucide-react";
+import { CheckCircle2, ListChecks, Plus, ReceiptText, Repeat, Search, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FinanceEmptyState, FinanceErrorState, MonthSelector } from "@/components/finance/ui/finance-primitives";
 import { TransactionRow } from "@/components/finance/transactions/transaction-row";
 import { TransactionSheet } from "@/components/finance/transactions/transaction-sheet";
 import { DeleteTransactionDialog } from "@/components/finance/transactions/delete-transaction-dialog";
 import { RecurringSheet } from "@/components/finance/transactions/recurring-sheet";
+import { BulkActionBar } from "@/components/finance/transactions/bulk-action-bar";
 import { TransactionFilterPanel } from "@/components/finance/transactions/transaction-filter-panel";
 import { emitTransactionChanged } from "@/lib/finance-events";
 import { cn } from "@/lib/utils";
 import { monthBounds, monthLabel } from "@/lib/finance-month";
 import { krw } from "@/lib/finance-format";
-import { createTransaction, deleteTransaction, updateTransaction } from "@/lib/api/finance";
+import { ApiError } from "@/lib/api/client";
+import { bulkTransactionAction, createTransaction, deleteTransaction, updateTransaction } from "@/lib/api/finance";
 import {
   useCategories,
   usePaymentMethods,
@@ -21,7 +23,7 @@ import {
   useTemplates,
   useTransactionList,
 } from "@/lib/query/finance-queries";
-import type { CreateTransactionInput, TransactionSort } from "@/lib/validation/finance";
+import type { BulkTransactionActionInput, CreateTransactionInput, TransactionSort } from "@/lib/validation/finance";
 import type { Transaction, TransactionType } from "@/types/finance";
 
 const TYPE_TABS: { label: string; value: TransactionType | undefined }[] = [
@@ -107,6 +109,10 @@ export function TransactionList() {
   const { saveTemplate, removeTemplate } = useTemplateActions();
   const [sheet, setSheet] = useState<{ mode: "create" | "edit"; transaction?: Transaction } | null>(null);
   const [recurringOpen, setRecurringOpen] = useState(false);
+  // null = not selecting; otherwise the ids picked in selection mode.
+  const [selection, setSelection] = useState<Set<string> | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -150,6 +156,45 @@ export function TransactionList() {
   const advancedFilterCount = [paymentMethodFilter, amountMin !== undefined, amountMax !== undefined].filter(Boolean).length;
   const isFiltered = Boolean(search || typeFilter || categoryFilter || advancedFilterCount > 0);
 
+  // Only rows still on screen count as selected, so changing a filter or
+  // month can never act on transactions the user can no longer see.
+  const selectedTransactions = useMemo(
+    () => (selection ? transactions.filter((transaction) => selection.has(transaction.id)) : []),
+    [selection, transactions]
+  );
+  const selectedTypes = useMemo(() => new Set(selectedTransactions.map((t) => t.type)), [selectedTransactions]);
+
+  function toggleSelected(transaction: Transaction) {
+    setSelection((prev) => {
+      const next = new Set(prev);
+      if (next.has(transaction.id)) next.delete(transaction.id);
+      else next.add(transaction.id);
+      return next;
+    });
+  }
+
+  async function runBulk(input: BulkTransactionActionInput, done: (affected: number) => string) {
+    setBulkBusy(true);
+    setBulkMessage(null);
+    try {
+      const { affected } = await bulkTransactionAction(input);
+      setSelection(null);
+      setBulkMessage({ tone: "success", text: done(affected) });
+      emitTransactionChanged();
+    } catch (error) {
+      setBulkMessage({
+        tone: "error",
+        text: error instanceof ApiError && error.status !== undefined && error.status < 500
+          ? error.message
+          : "Couldn't update those transactions. Nothing was changed — try again.",
+      });
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  const countLabel = (count: number) => `${count} ${count === 1 ? "transaction" : "transactions"}`;
+
   function clearAdvancedFilters() {
     setPaymentMethodFilter("");
     setAmountMinInput("");
@@ -192,6 +237,21 @@ export function TransactionList() {
           size="sm"
         />
         <div className="flex shrink-0 gap-2">
+          <Button
+            variant={selection ? "secondary" : "outline"}
+            size="sm"
+            className="min-h-11 px-3"
+            onClick={() => {
+              setBulkMessage(null);
+              setSelection((prev) => (prev ? null : new Set()));
+            }}
+            disabled={transactions.length === 0 && !selection}
+            aria-pressed={selection !== null}
+            aria-label={selection ? "Exit selection" : "Select transactions"}
+          >
+            <ListChecks />
+            <span className="hidden sm:inline">{selection ? "Done" : "Select"}</span>
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -301,6 +361,42 @@ export function TransactionList() {
         ))}
       </div>
 
+      {selection && (
+        <BulkActionBar
+          selectedCount={selectedTransactions.length}
+          selectedTypes={selectedTypes}
+          visibleCount={transactions.length}
+          categories={categories}
+          busy={bulkBusy}
+          onSelectAll={() => setSelection(new Set(transactions.map((transaction) => transaction.id)))}
+          onCancel={() => setSelection(null)}
+          onDelete={() =>
+            runBulk({ action: "delete", ids: selectedTransactions.map((t) => t.id) }, (n) => `Deleted ${countLabel(n)}.`)
+          }
+          onRecategorize={(categoryId) =>
+            runBulk(
+              { action: "recategorize", ids: selectedTransactions.map((t) => t.id), categoryId },
+              (n) => `Moved ${countLabel(n)} to ${categories.find((c) => c.id === categoryId)?.name ?? "No category"}.`
+            )
+          }
+        />
+      )}
+
+      {bulkMessage && (
+        <p
+          role={bulkMessage.tone === "error" ? "alert" : "status"}
+          className={cn(
+            "rounded-xl px-4 py-3 text-sm",
+            bulkMessage.tone === "error"
+              ? "border border-destructive/30 bg-destructive/5 text-destructive"
+              : "flex items-center gap-1.5 font-medium text-success"
+          )}
+        >
+          {bulkMessage.tone === "success" && <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />}
+          {bulkMessage.text}
+        </p>
+      )}
+
       {loadError ? (
         <FinanceErrorState
           title="Transactions unavailable"
@@ -346,6 +442,9 @@ export function TransactionList() {
                       transaction={transaction}
                       onEdit={(t) => setSheet({ mode: "edit", transaction: t })}
                       onDeleteRequest={setDeleteTarget}
+                      selection={
+                        selection ? { selected: selection.has(transaction.id), onToggle: toggleSelected } : undefined
+                      }
                     />
                   ))}
                 </div>
