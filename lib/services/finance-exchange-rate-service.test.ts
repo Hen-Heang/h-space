@@ -70,6 +70,41 @@ describe("getUsdToKrwRate", () => {
     await expect(getUsdToKrwRate()).resolves.toMatchObject({ rate: 1370, fallback: true });
   });
 
+  it("uses the keyed pair endpoint when a key is configured", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ result: "success", conversion_rate: 1390 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getUsdToKrwRate();
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://v6.exchangerate-api.com/v6/test-key/pair/USD/KRW");
+  });
+
+  describe("without EXCHANGE_RATE_API_KEY", () => {
+    beforeEach(() => vi.stubEnv("EXCHANGE_RATE_API_KEY", ""));
+
+    const openAccess = (body: object) => vi.fn().mockResolvedValue(Response.json(body));
+
+    it("fetches, stores, and returns a live rate from the keyless Open Access endpoint", async () => {
+      const fetchMock = openAccess({ result: "success", base_code: "USD", rates: { KRW: 1326.14, JPY: 150 } });
+      vi.stubGlobal("fetch", fetchMock);
+
+      await expect(getUsdToKrwRate()).resolves.toMatchObject({ rate: 1326.14, cached: false, fallback: false });
+      expect(fetchMock.mock.calls[0]?.[0]).toBe("https://open.er-api.com/v6/latest/USD");
+      expect(repo.insertRate).toHaveBeenCalledWith("USD", "KRW", 1326.14, expect.any(String));
+    });
+
+    it.each([
+      ["a non-success result", { result: "error", "error-type": "rate-limited" }],
+      ["a different base currency", { result: "success", base_code: "EUR", rates: { KRW: 1500 } }],
+      ["a missing KRW rate", { result: "success", base_code: "USD", rates: { JPY: 150 } }],
+    ])("falls back to the last stored rate on %s", async (_label, body) => {
+      vi.stubGlobal("fetch", openAccess(body));
+      repo.findLatestRate.mockResolvedValue({ rate: 1414.42, fetchedAt: "2026-08-19T00:00:00Z" });
+
+      await expect(getUsdToKrwRate()).resolves.toMatchObject({ rate: 1414.42, fallback: true });
+      expect(repo.insertRate).not.toHaveBeenCalled();
+    });
+  });
+
   it("still returns the live rate when storing it fails", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ result: "success", conversion_rate: 1392 })));
     repo.insertRate.mockRejectedValue(new Error("write failed"));

@@ -79,7 +79,8 @@ keys, each of which degrades gracefully when unset:
 - `CRON_SECRET` — authorizes the scheduled `/api/cron/*` routes
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` —
   browser push notifications
-- `EXCHANGE_RATE_API_KEY` — live USD→KRW rate
+- `EXCHANGE_RATE_API_KEY` — higher-limit USD→KRW rate; without it the
+  provider's free daily keyless endpoint is used
 - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`,
   `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` — Telegram reports and alerts
 - `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` — AI Money Coach

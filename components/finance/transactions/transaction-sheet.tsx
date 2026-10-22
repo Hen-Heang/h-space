@@ -382,6 +382,17 @@ function TransactionSheetFields({
             {rateFetch.state === "error" && (
               <p className="mt-2 text-xs text-destructive">Couldn&apos;t fetch a live rate. You can enter the rate manually.</p>
             )}
+            {/* Attribution required by the provider's free Open Access terms. */}
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              <a
+                href="https://www.exchangerate-api.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline-offset-2 hover:underline"
+              >
+                Rates by Exchange Rate API
+              </a>
+            </p>
           </div>
         </div>
 

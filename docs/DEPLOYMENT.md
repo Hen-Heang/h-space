@@ -47,7 +47,7 @@ on. The pooled host contains `-pooler` in its name.
 | Variable | Scope | Enables | Without it |
 |---|---|---|---|
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | browser | Google sign-in button | Email + password login still works; the Google button reports "Google sign-in is not configured." |
-| `EXCHANGE_RATE_API_KEY` | server | Live USD→KRW rate | Falls back to a fixed rate the user can still edit per transaction. |
+| `EXCHANGE_RATE_API_KEY` | server | Higher limits and more frequent USD→KRW updates | Uses ExchangeRate-API's free keyless endpoint (updated daily). Only if that also fails does it fall back to the last stored rate, which the user can still edit per transaction. |
 | `TELEGRAM_BOT_TOKEN` | server, secret | Sending Telegram messages | Settings shows "Telegram integration isn't configured." |
 | `TELEGRAM_WEBHOOK_SECRET` | server, secret | Validating inbound webhook calls | Same as above. A value you choose yourself. |
 | `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` | browser | The `t.me` deep link in Settings | Linking UI can't build its deep link. |
