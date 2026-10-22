@@ -129,10 +129,14 @@ Luyra already has debounced search, a filter panel, and templates
 - **No route-level boundaries.** Luyra has zero `loading.tsx`, `error.tsx`,
   `not-found.tsx`, or `global-error.tsx`. Money Flow ships one per route.
   Today an API failure inside a Finance route has no boundary to catch it.
-- **No client-side query caching.** Money Flow moved categories, budgets,
-  analytics, and monthly spending onto TanStack Query.
-  `components/finance/transactions/transaction-list.tsx` builds a manual
-  `requestKey` string and refetches on every navigation.
+- ~~**No client-side query caching.**~~ `DONE` — lookups, preferences, the
+  transaction list (infinite query), overview, analytics, budgets, and
+  savings goals are on TanStack Query (`lib/query/finance-queries.ts`).
+  Which writes make which screens stale is one map there (`invalidateAfter`),
+  tested in `finance-queries.test.ts`; transaction writes arrive through the
+  existing `emitTransactionChanged` event. Still uncached on purpose: the
+  exchange rate (server-cached), Review, Subscriptions, reports, and the
+  contribution-history sheet.
 - **Unapplied migration.**
   `db/migrations/007_finance_savings_contributions_cascade.sql` exists but,
   per `db/README.md` and the parity doc, has not been applied. Until it is,

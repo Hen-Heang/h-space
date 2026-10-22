@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ApiError } from "@/lib/api/client";
 import { onTransactionChanged } from "@/lib/finance-events";
-import { financeKeys } from "@/lib/query/finance-queries";
+import { invalidateAfter } from "@/lib/query/finance-queries";
 
 // A 4xx (validation, not found, unauthorized) won't succeed on a retry, and
 // retrying it only delays the inline error state. Network failures and 5xx
@@ -28,12 +28,9 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 
   // Any create/edit/delete — from the list, quick add, or elsewhere — already
   // announces itself through emitTransactionChanged. Turning that into one
-  // invalidation here keeps every cached transaction list honest without each
-  // writer needing to know which queries exist.
-  useEffect(
-    () => onTransactionChanged(() => void client.invalidateQueries({ queryKey: financeKeys.transactions() })),
-    [client]
-  );
+  // invalidation here keeps every transaction-derived view (lists, overview,
+  // analytics, budget spend) honest without each writer knowing which exist.
+  useEffect(() => onTransactionChanged(() => void invalidateAfter(client, "transaction")), [client]);
 
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
