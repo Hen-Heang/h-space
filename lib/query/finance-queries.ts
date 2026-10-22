@@ -17,6 +17,7 @@ import {
   listBudgets,
   listCategories,
   listPaymentMethods,
+  listRecurringRules,
   listSavingsGoals,
   listTemplates,
   listTransactions,
@@ -44,6 +45,7 @@ export const financeKeys = {
   budgets: (range?: { start: string; end: string }) =>
     [...financeKeys.all, "budgets", ...(range ? [range] : [])] as const,
   savingsGoals: () => [...financeKeys.all, "savings-goals"] as const,
+  recurring: () => [...financeKeys.all, "recurring"] as const,
 };
 
 // What each kind of write makes stale. Writes call invalidateAfter(kind) so
@@ -55,6 +57,14 @@ const INVALIDATES = {
   transaction: [financeKeys.transactions(), financeKeys.overview(), financeKeys.analytics(), financeKeys.budgets()],
   budget: [financeKeys.budgets(), financeKeys.overview()],
   savings: [financeKeys.savingsGoals(), financeKeys.overview()],
+  // Saving a rule due today or earlier creates transactions right away.
+  recurring: [
+    financeKeys.recurring(),
+    financeKeys.transactions(),
+    financeKeys.overview(),
+    financeKeys.analytics(),
+    financeKeys.budgets(),
+  ],
   lookup: [financeKeys.all],
   preferences: [financeKeys.all],
 } as const;
@@ -113,6 +123,8 @@ export function budgetsQuery(start: string, end: string) {
 }
 
 export const savingsGoalsQuery = queryOptions({ queryKey: financeKeys.savingsGoals(), queryFn: listSavingsGoals });
+
+export const recurringRulesQuery = queryOptions({ queryKey: financeKeys.recurring(), queryFn: listRecurringRules });
 
 // Lookups change only when the user edits them here, so they can sit for a
 // while; a remount after this refetches in the background without a skeleton.

@@ -61,6 +61,35 @@ export interface Transaction {
   updatedAt: string;
 }
 
+export type RecurringFrequency = "daily" | "weekly" | "monthly" | "yearly";
+
+/** A rule that creates a transaction on a schedule (salary, rent, a subscription). */
+export interface RecurringRule {
+  id: string;
+  type: TransactionType;
+  description: string;
+  currency: Currency;
+  /** KRW amount; for a USD rule, an estimate at the rate when it was saved. */
+  amountKrw: number;
+  /** USD amount for a USD rule; converted at that day's rate when applied. */
+  originalAmount: number | null;
+  categoryId: string | null;
+  categoryName: string | null;
+  categoryIcon: string | null;
+  categoryColor: string | null;
+  paymentMethodId: string | null;
+  paymentMethodName: string | null;
+  note: string | null;
+  frequency: RecurringFrequency;
+  /** Day of month a monthly/yearly rule lands on (clamped to short months). */
+  anchorDay: number;
+  /** YYYY-MM-DD of the next occurrence still to be created. */
+  nextDate: string;
+  lastApplied: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
 // The shape exported over CSV/JSON — deliberately trimmed of internal ids,
 // icon/color metadata, and timestamps that don't belong in a data export.
 export interface TransactionExportRow {

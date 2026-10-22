@@ -22,6 +22,7 @@ psql "$DATABASE_URL" -f db/migrations/010_push_notifications.sql
 psql "$DATABASE_URL" -f db/migrations/011_finance_report_email_delivery.sql
 psql "$DATABASE_URL" -f db/migrations/012_finance_money_rule.sql
 psql "$DATABASE_URL" -f db/migrations/013_finance_spending_class_backfill.sql
+psql "$DATABASE_URL" -f db/migrations/014_finance_recurring.sql
 ```
 
 Or paste the file contents into the Neon SQL Editor in the Neon console.
