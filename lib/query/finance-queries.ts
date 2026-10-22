@@ -77,6 +77,13 @@ export function useTemplateActions() {
 
   async function saveTemplate(input: CreateTransactionTemplateInput): Promise<void> {
     const created = await createTemplate(input);
+    // Only prepend to a list that actually loaded. If the initial fetch
+    // failed, writing [created] would pass off one template as the whole
+    // collection; refetching gets the real list instead.
+    if (queryClient.getQueryData<TransactionTemplate[]>(key) === undefined) {
+      await queryClient.invalidateQueries({ queryKey: key });
+      return;
+    }
     queryClient.setQueryData<TransactionTemplate[]>(key, (prev = []) => [created, ...prev]);
   }
 
