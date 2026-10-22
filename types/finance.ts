@@ -398,6 +398,8 @@ export interface NextMonthBudgetPlan {
   monthsAnalyzed: string[];
   recommendations: BudgetRecommendation[];
   totalRecommendedKrw: number;
+  /** Average monthly spending no recommendation covers (uncategorized or too sporadic), counted in the projection. */
+  otherSpendingKrw: number;
   averageIncomeKrw: number;
   /** Null when there was no income in the analyzed months. */
   projectedSavingsRatePct: number | null;

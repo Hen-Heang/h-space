@@ -103,7 +103,15 @@ export type UpsertBudgetInput = z.infer<typeof upsertBudgetSchema>;
 export const applyBudgetPlanSchema = z.object({
   month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Expected YYYY-MM"),
   changes: z
-    .array(z.object({ categoryId: z.string().uuid(), amountKrw: z.number().int().min(0) }))
+    .array(
+      z.object({
+        categoryId: z.string().uuid(),
+        amountKrw: z.number().int().min(0),
+        // The budget the review showed, so a budget edited elsewhere since
+        // then is detected even when the recommendation rounds the same.
+        currentBudgetKrw: z.number().min(0),
+      })
+    )
     .min(1, "Select at least one budget to apply")
     .max(100)
     .refine((changes) => new Set(changes.map((c) => c.categoryId)).size === changes.length, "Duplicate category"),

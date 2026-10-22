@@ -121,6 +121,13 @@ function buildRecommendation(history: CategorySpendHistory, currentBudgetKrw: nu
     rationale =
       `${name} averaged ${krw.format(averageKrw)} over the last ${months} months. ` +
       `${krw.format(recommendedBudgetKrw)} is an achievable first step down.`;
+  } else if (hasBudget && currentBudgetKrw >= typical) {
+    // Essential, Commitment, Growth, and unclassified categories are never
+    // trimmed: a budget already at or above typical spending is kept as is,
+    // so it stays out of the pre-selected changes.
+    recommendedBudgetKrw = currentBudgetKrw;
+    reason = "hold_steady";
+    rationale = `${name} typically costs ${krw.format(typical)} a month, within its ${krw.format(currentBudgetKrw)} budget. Keeping it as is.`;
   } else {
     recommendedBudgetKrw = roundToStep(typical, step);
     reason = hasBudget ? "hold_steady" : "first_budget";
@@ -170,16 +177,31 @@ export function buildBudgetPlan(input: BuildBudgetPlanInput): NextMonthBudgetPla
       ? Math.round(input.incomeByMonth.reduce((sum, v) => sum + v, 0) / input.incomeByMonth.length)
       : 0;
 
+  // Spending the plan can't put a budget on — uncategorized, plus categories
+  // too sporadic to recommend — still leaves the account every month, so the
+  // projection counts it rather than treating the plan as all spending.
+  const averageTotalSpendKrw =
+    input.spendByMonth.length > 0
+      ? input.spendByMonth.reduce((sum, month) => sum + month.reduce((s, entry) => s + entry.amountKrw, 0), 0) /
+        input.spendByMonth.length
+      : 0;
+  const otherSpendingKrw = Math.max(
+    Math.round(averageTotalSpendKrw - recommendations.reduce((sum, r) => sum + r.averageKrw, 0)),
+    0
+  );
+  const projectedSpendKrw = totalRecommendedKrw + otherSpendingKrw;
+
   const projectedSavingsRatePct =
-    averageIncomeKrw > 0 ? Math.round(((averageIncomeKrw - totalRecommendedKrw) / averageIncomeKrw) * 100) : null;
+    averageIncomeKrw > 0 ? Math.round(((averageIncomeKrw - projectedSpendKrw) / averageIncomeKrw) * 100) : null;
   const targetSpendKrw = averageIncomeKrw * (1 - input.targetSavingsRatePct / 100);
-  const additionalTrimNeededKrw = averageIncomeKrw > 0 ? Math.max(Math.round(totalRecommendedKrw - targetSpendKrw), 0) : 0;
+  const additionalTrimNeededKrw = averageIncomeKrw > 0 ? Math.max(Math.round(projectedSpendKrw - targetSpendKrw), 0) : 0;
 
   return {
     planMonth: input.planMonth,
     monthsAnalyzed: input.months,
     recommendations,
     totalRecommendedKrw,
+    otherSpendingKrw,
     averageIncomeKrw,
     projectedSavingsRatePct,
     targetSavingsRatePct: input.targetSavingsRatePct,

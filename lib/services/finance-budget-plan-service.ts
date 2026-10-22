@@ -38,25 +38,34 @@ export async function getNextMonthPlan(userId: string, month: string): Promise<N
 /**
  * Applies the confirmed subset of a reviewed plan. The amounts are not taken
  * on trust: the plan is rebuilt server-side, and every requested change must
- * match what it recommends right now. If a transaction or budget changed
- * since the review was loaded, the request is rejected rather than writing
- * numbers the user never saw.
+ * match both what it recommends right now and the budget the user was shown.
+ * Checking the budget too catches an edit made elsewhere that happens to
+ * leave the rounded recommendation unchanged. Either way, a stale review is
+ * rejected rather than overwriting numbers the user never saw.
  */
 export async function applyNextMonthPlan(
   userId: string,
   month: string,
-  changes: { categoryId: string; amountKrw: number }[]
+  changes: { categoryId: string; amountKrw: number; currentBudgetKrw: number }[]
 ): Promise<{ applied: number }> {
   const plan = await getNextMonthPlan(userId, month);
   if (!plan) throw Errors.validation("A plan can only be applied from last month's review.");
 
-  const recommended = new Map(plan.recommendations.map((r) => [r.categoryId, r.recommendedBudgetKrw]));
+  const byCategory = new Map(plan.recommendations.map((r) => [r.categoryId, r]));
   for (const change of changes) {
-    if (recommended.get(change.categoryId) !== change.amountKrw) {
+    const current = byCategory.get(change.categoryId);
+    if (
+      !current ||
+      current.recommendedBudgetKrw !== change.amountKrw ||
+      current.currentBudgetKrw !== change.currentBudgetKrw
+    ) {
       throw Errors.conflict("This plan changed since you opened it. Reload the review and try again.");
     }
   }
 
-  await upsertBudgets(userId, changes);
+  await upsertBudgets(
+    userId,
+    changes.map(({ categoryId, amountKrw }) => ({ categoryId, amountKrw }))
+  );
   return { applied: changes.length };
 }

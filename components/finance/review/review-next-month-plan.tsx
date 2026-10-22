@@ -16,6 +16,7 @@ import { ApiError } from "@/lib/api/client";
 import { applyBudgetPlan } from "@/lib/api/finance";
 import { monthKeyLabel } from "@/lib/finance-cron-time";
 import { krw } from "@/lib/finance-format";
+import { useInvalidateAfter } from "@/lib/query/finance-queries";
 import type { BudgetRecommendation, NextMonthBudgetPlan } from "@/types/finance";
 
 function isChange(recommendation: BudgetRecommendation): boolean {
@@ -47,6 +48,7 @@ export function ReviewNextMonthPlan({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const invalidateAfter = useInvalidateAfter();
 
   const selectedRecommendations = useMemo(
     () => plan.recommendations.filter((r) => selected.has(r.categoryId)),
@@ -69,9 +71,16 @@ export function ReviewNextMonthPlan({
     try {
       const result = await applyBudgetPlan({
         month,
-        changes: selectedRecommendations.map((r) => ({ categoryId: r.categoryId, amountKrw: r.recommendedBudgetKrw })),
+        changes: selectedRecommendations.map((r) => ({
+          categoryId: r.categoryId,
+          amountKrw: r.recommendedBudgetKrw,
+          currentBudgetKrw: r.currentBudgetKrw,
+        })),
       });
       setConfirmOpen(false);
+      // Budgets are standing limits: the Budgets screen and the overview's
+      // alerts and daily guide are all stale now.
+      void invalidateAfter("budget");
       onApplied(result.applied);
     } catch (err) {
       setConfirmOpen(false);
@@ -111,6 +120,12 @@ export function ReviewNextMonthPlan({
             <span className="font-semibold tabular-nums">{plan.projectedSavingsRatePct}%</span> against your{" "}
             <span className="tabular-nums">{plan.targetSavingsRatePct}%</span> target.
           </p>
+          {plan.otherSpendingKrw > 0 && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Includes about {krw.format(plan.otherSpendingKrw)} a month of uncategorized or occasional spending that
+              no budget covers.
+            </p>
+          )}
           {plan.additionalTrimNeededKrw > 0 && (
             <p className="mt-1 text-xs text-muted-foreground">
               Reaching the target would take about {krw.format(plan.additionalTrimNeededKrw)} more in cuts — that&apos;s

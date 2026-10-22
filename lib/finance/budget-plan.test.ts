@@ -68,6 +68,32 @@ describe("buildBudgetPlan", () => {
     expect(byName.Rent).toMatchObject({ recommendedBudgetKrw: 800_000, reason: "hold_steady" });
   });
 
+  it("keeps a protected category's budget that already sits above typical spending", () => {
+    // Essential ₩1,000,000 budget, ₩800,000 typical: never lowered, so not a pre-selected change.
+    const month = [spend("Housing", "essential", 800_000), spend("Family", null, 200_000)];
+    const result = plan([month, month, month], [budget("Housing", 1_000_000), budget("Family", 250_000)]);
+    const byName = Object.fromEntries(result.recommendations.map((r) => [r.categoryName, r]));
+    expect(byName.Housing).toMatchObject({ currentBudgetKrw: 1_000_000, recommendedBudgetKrw: 1_000_000, reason: "hold_steady" });
+    expect(byName.Family).toMatchObject({ currentBudgetKrw: 250_000, recommendedBudgetKrw: 250_000 });
+  });
+
+  it("still trims a flexible category whose budget sits above typical spending", () => {
+    const month = [spend("Travel", "flexible", 400_000)];
+    expect(plan([month, month, month], [budget("Travel", 600_000)]).recommendations[0]).toMatchObject({
+      recommendedBudgetKrw: 360_000,
+      reason: "gradual_reduction",
+    });
+  });
+
+  it("counts uncategorized and sporadic spending in the savings projection", () => {
+    const uncategorized: CategoryAmount = { ...spend("Uncategorized", null, 1_000_000), categoryId: null };
+    const month = [spend("Food", "essential", 1_000_000), uncategorized];
+    const result = plan([month, month, month]);
+    // Income ₩3M, Food plan ₩1M, plus ₩1M uncategorized → 33%, not 67%.
+    expect(result.otherSpendingKrw).toBe(1_000_000);
+    expect(result.projectedSavingsRatePct).toBe(33);
+  });
+
   it("raises a budget set unrealistically below typical spending, even for a flexible category", () => {
     const month = [spend("Shopping", "flexible", 500_000)];
     expect(plan([month, month, month], [budget("Shopping", 200_000)]).recommendations[0]).toMatchObject({
