@@ -2,16 +2,18 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRightLeft, Check, Loader2, RefreshCw, Save, WalletCards } from "lucide-react";
+import { Check, ChevronDown, Loader2, Plus, RefreshCw, Save, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { AmountField, CategoryIcon } from "@/components/finance/ui/finance-primitives";
+import { CategoryIcon } from "@/components/finance/ui/finance-primitives";
 import { TemplateStrip } from "@/components/finance/transactions/template-strip";
+import { AmountInput } from "@/components/finance/transactions/amount-input";
 import { DescriptionSuggestions } from "@/components/finance/transactions/description-suggestions";
 import type { DescriptionSuggestion } from "@/lib/api/finance";
+import { QUICK_AMOUNTS, groupAmount, sanitizeAmount } from "@/lib/finance/amount-entry";
 import { krw, usd } from "@/lib/finance-format";
 import { exchangeRateQuery } from "@/lib/query/finance-queries";
 import { cn } from "@/lib/utils";
@@ -23,8 +25,9 @@ function formatRate(rate: number): string {
   return String(Math.round(rate * 100) / 100);
 }
 
-function localToday(): string {
+function localToday(daysAgo = 0): string {
   const now = new Date();
+  now.setDate(now.getDate() - daysAgo);
   const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
   return localTime.toISOString().slice(0, 10);
 }
@@ -133,11 +136,18 @@ function TransactionSheetFields({
       : (paymentMethods.find((method) => method.name.trim().toLowerCase() === "bank")?.id ?? "")
   );
   const [note, setNote] = useState(transaction?.note ?? "");
+  // The note field stays tucked behind a link until it's wanted.
+  const [noteOpen, setNoteOpen] = useState(note !== "");
+  // The rate editor is folded into a one-line summary; USD entries open with
+  // it shown since the rate decides the stored KRW amount.
+  const [rateOpen, setRateOpen] = useState(currency === "USD");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [templateMessage, setTemplateMessage] = useState<string | null>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const descriptionInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const parsedAmount = Number(amount);
   const parsedExchangeRate = Number(exchangeRate);
@@ -223,9 +233,25 @@ function TransactionSheetFields({
 
   function handleCurrencyChange(next: Currency) {
     setCurrency(next);
+    // KRW has no minor unit, so "12.50" becomes "12".
+    setAmount((current) => sanitizeAmount(current, next));
+    if (next === "USD") setRateOpen(true);
     if (next === "USD" && exchangeRate.trim() === "" && rateFetch.state !== "loading") {
       void fetchLiveRate();
     }
+  }
+
+  function addQuickAmount(step: number) {
+    setAmount((current) => {
+      const next = (Number(current) || 0) + step;
+      return currency === "USD" ? String(Math.round(next * 100) / 100) : String(next);
+    });
+  }
+
+  // Enter on the amount moves on to the description, or saves once it's filled.
+  function handleAmountEnter() {
+    if (description.trim() === "") descriptionInputRef.current?.focus();
+    else formRef.current?.requestSubmit();
   }
 
   async function handleSaveAsTemplate() {
@@ -304,7 +330,7 @@ function TransactionSheetFields({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+    <form ref={formRef} onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-4">
         {mode === "create" && <TemplateStrip templates={templates} onApply={applyTemplate} onDelete={onDeleteTemplate} />}
 
@@ -328,10 +354,17 @@ function TransactionSheetFields({
           ))}
         </div>
 
-        <div className="space-y-1.5">
+        <div
+          className={cn(
+            "rounded-2xl border p-3 transition-colors sm:p-4",
+            type === "expense" ? "border-destructive/20 bg-destructive/[0.03]" : "border-success/25 bg-success/[0.04]"
+          )}
+        >
           <div className="flex items-center justify-between gap-3">
-            <Label htmlFor="transaction-amount">Amount</Label>
-            <div className="flex gap-1 rounded-lg border bg-secondary p-0.5">
+            <Label htmlFor="transaction-amount" className="text-muted-foreground">
+              {type === "expense" ? "Amount spent" : "Amount received"}
+            </Label>
+            <div className="flex gap-1 rounded-lg border bg-card p-0.5">
               {(["KRW", "USD"] as const).map((option) => (
                 <button
                   key={option}
@@ -340,7 +373,7 @@ function TransactionSheetFields({
                   aria-pressed={currency === option}
                   className={cn(
                     "min-h-11 rounded-md px-2.5 text-xs font-semibold transition-colors sm:min-h-7",
-                    currency === option ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    currency === option ? "bg-secondary text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {option}
@@ -348,81 +381,100 @@ function TransactionSheetFields({
               ))}
             </div>
           </div>
-          <AmountField
-            ref={amountInputRef}
-            symbol={currency === "USD" ? "$" : "₩"}
-            id="transaction-amount"
-            inputMode={currency === "USD" ? "decimal" : "numeric"}
-            min="0"
-            step={currency === "USD" ? "0.01" : "1"}
-            placeholder="0"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            required
-          />
+          <div className="mt-1">
+            <AmountInput
+              ref={amountInputRef}
+              id="transaction-amount"
+              value={amount}
+              currency={currency}
+              tone={type}
+              onValueChange={setAmount}
+              onEnter={handleAmountEnter}
+            />
+          </div>
 
-          <div className="rounded-xl border bg-secondary/40 p-3">
-            <div className="flex items-start gap-3">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground shadow-xs">
-                <ArrowRightLeft className="size-4" aria-hidden="true" />
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            {(previewUsd !== null || previewKrw !== null) && (
+              <span className="font-semibold text-foreground tabular-nums" aria-live="polite">
+                ≈ {previewUsd !== null ? usd.format(previewUsd) : krw.format(previewKrw ?? 0)}
               </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-muted-foreground">Estimated conversion</p>
-                <p className="mt-0.5 break-words font-semibold tabular-nums" aria-live="polite">
-                  {currency === "KRW" && previewUsd !== null
-                    ? `${krw.format(parsedAmount)} ≈ ${usd.format(previewUsd)}`
-                    : currency === "USD" && previewKrw !== null
-                      ? `${usd.format(parsedAmount)} ≈ ${krw.format(previewKrw)}`
-                      : "Enter an amount to see KRW and USD"}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
-              <Label htmlFor="transaction-exchange-rate" className="w-full text-xs text-muted-foreground xs:w-auto">
-                1 USD =
-              </Label>
-              <div className="flex h-11 min-w-0 flex-1 items-center rounded-xl border border-input bg-background px-2 focus-within:ring-2 focus-within:ring-ring sm:h-9 sm:flex-none">
-                <span className="text-xs text-muted-foreground">₩</span>
-                <input
-                  id="transaction-exchange-rate"
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="0.01"
-                  value={exchangeRate}
-                  onChange={(event) => setExchangeRate(event.target.value)}
-                  required={currency === "USD"}
-                  aria-label="KRW value of one US dollar"
-                  className="min-w-0 w-full bg-transparent px-1.5 text-base font-medium tabular-nums outline-none sm:w-24 sm:text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => void fetchLiveRate()}
-                disabled={rateFetch.state === "loading"}
-                aria-label="Refresh USD to KRW exchange rate"
-                className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-foreground hover:bg-background disabled:opacity-50 sm:min-h-9"
-              >
-                <RefreshCw className={cn("size-3.5", rateFetch.state === "loading" && "animate-spin")} aria-hidden="true" />
-                {rateFetch.state === "loading" ? "Updating" : "Refresh"}
-              </button>
-              {rateFetch.fallback && <span className="text-xs text-warning">Fallback rate</span>}
-            </div>
-            {rateFetch.state === "error" && (
-              <p className="mt-2 text-xs text-destructive">Couldn&apos;t fetch a live rate. You can enter the rate manually.</p>
             )}
+            <button
+              type="button"
+              onClick={() => setRateOpen((current) => !current)}
+              aria-expanded={rateOpen}
+              aria-controls="transaction-rate-editor"
+              className="flex min-h-11 items-center gap-1 rounded-md tabular-nums hover:text-foreground sm:min-h-7"
+            >
+              {rateFetch.state === "loading" && !hasValidRate
+                ? "Fetching rate…"
+                : hasValidRate
+                  ? `1 USD = ₩${groupAmount(exchangeRate)}`
+                  : "Set exchange rate"}
+              <ChevronDown className={cn("size-3.5 transition-transform", rateOpen && "rotate-180")} aria-hidden="true" />
+            </button>
+            {rateFetch.fallback && <span className="text-warning">Fallback rate</span>}
             {/* Attribution required by the provider's free Open Access terms. */}
-            <p className="mt-2 text-[11px] text-muted-foreground">
-              <a
-                href="https://www.exchangerate-api.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline-offset-2 hover:underline"
+            <a
+              href="https://www.exchangerate-api.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto text-[11px] underline-offset-2 hover:underline"
+            >
+              Rates by Exchange Rate API
+            </a>
+          </div>
+
+          {(rateOpen || rateFetch.state === "error") && (
+            <div id="transaction-rate-editor" className="mt-1 rounded-xl border bg-card/60 p-2.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Label htmlFor="transaction-exchange-rate" className="text-xs text-muted-foreground">
+                  1 USD =
+                </Label>
+                <div className="flex h-11 min-w-0 flex-1 items-center rounded-xl border border-input bg-background px-2 focus-within:ring-2 focus-within:ring-ring sm:h-9 sm:flex-none">
+                  <span className="text-xs text-muted-foreground">₩</span>
+                  <input
+                    id="transaction-exchange-rate"
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="0.01"
+                    value={exchangeRate}
+                    onChange={(event) => setExchangeRate(event.target.value)}
+                    required={currency === "USD"}
+                    aria-label="KRW value of one US dollar"
+                    className="min-w-0 w-full bg-transparent px-1.5 text-base font-medium tabular-nums outline-none sm:w-24 sm:text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void fetchLiveRate()}
+                  disabled={rateFetch.state === "loading"}
+                  aria-label="Refresh USD to KRW exchange rate"
+                  className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-foreground hover:bg-background disabled:opacity-50 sm:min-h-9"
+                >
+                  <RefreshCw className={cn("size-3.5", rateFetch.state === "loading" && "animate-spin")} aria-hidden="true" />
+                  {rateFetch.state === "loading" ? "Updating" : "Refresh"}
+                </button>
+              </div>
+              {rateFetch.state === "error" && (
+                <p className="mt-2 text-xs text-destructive">Couldn&apos;t fetch a live rate. You can enter the rate manually.</p>
+              )}
+            </div>
+          )}
+
+          <div className="mt-3 grid grid-cols-4 gap-1.5" role="group" aria-label="Add to amount">
+            {QUICK_AMOUNTS[currency].map((step) => (
+              <button
+                key={step}
+                type="button"
+                onClick={() => addQuickAmount(step)}
+                className="min-h-11 rounded-lg border bg-card px-1 text-xs font-semibold tabular-nums text-foreground transition-colors hover:bg-secondary active:scale-[0.97] sm:min-h-9"
               >
-                Rates by Exchange Rate API
-              </a>
-            </p>
+                +{currency === "USD" ? "$" : ""}
+                {groupAmount(String(step))}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -479,6 +531,7 @@ function TransactionSheetFields({
         <div className="space-y-1.5">
           <Label htmlFor="transaction-description">Description</Label>
           <Input
+            ref={descriptionInputRef}
             id="transaction-description"
             value={description}
             onChange={(event) => {
@@ -508,13 +561,27 @@ function TransactionSheetFields({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
               <Label htmlFor="transaction-date">Date</Label>
-              <button
-                type="button"
-                onClick={() => setDate(localToday())}
-                className="text-xs font-semibold text-primary underline-offset-4 hover:underline"
-              >
-                Today
-              </button>
+              <div className="flex gap-1">
+                {[
+                  { label: "Today", value: localToday() },
+                  { label: "Yesterday", value: localToday(1) },
+                ].map((option) => (
+                  <button
+                    key={option.label}
+                    type="button"
+                    onClick={() => setDate(option.value)}
+                    aria-pressed={date === option.value}
+                    className={cn(
+                      "min-h-9 rounded-full px-2.5 text-xs font-semibold transition-colors sm:min-h-6",
+                      date === option.value
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <Input id="transaction-date" type="date" value={date} onChange={(event) => setDate(event.target.value)} required />
           </div>
@@ -537,10 +604,27 @@ function TransactionSheetFields({
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="transaction-note">Note (optional)</Label>
-          <Textarea id="transaction-note" value={note} onChange={(event) => setNote(event.target.value)} rows={2} />
-        </div>
+        {noteOpen ? (
+          <div className="space-y-1.5">
+            <Label htmlFor="transaction-note">Note (optional)</Label>
+            <Textarea
+              id="transaction-note"
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              rows={2}
+              autoFocus={note === ""}
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setNoteOpen(true)}
+            className="flex min-h-11 items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground sm:min-h-8"
+          >
+            <Plus className="size-3.5" aria-hidden="true" />
+            Add a note
+          </button>
+        )}
 
         {mode === "create" && (
           <div className="flex flex-wrap items-center justify-between gap-3">
