@@ -34,24 +34,36 @@ async function staleOrHardcodedFallback(): Promise<ExchangeRateResult> {
   return hardcodedFallback();
 }
 
-async function fetchLiveRate(apiKey: string): Promise<number> {
-  const response = await fetch(`https://v6.exchangerate-api.com/v6/${apiKey}/pair/USD/KRW`, {
-    cache: "no-store",
-    signal: AbortSignal.timeout(LIVE_FETCH_TIMEOUT_MS),
-  });
+// With a key: ExchangeRate-API's keyed pair endpoint (higher limits, more
+// frequent updates). Without one: the same provider's free Open Access
+// endpoint, updated daily and keyless — so Luyra gets a real rate even when
+// EXCHANGE_RATE_API_KEY was never configured. Its terms ask for attribution
+// where rates are shown (see the transaction sheet). The DB cache above means
+// it's called at most once per CACHE_MINUTES either way.
+async function fetchLiveRate(apiKey: string | undefined): Promise<number> {
+  const url = apiKey
+    ? `https://v6.exchangerate-api.com/v6/${apiKey}/pair/USD/KRW`
+    : "https://open.er-api.com/v6/latest/USD";
+  const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(LIVE_FETCH_TIMEOUT_MS) });
   if (!response.ok) throw new Error(`Exchange rate API responded with ${response.status}`);
 
-  const data = (await response.json()) as { result?: string; conversion_rate?: number };
-  if (data.result !== "success" || typeof data.conversion_rate !== "number") {
+  const data = (await response.json()) as {
+    result?: string;
+    conversion_rate?: number;
+    base_code?: string;
+    rates?: Record<string, number>;
+  };
+  const rate = apiKey ? data.conversion_rate : data.base_code === "USD" ? data.rates?.KRW : undefined;
+  if (data.result !== "success" || typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0) {
     throw new Error("Unexpected exchange rate API response shape");
   }
-  return data.conversion_rate;
+  return rate;
 }
 
 // Server-side only, cached in finance_exchange_rates so a rate is fetched at
 // most once per cache window rather than on every render. EXCHANGE_RATE_API_KEY
-// is optional — with no key configured this returns the last stored rate or the
-// fallback, which is exactly the "allow manual rate fallback" behavior; the
+// is optional (see fetchLiveRate). Only when the provider fails does this
+// return the last stored rate or the hardcoded one, flagged `fallback`; the
 // amount entry UI lets the user override whatever rate this returns before
 // saving. Never throws: callers (notably the overview) must keep rendering real
 // transaction data when the provider or the rate table is unavailable.
@@ -64,12 +76,9 @@ export async function getUsdToKrwRate(): Promise<ExchangeRateResult> {
     return hardcodedFallback();
   }
 
-  const apiKey = process.env.EXCHANGE_RATE_API_KEY;
-  if (!apiKey) return staleOrHardcodedFallback();
-
   let rate: number;
   try {
-    rate = await fetchLiveRate(apiKey);
+    rate = await fetchLiveRate(process.env.EXCHANGE_RATE_API_KEY || undefined);
   } catch (error) {
     // Error objects here carry only the status/shape/abort reason — never the
     // request URL, so the key stays out of the logs.
