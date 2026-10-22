@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import {
   ArrowDownRight,
@@ -39,10 +40,9 @@ import {
 } from "@/components/finance/ui/finance-primitives";
 import { BUDGET_STATUS_META, BUDGET_STATUS_TEXT_CLASS } from "@/components/finance/ui/budget-status";
 import { ApiError } from "@/lib/api/client";
-import { getFinanceOverview } from "@/lib/api/finance";
-import { onTransactionChanged } from "@/lib/finance-events";
 import { krw } from "@/lib/finance-format";
 import { monthKey, monthLabel } from "@/lib/finance-month";
+import { overviewQuery } from "@/lib/query/finance-queries";
 import { cn } from "@/lib/utils";
 import type {
   BudgetPerformance,
@@ -596,42 +596,22 @@ export function FinanceOverview({
   initialSummary?: FinanceOverviewSummary;
 }) {
   const [monthOffset, setMonthOffset] = useState(0);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const requestKey = `${monthOffset}:${refreshKey}`;
-  const [result, setResult] = useState<{
-    key: string;
-    summary: FinanceOverviewSummary | null;
-    error: string | null;
-  }>(() =>
+  const month = monthKey(monthOffset);
+  const overview = useQuery({
+    ...overviewQuery(month),
     // Seeding from the server keeps the amounts on screen from the first paint.
     // The month guard covers a browser whose "this month" differs from the
-    // server's; the empty key then falls through to fetch-on-mount.
-    initialSummary && initialMonth === monthKey(0)
-      ? { key: requestKey, summary: initialSummary, error: null }
-      : { key: "", summary: null, error: null }
-  );
-  const loading = result.key !== requestKey;
-  const summary = loading ? null : result.summary;
-  const error = loading ? null : result.error;
-
-  useEffect(() => onTransactionChanged(() => setRefreshKey((key) => key + 1)), []);
+    // server's; that month then fetches on mount like any other.
+    initialData: initialSummary && initialMonth === month ? initialSummary : undefined,
+  });
+  // A failed background refresh keeps the month already on screen; only a
+  // month with nothing to show becomes the error state.
+  const summary = overview.data ?? null;
+  const error = overview.isError && !overview.data ? overviewErrorMessage(overview.error) : null;
 
   useEffect(() => {
-    // Already holding this month's data — the server prefetch, or a finished fetch.
-    if (result.key === requestKey) return;
-    let active = true;
-    void getFinanceOverview(monthKey(monthOffset))
-      .then((data) => {
-        if (active) setResult({ key: requestKey, summary: data, error: null });
-      })
-      .catch((fetchError: unknown) => {
-        console.error("[finance] overview request failed", fetchError);
-        if (active) {
-          setResult({ key: requestKey, summary: null, error: overviewErrorMessage(fetchError) });
-        }
-      });
-    return () => { active = false; };
-  }, [monthOffset, requestKey, result.key]);
+    if (overview.error) console.error("[finance] overview request failed", overview.error);
+  }, [overview.error]);
 
   return (
     <div className="space-y-6 lg:space-y-7">
@@ -653,9 +633,9 @@ export function FinanceOverview({
           <FinanceErrorState
             title="Finance overview unavailable"
             description={error}
-            onRetry={() => setRefreshKey((key) => key + 1)}
+            onRetry={() => void overview.refetch()}
           />
-        ) : loading || !summary ? <OverviewLoading /> : <FinanceSummaryCards summary={summary} />}
+        ) : !summary ? <OverviewLoading /> : <FinanceSummaryCards summary={summary} />}
       </FinanceSection>
 
       {summary ? (

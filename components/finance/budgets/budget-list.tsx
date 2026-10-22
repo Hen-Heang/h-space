@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Plus, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FinanceEmptyState, FinanceErrorState, FinanceMetricGrid, FinanceSection, MonthSelector } from "@/components/finance/ui/finance-primitives";
@@ -9,7 +10,8 @@ import { BudgetSummary } from "@/components/finance/budgets/budget-summary";
 import { BudgetSheet } from "@/components/finance/budgets/budget-sheet";
 import { DeleteBudgetDialog } from "@/components/finance/budgets/delete-budget-dialog";
 import { monthBounds, monthLabel } from "@/lib/finance-month";
-import { deleteBudget, listBudgets, upsertBudget } from "@/lib/api/finance";
+import { deleteBudget, upsertBudget } from "@/lib/api/finance";
+import { budgetsQuery, useInvalidateAfter } from "@/lib/query/finance-queries";
 import type { BudgetPerformance, Category } from "@/types/finance";
 
 function BudgetListSkeleton() {
@@ -31,46 +33,29 @@ function BudgetListSkeleton() {
 
 export function BudgetList() {
   const [monthOffset, setMonthOffset] = useState(0);
-  const [reloadToken, setReloadToken] = useState(0);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [performance, setPerformance] = useState<BudgetPerformance[]>([]);
-  const [budgetedCategoryIds, setBudgetedCategoryIds] = useState<Set<string>>(new Set());
+  const invalidateAfter = useInvalidateAfter();
+  const { start, end } = monthBounds(monthOffset);
+  const budgets = useQuery(budgetsQuery(start, end));
+  const loading = budgets.isPending;
+  // A failed background refresh keeps the month already on screen.
+  const loadError = budgets.isError && !budgets.data;
+  const categories = useMemo(() => budgets.data?.categories ?? [], [budgets.data]);
+  const performance = budgets.data?.performance ?? [];
   const [sheetTarget, setSheetTarget] = useState<
     { mode: "create"; unbudgetedCategories: Category[] } | { mode: "edit"; budget: BudgetPerformance } | null
   >(null);
   const [removeTarget, setRemoveTarget] = useState<BudgetPerformance | null>(null);
   const [removing, setRemoving] = useState(false);
 
-  const requestKey = `${monthOffset}:${reloadToken}`;
-  const [result, setResult] = useState<{ key: string; error: string | null }>({ key: "", error: null });
-  const loading = result.key !== requestKey;
+  const unbudgetedCategories = useMemo(() => {
+    const budgetedCategoryIds = new Set(budgets.data?.budgets.map((budget) => budget.categoryId));
+    return categories.filter((category) => !budgetedCategoryIds.has(category.id));
+  }, [categories, budgets.data]);
 
-  useEffect(() => {
-    let active = true;
-    const { start, end } = monthBounds(monthOffset);
-    listBudgets(start, end)
-      .then((data) => {
-        if (!active) return;
-        setCategories(data.categories);
-        setPerformance(data.performance);
-        setBudgetedCategoryIds(new Set(data.budgets.map((budget) => budget.categoryId)));
-        setResult({ key: requestKey, error: null });
-      })
-      .catch(() => {
-        if (active) setResult({ key: requestKey, error: "We couldn't load your budgets. Try again in a moment." });
-      });
-    return () => {
-      active = false;
-    };
-  }, [requestKey, monthOffset]);
-
-  const unbudgetedCategories = useMemo(
-    () => categories.filter((category) => !budgetedCategoryIds.has(category.id)),
-    [categories, budgetedCategoryIds]
-  );
-
+  // Budgets are standing limits, not per month, so every cached month and
+  // the overview's budget alerts and daily guide go stale together.
   function refresh() {
-    setReloadToken((token) => token + 1);
+    return invalidateAfter("budget");
   }
 
   async function handleSave(categoryId: string, amountKrw: number) {
@@ -112,8 +97,12 @@ export function BudgetList() {
         </Button>
       </div>
 
-      {result.error ? (
-        <FinanceErrorState title="Budgets unavailable" description={result.error} onRetry={refresh} />
+      {loadError ? (
+        <FinanceErrorState
+          title="Budgets unavailable"
+          description="We couldn't load your budgets. Try again in a moment."
+          onRetry={() => void budgets.refetch()}
+        />
       ) : loading ? (
         <BudgetListSkeleton />
       ) : categories.length === 0 ? (

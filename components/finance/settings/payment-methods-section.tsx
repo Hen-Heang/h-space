@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { CreditCard, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryIcon, FinanceEmptyState, FinanceErrorState } from "@/components/finance/ui/finance-primitives";
@@ -9,11 +8,11 @@ import { DeleteLookupDialog, LookupRowActions } from "@/components/finance/setti
 import { PaymentMethodSheet, type PaymentMethodFormValues } from "@/components/finance/settings/payment-method-sheet";
 import { ApiError } from "@/lib/api/client";
 import { createPaymentMethod, deletePaymentMethod, updatePaymentMethod } from "@/lib/api/finance";
-import { financeKeys, usePaymentMethods } from "@/lib/query/finance-queries";
+import { useInvalidateAfter, usePaymentMethods } from "@/lib/query/finance-queries";
 import type { PaymentMethod } from "@/types/finance";
 
 export function PaymentMethodsSection() {
-  const queryClient = useQueryClient();
+  const invalidateAfter = useInvalidateAfter();
   const { data: paymentMethods = [], isPending: loading, isError: loadError, refetch } = usePaymentMethods();
   const [sheetMode, setSheetMode] = useState<"create" | "edit">("create");
   const [editing, setEditing] = useState<PaymentMethod | undefined>(undefined);
@@ -22,8 +21,8 @@ export function PaymentMethodsSection() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Same shared-cache invalidation as CategoriesSection — see the note there.
-  const reload = () => queryClient.invalidateQueries({ queryKey: financeKeys.paymentMethods() });
+  // Same "lookup" invalidation as CategoriesSection — see the note there.
+  const reload = () => invalidateAfter("lookup");
 
   async function handleSave(values: PaymentMethodFormValues) {
     if (sheetMode === "edit" && editing) {

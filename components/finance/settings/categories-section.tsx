@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryIcon, FinanceEmptyState, FinanceErrorState } from "@/components/finance/ui/finance-primitives";
@@ -14,11 +13,11 @@ import { DeleteLookupDialog, LookupRowActions } from "@/components/finance/setti
 import { ApiError } from "@/lib/api/client";
 import { createCategory, deleteCategory, updateCategory } from "@/lib/api/finance";
 import { SPENDING_CLASS_META } from "@/lib/finance/spending-class";
-import { financeKeys, useCategories } from "@/lib/query/finance-queries";
+import { useCategories, useInvalidateAfter } from "@/lib/query/finance-queries";
 import type { Category } from "@/types/finance";
 
 export function CategoriesSection() {
-  const queryClient = useQueryClient();
+  const invalidateAfter = useInvalidateAfter();
   const { data: categories = [], isPending: loading, isError: loadError, refetch } = useCategories();
   const [sheetMode, setSheetMode] = useState<"create" | "edit">("create");
   const [editing, setEditing] = useState<Category | undefined>(undefined);
@@ -27,10 +26,10 @@ export function CategoriesSection() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Invalidating the shared key refetches in the background — the current
-  // list stays on screen — and also refreshes every category picker that
-  // reads the same cache (transactions, quick add).
-  const reload = () => queryClient.invalidateQueries({ queryKey: financeKeys.categories() });
+  // Refetches in the background — the current list stays on screen — and
+  // also refreshes every other Finance view that shows category names,
+  // colors, or classes (pickers, budgets, overview, analytics).
+  const reload = () => invalidateAfter("lookup");
 
   async function handleSave(values: CategoryFormValues) {
     if (sheetMode === "edit" && editing) {

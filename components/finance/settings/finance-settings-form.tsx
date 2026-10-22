@@ -14,7 +14,7 @@ import { TelegramLinkSection } from "@/components/finance/settings/telegram-link
 import { MoneyCoachSection } from "@/components/finance/settings/money-coach-section";
 import { cn } from "@/lib/utils";
 import { updatePreferences } from "@/lib/api/finance";
-import { financeKeys, preferencesQuery } from "@/lib/query/finance-queries";
+import { financeKeys, invalidateAfter, preferencesQuery } from "@/lib/query/finance-queries";
 import { toMoneyRule } from "@/lib/finance/financial-health";
 
 // Preset money rules from AGENTS.md's Financial Health spec. Lifestyle is
@@ -141,8 +141,10 @@ export function FinanceSettingsForm() {
         weeklyReportEmailEnabled,
         monthlyReportEmailEnabled,
       });
-      // So the Review page's on/off check sees the change without a refetch.
+      // The saved copy lands in the cache directly (Review's on/off check);
+      // thresholds and the money rule then refresh every view built on them.
       queryClient.setQueryData(financeKeys.preferences(), updated);
+      void invalidateAfter(queryClient, "preferences");
       setSaved(true);
     } catch {
       setError("Couldn't save your settings. Try again.");
