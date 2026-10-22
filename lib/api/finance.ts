@@ -6,6 +6,7 @@ import type {
   CreateSavingsGoalInput,
   CreateTransactionInput,
   CreateTransactionTemplateInput,
+  RecurringRuleInput,
   SetSubscriptionStatusInput,
   TransactionSort,
   UpdateCategoryInput,
@@ -25,6 +26,7 @@ import type {
   FinanceOverviewSummary,
   MonthlyReport,
   PaymentMethod,
+  RecurringRule,
   ReviewSummary,
   SavingsContribution,
   SavingsGoal,
@@ -119,6 +121,26 @@ export function createTemplate(input: CreateTransactionTemplateInput): Promise<T
 
 export async function deleteTemplate(id: string): Promise<void> {
   await apiFetch<{ id: string }>(`/api/finance/templates/${id}`, { method: "DELETE" });
+}
+
+export function listRecurringRules(): Promise<RecurringRule[]> {
+  return apiFetch<RecurringRule[]>("/api/finance/recurring");
+}
+
+/** `appliedCount` is how many transactions saving the rule created right away (a next date of today or earlier). */
+export function createRecurringRule(input: RecurringRuleInput): Promise<{ rule: RecurringRule; appliedCount: number }> {
+  return apiFetch("/api/finance/recurring", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function updateRecurringRule(
+  id: string,
+  input: RecurringRuleInput
+): Promise<{ rule: RecurringRule; appliedCount: number }> {
+  return apiFetch(`/api/finance/recurring/${id}`, { method: "PUT", body: JSON.stringify(input) });
+}
+
+export async function deleteRecurringRule(id: string): Promise<void> {
+  await apiFetch<{ id: string }>(`/api/finance/recurring/${id}`, { method: "DELETE" });
 }
 
 export function listBudgets(

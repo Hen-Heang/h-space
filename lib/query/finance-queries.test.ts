@@ -41,6 +41,7 @@ describe("invalidateAfter", () => {
     analytics: financeKeys.analytics("2026-10"),
     budgets: financeKeys.budgets(range),
     savingsGoals: financeKeys.savingsGoals(),
+    recurring: financeKeys.recurring(),
   };
 
   async function staleAfter(kind: FinanceWriteKind): Promise<string[]> {
@@ -63,6 +64,10 @@ describe("invalidateAfter", () => {
 
   it("a savings write refreshes goals and the overview's Financial Health", async () => {
     expect(await staleAfter("savings")).toEqual(["overview", "savingsGoals"]);
+  });
+
+  it("a recurring-rule write refreshes rules plus every transaction-derived view", async () => {
+    expect(await staleAfter("recurring")).toEqual(["analytics", "budgets", "overview", "recurring", "transactions"]);
   });
 
   it.each<FinanceWriteKind>(["lookup", "preferences"])("a %s write refreshes everything", async (kind) => {

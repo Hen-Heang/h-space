@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, ReceiptText, Search, SlidersHorizontal, X } from "lucide-react";
+import { Plus, ReceiptText, Repeat, Search, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FinanceEmptyState, FinanceErrorState, MonthSelector } from "@/components/finance/ui/finance-primitives";
 import { TransactionRow } from "@/components/finance/transactions/transaction-row";
 import { TransactionSheet } from "@/components/finance/transactions/transaction-sheet";
 import { DeleteTransactionDialog } from "@/components/finance/transactions/delete-transaction-dialog";
+import { RecurringSheet } from "@/components/finance/transactions/recurring-sheet";
 import { TransactionFilterPanel } from "@/components/finance/transactions/transaction-filter-panel";
 import { emitTransactionChanged } from "@/lib/finance-events";
 import { cn } from "@/lib/utils";
@@ -105,6 +106,7 @@ export function TransactionList() {
   const { data: templates = [] } = useTemplates();
   const { saveTemplate, removeTemplate } = useTemplateActions();
   const [sheet, setSheet] = useState<{ mode: "create" | "edit"; transaction?: Transaction } | null>(null);
+  const [recurringOpen, setRecurringOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -189,10 +191,22 @@ export function TransactionList() {
           ariaLabel="Transactions month selector"
           size="sm"
         />
-        <Button size="sm" className="min-h-11 shrink-0 px-3" onClick={() => setSheet({ mode: "create" })} aria-label="Add transaction">
-          <Plus />
-          <span className="hidden min-[400px]:inline">Add transaction</span>
-        </Button>
+        <div className="flex shrink-0 gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11 px-3"
+            onClick={() => setRecurringOpen(true)}
+            aria-label="Recurring transactions"
+          >
+            <Repeat />
+            <span className="hidden sm:inline">Recurring</span>
+          </Button>
+          <Button size="sm" className="min-h-11 px-3" onClick={() => setSheet({ mode: "create" })} aria-label="Add transaction">
+            <Plus />
+            <span className="hidden min-[400px]:inline">Add transaction</span>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-2 sm:flex sm:flex-wrap">
@@ -370,6 +384,13 @@ export function TransactionList() {
         onSave={handleSave}
         onSaveTemplate={saveTemplate}
         onDeleteTemplate={removeTemplate}
+      />
+
+      <RecurringSheet
+        open={recurringOpen}
+        onOpenChange={setRecurringOpen}
+        categories={categories}
+        paymentMethods={paymentMethods}
       />
 
       <DeleteTransactionDialog
