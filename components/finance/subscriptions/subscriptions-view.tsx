@@ -5,6 +5,7 @@ import { Repeat } from "lucide-react";
 import { FinanceEmptyState, FinanceErrorState, FinanceMetricGrid, FinanceSection } from "@/components/finance/ui/finance-primitives";
 import { SubscriptionsSummary } from "@/components/finance/subscriptions/subscriptions-summary";
 import { SubscriptionCard } from "@/components/finance/subscriptions/subscription-card";
+import { MerchantNamesSection } from "@/components/finance/subscriptions/merchant-names-section";
 import { listDetectedSubscriptions, setSubscriptionStatus } from "@/lib/api/finance";
 import type { DetectedSubscription, SubscriptionStatus } from "@/types/finance";
 
@@ -25,9 +26,9 @@ function SubscriptionsLoading() {
   );
 }
 
-// Detected straight from repeated transaction descriptions (see
-// lib/services/finance-subscription-service.ts) — simplified from Money
-// Flow's merchant-alias-grouping version, no fuzzy name matching.
+// Detected from repeated payments to the same merchant (see
+// lib/services/finance-subscription-service.ts). Spelling variants group
+// automatically; the Merchant names section below merges the rest.
 export function SubscriptionsView() {
   const [reloadToken, setReloadToken] = useState(0);
   const [subscriptions, setSubscriptions] = useState<DetectedSubscription[]>([]);
@@ -116,6 +117,16 @@ export function SubscriptionsView() {
             </div>
           </FinanceSection>
         </>
+      )}
+
+      {!result.error && !loading && (
+        <FinanceSection
+          id="subscriptions-merchant-names"
+          title="Merchant names"
+          description="Merge different names for the same merchant so its payments count together. Your transactions keep their original descriptions."
+        >
+          <MerchantNamesSection onChanged={refresh} />
+        </FinanceSection>
       )}
     </div>
   );

@@ -8,6 +8,7 @@ import type {
   CreateSavingsGoalInput,
   CreateTransactionInput,
   CreateTransactionTemplateInput,
+  MergeMerchantsInput,
   RecurringRuleInput,
   SetSubscriptionStatusInput,
   TransactionSort,
@@ -214,6 +215,31 @@ export function listSavingsContributions(goalId: string): Promise<SavingsContrib
 
 export function listDetectedSubscriptions(): Promise<DetectedSubscription[]> {
   return apiFetch<DetectedSubscription[]>("/api/finance/subscriptions");
+}
+
+export interface MerchantMergeSuggestion {
+  id: string;
+  suggestedName: string;
+  members: { key: string; sample: string; count: number; totalKrw: number }[];
+  occurrenceCount: number;
+  totalKrw: number;
+}
+
+export interface MerchantNames {
+  merges: { name: string; variants: { key: string; sample: string }[] }[];
+  suggestions: MerchantMergeSuggestion[];
+}
+
+export function getMerchantNames(): Promise<MerchantNames> {
+  return apiFetch<MerchantNames>("/api/finance/merchant-names");
+}
+
+export function mergeMerchants(input: MergeMerchantsInput): Promise<{ merged: number }> {
+  return apiFetch("/api/finance/merchant-names", { method: "POST", body: JSON.stringify(input) });
+}
+
+export async function unmergeMerchants(name: string): Promise<void> {
+  await apiFetch<{ name: string }>("/api/finance/merchant-names", { method: "DELETE", body: JSON.stringify({ name }) });
 }
 
 export async function setSubscriptionStatus(key: string, input: SetSubscriptionStatusInput): Promise<void> {

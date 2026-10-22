@@ -175,6 +175,15 @@ export const setSubscriptionStatusSchema = z.object({
 });
 export type SetSubscriptionStatusInput = z.infer<typeof setSubscriptionStatusSchema>;
 
+export const mergeMerchantsSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(200),
+  // Normalized merchant keys, as returned by the suggestions.
+  keys: z.array(z.string().trim().min(1).max(200)).min(1).max(20),
+});
+export type MergeMerchantsInput = z.infer<typeof mergeMerchantsSchema>;
+
+export const unmergeMerchantsSchema = z.object({ name: z.string().trim().min(1).max(200) });
+
 export const updatePreferencesSchema = z
   .object({
     monthlySpendingLimitKrw: z.number().min(0).nullable().optional(),
