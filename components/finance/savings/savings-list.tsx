@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PiggyBank, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FinanceEmptyState, FinanceErrorState, FinanceMetricGrid, FinanceSection } from "@/components/finance/ui/finance-primitives";
@@ -13,9 +14,9 @@ import {
   addSavingsContribution,
   createSavingsGoal,
   deleteSavingsGoal,
-  listSavingsGoals,
   updateSavingsGoal,
 } from "@/lib/api/finance";
+import { savingsGoalsQuery, useInvalidateAfter } from "@/lib/query/finance-queries";
 import type { CreateSavingsGoalInput, UpdateSavingsGoalInput } from "@/lib/validation/finance";
 import type { SavingsGoal } from "@/types/finance";
 
@@ -37,10 +38,12 @@ function SavingsListSkeleton() {
 }
 
 export function SavingsList() {
-  const [reloadToken, setReloadToken] = useState(0);
-  const [goals, setGoals] = useState<SavingsGoal[]>([]);
-  const [result, setResult] = useState<{ key: number; error: string | null }>({ key: -1, error: null });
-  const loading = result.key !== reloadToken;
+  const invalidateAfter = useInvalidateAfter();
+  const savings = useQuery(savingsGoalsQuery);
+  const goals = savings.data ?? [];
+  const loading = savings.isPending;
+  // A failed background refresh keeps the goals already on screen.
+  const loadError = savings.isError && !savings.data;
 
   const [goalSheet, setGoalSheet] = useState<{ mode: "create" | "edit"; goal?: SavingsGoal } | null>(null);
   const [contributionTarget, setContributionTarget] = useState<SavingsGoal | null>(null);
@@ -48,19 +51,9 @@ export function SavingsList() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const load = useCallback(() => {
-    listSavingsGoals()
-      .then((data) => setGoals(data))
-      .then(() => setResult({ key: reloadToken, error: null }))
-      .catch(() => setResult({ key: reloadToken, error: "We couldn't load your savings goals. Try again in a moment." }));
-  }, [reloadToken]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
+  // Goal balances also feed the overview's Financial Health "Future" share.
   function refresh() {
-    setReloadToken((token) => token + 1);
+    return invalidateAfter("savings");
   }
 
   async function handleSaveGoal(input: CreateSavingsGoalInput & UpdateSavingsGoalInput) {
@@ -103,8 +96,12 @@ export function SavingsList() {
         </Button>
       </div>
 
-      {result.error ? (
-        <FinanceErrorState title="Savings unavailable" description={result.error} onRetry={refresh} />
+      {loadError ? (
+        <FinanceErrorState
+          title="Savings unavailable"
+          description="We couldn't load your savings goals. Try again in a moment."
+          onRetry={() => void savings.refetch()}
+        />
       ) : loading ? (
         <SavingsListSkeleton />
       ) : goals.length === 0 ? (

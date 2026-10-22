@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Plus, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryIcon, FinanceEmptyState, FinanceErrorState } from "@/components/finance/ui/finance-primitives";
@@ -11,14 +11,14 @@ import {
 } from "@/components/finance/settings/category-sheet";
 import { DeleteLookupDialog, LookupRowActions } from "@/components/finance/settings/lookup-primitives";
 import { ApiError } from "@/lib/api/client";
-import { createCategory, deleteCategory, listCategories, updateCategory } from "@/lib/api/finance";
+import { createCategory, deleteCategory, updateCategory } from "@/lib/api/finance";
 import { SPENDING_CLASS_META } from "@/lib/finance/spending-class";
+import { useCategories, useInvalidateAfter } from "@/lib/query/finance-queries";
 import type { Category } from "@/types/finance";
 
 export function CategoriesSection() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
+  const invalidateAfter = useInvalidateAfter();
+  const { data: categories = [], isPending: loading, isError: loadError, refetch } = useCategories();
   const [sheetMode, setSheetMode] = useState<"create" | "edit">("create");
   const [editing, setEditing] = useState<Category | undefined>(undefined);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -26,30 +26,10 @@ export function CategoriesSection() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Bumping the token refetches. A refetch after a save or delete deliberately
-  // leaves the current list on screen instead of flashing the skeleton again —
-  // and it keeps setState out of the effect body, which the lint rule forbids.
-  const [reloadToken, setReloadToken] = useState(0);
-  const reload = useCallback(() => setReloadToken((token) => token + 1), []);
-
-  useEffect(() => {
-    let active = true;
-    listCategories()
-      .then((next) => {
-        if (!active) return;
-        setCategories(next);
-        setLoadError(false);
-      })
-      .catch(() => {
-        if (active) setLoadError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [reloadToken]);
+  // Refetches in the background — the current list stays on screen — and
+  // also refreshes every other Finance view that shows category names,
+  // colors, or classes (pickers, budgets, overview, analytics).
+  const reload = () => invalidateAfter("lookup");
 
   async function handleSave(values: CategoryFormValues) {
     if (sheetMode === "edit" && editing) {
@@ -83,11 +63,7 @@ export function CategoriesSection() {
       <FinanceErrorState
         title="Categories unavailable"
         description="We couldn't load your categories. Try again in a moment."
-        onRetry={() => {
-          setLoadError(false);
-          setLoading(true);
-          reload();
-        }}
+        onRetry={() => void refetch()}
       />
     );
   }

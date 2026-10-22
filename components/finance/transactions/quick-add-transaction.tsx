@@ -1,20 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
 
 import { TransactionSheet } from "@/components/finance/transactions/transaction-sheet";
-import {
-  createTemplate,
-  createTransaction,
-  deleteTemplate,
-  listCategories,
-  listPaymentMethods,
-  listTemplates,
-} from "@/lib/api/finance";
+import { createTransaction } from "@/lib/api/finance";
 import { emitTransactionChanged } from "@/lib/finance-events";
-import type { CreateTransactionInput, CreateTransactionTemplateInput } from "@/lib/validation/finance";
-import type { Category, PaymentMethod, TransactionTemplate } from "@/types/finance";
+import { useCategories, usePaymentMethods, useTemplateActions, useTemplates } from "@/lib/query/finance-queries";
+import type { CreateTransactionInput } from "@/lib/validation/finance";
 
 /**
  * A globally-mounted "compose" button — the daily-use shortcut for logging a
@@ -24,50 +17,16 @@ import type { Category, PaymentMethod, TransactionTemplate } from "@/types/finan
  */
 export function QuickAddTransaction() {
   const [open, setOpen] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [templates, setTemplates] = useState<TransactionTemplate[]>([]);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!open || loaded) return;
-    let active = true;
-    void (async () => {
-      try {
-        const [cats, methods, templateList] = await Promise.all([listCategories(), listPaymentMethods(), listTemplates()]);
-        if (!active) return;
-        setCategories(cats);
-        setPaymentMethods(methods);
-        setTemplates(templateList);
-        setLoaded(true);
-      } catch {
-        // The sheet still works with empty pickers; category/payment-method
-        // selection just won't have options until the next open.
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [open, loaded]);
+  // Fetched on first open, then served from the shared cache. If a lookup
+  // fails the sheet still works with an empty picker; reopening retries.
+  const { data: categories = [] } = useCategories({ enabled: open });
+  const { data: paymentMethods = [] } = usePaymentMethods({ enabled: open });
+  const { data: templates = [] } = useTemplates({ enabled: open });
+  const { saveTemplate, removeTemplate } = useTemplateActions();
 
   async function handleSave(input: CreateTransactionInput) {
     await createTransaction(input);
     emitTransactionChanged();
-  }
-
-  async function handleSaveTemplate(input: CreateTransactionTemplateInput) {
-    const created = await createTemplate(input);
-    setTemplates((prev) => [created, ...prev]);
-  }
-
-  async function handleDeleteTemplate(template: TransactionTemplate) {
-    const previous = templates;
-    setTemplates((prev) => prev.filter((t) => t.id !== template.id));
-    try {
-      await deleteTemplate(template.id);
-    } catch {
-      setTemplates(previous);
-    }
   }
 
   return (
@@ -89,8 +48,8 @@ export function QuickAddTransaction() {
         open={open}
         onOpenChange={setOpen}
         onSave={handleSave}
-        onSaveTemplate={handleSaveTemplate}
-        onDeleteTemplate={handleDeleteTemplate}
+        onSaveTemplate={saveTemplate}
+        onDeleteTemplate={removeTemplate}
       />
     </>
   );

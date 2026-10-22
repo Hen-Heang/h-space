@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, FileDown, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,8 @@ import { FinanceReportsSection } from "@/components/finance/settings/finance-rep
 import { TelegramLinkSection } from "@/components/finance/settings/telegram-link-section";
 import { MoneyCoachSection } from "@/components/finance/settings/money-coach-section";
 import { cn } from "@/lib/utils";
-import { getPreferences, updatePreferences } from "@/lib/api/finance";
+import { updatePreferences } from "@/lib/api/finance";
+import { financeKeys, invalidateAfter, preferencesQuery } from "@/lib/query/finance-queries";
 import { toMoneyRule } from "@/lib/finance/financial-health";
 
 // Preset money rules from AGENTS.md's Financial Health spec. Lifestyle is
@@ -46,13 +48,19 @@ export function FinanceSettingsForm() {
   const [monthlyReportEmailEnabled, setMonthlyReportEmailEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  // Bumped by "Try again" so the load effect actually runs again.
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
+  // The form keeps its own editable copy, seeded from the shared preferences
+  // cache (fetchQuery reuses fresh cached data, e.g. from the Review page).
   useEffect(() => {
     let active = true;
-    getPreferences()
+    queryClient
+      .fetchQuery(preferencesQuery)
       .then((preferences) => {
         if (!active) return;
         setMonthlyLimit(preferences.monthlySpendingLimitKrw != null ? String(preferences.monthlySpendingLimitKrw) : "");
@@ -74,7 +82,7 @@ export function FinanceSettingsForm() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [queryClient, loadAttempt]);
 
   // The browser's native #hash scroll fires on initial navigation, before
   // this client component has replaced SettingsLoading's skeleton with the
@@ -122,7 +130,7 @@ export function FinanceSettingsForm() {
     setError(null);
     setSaved(false);
     try {
-      await updatePreferences({
+      const updated = await updatePreferences({
         monthlySpendingLimitKrw: monthlyLimit.trim() === "" ? null : Number(monthlyLimit),
         targetSavingsRate: futurePct,
         essentialTargetPct: essentialPct,
@@ -133,6 +141,10 @@ export function FinanceSettingsForm() {
         weeklyReportEmailEnabled,
         monthlyReportEmailEnabled,
       });
+      // The saved copy lands in the cache directly (Review's on/off check);
+      // thresholds and the money rule then refresh every view built on them.
+      queryClient.setQueryData(financeKeys.preferences(), updated);
+      void invalidateAfter(queryClient, "preferences");
       setSaved(true);
     } catch {
       setError("Couldn't save your settings. Try again.");
@@ -149,6 +161,7 @@ export function FinanceSettingsForm() {
         onRetry={() => {
           setLoadError(false);
           setLoading(true);
+          setLoadAttempt((attempt) => attempt + 1);
         }}
       />
     );

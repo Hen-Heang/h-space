@@ -11,8 +11,9 @@ import { ReviewCategoryChanges } from "@/components/finance/review/review-catego
 import { ReviewSavingsProgressCard } from "@/components/finance/review/review-savings-progress";
 import { ReviewObservations } from "@/components/finance/review/review-observations";
 import { ReviewNextMonthPlan } from "@/components/finance/review/review-next-month-plan";
-import { getPreferences, getReviewSummary } from "@/lib/api/finance";
+import { getReviewSummary } from "@/lib/api/finance";
 import { monthKeyLabel } from "@/lib/finance-cron-time";
+import { usePreferences } from "@/lib/query/finance-queries";
 import { krw } from "@/lib/finance-format";
 import { monthKey, monthLabel } from "@/lib/finance-month";
 import type { ReviewSummary } from "@/types/finance";
@@ -42,7 +43,10 @@ export function ReviewView() {
     summary: null,
     error: null,
   });
-  const [reviewEnabled, setReviewEnabled] = useState<boolean | null>(null);
+  // If preferences fail to load, the review stays visible rather than
+  // assuming it was turned off.
+  const { data: preferences } = usePreferences();
+  const reviewEnabled = preferences?.monthlyReviewEnabled ?? true;
   // Lives here rather than in the plan section so the confirmation survives
   // the refetch that follows an apply.
   const [appliedCount, setAppliedCount] = useState<number | null>(null);
@@ -65,20 +69,6 @@ export function ReviewView() {
       active = false;
     };
   }, [monthOffset, requestKey]);
-
-  useEffect(() => {
-    let active = true;
-    void getPreferences()
-      .then((preferences) => {
-        if (active) setReviewEnabled(preferences.monthlyReviewEnabled);
-      })
-      .catch(() => {
-        if (active) setReviewEnabled(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   function changeMonth(nextOffset: number) {
     setMonthOffset(nextOffset);

@@ -7,6 +7,7 @@ import { MonthSelector } from "@/components/finance/ui/finance-primitives";
 import { getMoneyCoachInsight, upsertBudget, type MoneyCoachRecommendation } from "@/lib/api/finance";
 import { krw } from "@/lib/finance-format";
 import { monthKey, monthLabel } from "@/lib/finance-month";
+import { useInvalidateAfter } from "@/lib/query/finance-queries";
 
 type InsightState =
   | { status: "idle" }
@@ -21,6 +22,7 @@ export function MoneyCoachSection() {
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const invalidateAfter = useInvalidateAfter();
 
   function handleMonthChange(nextOffset: number) {
     setMonthOffset(nextOffset);
@@ -49,6 +51,7 @@ export function MoneyCoachSection() {
     setApplying(true);
     try {
       await upsertBudget({ categoryId: recommendation.categoryId, amountKrw: recommendation.suggestedBudgetKrw });
+      void invalidateAfter("budget");
       setApplied(true);
     } finally {
       setApplying(false);

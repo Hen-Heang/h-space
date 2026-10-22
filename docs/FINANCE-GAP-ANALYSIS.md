@@ -51,7 +51,7 @@ have yet rather than on the scheduler.
 | `/api/cron/daily-reminder` | Telegram nudge to log expenses | `DONE` — skips users who already logged that day |
 | `/api/cron/weekly-summary` | Weekly financial check-in | `DONE` |
 | `/api/cron/monthly-report` | The completed month, once per user | `DONE` |
-| `/api/cron/recurring` | Create due recurring transactions | `MISSING` — blocked on §2's recurring engine |
+| `/api/cron/recurring` | Create due recurring transactions | `DONE` — catches up every missed occurrence (capped per run) and is idempotent via a unique `(recurring_id, date)` index |
 | `/api/cron/savings` | Send or apply due savings contributions | `MISSING` — blocked on §2's savings auto-plan |
 | `/api/cron/cleanup-exchange-rates` | Delete rates older than 30 days | `MISSING` — rates accumulate forever |
 
@@ -77,7 +77,7 @@ touches them. Verified with a repo-wide grep across `lib/`, `app/`, and
 
 | Item | Status | Money Flow equivalent | Notes |
 |---|---|---|---|
-| `finance_recurring_transactions` | `SCHEMA_ONLY` | `/api/recurring` (GET/POST/PUT/DELETE), `components/transactions/RecurringSheet.tsx`, `/api/cron/recurring` | Deferred by request in the parity doc; it is the only phase left from the original 1–16 list. The savings auto-plan below depends on the same machinery. |
+| ~~`finance_recurring_transactions`~~ | `DONE` | `/api/recurring` (GET/POST/PUT/DELETE), `components/transactions/RecurringSheet.tsx`, `/api/cron/recurring` | `014_finance_recurring.sql` + `/api/finance/recurring`, `components/finance/transactions/recurring-sheet.tsx`. Unlike Money Flow: monthly/yearly rules keep an anchor day (no Jan 31 → Feb 28 → Mar 28 drift), missed days catch up in one run, and a rule due today applies on save. The savings auto-plan is still open. |
 | `finance_transaction_description_aliases` | `SCHEMA_ONLY` | `components/budget/MerchantNamesSheet.tsx`, `lib/finance/analysis/aliases.ts` | Luyra subscription detection still groups by exact normalized description, so `NETFLIX` and `NETFLIX.COM` stay separate. |
 | `finance_ai_insights` | `SCHEMA_ONLY` | `lib/finance/insights/{generate,rules,ai}.ts`, `20260727_ai_money_coach.sql` | Money Coach output is not persisted, so there is no Review / Apply / Snooze / Dismiss history and no rules-based (non-AI) insight tier. |
 | Savings `auto_monthly_usd`, `last_auto_month`, `reminder_day`, `skipped_month`, `last_reminder_month` | `SCHEMA_ONLY` | `savings/_components/SavingsCoach.tsx`, `20260320_savings_auto_deposit.sql`, `20260718164519_savings_confirmation_reminders.sql` | Contributions are manual-only. No planned amount, no reminder day, no month skip, no progress celebration. |
@@ -129,22 +129,25 @@ Luyra already has debounced search, a filter panel, and templates
 - **No route-level boundaries.** Luyra has zero `loading.tsx`, `error.tsx`,
   `not-found.tsx`, or `global-error.tsx`. Money Flow ships one per route.
   Today an API failure inside a Finance route has no boundary to catch it.
-- **No client-side query caching.** Money Flow moved categories, budgets,
-  analytics, and monthly spending onto TanStack Query.
-  `components/finance/transactions/transaction-list.tsx` builds a manual
-  `requestKey` string and refetches on every navigation.
-- **Unapplied migration.**
-  `db/migrations/007_finance_savings_contributions_cascade.sql` exists but,
-  per `db/README.md` and the parity doc, has not been applied. Until it is,
-  deleting a savings goal that has any contribution history fails with a
-  foreign-key violation.
+- ~~**No client-side query caching.**~~ `DONE` — lookups, preferences, the
+  transaction list (infinite query), overview, analytics, budgets, and
+  savings goals are on TanStack Query (`lib/query/finance-queries.ts`).
+  Which writes make which screens stale is one map there (`invalidateAfter`),
+  tested in `finance-queries.test.ts`; transaction writes arrive through the
+  existing `emitTransactionChanged` event. Still uncached on purpose: the
+  exchange rate (server-cached), Review, Subscriptions, reports, and the
+  contribution-history sheet.
+- ~~**Unapplied migration.**~~ Resolved — verified 2026-10-22 against the
+  production database: `finance_savings_contributions_goal_id_fkey` is
+  `ON DELETE CASCADE`, so `007_finance_savings_contributions_cascade.sql` is
+  applied and deleting a goal with contribution history works.
 
 ## Suggested order
 
 1. ~~**Cron infrastructure + `vercel.json`.**~~ Done — see §1. Still inert
    until the app is deployed and `CRON_SECRET` is set.
 2. ~~**Category and payment-method CRUD.**~~ Done.
-3. **Recurring transactions.** The table is already there, the savings
+3. ~~**Recurring transactions.**~~ Done. The table is already there, the savings
    auto-plan reuses the same due-date machinery, and the two remaining cron
    jobs (`recurring`, `savings`) are blocked behind it.
 4. **Route loading/error boundaries, then a Vitest setup** over

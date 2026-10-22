@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { BarChart3 } from "lucide-react";
 import { FinanceEmptyState, FinanceErrorState, FinanceMetricGrid, FinanceSection, MonthSelector } from "@/components/finance/ui/finance-primitives";
 import { AnalyticsSummaryCards } from "@/components/finance/analytics/analytics-summary";
@@ -8,9 +9,8 @@ import { CashFlowTrendChart } from "@/components/finance/analytics/cash-flow-tre
 import { CategoryDistribution } from "@/components/finance/analytics/category-distribution";
 import { PaymentMethodBreakdown } from "@/components/finance/analytics/payment-method-breakdown";
 import { MonthComparison } from "@/components/finance/analytics/month-comparison";
-import { getAnalyticsSummary } from "@/lib/api/finance";
 import { monthKey, monthLabel } from "@/lib/finance-month";
-import type { AnalyticsSummary } from "@/types/finance";
+import { analyticsQuery } from "@/lib/query/finance-queries";
 
 function AnalyticsLoading() {
   return (
@@ -31,32 +31,11 @@ function AnalyticsLoading() {
 
 export function AnalyticsView() {
   const [monthOffset, setMonthOffset] = useState(0);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const requestKey = `${monthOffset}:${refreshKey}`;
-  const [result, setResult] = useState<{ key: string; summary: AnalyticsSummary | null; error: string | null }>({
-    key: "",
-    summary: null,
-    error: null,
-  });
-  const loading = result.key !== requestKey;
-  const summary = loading ? null : result.summary;
-  const error = loading ? null : result.error;
-
-  useEffect(() => {
-    let active = true;
-    void getAnalyticsSummary(monthKey(monthOffset))
-      .then((data) => {
-        if (active) setResult({ key: requestKey, summary: data, error: null });
-      })
-      .catch(() => {
-        if (active) {
-          setResult({ key: requestKey, summary: null, error: "We couldn't load your analytics. Try again in a moment." });
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, [monthOffset, requestKey]);
+  const analytics = useQuery(analyticsQuery(monthKey(monthOffset)));
+  const summary = analytics.data ?? null;
+  const loading = analytics.isPending;
+  // A failed background refresh keeps the month already on screen.
+  const error = analytics.isError && !analytics.data ? "We couldn't load your analytics. Try again in a moment." : null;
 
   return (
     <div className="space-y-6">
@@ -72,7 +51,7 @@ export function AnalyticsView() {
       </div>
 
       {error ? (
-        <FinanceErrorState title="Analytics unavailable" description={error} onRetry={() => setRefreshKey((key) => key + 1)} />
+        <FinanceErrorState title="Analytics unavailable" description={error} onRetry={() => void analytics.refetch()} />
       ) : loading || !summary ? (
         <AnalyticsLoading />
       ) : summary.totals.transactionCount === 0 ? (

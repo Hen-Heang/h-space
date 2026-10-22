@@ -43,7 +43,7 @@ function describeUsage(usage: LookupUsage): string {
   if (usage.transactions > 0) parts.push(plural(usage.transactions, "transaction"));
   if (usage.budgets > 0) parts.push(plural(usage.budgets, "budget"));
   if (usage.templates > 0) parts.push(plural(usage.templates, "template"));
-  if (usage.recurring > 0) parts.push(plural(usage.recurring, "recurring entry"));
+  if (usage.recurring > 0) parts.push(plural(usage.recurring, "recurring rule"));
   return parts.join(", ");
 }
 

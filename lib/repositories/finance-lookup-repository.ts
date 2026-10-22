@@ -126,8 +126,8 @@ function toUsage(row: UsageRow): LookupUsage {
 // Every table whose foreign key points at finance_categories. None of them
 // declare ON DELETE, so a referenced row makes the delete fail at the database
 // with a raw constraint error — counting first turns that into a clear 409.
-// finance_recurring_transactions is included even though no feature writes to
-// it yet: the constraint exists regardless of whether the app uses the table.
+// finance_recurring_transactions counts too: a recurring rule that still files
+// into this category would otherwise keep creating rows that point at it.
 export async function countCategoryUsage(id: string, userId: string): Promise<LookupUsage> {
   const rows = (await sql`
     select

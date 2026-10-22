@@ -38,6 +38,35 @@ export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 export const updateTransactionSchema = createTransactionSchema;
 export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
 
+export const recurringFrequencySchema = z.enum(["daily", "weekly", "monthly", "yearly"]);
+
+// One schema for create and edit — a rule is always saved whole. `nextDate`
+// is the next occurrence still to create; its day of month becomes the
+// rule's anchor for monthly/yearly schedules.
+export const recurringRuleSchema = z
+  .object({
+    type: transactionTypeSchema,
+    description: z.string().trim().min(1, "Description is required").max(200),
+    currency: currencySchema.default("KRW"),
+    amountKrw: z.number().positive().optional(),
+    originalAmount: z.number().positive().optional(),
+    categoryId: z.string().uuid().nullable().optional(),
+    paymentMethodId: z.string().uuid().nullable().optional(),
+    note: z.string().trim().max(500).nullable().optional(),
+    frequency: recurringFrequencySchema,
+    nextDate: z.string().date(),
+    isActive: z.boolean().default(true),
+  })
+  .refine((data) => data.currency !== "KRW" || data.amountKrw !== undefined, {
+    message: "Amount is required",
+    path: ["amountKrw"],
+  })
+  .refine((data) => data.currency !== "USD" || data.originalAmount !== undefined, {
+    message: "Amount is required",
+    path: ["originalAmount"],
+  });
+export type RecurringRuleInput = z.infer<typeof recurringRuleSchema>;
+
 export const transactionSortSchema = z.enum(["date_desc", "date_asc", "amount_desc", "amount_asc"]);
 export type TransactionSort = z.infer<typeof transactionSortSchema>;
 
