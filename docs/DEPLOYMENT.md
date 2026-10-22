@@ -57,15 +57,13 @@ on. The pooled host contains `-pooler` in its name.
 | `RESEND_FROM_EMAIL` | server | Custom sender address | Sends from Resend's shared sandbox address, which is more likely to be filtered. |
 | `CRON_SECRET` | server, secret | The scheduled Telegram jobs in `vercel.json` | Every `/api/cron/*` route returns 503, so nothing is scheduled — and nothing is exposed. |
 
-### Do not set these
+### Remove these if present
 
 `NEXT_PUBLIC_MONEY_FLOW_SUPABASE_URL` and
-`NEXT_PUBLIC_MONEY_FLOW_SUPABASE_PUBLISHABLE_KEY` are listed in
-`.env.example` but are **dead**. The only files that read them —
-`components/finance/money-flow-dashboard.tsx` and
-`money-flow-session.tsx` — are not imported by any route. Finance now runs
-entirely on the native Neon API. Setting them does nothing; they are a
-cleanup candidate, not a deployment step.
+`NEXT_PUBLIC_MONEY_FLOW_SUPABASE_PUBLISHABLE_KEY` belonged to the first,
+read-only Money Flow test slice. That code is gone and nothing reads them, so
+delete them from the Vercel project's environment variables if they are still
+set. Finance runs entirely on the native Neon API.
 
 ## 3. Supabase Auth URLs
 
