@@ -88,4 +88,28 @@ describe("theme helpers", () => {
     expect(() => setThemePreference("dark")).not.toThrow();
     expect(browser.theme()).toBe("dark");
   });
+
+  it("keeps reporting the unsaved choice when storage is blocked, so toggles and OS changes respect it", () => {
+    stubBrowser({ osDark: false, storageThrows: true });
+    setThemePreference("dark");
+    // Toggles read this; it must not fall back to "system" while the page is dark.
+    expect(readPreference()).toBe("dark");
+    // watchTheme only follows the OS when the preference is "system".
+    expect(readPreference() === "system").toBe(false);
+
+    setThemePreference("system");
+    expect(readPreference()).toBe("system");
+  });
+
+  it("goes back to trusting storage once a save succeeds", () => {
+    const blocked = stubBrowser({ osDark: false, storageThrows: true });
+    setThemePreference("dark");
+    expect(blocked.theme()).toBe("dark");
+
+    const working = stubBrowser({ osDark: false });
+    setThemePreference("light");
+    expect(working.store.get(THEME_STORAGE_KEY)).toBe("light");
+    working.store.set(THEME_STORAGE_KEY, "dark"); // another tab's change
+    expect(readPreference()).toBe("dark");
+  });
 });

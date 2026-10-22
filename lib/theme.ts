@@ -28,7 +28,15 @@ export function isThemePreference(value: unknown): value is ThemePreference {
   return value === "system" || value === "light" || value === "dark";
 }
 
+// The choice made on this page view when it couldn't be saved (storage
+// blocked, e.g. private mode). Without it, toggles would re-read storage, see
+// nothing, show "System" while the page is dark, and let an OS change undo
+// the user's explicit choice. Null while storage works — storage stays the
+// source of truth then, so changes from other tabs still apply.
+let unsavedPreference: ThemePreference | null = null;
+
 export function readPreference(): ThemePreference {
+  if (unsavedPreference) return unsavedPreference;
   try {
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
     return isThemePreference(stored) ? stored : "system";
@@ -53,8 +61,10 @@ export function setThemePreference(preference: ThemePreference): void {
   try {
     if (preference === "system") window.localStorage.removeItem(THEME_STORAGE_KEY);
     else window.localStorage.setItem(THEME_STORAGE_KEY, preference);
+    unsavedPreference = null;
   } catch {
-    // Storage blocked (private mode): the theme still applies for this page view.
+    // Storage blocked (private mode): remember the choice for this page view.
+    unsavedPreference = preference;
   }
   applyResolvedTheme(resolveTheme(preference));
   window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT, { detail: preference }));
