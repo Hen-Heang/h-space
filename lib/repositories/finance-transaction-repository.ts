@@ -436,48 +436,6 @@ export async function sumExpenseByDayForRange(
   return rows.map((row) => ({ date: row.date, amountKrw: Number(row.amount_krw) }));
 }
 
-export interface RecurringExpenseGroup {
-  key: string;
-  displayName: string;
-  categoryId: string | null;
-  dates: string[];
-  amounts: number[];
-  occurrenceCount: number;
-}
-
-// Groups expenses by normalized description — the same payment recurring
-// over time (subscriptions, rent, etc). `since` bounds how far back to look
-// so one-off matches from years ago don't count as "recurring".
-export async function findRecurringExpenseGroups(userId: string, since: string): Promise<RecurringExpenseGroup[]> {
-  const rows = (await sql`
-    select
-      lower(trim(description)) as key,
-      (array_agg(description order by date desc))[1] as display_name,
-      (array_agg(category_id order by date desc))[1] as category_id,
-      array_agg(to_char(date, 'YYYY-MM-DD') order by date desc) as dates,
-      array_agg(amount_krw order by date desc) as amounts,
-      count(*)::int as occurrence_count
-    from finance_transactions
-    where user_id = ${userId} and type = 'expense' and date >= ${since}
-      and description is not null and trim(description) <> ''
-    group by lower(trim(description))
-    having count(*) >= 2
-    order by count(*) desc
-  `) as {
-    key: string;
-    display_name: string;
-    category_id: string | null;
-    dates: string[];
-    amounts: string[];
-    occurrence_count: number;
-  }[];
-
-  return rows.map((r) => ({
-    key: r.key,
-    displayName: r.display_name,
-    categoryId: r.category_id,
-    dates: r.dates,
-    amounts: r.amounts.map(Number),
-    occurrenceCount: r.occurrence_count,
-  }));
-}
+// Recurring-expense grouping for subscription detection lives in
+// lib/finance/merchant-names.ts, over findExpensesSince — it needs the
+// user's merchant merges, which plain SQL grouping can't apply.

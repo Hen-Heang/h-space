@@ -4,11 +4,11 @@ import {
   findSubscriptionStatuses,
   upsertSubscriptionStatus,
 } from "@/lib/repositories/finance-subscription-repository";
-import { findRecurringExpenseGroups } from "@/lib/repositories/finance-transaction-repository";
+import { createMerchantResolver, groupRecurringExpenses } from "@/lib/finance/merchant-names";
+import { findExpensesSince, findMerchantAliases } from "@/lib/repositories/finance-merchant-alias-repository";
+import { lookbackStart, MERCHANT_LOOKBACK_MONTHS as LOOKBACK_MONTHS } from "@/lib/services/finance-merchant-alias-service";
 import type { SetSubscriptionStatusInput } from "@/lib/validation/finance";
 import type { DetectedSubscription } from "@/types/finance";
-
-const LOOKBACK_MONTHS = 6;
 
 function average(values: number[]): number {
   return values.reduce((sum, v) => sum + v, 0) / values.length;
@@ -28,19 +28,17 @@ function classifyFrequency(dates: string[]): "monthly" | "yearly" | "irregular" 
   return "irregular";
 }
 
-// Detects recurring payments straight from transaction history — simplified
-// from Money Flow's merchant-alias-grouping + overlap-detection version:
-// groups by exact normalized description only, no fuzzy matching.
+// Detects recurring payments from transaction history, grouped by merchant:
+// cosmetic spelling variants ("NETFLIX" / "Netflix.com") group automatically,
+// and merges the user confirmed (lib/finance/merchant-names.ts) group the rest.
 export async function listDetectedSubscriptions(userId: string): Promise<DetectedSubscription[]> {
-  const since = new Date();
-  since.setMonth(since.getMonth() - LOOKBACK_MONTHS);
-  const sinceStr = since.toISOString().slice(0, 10);
-
-  const [groups, categories, statuses] = await Promise.all([
-    findRecurringExpenseGroups(userId, sinceStr),
+  const [expenses, aliases, categories, statuses] = await Promise.all([
+    findExpensesSince(userId, lookbackStart()),
+    findMerchantAliases(userId),
     findCategoriesByUser(userId),
     findSubscriptionStatuses(userId),
   ]);
+  const groups = groupRecurringExpenses(expenses, createMerchantResolver(aliases));
 
   const categoryById = new Map(categories.map((c) => [c.id, c]));
 
