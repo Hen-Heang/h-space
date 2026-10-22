@@ -1,12 +1,19 @@
 import type { LucideIcon } from "lucide-react"
-import { BookOpenText, Headphones, Languages, MessagesSquare } from "lucide-react"
+import {
+  BookOpen,
+  BookOpenText,
+  Headphones,
+  Languages,
+  MessagesSquare,
+  Mic,
+  Sparkles,
+} from "lucide-react"
 
-// Single source of truth for the `/learn` (Study) hub's cards. Vocabulary,
-// Practice, and Coach each already have their own primary nav destination
-// (see `primaryNavItems` in lib/navigation.ts) and are deliberately not
-// duplicated here — this hub covers the Korean study material that has no
-// nav slot of its own: workplace/daily phrases, foundations, reading, and
-// listening. Foundations and Reading are modes of the merged Phrasebook hub
+// Single source of truth for the `/learn` (Study) hub's cards. `/learn` is the
+// landing page of the mobile/tablet "Korean" tab (see `primaryNavItems` in
+// lib/navigation.ts), which is the only Korean slot in that nav — so this hub
+// is the front door to every Korean area: practice, vocabulary, the voice
+// coach, phrases, foundations, reading, and listening. Foundations and Reading are modes of the merged Phrasebook hub
 // (`?mode=foundations` / `?mode=reading` on `/phrasebook` — see
 // app/(main)/phrasebook/page.tsx), not separate routes.
 export type LearningModule = {
@@ -22,6 +29,30 @@ export type LearningModule = {
 }
 
 export const learningModules: LearningModule[] = [
+  {
+    id: "practice",
+    title: "Daily Practice",
+    description: "Today's Korean practice session.",
+    href: "/practice",
+    icon: Sparkles,
+    badge: "Korean",
+  },
+  {
+    id: "vocab",
+    title: "Vocabulary",
+    description: "Review your words with spaced repetition.",
+    href: "/vocab",
+    icon: BookOpen,
+    badge: "Korean",
+  },
+  {
+    id: "korean-coach",
+    title: "Korean Coach",
+    description: "Listening and speaking practice with AI feedback.",
+    href: "/korean-coach",
+    icon: Mic,
+    badge: "Korean",
+  },
   {
     id: "phrasebook",
     title: "Workplace & Daily Phrases",

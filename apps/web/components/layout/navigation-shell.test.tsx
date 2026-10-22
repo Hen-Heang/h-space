@@ -92,33 +92,43 @@ describe("MobileBottomNav", () => {
     render(<MobileBottomNav pathname={pathname} searchParams={searchParams} />)
   }
 
-  it("renders exactly Hengo V2's five destinations, no More trigger", () => {
+  it("renders the hub's five module destinations, no More trigger", () => {
     setup("/home")
     const nav = screen.getByRole("navigation", { name: "Primary" })
     expect(within(nav).getAllByRole("listitem")).toHaveLength(5)
-    for (const label of ["Today", "Vocabulary", "Practice", "Coach", "Study"]) {
+    for (const label of ["Today", "Goals", "Korean", "Notes", "Progress"]) {
       expect(within(nav).getByText(label)).toBeTruthy()
     }
     expect(within(nav).queryByRole("button", { name: /more/i })).toBeNull()
   })
 
-  it("uses the V2 route mapping, in order", () => {
+  it("uses the hub route mapping, in order", () => {
     setup("/home")
     const hrefs = screen.getAllByRole("link").map((el) => el.getAttribute("href"))
-    expect(hrefs).toEqual(["/home", "/vocab", "/practice", "/korean-coach", "/learn"])
+    expect(hrefs).toEqual(["/home", "/goals", "/learn", "/notes", "/progress"])
   })
 
   it("marks the current destination with aria-current", () => {
-    setup("/practice")
+    setup("/notes")
     const current = screen
       .getAllByRole("link")
       .filter((el) => el.getAttribute("aria-current") === "page")
     expect(current).toHaveLength(1)
-    expect(current[0].getAttribute("href")).toBe("/practice")
+    expect(current[0].getAttribute("href")).toBe("/notes")
   })
 
-  it("does not mark any tab current on a route outside the five destinations", () => {
-    setup("/statistics")
+  it("keeps the Progress tab lit on the pages its hub links to", () => {
+    for (const route of ["/progress", "/statistics", "/achievements", "/review/evening"]) {
+      setup(route)
+      expect(screen.getByRole("link", { name: "Progress" }).getAttribute("aria-current")).toBe(
+        "page",
+      )
+      cleanup()
+    }
+  })
+
+  it("does not mark any tab current on a route outside the five modules", () => {
+    setup("/growth/recovery")
     expect(
       screen.queryAllByRole("link").filter((el) => el.getAttribute("aria-current") === "page"),
     ).toHaveLength(0)
@@ -131,17 +141,25 @@ describe("MobileBottomNav", () => {
     expect(first.getAttribute("aria-current")).toBe("page")
   })
 
-  it("labels /korean-coach as Coach and /learn as Study, even though their routes are unchanged", () => {
-    setup("/korean-coach")
-    expect(screen.getByRole("link", { name: "Coach" }).getAttribute("href")).toBe("/korean-coach")
-    cleanup()
-    setup("/learn")
-    expect(screen.getByRole("link", { name: "Study" }).getAttribute("href")).toBe("/learn")
+  it("lights the Korean tab on every Korean Learning route, not just /learn", () => {
+    for (const route of ["/learn", "/vocab", "/practice", "/korean-coach", "/phrasebook"]) {
+      setup(route)
+      expect(screen.getByRole("link", { name: "Korean" }).getAttribute("aria-current")).toBe("page")
+      cleanup()
+    }
   })
 
-  it("no longer has Goals, Progress, Growth, or Memory tabs — only the five Korean-learning destinations", () => {
+  it("lights the Goals tab across the Plan section (Calendar, Tasks, Inbox)", () => {
+    for (const route of ["/goals", "/goals/calendar", "/goals/tasks", "/inbox"]) {
+      setup(route)
+      expect(screen.getByRole("link", { name: "Goals" }).getAttribute("aria-current")).toBe("page")
+      cleanup()
+    }
+  })
+
+  it("no longer spends tabs on individual Korean pages", () => {
     setup("/home")
-    for (const label of ["Goals", "Progress", "Growth", "Memory", "Learn"]) {
+    for (const label of ["Vocabulary", "Practice", "Coach", "Study"]) {
       expect(screen.queryByRole("link", { name: label })).toBeNull()
     }
   })
@@ -546,7 +564,7 @@ describe("WorkspaceFlyout", () => {
         active
       />,
     )
-    const panel = screen.getByRole("navigation", { name: "Learn" })
+    const panel = screen.getByRole("navigation", { name: "Korean Learning" })
     expect(within(panel).queryAllByRole("link")).toHaveLength(0)
   })
 
@@ -595,7 +613,7 @@ describe("QuickSwitcher", () => {
     expect(screen.queryByText("Pages")).toBeNull()
     // Section headings — getAllByText because a section label can also appear
     // inside an entry's own description text.
-    for (const label of ["Learn", "Plan", "Grow", "Memory"]) {
+    for (const label of ["Korean Learning", "Plan", "Grow", "Memory"]) {
       expect(screen.getAllByText(label).length).toBeGreaterThan(0)
     }
     expect(screen.getByRole("option", { name: /vocabulary/i })).toBeTruthy()

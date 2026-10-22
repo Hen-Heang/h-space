@@ -21,6 +21,7 @@ import {
   secondaryNavItems,
   sectionRoutePrefixes,
   shippedItems,
+  sidebarSections,
   todayItem,
   visibleSidebarItems,
   workspaceNavSections,
@@ -577,40 +578,44 @@ describe("Coming Soon filtering", () => {
   })
 })
 
-describe("Hengo V2 primary navigation (Phase 1: product shell)", () => {
-  it("has exactly five destinations, in the required order", () => {
+describe("Hub primary navigation (tablet rail + mobile bottom bar)", () => {
+  it("has exactly five destinations, one per module, in order", () => {
     expect(primaryNavItems.map((i) => i.label)).toEqual([
       "Today",
-      "Vocabulary",
-      "Practice",
-      "Coach",
-      "Study",
+      "Goals",
+      "Korean",
+      "Notes",
+      "Progress",
     ])
     expect(primaryNavItems.map((i) => i.href)).toEqual([
       "/home",
-      "/vocab",
-      "/practice",
-      "/korean-coach",
+      "/goals",
       "/learn",
+      "/notes",
+      "/progress",
     ])
   })
 
-  it("keeps Study pointed at /learn — same route, only the display label changes", () => {
-    const study = primaryNavItems.find((i) => i.label === "Study")!
-    expect(study.href).toBe("/learn")
+  it("keeps Korean pointed at /learn — same route, only the display label changes", () => {
+    const korean = primaryNavItems.find((i) => i.label === "Korean")!
+    expect(korean.href).toBe("/learn")
     // The underlying registry item keeps its own title for page headers/breadcrumbs.
     expect(getActiveNavItem("/learn")?.label).toBe("Learn")
   })
 
-  it("keeps Coach pointed at /korean-coach — same route, only the display label changes", () => {
-    const coach = primaryNavItems.find((i) => i.label === "Coach")!
-    expect(coach.href).toBe("/korean-coach")
-    expect(getActiveNavItem("/korean-coach")?.label).toBe("Korean Coach")
-  })
-
-  it("resolves active state per item, matching each item's own route", () => {
-    expect(isNavigationItemActive({ pathname: "/vocab", item: navItem("learn-vocab") })).toBe(true)
-    for (const route of ["/home", "/vocab", "/practice", "/korean-coach", "/learn"]) {
+  it("resolves active state to exactly one tab on each module's routes", () => {
+    for (const route of [
+      "/home",
+      "/goals",
+      "/goals/calendar",
+      "/inbox",
+      "/learn",
+      "/vocab",
+      "/practice",
+      "/korean-coach",
+      "/notes",
+      "/progress",
+    ]) {
       const activeCount = primaryNavItems.filter((item) =>
         isNavigationItemActive({ pathname: route, item }),
       ).length
@@ -622,6 +627,22 @@ describe("Hengo V2 primary navigation (Phase 1: product shell)", () => {
     for (const item of primaryNavItems) {
       expect(getActiveNavItem(item.href)).toBeDefined()
     }
+  })
+
+  it("orders the desktop sidebar personal tools first, Korean Learning after, and drops no section", () => {
+    expect(sidebarSections.map((s) => s.id)).toEqual([
+      "today",
+      "plan",
+      "grow",
+      "memory",
+      "history",
+      "learn",
+      "ai",
+    ])
+    // A section added to the registry must also get a place in the sidebar order.
+    const withShippedItems = navSections.filter((s) => shippedItems(s.items).length > 0)
+    expect(sidebarSections).toHaveLength(withShippedItems.length)
+    expect(sidebarSections.find((s) => s.id === "learn")?.label).toBe("Korean Learning")
   })
 
   it("still leaves every removed-from-chrome route registered and reachable by URL", () => {

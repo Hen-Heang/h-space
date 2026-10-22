@@ -21,13 +21,13 @@ export const SIDEBAR_COLLAPSED_WIDTH = 72
 
 /**
  * Every shipped destination, grouped by section — `sidebarSections` from
- * `lib/navigation.ts`, in registry order. Expanded it's a labelled 232px rail
- * with section headings; collapsed it's a 72px icon column with the groups
- * separated by rules and the headings kept for screen readers.
+ * `lib/navigation.ts`: personal tools first, then the Korean Learning module.
+ * Expanded it's a labelled 232px rail with section headings; collapsed it's a
+ * 72px icon column with the groups separated by rules and the headings kept
+ * for screen readers.
  *
- * This replaced V2's five-item rail (Today · Vocabulary · Practice · Coach ·
- * Study, still exported as `primaryNavItems` and still what the tablet rail
- * and mobile bottom bar render). V2 hid ~28 built, working routes behind
+ * This replaced V2's five-item rail (the tablet rail and mobile bottom bar
+ * still render a five-item `primaryNavItems`). V2 hid ~28 built, working routes behind
  * Quick Switcher search; they now have rows you can click. `soon`
  * placeholders are excluded — see `sidebarSections`.
  *

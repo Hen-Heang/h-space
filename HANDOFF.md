@@ -10,8 +10,14 @@ summarized below.
 - **Updated:** 2026-10-21
 - **Branch:** `main` (aligned with `origin/main` before these uncommitted edits)
 - **Last commit:** 8f4e367 — `update skill with claude`
-- **Working tree:** H-Space identity/dashboard changes are uncommitted. No
-  unrelated pre-existing changes were present when the work began.
+- **Working tree:** the H-Space rebrand was committed in `95db444`. One
+  uncommitted follow-up (2026-10-22): an "Engineering highlights" list in
+  `apps/web/components/home/AboutHSpace.tsx` — five claims, each traced to
+  code: RLS via `requireUser`, Zod + `generateObject` + SSE, Ask Hengo FTS
+  citations, SM-2 in `lib/srs.ts`, Vitest/Playwright/PWA push.
+- **Known failing test:** `lib/goals.test.ts` > "shows 'Due today'…" fails on
+  2026-10-22 with or without that change (returns "Overdue by 1d"); it passed
+  on 10-21, so it looks date/timezone-dependent. Not yet investigated.
 
 ## Current focus
 

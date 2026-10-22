@@ -9,13 +9,12 @@ const TAB =
   "relative flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-lg py-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
 
 /**
- * V2's five mobile destinations, filling the bar exactly — Today, Vocabulary,
- * Practice, Coach, Study (`primaryNavItems`). No "More" trigger: with only
- * five, single-route primary destinations there is nothing left to hide
- * behind an overflow sheet. Everything else the app still supports (Goals,
- * Habits, Recovery, Notes, Settings, general AI chat, …) stays a real,
- * registered route reachable by direct URL and — for Settings — the mobile
- * header's action row; it simply has no tab here. Hengo Coach's own floating
+ * The hub's five mobile destinations, filling the bar exactly — Today, Goals,
+ * Korean, Notes, Progress (`primaryNavItems`), one per module. No "More"
+ * trigger: everything else the app still supports (Vocabulary, Practice,
+ * Habits, Recovery, Settings, general AI chat, …) stays a real, registered
+ * route reachable from those hubs, by direct URL, and — for Settings — the
+ * mobile header's action row; it simply has no tab here. Hengo Coach's own floating
  * launcher (`components/chat/FloatingAiCoach`) still gives one-tap access to
  * the general assistant without needing a slot in this bar.
  *

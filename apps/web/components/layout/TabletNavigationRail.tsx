@@ -16,10 +16,10 @@ import { ProfileMenu } from "./ProfileMenu"
 export const RAIL_WIDTH = 80
 
 /**
- * 768–1199px navigation. V2's five destinations (Today, Vocabulary, Practice,
- * Coach, Study — `primaryNavItems`) as a flat icon column; no flyouts needed
- * with only five, single-route items. The mobile bottom bar is never used at
- * these widths.
+ * 768–1199px navigation. The hub's five destinations (Today, Goals, Korean,
+ * Notes, Progress — `primaryNavItems`) as a flat icon column; no flyouts
+ * needed with only five items. The mobile bottom bar is never used at these
+ * widths.
  */
 export function TabletNavigationRail({
   pathname,

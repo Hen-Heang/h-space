@@ -64,6 +64,13 @@ export type NavMatch = {
    * share a common path with the hub itself.
    */
   sectionId?: NavSectionId
+  /**
+   * Extra route prefixes that also activate the item — for a hub whose child
+   * routes live elsewhere but whose section holds unrelated siblings too, so
+   * `sectionId` would over-match (e.g. Progress → /statistics, but not
+   * Recovery).
+   */
+  alsoPathnames?: string[]
 }
 
 export type NavItem = {
@@ -287,8 +294,10 @@ export const navSections: NavSection[] = [
     items: [todayItem],
   },
   {
+    // Labelled as the module it is — H-Space is a multi-app hub and Korean
+    // learning is one area of it, so a generic "Learn" heading oversold it.
     id: "learn",
-    label: "Learn",
+    label: "Korean Learning",
     icon: Sparkles,
     color: "text-violet-500",
     href: "/learn",
@@ -683,25 +692,23 @@ function section(id: NavSectionId): NavSection {
   return navSections.find((s) => s.id === id)!
 }
 
-// ─── V2 primary navigation ─────────────────────────────────────────────────────
+// ─── Hub primary navigation ────────────────────────────────────────────────────
 //
-// Hengo V2 narrows the whole product to Korean learning. `primaryNavItems` is
-// the ONLY list the desktop sidebar, tablet rail, and mobile bottom bar render
-// as their own row — five flat destinations, no expandable workspace groups,
-// no "More" overflow. Everything else in `navSections` above (Goals, Habits,
-// Recovery, Journal, Progress, Achievements, Statistics, History, Notes,
-// Memories, Ask Hengo, general AI chat, Scenarios, Exam Prep, …) stays a real,
-// registered route — used for page titles, breadcrumbs, active-state
-// matching, and the Quick Switcher — it just has no chrome row anymore.
-// Coach and Study reuse their registry item's href/icon/match via spread,
-// only overriding `id` (so the display variant doesn't collide with the
-// registry item elsewhere) and `label` (a shorter, V2-only display name — the
-// underlying route's own page title/breadcrumb is untouched), the same
-// pattern the old `bottomTabs`'s `tab-learn` override used.
+// H-Space is a personal hub of several apps, so the tablet rail and mobile
+// bottom bar give each module one tab instead of spending all five on Korean
+// learning (Hengo V2's original Today · Vocabulary · Practice · Coach · Study).
+// Each tab reuses its registry item's href/icon via spread, overriding only
+// `id` (so the display variant doesn't collide with the registry item),
+// `label`, and — for hub tabs — `match`, the same pattern the old
+// `bottomTabs`'s `tab-learn` override used. Everything not given a tab stays a
+// real, registered route reachable from those hubs, the desktop sidebar, and
+// the Quick Switcher.
 /**
  * Shorter display names for the two destinations whose registry labels are
- * longer than a nav row wants. One map so the sidebar, tablet rail and mobile
- * bottom bar can't drift into calling the same route different things — the
+ * longer than a nav row wants, used by the desktop sidebar. The one
+ * deliberate exception is the rail/bottom bar's "Korean" tab: it also lands on
+ * `/learn` but stands for the whole Korean Learning module (section-wide
+ * match), so it takes the module's name rather than the page's "Study". The
  * underlying page title and breadcrumb still come from the registry label.
  */
 const NAV_DISPLAY_LABELS: Record<string, string> = {
@@ -716,10 +723,48 @@ function withDisplayLabel(item: NavItem): NavItem {
 
 export const primaryNavItems: NavItem[] = [
   todayItem,
-  navItem("learn-vocab"),
-  navItem("learn-practice"),
-  { ...withDisplayLabel(navItem("learn-korean-coach")), id: "primary-coach" },
-  { ...withDisplayLabel(navItem("learn-hub")), id: "primary-study" },
+  // Section-wide match so Calendar, Tasks, Inbox and Roadmap keep Goals lit
+  // instead of going dark — none of them has a tab of its own here.
+  {
+    ...navItem("goals-goals"),
+    id: "primary-goals",
+    match: { pathname: "/goals", sectionId: "plan" },
+  },
+  // `/vocab`, `/korean-coach`, `/phrasebook`, … don't share the `/learn`
+  // prefix, so the whole Korean Learning section lights this tab.
+  {
+    ...navItem("learn-hub"),
+    id: "primary-korean",
+    label: "Korean",
+    match: { pathname: "/learn", sectionId: "learn" },
+  },
+  { ...notesItem, id: "primary-notes" },
+  // No sectionId match: "grow" also holds Recovery/Habits/Journal, which
+  // shouldn't light a tab labelled Progress. The pages the /progress hub links
+  // to are listed instead, so drilling into them keeps the tab lit.
+  {
+    ...progressHubItem,
+    id: "primary-progress",
+    match: {
+      pathname: "/progress",
+      alsoPathnames: ["/review", "/achievements", "/statistics"],
+    },
+  },
+]
+
+/**
+ * Desktop sidebar section order. Personal tools first, then the Korean
+ * Learning module and its AI coach — the registry order in `navSections` is
+ * left alone because `getActiveNavItem` / `getSectionForPath` are first-match.
+ */
+const SIDEBAR_SECTION_ORDER: NavSectionId[] = [
+  "today",
+  "plan",
+  "grow",
+  "memory",
+  "history",
+  "learn",
+  "ai",
 ]
 
 /**
@@ -729,14 +774,14 @@ export const primaryNavItems: NavItem[] = [
  * This deliberately ignores `showInSidebar`. That flag was V2's way of hiding
  * ~28 built, working routes behind Quick Switcher search only; the audit found
  * that leaves most of the product with no front door you can click. Sections
- * and order come straight from `navSections`, so a new route still only needs
- * registering there.
+ * come straight from `navSections` (ordered by `SIDEBAR_SECTION_ORDER`), so a
+ * new route still only needs registering there.
  *
  * `soon` placeholders are filtered out: they have no page behind them, so a
  * row would be a dead end. They stay in `navSections` (and in `moreComingSoon`)
  * for whoever builds them.
  */
-export const sidebarSections: NavSection[] = navSections
+export const sidebarSections: NavSection[] = SIDEBAR_SECTION_ORDER.map(section)
   .map((section) => ({ ...section, items: shippedItems(section.items).map(withDisplayLabel) }))
   .filter((section) => section.items.length > 0)
 
@@ -830,6 +875,10 @@ export function isNavigationItemActive({
   // `/reading` aren't under `/learn`, but should still light it up).
   if (match.sectionId) {
     return getSectionForPath(pathname, searchParams)?.id === match.sectionId
+  }
+
+  if (match.alsoPathnames?.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return true
   }
 
   const includeChildren = match.includeChildren ?? true
