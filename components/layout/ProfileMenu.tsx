@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChevronsUpDown, LogOut, ShieldCheck } from "lucide-react";
+import { Check, ChevronsUpDown, LogOut, ShieldCheck } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -15,7 +15,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { THEME_OPTIONS } from "@/components/theme/theme-toggle";
+import { useThemePreference } from "@/components/theme/use-theme-preference";
 import { clearOfflineApiCache } from "@/lib/pwa-cache";
+import { setThemePreference, THEME_PREFERENCES } from "@/lib/theme";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +39,7 @@ export function ProfileMenu({
 }) {
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
+  const themePreference = useThemePreference();
 
   useEffect(() => {
     const supabase = createClient();
@@ -96,6 +100,27 @@ export function ProfileMenu({
             <ShieldCheck size={16} /> Account settings
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Theme</DropdownMenuLabel>
+        {THEME_PREFERENCES.map((option) => {
+          const { label, icon: Icon } = THEME_OPTIONS[option];
+          return (
+            <DropdownMenuItem
+              key={option}
+              role="menuitemradio"
+              aria-checked={themePreference === option}
+              // Stay open so the change is visible before the menu closes.
+              onSelect={(event) => {
+                event.preventDefault();
+                setThemePreference(option);
+              }}
+              className="rounded-lg"
+            >
+              <Icon size={16} /> {label}
+              {themePreference === option && <Check size={16} className="ml-auto" aria-hidden="true" />}
+            </DropdownMenuItem>
+          );
+        })}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="rounded-lg text-destructive focus:text-destructive">
           <LogOut size={16} /> Sign out

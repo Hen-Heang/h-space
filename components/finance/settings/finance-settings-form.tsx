@@ -12,6 +12,7 @@ import { PaymentMethodsSection } from "@/components/finance/settings/payment-met
 import { FinanceReportsSection } from "@/components/finance/settings/finance-reports-section";
 import { TelegramLinkSection } from "@/components/finance/settings/telegram-link-section";
 import { MoneyCoachSection } from "@/components/finance/settings/money-coach-section";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { cn } from "@/lib/utils";
 import { updatePreferences } from "@/lib/api/finance";
 import { financeKeys, invalidateAfter, preferencesQuery } from "@/lib/query/finance-queries";
@@ -367,6 +368,11 @@ export function FinanceSettingsForm() {
           {pending ? "Saving…" : "Save changes"}
         </Button>
       </form>
+
+      {/* Outside the form on purpose: it applies instantly and is saved on this device, not with "Save changes". */}
+      <FinanceSection id="settings-appearance" title="Appearance" description="Applies right away and is remembered on this device. System follows your device's light or dark setting.">
+        <ThemeToggle className="max-w-md" />
+      </FinanceSection>
 
       <FinanceSection id="settings-categories" title="Categories" description="How transactions are grouped, and what budgets are set against. A category still used by a transaction, budget, or template can't be deleted.">
         <CategoriesSection />

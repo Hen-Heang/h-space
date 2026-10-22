@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { applyResolvedTheme, readPreference, resolveTheme } from "@/lib/theme";
 import "./globals.css";
 
 // Last-resort boundary for errors in the root layout itself. It replaces the
@@ -17,6 +18,10 @@ export default function GlobalError({
   useEffect(() => {
     console.error(error);
   }, [error]);
+
+  // This document replaces the root layout's <html>, so the theme the inline
+  // script set there is gone; re-apply the saved one.
+  useEffect(() => applyResolvedTheme(resolveTheme(readPreference())), []);
 
   return (
     <html lang="en" className="h-full antialiased">

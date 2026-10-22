@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { PwaRegister } from "@/components/pwa-register";
+import { ThemeSync } from "@/components/theme/use-theme-preference";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,13 +27,22 @@ export const viewport: Viewport = {
   themeColor: "#18181b",
 };
 
+// The theme script sets <html data-theme> from the saved preference before
+// first paint, so the server HTML stays static and a dark choice never
+// flashes light. suppressHydrationWarning: that attribute is expected to
+// differ from the server render.
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
+        <ThemeSync />
         <PwaRegister />
         {children}
       </body>
