@@ -8,12 +8,18 @@ import { TransactionRow } from "@/components/finance/transactions/transaction-ro
 import { TransactionSheet } from "@/components/finance/transactions/transaction-sheet";
 import { DeleteTransactionDialog } from "@/components/finance/transactions/delete-transaction-dialog";
 import { TransactionFilterPanel } from "@/components/finance/transactions/transaction-filter-panel";
-import { emitTransactionChanged, onTransactionChanged } from "@/lib/finance-events";
+import { emitTransactionChanged } from "@/lib/finance-events";
 import { cn } from "@/lib/utils";
 import { monthBounds, monthLabel } from "@/lib/finance-month";
 import { krw } from "@/lib/finance-format";
-import { createTransaction, deleteTransaction, listTransactions, updateTransaction } from "@/lib/api/finance";
-import { useCategories, usePaymentMethods, useTemplateActions, useTemplates } from "@/lib/query/finance-queries";
+import { createTransaction, deleteTransaction, updateTransaction } from "@/lib/api/finance";
+import {
+  useCategories,
+  usePaymentMethods,
+  useTemplateActions,
+  useTemplates,
+  useTransactionList,
+} from "@/lib/query/finance-queries";
 import type { CreateTransactionInput, TransactionSort } from "@/lib/validation/finance";
 import type { Transaction, TransactionType } from "@/types/finance";
 
@@ -93,27 +99,35 @@ export function TransactionList() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [reloadToken, setReloadToken] = useState(0);
   // A failed lookup leaves its picker empty; the transaction list still works.
   const { data: categories = [] } = useCategories();
   const { data: paymentMethods = [] } = usePaymentMethods();
   const { data: templates = [] } = useTemplates();
   const { saveTemplate, removeTemplate } = useTemplateActions();
-  const [loadingMore, setLoadingMore] = useState(false);
   const [sheet, setSheet] = useState<{ mode: "create" | "edit"; transaction?: Transaction } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const requestKey = `${monthOffset}:${typeFilter ?? ""}:${categoryFilter}:${paymentMethodFilter}:${amountMin ?? ""}:${amountMax ?? ""}:${sort}:${search}:${reloadToken}`;
-  const [result, setResult] = useState<{
-    key: string;
-    transactions: Transaction[];
-    hasMore: boolean;
-    pagesLoaded: number;
-    error: string | null;
-    loadMoreError: string | null;
-  }>({ key: "", transactions: [], hasMore: false, pagesLoaded: 0, error: null, loadMoreError: null });
-  const loading = result.key !== requestKey;
+  const { start, end } = monthBounds(monthOffset);
+  // Each distinct filter set is its own cache entry, so flipping back to a
+  // month or filter already seen renders instantly. Writes anywhere refresh
+  // every entry via the transaction-changed invalidation in QueryProvider.
+  const list = useTransactionList({
+    start,
+    end,
+    type: typeFilter,
+    categoryId: categoryFilter || undefined,
+    paymentMethodId: paymentMethodFilter || undefined,
+    amountMin,
+    amountMax,
+    sort,
+    search: search || undefined,
+  });
+  const transactions = useMemo(() => list.data?.pages.flatMap((page) => page.transactions) ?? [], [list.data]);
+  const loading = list.isPending;
+  // A failed background refresh or "Load more" keeps the rows already shown;
+  // only a first load with nothing to show becomes the full error state.
+  const loadError = list.isError && !list.data;
 
   useEffect(() => {
     const timeout = setTimeout(() => setSearch(searchInput.trim()), 300);
@@ -130,53 +144,7 @@ export function TransactionList() {
     return () => clearTimeout(timeout);
   }, [amountMaxInput]);
 
-  useEffect(() => {
-    let active = true;
-    const { start, end } = monthBounds(monthOffset);
-    listTransactions({
-      start,
-      end,
-      type: typeFilter,
-      categoryId: categoryFilter || undefined,
-      paymentMethodId: paymentMethodFilter || undefined,
-      amountMin,
-      amountMax,
-      sort,
-      search: search || undefined,
-      page: 0,
-    })
-      .then((data) => {
-        if (active) {
-          setResult({
-            key: requestKey,
-            transactions: data.transactions,
-            hasMore: data.hasMore,
-            pagesLoaded: 1,
-            error: null,
-            loadMoreError: null,
-          });
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setResult({
-            key: requestKey,
-            transactions: [],
-            hasMore: false,
-            pagesLoaded: 0,
-            error: "We couldn't load your transactions. Try again in a moment.",
-            loadMoreError: null,
-          });
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, [requestKey, monthOffset, typeFilter, categoryFilter, paymentMethodFilter, amountMin, amountMax, sort, search]);
-
-  useEffect(() => onTransactionChanged(() => setReloadToken((token) => token + 1)), []);
-
-  const grouped = useMemo(() => groupByDate(result.transactions), [result.transactions]);
+  const grouped = useMemo(() => groupByDate(transactions), [transactions]);
   const advancedFilterCount = [paymentMethodFilter, amountMin !== undefined, amountMax !== undefined].filter(Boolean).length;
   const isFiltered = Boolean(search || typeFilter || categoryFilter || advancedFilterCount > 0);
 
@@ -188,43 +156,13 @@ export function TransactionList() {
     setAmountMax(undefined);
   }
 
-  async function handleLoadMore() {
-    setLoadingMore(true);
-    try {
-      const { start: rangeStart, end } = monthBounds(monthOffset);
-      const data = await listTransactions({
-        start: rangeStart,
-        end,
-        type: typeFilter,
-        categoryId: categoryFilter || undefined,
-        paymentMethodId: paymentMethodFilter || undefined,
-        amountMin,
-        amountMax,
-        sort,
-        search: search || undefined,
-        page: result.pagesLoaded,
-      });
-      setResult((prev) => ({
-        ...prev,
-        transactions: [...prev.transactions, ...data.transactions],
-        hasMore: data.hasMore,
-        pagesLoaded: prev.pagesLoaded + 1,
-        loadMoreError: null,
-      }));
-    } catch {
-      setResult((prev) => ({ ...prev, loadMoreError: "Couldn't load more transactions." }));
-    } finally {
-      setLoadingMore(false);
-    }
-  }
-
+  // The emitted event is what refreshes the cached lists (see QueryProvider).
   async function handleSave(input: CreateTransactionInput) {
     if (sheet?.mode === "edit" && sheet.transaction) {
       await updateTransaction(sheet.transaction.id, input);
     } else {
       await createTransaction(input);
     }
-    setReloadToken((token) => token + 1);
     emitTransactionChanged();
   }
 
@@ -234,7 +172,6 @@ export function TransactionList() {
     try {
       await deleteTransaction(deleteTarget.id);
       setDeleteTarget(null);
-      setReloadToken((token) => token + 1);
       emitTransactionChanged();
     } finally {
       setDeleting(false);
@@ -350,15 +287,15 @@ export function TransactionList() {
         ))}
       </div>
 
-      {result.error ? (
+      {loadError ? (
         <FinanceErrorState
           title="Transactions unavailable"
-          description={result.error}
-          onRetry={() => setReloadToken((token) => token + 1)}
+          description="We couldn't load your transactions. Try again in a moment."
+          onRetry={() => void list.refetch()}
         />
       ) : loading ? (
         <ListSkeleton />
-      ) : result.transactions.length === 0 ? (
+      ) : transactions.length === 0 ? (
         <FinanceEmptyState
           icon={ReceiptText}
           title={isFiltered ? "No matching transactions" : "No transactions yet"}
@@ -402,15 +339,21 @@ export function TransactionList() {
             </div>
           ))}
 
-          {result.loadMoreError && (
+          {list.isFetchNextPageError && (
             <p className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive" role="alert">
-              {result.loadMoreError}
+              Couldn&apos;t load more transactions.
             </p>
           )}
 
-          {result.hasMore && (
-            <Button variant="outline" size="sm" onClick={handleLoadMore} disabled={loadingMore} className="min-h-11 w-full">
-              {loadingMore ? "Loading…" : "Load more"}
+          {list.hasNextPage && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void list.fetchNextPage()}
+              disabled={list.isFetchingNextPage}
+              className="min-h-11 w-full"
+            >
+              {list.isFetchingNextPage ? "Loading…" : "Load more"}
             </Button>
           )}
         </div>

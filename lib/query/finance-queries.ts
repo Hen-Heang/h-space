@@ -1,6 +1,6 @@
 "use client";
 
-import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
+import { infiniteQueryOptions, queryOptions, useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createTemplate,
   deleteTemplate,
@@ -8,6 +8,7 @@ import {
   listCategories,
   listPaymentMethods,
   listTemplates,
+  listTransactions,
 } from "@/lib/api/finance";
 import type { CreateTransactionTemplateInput } from "@/lib/validation/finance";
 import type { TransactionTemplate } from "@/types/finance";
@@ -24,7 +25,28 @@ export const financeKeys = {
   paymentMethods: () => [...financeKeys.all, "payment-methods"] as const,
   templates: () => [...financeKeys.all, "templates"] as const,
   preferences: () => [...financeKeys.all, "preferences"] as const,
+  // Prefix for every filtered list — invalidate this to refresh them all.
+  transactions: () => [...financeKeys.all, "transactions"] as const,
+  transactionList: (filters: TransactionListFilters) => [...financeKeys.transactions(), filters] as const,
 };
+
+export type TransactionListFilters = Omit<Parameters<typeof listTransactions>[0], "page">;
+
+// No staleTime: transactions also arrive from outside this tab (the Telegram
+// bot), so a remount always revalidates. The cached pages still render
+// immediately while that happens, instead of a skeleton.
+export function transactionListQuery(filters: TransactionListFilters) {
+  return infiniteQueryOptions({
+    queryKey: financeKeys.transactionList(filters),
+    queryFn: ({ pageParam }) => listTransactions({ ...filters, page: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, pages) => (lastPage.hasMore ? pages.length : undefined),
+  });
+}
+
+export function useTransactionList(filters: TransactionListFilters) {
+  return useInfiniteQuery(transactionListQuery(filters));
+}
 
 // Lookups change only when the user edits them here, so they can sit for a
 // while; a remount after this refetches in the background without a skeleton.
