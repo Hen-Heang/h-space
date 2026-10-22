@@ -12,19 +12,10 @@ import { emitTransactionChanged, onTransactionChanged } from "@/lib/finance-even
 import { cn } from "@/lib/utils";
 import { monthBounds, monthLabel } from "@/lib/finance-month";
 import { krw } from "@/lib/finance-format";
-import {
-  createTemplate,
-  createTransaction,
-  deleteTemplate,
-  deleteTransaction,
-  listCategories,
-  listPaymentMethods,
-  listTemplates,
-  listTransactions,
-  updateTransaction,
-} from "@/lib/api/finance";
-import type { CreateTransactionInput, CreateTransactionTemplateInput, TransactionSort } from "@/lib/validation/finance";
-import type { Category, PaymentMethod, Transaction, TransactionTemplate, TransactionType } from "@/types/finance";
+import { createTransaction, deleteTransaction, listTransactions, updateTransaction } from "@/lib/api/finance";
+import { useCategories, usePaymentMethods, useTemplateActions, useTemplates } from "@/lib/query/finance-queries";
+import type { CreateTransactionInput, TransactionSort } from "@/lib/validation/finance";
+import type { Transaction, TransactionType } from "@/types/finance";
 
 const TYPE_TABS: { label: string; value: TransactionType | undefined }[] = [
   { label: "All", value: undefined },
@@ -103,9 +94,11 @@ export function TransactionList() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [templates, setTemplates] = useState<TransactionTemplate[]>([]);
+  // A failed lookup leaves its picker empty; the transaction list still works.
+  const { data: categories = [] } = useCategories();
+  const { data: paymentMethods = [] } = usePaymentMethods();
+  const { data: templates = [] } = useTemplates();
+  const { saveTemplate, removeTemplate } = useTemplateActions();
   const [loadingMore, setLoadingMore] = useState(false);
   const [sheet, setSheet] = useState<{ mode: "create" | "edit"; transaction?: Transaction } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
@@ -183,24 +176,6 @@ export function TransactionList() {
 
   useEffect(() => onTransactionChanged(() => setReloadToken((token) => token + 1)), []);
 
-  useEffect(() => {
-    let active = true;
-    void (async () => {
-      try {
-        const [cats, methods, templateList] = await Promise.all([listCategories(), listPaymentMethods(), listTemplates()]);
-        if (!active) return;
-        setCategories(cats);
-        setPaymentMethods(methods);
-        setTemplates(templateList);
-      } catch {
-        // Category/payment-method/template pickers stay empty; the transaction list above still works.
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
-
   const grouped = useMemo(() => groupByDate(result.transactions), [result.transactions]);
   const advancedFilterCount = [paymentMethodFilter, amountMin !== undefined, amountMax !== undefined].filter(Boolean).length;
   const isFiltered = Boolean(search || typeFilter || categoryFilter || advancedFilterCount > 0);
@@ -251,21 +226,6 @@ export function TransactionList() {
     }
     setReloadToken((token) => token + 1);
     emitTransactionChanged();
-  }
-
-  async function handleSaveTemplate(input: CreateTransactionTemplateInput) {
-    const created = await createTemplate(input);
-    setTemplates((prev) => [created, ...prev]);
-  }
-
-  async function handleDeleteTemplate(template: TransactionTemplate) {
-    const previous = templates;
-    setTemplates((prev) => prev.filter((t) => t.id !== template.id));
-    try {
-      await deleteTemplate(template.id);
-    } catch {
-      setTemplates(previous);
-    }
   }
 
   async function handleDelete() {
@@ -465,8 +425,8 @@ export function TransactionList() {
         open={sheet !== null}
         onOpenChange={(open) => !open && setSheet(null)}
         onSave={handleSave}
-        onSaveTemplate={handleSaveTemplate}
-        onDeleteTemplate={handleDeleteTemplate}
+        onSaveTemplate={saveTemplate}
+        onDeleteTemplate={removeTemplate}
       />
 
       <DeleteTransactionDialog

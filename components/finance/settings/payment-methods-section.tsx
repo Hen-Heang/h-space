@@ -1,24 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { CreditCard, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryIcon, FinanceEmptyState, FinanceErrorState } from "@/components/finance/ui/finance-primitives";
 import { DeleteLookupDialog, LookupRowActions } from "@/components/finance/settings/lookup-primitives";
 import { PaymentMethodSheet, type PaymentMethodFormValues } from "@/components/finance/settings/payment-method-sheet";
 import { ApiError } from "@/lib/api/client";
-import {
-  createPaymentMethod,
-  deletePaymentMethod,
-  listPaymentMethods,
-  updatePaymentMethod,
-} from "@/lib/api/finance";
+import { createPaymentMethod, deletePaymentMethod, updatePaymentMethod } from "@/lib/api/finance";
+import { financeKeys, usePaymentMethods } from "@/lib/query/finance-queries";
 import type { PaymentMethod } from "@/types/finance";
 
 export function PaymentMethodsSection() {
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
+  const queryClient = useQueryClient();
+  const { data: paymentMethods = [], isPending: loading, isError: loadError, refetch } = usePaymentMethods();
   const [sheetMode, setSheetMode] = useState<"create" | "edit">("create");
   const [editing, setEditing] = useState<PaymentMethod | undefined>(undefined);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -26,28 +22,8 @@ export function PaymentMethodsSection() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Same reload-token approach as CategoriesSection — see the note there.
-  const [reloadToken, setReloadToken] = useState(0);
-  const reload = useCallback(() => setReloadToken((token) => token + 1), []);
-
-  useEffect(() => {
-    let active = true;
-    listPaymentMethods()
-      .then((next) => {
-        if (!active) return;
-        setPaymentMethods(next);
-        setLoadError(false);
-      })
-      .catch(() => {
-        if (active) setLoadError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [reloadToken]);
+  // Same shared-cache invalidation as CategoriesSection — see the note there.
+  const reload = () => queryClient.invalidateQueries({ queryKey: financeKeys.paymentMethods() });
 
   async function handleSave(values: PaymentMethodFormValues) {
     if (sheetMode === "edit" && editing) {
@@ -78,11 +54,7 @@ export function PaymentMethodsSection() {
       <FinanceErrorState
         title="Payment methods unavailable"
         description="We couldn't load your payment methods. Try again in a moment."
-        onRetry={() => {
-          setLoadError(false);
-          setLoading(true);
-          reload();
-        }}
+        onRetry={() => void refetch()}
       />
     );
   }
