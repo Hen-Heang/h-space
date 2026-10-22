@@ -2,6 +2,9 @@
 
 @custom-variant data-open (&:where([data-state="open"], [data-open]:not([data-open="false"])));
 @custom-variant data-closed (&:where([data-state="closed"], [data-closed]:not([data-closed="false"])));
+/* `dark:` follows <html data-theme>, which lib/theme.ts resolves from the
+   saved preference (System follows the OS) before first paint. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
   color-scheme: light;
@@ -96,37 +99,37 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --background: #0a0a0b;
-    --foreground: #fafafa;
-    --card: #131316;
-    --card-foreground: #fafafa;
-    --popover: #131316;
-    --popover-foreground: #fafafa;
-    --primary: #fafafa;
-    --primary-foreground: #18181b;
-    --secondary: #1f1f23;
-    --secondary-foreground: #fafafa;
-    --muted: #1f1f23;
-    --muted-foreground: #a1a1aa;
-    --accent: #1f1f23;
-    --accent-foreground: #fafafa;
-    --border: #27272a;
-    --input: #27272a;
-    --ring: #52525b;
-    --success: #34d399;
-    --warning: #fbbf24;
-    --finance-chart: #60a5fa;
-    --sidebar: #131316;
-    --chart-series-1: #3987e5;
-    --chart-series-2: #d95926;
-    --chart-series-3: #199e70;
-    --chart-series-4: #c98500;
-    --chart-series-5: #d55181;
-    --chart-series-6: #008300;
-  }
+/* Set by the inline theme script in app/layout.tsx; "System" resolves to
+   light or dark there, so this is the only dark token block. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0a0a0b;
+  --foreground: #fafafa;
+  --card: #131316;
+  --card-foreground: #fafafa;
+  --popover: #131316;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #18181b;
+  --secondary: #1f1f23;
+  --secondary-foreground: #fafafa;
+  --muted: #1f1f23;
+  --muted-foreground: #a1a1aa;
+  --accent: #1f1f23;
+  --accent-foreground: #fafafa;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #52525b;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --finance-chart: #60a5fa;
+  --sidebar: #131316;
+  --chart-series-1: #3987e5;
+  --chart-series-2: #d95926;
+  --chart-series-3: #199e70;
+  --chart-series-4: #c98500;
+  --chart-series-5: #d55181;
+  --chart-series-6: #008300;
 }
 
 * {
