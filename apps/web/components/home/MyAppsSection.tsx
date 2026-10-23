@@ -5,8 +5,8 @@ import {
   BriefcaseBusiness,
   Github,
   GraduationCap,
-  Landmark,
   ShoppingBag,
+  Vault,
   type LucideIcon,
 } from "lucide-react"
 
@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils"
 
 const projectIcons: Record<HSpaceProject["id"], LucideIcon> = {
   "hengo-learning": GraduationCap,
-  "money-flow": Landmark,
+  "h-vault": Vault,
   luyra: AppWindow,
   "h-phsar": ShoppingBag,
   portfolio: BriefcaseBusiness,

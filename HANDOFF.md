@@ -7,135 +7,68 @@ summarized below.
 
 ## Snapshot
 
-- **Updated:** 2026-10-22
-- **Branch:** `feat/hub-sidebar-nav`
-- **Commits:** Phase 1 — `feat(web): turn /home into the personal daily
-  dashboard`; Phase 2 — `feat(web): organize navigation into seven workspaces`
-  (on top of e4f4ec6). Not pushed; no PR opened.
+- **Updated:** 2026-10-23
+- **Branch:** `main`. Workspace navigation and H-Vault changes are committed.
+- **Working tree:** Auth page layout changes from a concurrent session remain uncommitted.
 
-## Current focus — H-Space daily workspace upgrade
+## Current focus — workspace redesign
 
-A four-phase plan agreed with the maintainer:
+H-Space is presented as a personal workspace: six workspaces plus tools,
+each workspace owning its own pages as local tabs.
 
-1. **Daily usability** — `/home` as a personal dashboard. **Implemented (this session).**
-2. **Navigation** — seven workspaces, every route and deep link preserved.
-   **Implemented (this session)** — see "Phase 2" below.
-3. **Portfolio value** — richer My Apps catalog (purpose, problem, architecture,
-   tech choices, challenges, status, verified links) and a clear split between
-   the private dashboard and public portfolio. Not started.
-4. **Engineering quality audit** — auth/RLS, AI access control and rate limits,
-   error/loading states, responsive layouts, tests, CI, architecture docs. Not
-   started.
+- **Navigation layers** (`lib/navigation.ts`, registry unchanged):
+  `workspaceNavItems` (Overview, My Apps, Planner, Learning, Notes, Growth) + `toolNavItems` (AI Assistant · Settings) for the sidebar and
+  tablet rail; `workspaceTabs` + `getActiveTab` for local tabs;
+  `mobileNavItems` (Home · Plan · Learn · Apps) + `moreNavItems` +
+  `browseSections` for the bottom bar and More sheet. Removed:
+  `sidebarSections`, `primaryNavItems`, `isSpacesRoute`, and the V1 exports
+  (`bottomTabs`, `moreGroups`, `secondaryNavItems`, …). Section labels:
+  Today→Overview, Goals & Tasks→Planner, Notes & Knowledge→Notes.
+- **Shell:** new `MoreSheet`, `WorkspaceTabs`, `header-trail.ts`; deleted
+  `SpacesSheet` and the unmounted `WorkspaceFlyout`. Header =
+  `Workspace / Page` with the only `h1`; neutral icons; "AI Assistant" is
+  the visible assistant name (Hengo Coach stays internal). The Vault dashboard no longer repeats its page title below the shared header.
+- **Pages:** `/home` reordered (focus/upcoming → progress/continue → quick
+  access; `LearningWidget`, `QuickAccess` new); `/growth` landing page
+  (new route); `/apps` catalog with search, categories, favorites
+  (`components/apps/AppsCatalog`, `lib/apps-catalog.ts`, localStorage key
+  `hengo-app-favorites`); `/learn` subjects row (Korean, Software
+  Engineering → Notes, AI Engineering "Not set up"); Planner/Notes/Growth/
+  My Apps pages use `WorkspaceTabs` instead of title heroes.
+- **Goal health fix:** a goal with no key results and every task done showed
+  "Needs attention" beside a 100% bar — the engine flagged "no key results"
+  as attention regardless of progress. Now `on_track` with a "mark complete
+  once the outcome is reached" reason (`attention` if the deadline passed);
+  never auto-`completed`. `computeListGoalHealth` is shared by the Goals
+  list and Home's Active goals card (which previously showed the stored
+  `health_status` column, refreshed only by the detail page).
+- **Tokens:** slate neutrals + indigo `--primary` (#4F46E5 / dark #818CF8),
+  flat body background, solid default `Button`.
 
-Constraints from the maintainer: no new repo/app, no Spring backend, don't
-rename `kori_*`/`koriai-*`/`hengo-*` persistence keys, no production schema
-change without a reviewed migration plan, no private data on public pages, no
-fabricated achievements.
+## Auth layout update (2026-10-23)
 
-### Phase 1 — what changed
+- Login and registration now use centered responsive cards on desktop and mobile; auth flows and fields were preserved. No tests or build were run for this visual change.
 
-`/home` (`apps/web/app/(main)/home/page.tsx`) now leads with the day instead
-of Korean learning. Every card reads an existing query cache; no new API,
-table, route, or storage key.
+## Verification (2026-10-23)
 
-- **Header:** date, greeting, **Quick capture** (`openQuickCapture()`), and
-  **Ask Hengo** (`askHengoItem.href`).
-- **Priorities column (lg: 2/3):** `TodayTasksCard` (existing, previously
-  unused on `/home`) and the new `ActiveGoalsCard`.
-- **Today column:** new `UpcomingEventsCard`, new `ContinueCard`, and the
-  existing `TodayHabitCheckins`.
-- **Daily learning · Hengo:** `TodayMissionCard`, streak, and the three
-  learning shortcuts — kept full width below the grid rather than in the side
-  column, because the mission card is too wide for a one-third column.
-- **My Apps** in a new `compact` mode (no intro paragraph or stack chips; the
-  public landing page `/` still renders the full version). `AboutHSpace` was
-  removed from `/home` at the maintainer's request — it remains on `/`.
-
-New files:
-
-- `apps/web/lib/home-dashboard.ts` + `.test.ts` (10 tests): `selectActiveGoals`
-  (excludes completed/archived; starred → nearest target date → newest),
-  `goalTaskProgress`, `upcomingEventsWindow` (local today + tomorrow),
-  `selectUpcomingEvents`, `resolveRecentDestinations`.
-- `components/home/ActiveGoalsCard.tsx` — shares `goalsQueryKey` with `/goals`.
-  Progress shown is task completion (`taskCounts`), because `outcome_progress`
-  isn't rendered anywhere else and its scale isn't established.
-- `components/home/UpcomingEventsCard.tsx` — only queries Google Calendar when
-  connected; otherwise shows a "Connect Google Calendar" link. Errors degrade
-  to a message, never a broken card.
-- `components/home/ContinueCard.tsx` — Quick Switcher recents
-  (`readRecentNavIds`) via `useSyncExternalStore`; hidden with no history.
-
-Modified: `components/home/MyAppsSection.tsx` (`compact` prop),
-`app/(main)/home/page.tsx`, `apps/web/CLAUDE.md` (removed contradictory
-`/home` descriptions).
-
-### Phase 2 — what changed
-
-- `lib/navigation.ts` registry relabelled and regrouped as **Today · Learning ·
-  Goals & Tasks · Growth · Notes & Knowledge · My Apps · AI Assistant**.
-  Section ids kept (stored in localStorage by last-visited tracking) except
-  `history` → `apps`; `WorkspaceId` in `lib/last-visited.ts` updated to match.
-  - `/history` (Korean correction history) → Learning.
-  - `/timeline` → Notes & Knowledge (section href now `/notes`).
-  - Ask Hengo (`/chat?mode=memory`) → AI Assistant.
-  - New `appsItem` → `/apps`.
-- New route `app/(main)/apps/page.tsx` renders the full `MyAppsSection`.
-- `SIDEBAR_SECTION_ORDER` follows the seven workspaces; the desktop sidebar
-  needed no component change.
-- Mobile bottom bar and tablet rail: **Today · Goals · Learning · Notes ·
-  Spaces**. Progress lost its tab and is in Spaces → Growth. Notes now lights
-  across its whole section. `isSpacesRoute()` lights Spaces where no tab owns
-  the route.
-- `MoreNavigationSheet.tsx` was renamed (`git mv`) and rewritten as
-  `SpacesSheet.tsx`, rendering `sidebarSections` plus Settings. Each nav owns its
-  sheet (bottom on mobile, left on the rail). `ActiveIndicator` in `NavItem.tsx`
-  is now exported for the rail's Spaces button.
-- Tests: `lib/navigation.test.ts` and
-  `components/layout/navigation-shell.test.tsx` updated to the new structure;
-  `/apps` added to the "every previously shipped route stays reachable" guard.
-- Docs: `apps/web/CLAUDE.md`, `apps/web/README.md`,
-  `apps/web/docs/navigation-shell-audit.md` (dated "current" note at the top).
-  `docs/HENGO_V2.md` and older audits left as historical records.
-- Known minor doc drift, pre-existing: `apps/web/CLAUDE.md`'s Growth section
-  still has two overlapping descriptions.
-
-## Verification (2026-10-22)
-
-Phase 2 (latest run):
-
-- `pnpm lint` — 0 errors, the same 5 pre-existing warnings.
-- `pnpm --dir apps/web format:check` — passed.
-- `NODE_OPTIONS=--no-experimental-webstorage pnpm test` — 95 files, 1152 tests passed.
-- `pnpm build` — passed, 126 routes (adds `/apps`).
-- **Not run:** browser check of the Spaces sheet and tabs at 375/768/1024/1440px.
-
-Phase 1:
-
-- `npx vitest run lib/home-dashboard.test.ts` — 10/10 passed.
-- `pnpm lint` — 0 errors, the same 5 pre-existing warnings.
-- `pnpm --dir apps/web format:check` — passed.
-- `NODE_OPTIONS=--no-experimental-webstorage pnpm test` — 95 files, 1149 tests passed.
-- `pnpm build` — passed, 125 routes.
-- **Not run:** authenticated visual check of `/home` at 375/768/1024/1440px
-  (needs a dev server and a login). Playwright e2e not run.
-- `lib/goals.test.ts` (previously reported failing on 2026-10-22) passed in
-  this session — it is intermittent and likely date/time-of-day dependent.
-  Not yet investigated.
-
+- `pnpm exec tsc --noEmit`: clean.
+- `NODE_OPTIONS=--no-experimental-webstorage pnpm test`: 104 files, 1343 tests passed.
+- Prettier and ESLint checks on changed H-Vault files: clean.
+- Not run this turn: production build, e2e specs, checks with real user data.
 ## Next steps
 
-- Visually review logged-in `/home` and the new navigation (Spaces sheet on
-  mobile and tablet), then commit Phases 1–2 when requested.
-- Optional follow-up: collapsible desktop sidebar groups (~34 rows today).
-- Phase 3 audit + plan (My Apps catalog content at `/apps` + `lib/projects.ts`).
-- Existing infra follow-ups: fix Vercel Preview Supabase variables; delete or
-  repoint the retired Railway API service. Playwright on Windows: the
-  web-server command treats `--port` as a directory and bundled Chromium is
-  absent (use `PLAYWRIGHT_EXECUTABLE_PATH` with installed Chrome).
-
+- Review H-Vault with populated data; live persistence still requires approval and application of the Supabase migration.
+- Pages still using `PageHero` title blocks outside the workspaces touched here (e.g. Settings, Statistics, Achievements, Review) may repeat the header title; migrate them to the same tabs/description pattern.
+- Home cards still use their older card styling (shadows, nested boxes); a pass to the flat `app-surface` style would finish the visual system.
+- Carried over: Phase 3/4 of the H-Space upgrade; Vercel Preview Supabase variables; `lib/goals.test.ts` is date-dependent.
 ## Notes for future sessions
 
+- H-Vault passwords are stored **only** as browser-encrypted
+  `password_ciphertext` envelopes. Never add a plaintext password path, never
+  send or store the master password/key, and still no PIN, token,
+  recovery-code or free-text notes field.
+- The H-Vault reset clears encrypted account passwords only after explicit
+  confirmation; account metadata remains. Document this consequence clearly.
 - Keep Hengo Learning feature names such as Hengo Coach and Ask Hengo where
   they identify the learning/assistant experience.
 - Do not rename `kori_*`, `koriai-*`, or `hengo-*` persistence identifiers as a
@@ -143,3 +76,5 @@ Phase 1:
 - Project card facts live in `apps/web/lib/projects.ts`; verify a repository or
   deployment before adding technical claims or a live link.
 - One application remains: `apps/web`, deployed from that Vercel root.
+- Playwright on Windows: reuse a running dev server via `PLAYWRIGHT_BASE_URL`
+  and installed Chrome via `PLAYWRIGHT_EXECUTABLE_PATH`.

@@ -4,15 +4,6 @@
 // second real case.
 
 /**
- * Money Flow integration preview card (see docs/money-flow-integration.md).
- * Off by default — this repo has no token-exchange/encryption
- * infrastructure yet, so the card only ever shows mocked example data, and
- * even that stays hidden unless explicitly opted into.
- */
-export const isMoneyFlowIntegrationEnabled = (): boolean =>
-  process.env.NEXT_PUBLIC_FEATURE_MONEY_FLOW === "true"
-
-/**
  * The Integrations settings section (/settings/integrations) and its Google
  * Calendar card. Off by default until Plan ships.
  *
@@ -29,3 +20,13 @@ export const isMoneyFlowIntegrationEnabled = (): boolean =>
  */
 export const isCalendarIntegrationsEnabled = (): boolean =>
   process.env.NEXT_PUBLIC_FEATURE_INTEGRATIONS === "true"
+
+/**
+ * H-Vault live persistence (docs/h-vault.md). Off by default because the
+ * `kori_vault_accounts` migration needs the maintainer's approval before it is
+ * applied to the shared Supabase project; until then `/vault` runs on the
+ * browser-local demo adapter with fictional data. Turn on only after the
+ * migration is applied.
+ */
+export const isVaultLiveEnabled = (): boolean =>
+  process.env.NEXT_PUBLIC_FEATURE_VAULT_LIVE === "true"

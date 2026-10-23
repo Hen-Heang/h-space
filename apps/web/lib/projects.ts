@@ -1,5 +1,5 @@
 export type HSpaceProject = {
-  id: "hengo-learning" | "money-flow" | "luyra" | "h-phsar" | "portfolio"
+  id: "hengo-learning" | "h-vault" | "luyra" | "h-phsar" | "portfolio"
   name: string
   area: string
   description: string
@@ -28,17 +28,16 @@ export const hSpaceProjects: HSpaceProject[] = [
       { label: "GitHub", href: "https://github.com/Hen-Heang/h-space", kind: "github" },
     ],
   },
+  // Generic product card only — this list also renders on the public landing
+  // page, so it must never carry account counts or any user's account data.
   {
-    id: "money-flow",
-    name: "Money Flow",
-    area: "Personal finance",
+    id: "h-vault",
+    name: "H-Vault",
+    area: "Personal accounts",
     description:
-      "A mobile-first finance PWA for cash flow, budgets, savings, recurring transactions, reports, and reviewable AI-assisted insights.",
-    stack: ["Next.js 16", "TypeScript", "Supabase", "TanStack Query", "Vercel AI SDK"],
-    links: [
-      { label: "Live demo", href: "https://money-flow.henheang.site", kind: "demo" },
-      { label: "GitHub", href: "https://github.com/Hen-Heang/money-flow", kind: "github" },
-    ],
+      "A private directory of which email or username belongs to each service, with categories, favorites, and search. Passwords stay in Bitwarden — H-Vault stores account information only.",
+    stack: ["Next.js 16", "Supabase RLS", "TanStack Query", "Zod"],
+    links: [{ label: "Open app", href: "/vault", kind: "app" }],
   },
   {
     id: "luyra",

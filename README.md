@@ -31,8 +31,6 @@ run.
 
 - **Hengo Learning** — Korean learning, workplace practice, interview prep,
   spaced repetition, and authenticated AI coaching
-- **Money Flow** — mobile-first cash flow, budgeting, savings, reporting, and
-  reviewable AI-assisted insights
 - **Luyra** — finance workspace using Supabase Auth, Neon Postgres, scheduled
   workflows, and multi-channel notifications
 - **H-Phsar Commerce** — Next.js and Spring Boot B2B marketplace for buyers,

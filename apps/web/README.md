@@ -27,7 +27,7 @@ preserved inside it as **Hengo Learning**.
 
 > ### Hengo Learning — focused Korean learning inside H-Space
 >
-> Hengo Learning retains the existing Korean-learning routes, data, and functionality. It is the Learning workspace of the hub: the mobile and tablet navigation is **Today · Goals · Learning · Notes · Spaces** (Spaces opens every workspace), and the desktop sidebar lists the seven workspaces — Today, Learning, Goals & Tasks, Growth, Notes & Knowledge, My Apps, AI Assistant.
+> Hengo Learning retains the existing Korean-learning routes, data, and functionality. It is the Learning workspace of the hub. The desktop sidebar and tablet rail list six workspaces — **Overview · Planner · Learning · Notes · My Apps · Growth** — plus the **AI Assistant** and **Settings**; each workspace's own pages are local tabs inside it. The mobile bottom bar is **Home · Plan · Learn · Apps · More** (More opens Notes, Growth, the AI Assistant, Settings, and every page by workspace).
 >
 > This README still documents the full V1 feature set below, and that documentation remains accurate as an _implementation_ reference — the productivity, growth, second-brain, progress, general-AI, and K-Specialist exam-prep features all still exist and still work by direct URL. Goals, Notes, and Progress have mobile/tablet tabs again, and every section is listed in the desktop sidebar; pages without a tab of their own are reached from those hubs or the ⌘K Quick Switcher. Nothing was deleted, and all data is intact.
 >
@@ -216,6 +216,14 @@ Two safety properties are deliberate and worth calling out: retrieved content is
 
 > Retrieval is Postgres FTS (`tsvector` + GIN), not embeddings. Vector search was deliberately deferred rather than half-built — see `docs/second-brain-implementation.md` for the full six-phase record, including the known gaps.
 
+### H-Vault
+
+| Feature     | Route    | Purpose                                                                                                                      | Benefits                                                                                                                                                                                                                                                                                                                                          | Main technologies                                                                                                        |
+| ----------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **H-Vault** | `/vault` | Private directory of your accounts: which email/username (and, encrypted, which password) you use for each service (My Apps) | Categories, favorites, multiple accounts per service, search/filter/sort, safe https "Open website" links, and an optional password **end-to-end encrypted in the browser** with your master password (only ciphertext is stored; copy auto-clears, reveal auto-hides, 10-minute auto-lock), plus an in-browser CSV import (e.g. a Notion export) | `lib/vault.ts`, `lib/vault-crypto.ts` (Web Crypto), `lib/api/vault.ts`, `hooks/useVault.ts`, `kori_vault_accounts` (RLS) |
+
+Live persistence is behind `NEXT_PUBLIC_FEATURE_VAULT_LIVE` until its migration is approved. Until then it runs on fictional demo data in the browser. See `docs/h-vault.md`.
+
 ### App surfaces
 
 | Surface          | Route                                 | Notes                                                                                                                                                                                                                                                                                                                                                  |
@@ -242,7 +250,7 @@ Two safety properties are deliberate and worth calling out: retrieved content is
   | **AI Coach** | Chat · Analyze · Generate · Corrections · Ask Hengo                                                           |
 
 - **Query-aware matching.** `NavMatch` (`pathname` + `query` / `absentQuery` / `includeChildren`) is what lets `/chat?mode=analyze` and bare `/chat` be different nav items with independent active states — pathname-only matching cannot express that.
-- **The shell is `components/layout/*`, not the route layout.** `app/(main)/layout.tsx` owns only what must live at the route boundary (auth gate, onboarding wizard, last-visited tracking) and delegates all visual chrome to `AppShell`: `DesktopSidebar`, `TabletNavigationRail`, `DesktopHeader` / `MobileHeader`, `MobileBottomNav`, `SpacesSheet` (opened from the bottom bar and rail), `PageHeader`, `ProfileMenu`.
+- **The shell is `components/layout/*`, not the route layout.** `app/(main)/layout.tsx` owns only what must live at the route boundary (auth gate, onboarding wizard, last-visited tracking) and delegates all visual chrome to `AppShell`: `DesktopSidebar`, `TabletNavigationRail`, `DesktopHeader` / `MobileHeader`, `MobileBottomNav`, `MoreSheet` (opened from the bottom bar), `WorkspaceTabs` (a workspace's local navigation, rendered by its pages), `PageHeader`, `ProfileMenu`.
 - **Desktop:** a contextual sidebar — a section switcher plus only the active section's links, so one section shows at a time. **Tablet** gets an icon rail with a flyout instead.
 - **Header:** a compact level/XP badge linking to `/achievements`, plus the Quick Capture button and ⌘K palette.
 - **Mobile:** a four-tab bottom bar — Today · Learn · Goals · Growth — with a fifth "More" slot opening a sheet that groups everything else (Progress, Tools, Learn more, Growth, Account) so nothing is unreachable on a phone.
@@ -525,7 +533,7 @@ public/            hengo-icon.png (mark + full lockup, source of the app icons),
 
 `docs/` holds the working record for the larger features — written as implementation plans and audits against real code and the live database, not marketing:
 
-`second-brain-implementation.md` (Inbox → Notes → Journal/Timeline → Reminders → Ask Hengo → Review, all six phases) · `goal-system-v2-audit.md` · `goal-planning-scheduling-audit.md` · `korean-phrasebook-implementation.md` · `ai-korean-voice-coach.md` · `navigation-shell-audit.md` · `ui-ux-responsive-audit.md` · `testing-strategy.md` · `business-logic-test-audit.md` · `account-reconciliation-plan.md` · `money-flow-integration.md`
+`second-brain-implementation.md` (Inbox → Notes → Journal/Timeline → Reminders → Ask Hengo → Review, all six phases) · `goal-system-v2-audit.md` · `goal-planning-scheduling-audit.md` · `korean-phrasebook-implementation.md` · `ai-korean-voice-coach.md` · `navigation-shell-audit.md` · `ui-ux-responsive-audit.md` · `testing-strategy.md` · `business-logic-test-audit.md` · `account-reconciliation-plan.md` · `h-vault.md`
 
 ### Responsibilities and design principles
 
