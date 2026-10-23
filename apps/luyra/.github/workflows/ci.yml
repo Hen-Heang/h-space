@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-build:
+    name: Lint and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        # Placeholders only. Every secret-backed feature degrades gracefully at
+        # runtime, but the public Supabase values must parse as a URL/key for
+        # the client to be constructible during prerendering.
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: placeholder-publishable-key
+          NEXT_PUBLIC_MONEY_FLOW_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_MONEY_FLOW_SUPABASE_PUBLISHABLE_KEY: placeholder-publishable-key
+        run: npm run build

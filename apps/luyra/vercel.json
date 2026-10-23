@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["icn1"],
+  "crons": [
+    { "path": "/api/cron/budget-alerts", "schedule": "0 10 * * *" },
+    { "path": "/api/cron/push-budget-alerts", "schedule": "0 10 * * *" },
+    { "path": "/api/cron/spending-spike", "schedule": "0 12 * * *" },
+    { "path": "/api/cron/daily-reminder", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/daily-log-reminder", "schedule": "0 11 * * *" },
+    { "path": "/api/cron/weekly-summary", "schedule": "0 0 * * 1" },
+    { "path": "/api/cron/monthly-report", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/recurring", "schedule": "0 0 * * *" }
+  ]
+}
