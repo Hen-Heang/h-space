@@ -17,8 +17,8 @@ self.addEventListener("push", (event) => {
   const title = data.title || "KoriAI"
   const options = {
     body: data.body || "",
-    icon: "/icon-192.png",
-    badge: "/icon-192.png",
+    icon: "/H%20Space%20Icon.png",
+    badge: "/H%20Space%20Icon.png",
     data: { url: data.url || "/" },
     tag: data.tag || undefined,
   }

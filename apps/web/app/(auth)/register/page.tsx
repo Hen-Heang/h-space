@@ -129,7 +129,7 @@ export default function RegisterPage() {
           <Link href="/" className="group flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl shadow-sm">
               <Image
-                src="/hengo-icon.png"
+                src="/H%20Space%20Icon.png"
                 alt=""
                 width={36}
                 height={36}
@@ -484,7 +484,7 @@ function BrandPanel() {
 
       <div className="relative z-10 flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/20 backdrop-blur">
-          <Image src="/hengo-icon.png" alt="" width={40} height={40} className="h-full w-full" />
+          <Image src="/H%20Space%20Icon.png" alt="" width={40} height={40} className="h-full w-full" />
         </span>
         <span className="text-xl font-semibold tracking-tight">H-Space</span>
       </div>

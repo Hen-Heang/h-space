@@ -54,12 +54,10 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
   icons: {
     icon: [
-      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/H%20Space%20Icon.png", type: "image/png" },
     ],
-    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
-    shortcut: ["/favicon-32.png"],
+    apple: [{ url: "/H%20Space%20Icon.png", type: "image/png" }],
+    shortcut: ["/H%20Space%20Icon.png"],
   },
 }
 

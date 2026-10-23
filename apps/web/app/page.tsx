@@ -205,7 +205,7 @@ export default function Home() {
             <Link href="/" className="group flex items-center gap-3">
               <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
                 <Image
-                  src="/hengo-icon.png"
+                  src="/H%20Space%20Icon.png"
                   alt=""
                   width={36}
                   height={36}
@@ -769,7 +769,7 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl shadow-md">
                   <Image
-                    src="/hengo-icon.png"
+                    src="/H%20Space%20Icon.png"
                     alt=""
                     width={32}
                     height={32}

@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
       <div className="absolute inset-x-0 top-0 flex items-center justify-between px-5 py-8 sm:px-8 lg:px-12">
         <Link href="/" className="group flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl shadow-sm">
-            <Image src="/hengo-icon.png" alt="" width={36} height={36} className="h-full w-full" />
+            <Image src="/H%20Space%20Icon.png" alt="" width={36} height={36} className="h-full w-full" />
           </span>
           <span className="text-lg font-semibold tracking-tight text-foreground">H-Space</span>
         </Link>

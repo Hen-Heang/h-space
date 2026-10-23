@@ -41,7 +41,7 @@ export function TabletNavigationRail({
           aria-label="H-Space home"
           className="flex size-9 items-center justify-center overflow-hidden rounded-md outline-none ring-1 ring-border focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <Image src="/hengo-icon.png" alt="" width={36} height={36} className="size-full" />
+          <Image src="/H%20Space%20Icon.png" alt="" width={36} height={36} className="size-full" />
         </Link>
       </div>
 

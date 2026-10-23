@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
-  ArrowLeft,
   Mail,
   CheckCircle2,
   LogOut,
@@ -235,14 +234,6 @@ export default function SettingsPage() {
     )
   }
 
-  function handleClose() {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back()
-      return
-    }
-    router.push("/home")
-  }
-
   async function handleSignOut() {
     try {
       await authApi.logout()
@@ -306,21 +297,9 @@ export default function SettingsPage() {
       variants={containerVariants}
       className="mx-auto max-w-3xl space-y-5 pb-24"
     >
-      {/* Header */}
+      {/* The app shell provides the Settings page title. */}
       <motion.div variants={itemVariants}>
-        <div className="flex items-center gap-3 px-1 py-1">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <ArrowLeft size={18} strokeWidth={2.5} />
-          </button>
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">Settings</h1>
-            <p className="text-sm text-muted-foreground">Profile, preferences & account</p>
-          </div>
-        </div>
+        <p className="px-1 py-1 text-sm text-muted-foreground">Profile, preferences & account</p>
       </motion.div>
 
       {/* Profile identity + editable name/email */}
