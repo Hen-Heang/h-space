@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import { Plus } from "lucide-react"
 import { motion } from "motion/react"
 
-import { PageHero } from "@/components/app/page-hero"
+import { GoalsHubNav } from "@/components/goals/hub/GoalsHubNav"
 import { InboxFilters } from "@/components/inbox/InboxFilters"
 import { InboxItemCard } from "@/components/inbox/InboxItemCard"
 import { Button } from "@/components/ui/button"
@@ -48,19 +48,22 @@ export default function InboxPage() {
       variants={containerVariants}
       className="space-y-6 pb-16"
     >
-      <motion.div variants={itemVariants}>
-        <PageHero
-          eyebrow="Productivity"
-          title="Inbox"
-          description="Capture ideas, tasks, phrases, or learnings now; organize them into notes, tasks, or journal entries later."
-          stats={[{ label: "Unprocessed", value: loading ? "…" : String(inboxCount) }]}
+      <motion.div variants={itemVariants} className="space-y-3">
+        <GoalsHubNav
           actions={
-            <Button onClick={() => openQuickCapture()} className="gap-1.5">
-              <Plus size={16} />
+            <Button size="sm" onClick={() => openQuickCapture()} className="h-9 gap-1.5 rounded-md">
+              <Plus size={16} aria-hidden="true" />
               Quick capture
             </Button>
           }
         />
+        <p className="text-sm text-muted-foreground">
+          Capture now, organize later.{" "}
+          <span className="font-medium text-foreground tabular-nums">
+            {loading ? "…" : inboxCount}
+          </span>{" "}
+          unprocessed.
+        </p>
       </motion.div>
 
       <motion.div variants={itemVariants}>

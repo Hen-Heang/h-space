@@ -73,7 +73,7 @@ export default function JournalPage() {
       <motion.div variants={itemVariants} className="mb-6">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h1 className="mb-1 text-xl font-semibold text-foreground">Journal</h1>
+            <h2 className="mb-1 text-lg font-semibold text-foreground">Today&apos;s reflection</h2>
             <p className="text-sm text-muted-foreground">
               A daily reflection — what you did, learned, struggled with, and want to do next.
               Nothing here is required.

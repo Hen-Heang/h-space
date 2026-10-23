@@ -1,8 +1,19 @@
-import { MyAppsSection } from "@/components/home/MyAppsSection"
+import { AppsCatalog } from "@/components/apps/AppsCatalog"
+import { WorkspaceTabs } from "@/components/layout/WorkspaceTabs"
 
-// The My Apps workspace: the full project catalog from `lib/projects.ts`,
-// the same one the public landing page shows. Phase 3 of the H-Space upgrade
-// extends the catalog itself (purpose, architecture, status) — not this page.
+// The My Apps workspace: the private catalog of the projects in
+// `lib/projects.ts` (search, categories, favorites). The public landing page
+// shows the same facts as a portfolio through `MyAppsSection`.
 export default function AppsPage() {
-  return <MyAppsSection className="pb-12" />
+  return (
+    <div className="space-y-5 pb-12">
+      <div className="space-y-3">
+        <WorkspaceTabs sectionId="apps" />
+        <p className="text-sm text-muted-foreground">
+          The applications I build and use — open one, or jump to its code.
+        </p>
+      </div>
+      <AppsCatalog />
+    </div>
+  )
 }

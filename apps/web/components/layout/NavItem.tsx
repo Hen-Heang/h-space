@@ -7,26 +7,26 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import type { NavItem } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
-// One calm active-state system, shared by the sidebar, rail flyout and More
-// sheet: subtle accent background + stronger text + a thin left indicator.
-// No sliding pill, no glow, no icon scaling, no per-item spring — the global
-// prefers-reduced-motion rule in globals.css handles the rest.
+// One calm active-state system, shared by the sidebar, tablet rail and More
+// sheet: a subtle accent background, stronger text, and a thin left
+// indicator. Icons stay neutral (no per-item colors) so the chrome reads as
+// one quiet surface; the global prefers-reduced-motion rule in globals.css
+// handles the rest.
 
-export type NavRowVariant = "sidebar" | "flyout" | "list"
+export type NavRowVariant = "sidebar" | "list"
 
 const ROW_BASE =
-  "group relative flex items-center gap-3 rounded-lg text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+  "group relative flex items-center gap-2.5 rounded-md text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
 
 const ROW_SIZE: Record<NavRowVariant, string> = {
-  // 44px min height everywhere so mobile touch targets are always compliant.
-  sidebar: "min-h-11 px-3 py-2",
-  flyout: "min-h-11 px-3 py-2",
-  list: "min-h-14 px-3.5 py-3 text-[15px]",
+  // Compact desktop rows; the touch-first list keeps a 48px+ target.
+  sidebar: "min-h-9 px-2.5 py-1.5",
+  list: "min-h-12 px-3 py-2.5 text-[15px]",
 }
 
 const ROW_STATE = {
-  active: "bg-accent text-foreground font-semibold",
-  idle: "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+  active: "bg-accent text-foreground",
+  idle: "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
   soon: "cursor-default text-muted-foreground/50",
 }
 
@@ -35,7 +35,7 @@ export function ActiveIndicator() {
   return (
     <span
       aria-hidden
-      className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary"
+      className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-primary"
     />
   )
 }
@@ -47,6 +47,7 @@ export function NavRow({
   onNavigate,
   className,
   trailing,
+  showDescription = false,
   ...rest
 }: {
   item: NavItem
@@ -54,9 +55,11 @@ export function NavRow({
   variant?: NavRowVariant
   onNavigate?: () => void
   trailing?: React.ReactNode
+  /** Second line with `item.description` — used by the mobile More sheet. */
+  showDescription?: boolean
 } & Omit<ComponentProps<typeof Link>, "href" | "item">) {
   const Icon = item.icon
-  const iconSize = variant === "list" ? 19 : 17
+  const iconSize = variant === "list" ? 18 : 16
 
   if (item.soon) {
     return (
@@ -87,10 +90,18 @@ export function NavRow({
       {active && <ActiveIndicator />}
       <Icon
         size={iconSize}
-        strokeWidth={active ? 2.4 : 2}
-        className={cn("shrink-0", item.color, !active && "opacity-70")}
+        strokeWidth={2}
+        aria-hidden
+        className={cn("shrink-0", active ? "text-foreground" : "text-muted-foreground")}
       />
-      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate">{item.label}</span>
+        {showDescription && item.description && (
+          <span className="block truncate text-xs font-normal text-muted-foreground">
+            {item.description}
+          </span>
+        )}
+      </span>
       {trailing}
     </Link>
   )
@@ -110,7 +121,7 @@ export function NavIconRow({
 }: {
   item: NavItem
   active: boolean
-  /** Override the tooltip / accessible name (rail sections use their own). */
+  /** Override the tooltip / accessible name. */
   label?: string
   onNavigate?: () => void
   /** Micro-label under the icon — used by the tablet rail. */
@@ -129,27 +140,24 @@ export function NavIconRow({
           aria-current={active ? "page" : undefined}
           onClick={onNavigate}
           className={cn(
-            "relative flex min-h-11 w-full flex-col items-center justify-center gap-1 rounded-lg py-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+            "relative flex w-full flex-col items-center justify-center gap-1 rounded-md outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+            showLabel ? "min-h-14 py-2" : "min-h-10 py-2",
             active
               ? "bg-accent text-foreground"
-              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+              : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
             className,
           )}
         >
           {active && <ActiveIndicator />}
-          <Icon
-            size={20}
-            strokeWidth={active ? 2.4 : 2}
-            className={cn("shrink-0", item.color, !active && "opacity-70")}
-          />
+          <Icon size={18} strokeWidth={2} aria-hidden className="shrink-0" />
           {showLabel && (
             <span
               className={cn(
-                "max-w-full truncate px-1 text-xs leading-none",
+                "max-w-full truncate px-1 text-[11px] leading-none",
                 active && "font-semibold",
               )}
             >
-              {name}
+              {item.shortLabel ?? name}
             </span>
           )}
         </Link>

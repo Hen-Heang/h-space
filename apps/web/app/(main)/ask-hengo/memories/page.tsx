@@ -2,9 +2,9 @@
 
 import { motion } from "motion/react"
 
+import { WorkspaceTabs } from "@/components/layout/WorkspaceTabs"
 import { AddMemoryDialog } from "@/components/memory/AddMemoryDialog"
 import { MemoryCandidateCard } from "@/components/memory/MemoryCandidateCard"
-import { BackLink } from "@/components/ui/back-link"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useMemoryCandidates } from "@/hooks/useMemory"
@@ -24,20 +24,12 @@ export default function AskHengoMemoriesPage() {
       variants={containerVariants}
       className="mx-auto max-w-2xl space-y-6 pb-16"
     >
-      <motion.div variants={itemVariants}>
-        <BackLink href="/ask-hengo" label="Ask Hengo" />
-        <div className="mt-2 flex flex-col items-start justify-between gap-3 min-[360px]:flex-row">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">Memories</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Facts Hengo has noticed or you&apos;ve told it directly. Only approved memories are
-              ever used to answer future questions.
-            </p>
-          </div>
-          <div className="shrink-0">
-            <AddMemoryDialog />
-          </div>
-        </div>
+      <motion.div variants={itemVariants} className="space-y-3">
+        <WorkspaceTabs sectionId="memory" actions={<AddMemoryDialog />} />
+        <p className="text-sm text-muted-foreground">
+          Facts Hengo has noticed or you&apos;ve told it directly. Only approved memories are ever
+          used to answer future questions.
+        </p>
       </motion.div>
 
       {loading ? (

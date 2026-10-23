@@ -181,7 +181,8 @@ function NotificationRow({
   )
 }
 
-export function NotificationBell() {
+/** `className` lets each top bar size the trigger to match its other controls. */
+export function NotificationBell({ className }: { className?: string } = {}) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const {
@@ -209,7 +210,10 @@ export function NotificationBell() {
           variant="ghost"
           size="icon"
           aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
-          className="relative h-11 w-11 rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-all hover:text-foreground active:scale-95"
+          className={cn(
+            "relative h-11 w-11 rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-all hover:text-foreground active:scale-95",
+            className,
+          )}
         >
           <Bell size={18} strokeWidth={2.5} />
           {unreadCount > 0 && (

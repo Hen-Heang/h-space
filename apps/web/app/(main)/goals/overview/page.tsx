@@ -4,7 +4,6 @@ import { useMemo } from "react"
 import { AlertTriangle } from "lucide-react"
 
 import { GoalsHubHeader } from "@/components/goals/hub/GoalsHubHeader"
-import { GoalsHubNav } from "@/components/goals/hub/GoalsHubNav"
 import { GoalTasksSnapshot } from "@/components/goals/GoalTasksSnapshot"
 import { GoalsOverview } from "@/components/dashboard/GoalsOverview"
 import { RoadmapTeaser } from "@/components/dashboard/RoadmapTeaser"
@@ -44,7 +43,6 @@ export default function GoalsOverviewPage() {
           { label: "Completed", value: String(completedGoals.length) },
         ]}
       />
-      <GoalsHubNav />
 
       {deadlineMessage && (
         <div className="flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm font-medium text-amber-700 dark:text-amber-300">

@@ -51,7 +51,7 @@ export default function HabitsPage() {
 
       <motion.div variants={itemVariants} className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Habits</h1>
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">Your habits</h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
             Keep only a few habits you actually want to repeat. Tap the circle to check in today.
           </p>

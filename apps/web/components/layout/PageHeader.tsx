@@ -47,8 +47,8 @@ export function PageHeader({
 
 export function BreadcrumbTrail({ items, className }: { items: Breadcrumb[]; className?: string }) {
   return (
-    <nav aria-label="Breadcrumb" className={cn("min-w-0", className)}>
-      <ol className="flex min-w-0 items-center gap-1 text-xs font-medium text-muted-foreground">
+    <nav aria-label="Breadcrumb" className={cn("min-w-0 text-xs", className)}>
+      <ol className="flex min-w-0 items-center gap-1 font-medium text-muted-foreground">
         {items.map((crumb, index) => (
           <li key={`${crumb.label}-${index}`} className="flex min-w-0 items-center gap-1">
             {index > 0 && <ChevronRight size={12} aria-hidden className="shrink-0 opacity-60" />}

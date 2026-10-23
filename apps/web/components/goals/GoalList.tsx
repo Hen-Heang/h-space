@@ -41,8 +41,8 @@ import {
   type Goal,
   type SortOption,
 } from "@/lib/goals"
-import { allKeyResultsAchieved, computeGoalProgress } from "@/lib/goal-progress"
-import { computeGoalHealth } from "@/lib/goal-health"
+import { computeGoalProgress } from "@/lib/goal-progress"
+import { computeListGoalHealth } from "@/lib/goal-health"
 import { selectNextBestAction } from "@/lib/next-best-action"
 import { todayInAppTimezone } from "@/lib/task-status"
 import { getUserId } from "@/lib/auth-store"
@@ -426,24 +426,7 @@ export function GoalList({
             const done = goalProgress.activityProgress.completed
             const progress =
               goalProgress.outcomeProgress ?? goalProgress.activityProgress.percentage
-            // List-level health: no per-goal task-detail fetch here, so overdue
-            // high-impact / inactivity signals are omitted (0 / null) — the
-            // goal detail page computes those from the full task list.
-            const health = computeGoalHealth({
-              goalStatus: goal.status,
-              hasKeyResults: goalProgress.hasActiveKeyResults,
-              outcomeProgress: goalProgress.outcomeProgress,
-              allKeyResultsAchieved: goalProgress.hasActiveKeyResults
-                ? allKeyResultsAchieved(goal.keyResults ?? [])
-                : false,
-              activityTotalTasks: total,
-              targetDate: goal.target_date,
-              startDate: goal.metadata?.start_date ?? null,
-              noDuration: Boolean(goal.no_duration || goal.metadata?.no_duration),
-              now: new Date(),
-              daysSinceLastActivity: null,
-              overdueHighImpactTaskCount: 0,
-            })
+            const health = computeListGoalHealth(goal, new Date())
             // Deterministic next-best-action, reusing the same engine as the
             // goal detail Overview tab (lib/next-best-action.ts) — no ranking
             // logic duplicated here. Not shown once a goal is completed.

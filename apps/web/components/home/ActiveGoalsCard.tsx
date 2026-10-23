@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { goalsQueryKey } from "@/hooks/useGoals"
 import { goalsApi } from "@/lib/api"
 import { getUserId } from "@/lib/auth-store"
+import { computeListGoalHealth } from "@/lib/goal-health"
 import { goalTaskProgress, selectActiveGoals } from "@/lib/home-dashboard"
 
 /**
@@ -30,7 +31,7 @@ export function ActiveGoalsCard() {
   const goals = selectActiveGoals(data)
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 shadow-sm dark:bg-slate-900/40 sm:p-5">
+    <div className="rounded-lg border border-border bg-card p-4">
       <div className="flex items-center justify-between">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <Target size={14} strokeWidth={2.5} className="text-violet-500" />
@@ -65,6 +66,9 @@ export function ActiveGoalsCard() {
         <ul className="mt-3 space-y-2">
           {goals.map((goal) => {
             const progress = goalTaskProgress(goal)
+            // Live, same as the Goals list — the stored health_status only
+            // refreshes when the goal's detail page is opened.
+            const health = computeListGoalHealth(goal, new Date())
             return (
               <li key={goal.id}>
                 <Link
@@ -82,7 +86,7 @@ export function ActiveGoalsCard() {
                     <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                       {goal.title}
                     </span>
-                    <HealthBadge status={goal.health_status} reason={goal.health_reason} />
+                    <HealthBadge status={health.status} reason={health.reason} />
                   </div>
                   {progress && (
                     <div className="mt-2 flex items-center gap-2">

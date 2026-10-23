@@ -2,6 +2,7 @@ import {
   BarChart3,
   BookOpen,
   BookOpenText,
+  Bot,
   BrainCircuit,
   CalendarClock,
   CalendarDays,
@@ -16,9 +17,11 @@ import {
   Languages,
   LayoutGrid,
   ListChecks,
+  ListTodo,
   Map,
   MessageCircle,
   MessagesSquare,
+  MoreHorizontal,
   Mic,
   NotebookPen,
   RotateCcw,
@@ -26,10 +29,11 @@ import {
   Settings,
   Smile,
   Sparkles,
+  Sprout,
   Sunrise,
   Target,
-  TreeDeciduous,
   Trophy,
+  Vault,
   Wand2,
   Zap,
 } from "lucide-react"
@@ -97,13 +101,15 @@ export type NavItem = {
   soon?: boolean
   match?: NavMatch
   /**
-   * Whether this item gets its own row in the sidebar / rail / bottom nav.
-   * Defaults to visible. Set `false` for routes that are still first-class,
-   * reachable, searchable destinations (Quick Switcher, breadcrumbs, page
-   * titles) but shouldn't clutter the nav chrome individually — e.g. the
-   * Learn section's children, which are all reachable from the `/learn` hub
-   * instead. Never remove an item from `navSections` just to hide it; that
-   * would also break route matching, page titles, and the Quick Switcher.
+   * Whether this item is a standalone destination that can claim its own
+   * active state from a parent's prefix match (see `navPathnames`). Defaults
+   * to true. `false` marks a hub child — Planner's Overview/Tasks, Learning's
+   * modules — whose parent should stay lit while it is open.
+   *
+   * It no longer decides chrome visibility: the global sidebar shows only the
+   * workspaces in `workspaceNavItems`, and per-workspace pages are listed in
+   * `workspaceTabs`. Never remove an item from `navSections` to hide it; that
+   * would break route matching, page titles, and the Quick Switcher.
    */
   showInSidebar?: boolean
 }
@@ -126,11 +132,12 @@ export type NavSection = {
 export const todayItem: NavItem = {
   id: "today",
   href: "/home",
-  label: "Today",
+  label: "Overview",
+  shortLabel: "Home",
   icon: Home,
   color: "text-blue-500",
-  description: "Your daily overview",
-  keywords: ["home", "dashboard", "start", "overview"],
+  description: "Your daily dashboard",
+  keywords: ["home", "today", "dashboard", "start", "overview"],
   // /home has no children; keep the match tight so nothing else lights it up.
   match: { pathname: "/home", includeChildren: false },
 }
@@ -259,7 +266,7 @@ export const progressHubItem: NavItem = {
 /**
  * Korean correction history (`/history` reads `correctionApi`/`progressApi`),
  * so it lives in the Learning section. Timeline — the cross-app activity log
- * it used to share a section with — moved to Notes & Knowledge.
+ * it used to share a section with — moved to Notes.
  */
 export const historyItem: NavItem = {
   id: "history-hub",
@@ -290,7 +297,21 @@ export const appsItem: NavItem = {
   icon: LayoutGrid,
   color: "text-cyan-500",
   description: "The applications in H-Space and what each one solves",
-  keywords: ["apps", "projects", "portfolio", "money flow", "catalog"],
+  keywords: ["apps", "projects", "portfolio", "catalog"],
+}
+
+/**
+ * H-Vault — the private account directory (metadata only; passwords live in
+ * Bitwarden). An internal app inside the My Apps workspace.
+ */
+export const vaultItem: NavItem = {
+  id: "apps-vault",
+  href: "/vault",
+  label: "H-Vault",
+  icon: Vault,
+  color: "text-cyan-600",
+  description: "Which email or username you use for each service",
+  keywords: ["vault", "accounts", "logins", "username", "email", "bitwarden", "services"],
 }
 
 // ─── Sections ─────────────────────────────────────────────────────────────────
@@ -298,7 +319,7 @@ export const appsItem: NavItem = {
 export const navSections: NavSection[] = [
   {
     id: "today",
-    label: "Today",
+    label: "Overview",
     icon: Home,
     color: "text-blue-500",
     href: todayItem.href,
@@ -310,7 +331,7 @@ export const navSections: NavSection[] = [
     // Korean hub (`/learn`).
     id: "learn",
     label: "Learning",
-    icon: Sparkles,
+    icon: GraduationCap,
     color: "text-violet-500",
     href: "/learn",
     // Every child below is a real, reachable, searchable route — just hidden
@@ -431,7 +452,7 @@ export const navSections: NavSection[] = [
       {
         id: "learn-hub",
         href: "/learn",
-        label: "Learn",
+        label: "Learning Hub",
         icon: Sparkles,
         color: "text-violet-500",
         description: "Practice, study, and exam prep — all Korean learning in one hub",
@@ -452,8 +473,8 @@ export const navSections: NavSection[] = [
     // highlighting. Inbox lives here too (not a "Memory" browsing tool — it's
     // where a stray idea becomes a goal or task).
     id: "plan",
-    label: "Goals & Tasks",
-    icon: ClipboardList,
+    label: "Planner",
+    icon: ListTodo,
     color: "text-sky-500",
     href: "/goals",
     items: [
@@ -490,11 +511,7 @@ export const navSections: NavSection[] = [
         match: { pathname: "/goals", includeChildren: true },
       },
       {
-        // Data-model home stays here (route registry, GoalsHubNav's local
-        // tab, last-visited tracking for Plan's shortcut tile), but it's
-        // promoted OUT of Plan's nested sidebar group and into a top-level
-        // row — see `secondaryNavItems` and `visibleSidebarItems` below —
-        // since Calendar is a primary daily surface, not a Goals sub-page.
+        // One of the Planner's local tabs (`workspaceTabs.plan`).
         // `showInSidebar` deliberately stays unset (true): flipping it would
         // drop this href out of `navPathnames`, breaking the sibling-wins
         // exclusion `goals-goals` relies on above.
@@ -532,10 +549,23 @@ export const navSections: NavSection[] = [
     // Overview/Tasks.
     id: "grow",
     label: "Growth",
-    icon: TreeDeciduous,
+    icon: Sprout,
     color: "text-emerald-500",
-    href: "/growth/recovery",
+    href: "/growth",
     items: [
+      {
+        // The Growth workspace's landing page — a small hub over Habits,
+        // Journal, Progress and Recovery. Exact match only, so it never
+        // claims the child routes below.
+        id: "growth-hub",
+        href: "/growth",
+        label: "Growth",
+        icon: Sprout,
+        color: "text-emerald-500",
+        description: "Habits, reflection, and progress in one place",
+        keywords: ["growth", "habits", "journal", "progress", "reflection"],
+        match: { pathname: "/growth", includeChildren: false },
+      },
       {
         id: "growth-habits",
         href: "/growth/habits",
@@ -602,13 +632,13 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    // Notes & Knowledge: what you've written down and what Hengo remembers —
+    // Notes: what you've written down and what Hengo remembers —
     // freeform Notes, the Memories hub (facts extracted from notes/goals/
     // habits/journal), and the cross-app Timeline. The "memory" id is kept
     // because last-visited tracking stores it in localStorage.
     id: "memory",
-    label: "Notes & Knowledge",
-    icon: BrainCircuit,
+    label: "Notes",
+    icon: NotebookPen,
     color: "text-indigo-500",
     href: notesItem.href,
     items: [notesItem, memoryHubItem, timelineItem],
@@ -619,7 +649,7 @@ export const navSections: NavSection[] = [
     icon: LayoutGrid,
     color: "text-cyan-500",
     href: appsItem.href,
-    items: [appsItem],
+    items: [appsItem, vaultItem],
   },
   {
     // AI Assistant: the general Hengo Coach chat, its modes, and Ask Hengo
@@ -627,7 +657,7 @@ export const navSections: NavSection[] = [
     // keep exactly one of them active.
     id: "ai",
     label: "AI Assistant",
-    icon: MessageCircle,
+    icon: Bot,
     color: "text-teal-500",
     href: aiCoachItem.href,
     items: [
@@ -695,135 +725,145 @@ function section(id: NavSectionId): NavSection {
   return navSections.find((s) => s.id === id)!
 }
 
-// ─── Hub primary navigation ────────────────────────────────────────────────────
+// ─── Navigation layers ────────────────────────────────────────────────────────
 //
-// H-Space is a personal hub of several apps, so the tablet rail and mobile
-// bottom bar give each module one tab instead of spending all five on Korean
-// learning (Hengo V2's original Today · Vocabulary · Practice · Coach · Study).
-// Each tab reuses its registry item's href/icon via spread, overriding only
-// `id` (so the display variant doesn't collide with the registry item),
-// `label`, and — for hub tabs — `match`, the same pattern the old
-// `bottomTabs`'s `tab-learn` override used. Everything not given a tab stays a
-// real, registered route reachable from those hubs, the desktop sidebar, and
-// the Quick Switcher.
+// The registry above (`navSections`) covers every route and drives titles,
+// breadcrumbs, active matching, and the Quick Switcher. What each surface
+// *shows* is chosen from it in four small layers, so no shell component ever
+// decides visibility itself:
+//
+//   1. `workspaceNavItems` + `toolNavItems` — the global sidebar / tablet rail:
+//      six workspaces plus the AI Assistant and Settings. Nothing else.
+//   2. `workspaceTabs` — each workspace's local navigation, rendered inside the
+//      workspace by `WorkspaceTabs` (Planner: Tasks · Goals · Calendar · …).
+//   3. `mobileNavItems` — the four mobile bottom-bar tabs before "More".
+//   4. `browseSections` — every shipped route grouped by workspace, for the
+//      mobile "More" sheet's full list.
+//
+// Entries in layers 1 and 3 represent a whole workspace, so they use a
+// `sectionId` match: every route in that workspace (Calendar, `/vocab`,
+// Memories, …) keeps its workspace lit.
+
 /**
- * Shorter display names for the two destinations whose registry labels are
- * longer than a nav row wants, used by the desktop sidebar. The one
- * deliberate exception is the rail/bottom bar's "Learning" tab: it also lands
- * on `/learn` but stands for the whole Learning workspace (section-wide
- * match), so it takes the workspace's name rather than the page's "Study". The
- * underlying page title and breadcrumb still come from the registry label.
+ * One global-nav entry per workspace, built from the section itself so the
+ * label, icon, and landing route are defined once. `id` is prefixed so it
+ * never collides with the registry item that shares the href.
  */
-const NAV_DISPLAY_LABELS: Record<string, string> = {
-  "learn-korean-coach": "Coach",
-  "learn-hub": "Study",
+function workspaceEntry(id: NavSectionId, overrides: Partial<NavItem> = {}): NavItem {
+  const s = section(id)
+  return {
+    id: `nav-${id}`,
+    href: s.href,
+    label: s.label,
+    icon: s.icon,
+    match: { pathname: linkPath(s.href), sectionId: id },
+    ...overrides,
+  }
 }
 
-function withDisplayLabel(item: NavItem): NavItem {
-  const label = NAV_DISPLAY_LABELS[item.id]
-  return label ? { ...item, label } : item
-}
-
-export const primaryNavItems: NavItem[] = [
-  todayItem,
-  // Section-wide match so Calendar, Tasks, Inbox and Roadmap keep Goals lit
-  // instead of going dark — none of them has a tab of its own here.
-  {
-    ...navItem("goals-goals"),
-    id: "primary-goals",
-    match: { pathname: "/goals", sectionId: "plan" },
-  },
-  // `/vocab`, `/korean-coach`, `/phrasebook`, … don't share the `/learn`
-  // prefix, so the whole Learning section lights this tab.
-  {
-    ...navItem("learn-hub"),
-    id: "primary-learning",
-    label: "Learning",
-    match: { pathname: "/learn", sectionId: "learn" },
-  },
-  // Section-wide so Memories and Timeline keep Notes lit too.
-  { ...notesItem, id: "primary-notes", match: { pathname: "/notes", sectionId: "memory" } },
+/** The global sidebar's WORKSPACE group, in display order. */
+export const workspaceNavItems: NavItem[] = [
+  // /home has no children, so a plain exact match is enough.
+  workspaceEntry("today", {
+    shortLabel: "Home",
+    description: todayItem.description,
+    match: todayItem.match,
+  }),
+  workspaceEntry("apps", {
+    shortLabel: "Apps",
+    description: "Projects and personal applications",
+  }),
+  workspaceEntry("plan", { shortLabel: "Plan", description: "Tasks, goals, and calendar" }),
+  workspaceEntry("learn", {
+    shortLabel: "Learn",
+    description: "Korean, software engineering, and AI",
+  }),
+  workspaceEntry("memory", { description: "Notes, memories, and timeline" }),
+  workspaceEntry("grow", { description: "Habits, reflection, and progress" }),
 ]
-// The fifth slot is the "Spaces" sheet trigger (`SpacesSheet`), rendered by
-// the bottom bar and rail themselves — it opens every workspace in
-// `sidebarSections`, so Growth, My Apps and AI Assistant are one tap away.
 
-/** Whether the Spaces trigger should read as current: no primary tab owns the route. */
-export function isSpacesRoute(pathname: string, searchParams?: NavSearchParams): boolean {
-  return !primaryNavItems.some((item) => isNavigationItemActive({ pathname, searchParams, item }))
+/**
+ * The global sidebar's TOOLS group. "AI Assistant" is the one AI identity in
+ * the chrome; Hengo Coach and its modes stay the assistant's internal names.
+ * Section-wide match so every `/chat?mode=…` keeps it lit.
+ */
+export const toolNavItems: NavItem[] = [
+  workspaceEntry("ai", { shortLabel: "AI", description: aiCoachItem.description }),
+  settingsItem,
+]
+
+/** Mobile bottom bar: four tabs; the fifth slot is the "More" sheet trigger. */
+export const mobileNavItems: NavItem[] = ["nav-today", "nav-plan", "nav-learn", "nav-apps"].map(
+  (id) => workspaceNavItems.find((item) => item.id === id)!,
+)
+
+/** Workspaces and tools the "More" sheet leads with — everything without a tab. */
+export const moreNavItems: NavItem[] = [
+  ...workspaceNavItems.filter((item) => !mobileNavItems.includes(item)),
+  ...toolNavItems,
+]
+
+/** Icon for the "More" trigger, kept here with the rest of the nav vocabulary. */
+export const moreIcon = MoreHorizontal
+
+/** Whether the "More" trigger should read as current: no bottom tab owns the route. */
+export function isMoreRoute(pathname: string, searchParams?: NavSearchParams): boolean {
+  return !mobileNavItems.some((item) => isNavigationItemActive({ pathname, searchParams, item }))
 }
 
 /**
- * Desktop sidebar and Spaces sheet section order — the seven workspaces. The
- * registry order in `navSections` is left alone because `getActiveNavItem` /
- * `getSectionForPath` are first-match.
+ * Local navigation inside each workspace. Workspaces without an entry
+ * (Overview, Learning, AI Assistant) navigate with their own page content —
+ * the Learning Hub's cards, the chat's mode switcher.
  */
-const SIDEBAR_SECTION_ORDER: NavSectionId[] = [
+export const workspaceTabs: Partial<Record<NavSectionId, NavItem[]>> = {
+  plan: ["goals-tasks", "goals-goals", "goals-calendar", "goals-overview", "plan-inbox"].map(
+    navItem,
+  ),
+  memory: ["memory-notes", "memory-hub", "review-timeline"].map(navItem),
+  grow: ["growth-hub", "growth-habits", "growth-journal", "grow-progress"].map(navItem),
+  apps: ["apps-catalog", "apps-vault"].map(navItem),
+}
+
+/**
+ * The one tab that should read as current. A parent tab's prefix match can
+ * overlap a sibling's (Goals' `/goals` vs Tasks' `/goals/tasks`), so when
+ * several match, the most specific href wins.
+ */
+export function getActiveTab(
+  tabs: NavItem[],
+  pathname: string,
+  searchParams?: NavSearchParams,
+): NavItem | undefined {
+  return tabs
+    .filter((item) => isNavigationItemActive({ pathname, searchParams, item }))
+    .sort((a, b) => linkPath(b.href).length - linkPath(a.href).length)[0]
+}
+
+/**
+ * Display order for `browseSections` — the workspace order of the global
+ * sidebar. The registry order in `navSections` is left alone because
+ * `getActiveNavItem` / `getSectionForPath` are first-match.
+ */
+const BROWSE_SECTION_ORDER: NavSectionId[] = [
   "today",
-  "learn",
   "plan",
-  "grow",
+  "learn",
   "memory",
   "apps",
+  "grow",
   "ai",
 ]
 
 /**
- * Every shipped destination, grouped by its section — the desktop sidebar's
- * data source, and the Quick Switcher's pre-typing browse view.
- *
- * This deliberately ignores `showInSidebar`. That flag was V2's way of hiding
- * ~28 built, working routes behind Quick Switcher search only; the audit found
- * that leaves most of the product with no front door you can click. Sections
- * come straight from `navSections` (ordered by `SIDEBAR_SECTION_ORDER`), so a
- * new route still only needs registering there.
- *
- * `soon` placeholders are filtered out: they have no page behind them, so a
- * row would be a dead end. They stay in `navSections` (and in `moreComingSoon`)
- * for whoever builds them.
+ * Every shipped route, grouped by workspace — the mobile "More" sheet's full
+ * list, so phones keep a tappable door to routes that only a workspace's own
+ * page links to on desktop. `soon` placeholders are excluded: no page behind
+ * them.
  */
-export const sidebarSections: NavSection[] = SIDEBAR_SECTION_ORDER.map(section)
-  .map((section) => ({ ...section, items: shippedItems(section.items).map(withDisplayLabel) }))
-  .filter((section) => section.items.length > 0)
-
-// ─── V1 workspace grouping (superseded by `primaryNavItems` above) ───────────
-//
-// Everything below in this section is the pre-V2 grouped-sidebar model (Plan/
-// Grow expandable workspaces, a Learn/Calendar/History secondary row, and a
-// mobile "More" sheet). No longer wired into any shell component — V2's flat
-// five-item nav replaced it — but left in place and still exported/tested
-// since the underlying routes it lists are all still real and some of this
-// may be revisited by a later V2 phase instead of being deleted outright.
-
-/**
- * The only sections that render as a real, expandable primary group in the
- * desktop sidebar and tablet rail: Plan and Grow. Order here is display
- * order. Learn and History are secondary flat destinations (see
- * `secondaryNavItems`); Memory and AI have no chrome presence at all — every
- * item they hold is `showInSidebar: false`.
- */
-export const workspaceNavSections: NavSection[] = ["plan", "grow"].map((id) =>
-  section(id as NavSectionId),
-)
-
-/**
- * Secondary desktop/tablet destinations, rendered below the primary groups:
- * Learn's card hub, Calendar, and History. Calendar's `NavItem` still lives
- * inside the "plan" section's `items` (see the comment there) purely for
- * route registry / GoalsHubNav / last-visited purposes — listing it here too
- * is what actually promotes it to a top-level row; `visibleSidebarItems`
- * below excludes it from Plan's nested group so it isn't rendered twice.
- * Neither "Account" nor "Settings" gets its own row here — the existing
- * `ProfileMenu` component already serves as the sidebar's Account entry
- * point (avatar + email, labelled "Account") and its dropdown's first item
- * is Settings, so a standalone Settings row would duplicate that same
- * destination right above it.
- */
-export const secondaryNavItems: NavItem[] = [
-  navItem("learn-hub"),
-  navItem("goals-calendar"),
-  navItem("history-hub"),
-]
+export const browseSections: NavSection[] = BROWSE_SECTION_ORDER.map(section)
+  .map((s) => ({ ...s, items: shippedItems(s.items) }))
+  .filter((s) => s.items.length > 0)
 
 // ─── Matching ─────────────────────────────────────────────────────────────────
 
@@ -938,59 +978,7 @@ export function getActiveNavItem(
   return allNavItems.find((item) => isNavigationItemActive({ pathname, searchParams, item }))
 }
 
-// ─── Mobile bottom bar (V1 — superseded, `MobileBottomNav` now renders
-// `primaryNavItems` directly) ──────────────────────────────────────────────────
-
-/**
- * Four routed mobile destinations. The fifth slot ("More") is a sheet
- * trigger, not a route, so it is not in this list — see `MobileBottomNav`.
- * Hengo Coach deliberately has no bottom tab of its own: the floating
- * launcher (`components/chat/FloatingAiCoach`) already gives it one-tap
- * mobile access without spending a tab slot, which is also the only way
- * Grow/Memory/Settings/History stay reachable without a "More" trigger.
- */
-export const bottomTabs: NavItem[] = [
-  todayItem,
-  {
-    ...navItem("learn-hub"),
-    id: "tab-learn",
-    label: "Learn",
-    match: { pathname: "/learn", sectionId: "learn" },
-  },
-  { ...navItem("goals-goals"), id: "tab-goals", label: "Goals" },
-  // No sectionId match: "grow" also holds Recovery/Journal, which have no
-  // chrome row at all now (reachable via Quick Switcher / deep link) and
-  // shouldn't light up this tab. Only /progress itself (and its children,
-  // via the default pathname match) does.
-  { ...navItem("grow-progress"), id: "tab-progress", label: "Progress" },
-]
-
-/**
- * Whether the current route lives behind the "More" sheet rather than one of
- * the four direct tabs. Anything no tab owns counts — so /growth/recovery,
- * /vocab, /chat and /settings all light up "More".
- */
-export function isMoreRoute(pathname: string, searchParams?: NavSearchParams): boolean {
-  return !bottomTabs.some((item) => isNavigationItemActive({ pathname, searchParams, item }))
-}
-
-/** Index of the active bottom tab, or `bottomTabs.length` for More, or -1. */
-export function getActiveBottomTabIndex(pathname: string, searchParams?: NavSearchParams): number {
-  const index = bottomTabs.findIndex((item) =>
-    isNavigationItemActive({ pathname, searchParams, item }),
-  )
-  if (index !== -1) return index
-  return isMoreRoute(pathname, searchParams) ? bottomTabs.length : -1
-}
-
-// ─── "More" sheet grouping (V1 — superseded; the mounted overflow sheet is
-// now `SpacesSheet`, which renders `sidebarSections` instead) ───────────────
-
-export type MoreGroup = {
-  id: string
-  label: string
-  items: NavItem[]
-}
+// ─── Shipped / coming-soon filters ────────────────────────────────────────────
 
 /** Only shipped items — `soon` placeholders are surfaced separately. */
 export function shippedItems(items: NavItem[]): NavItem[] {
@@ -1000,47 +988,6 @@ export function shippedItems(items: NavItem[]): NavItem[] {
 export function comingSoonItems(items: NavItem[]): NavItem[] {
   return items.filter((item) => item.soon)
 }
-
-/**
- * Shipped items that also get their own sidebar/rail/flyout row. A section
- * where every item opts out (like Learn — see `showInSidebar` on `NavItem`)
- * renders as a single flat link to `section.href` instead of an expandable
- * group; see `DesktopSidebar` / `TabletNavigationRail`. Items promoted into
- * `secondaryNavItems` (currently just Calendar) are excluded here too, so a
- * promoted item gets its one top-level row instead of also appearing nested
- * in its data-model section's group.
- */
-export function visibleSidebarItems(section: NavSection): NavItem[] {
-  return shippedItems(section.items).filter(
-    (item) => item.showInSidebar !== false && !secondaryNavItems.includes(item),
-  )
-}
-
-/**
- * The More sheet's menu, grouped: Calendar/History/Settings as a flat menu,
- * plus a labelled "Memory" group for Notes and Memories (Inbox is a Plan
- * item now, reachable from the Goals tab). Calendar leads the flat menu —
- * mobile's mirror of the desktop promotion into `secondaryNavItems` — so
- * it's one tap from "More" instead of two taps via the Goals hub's local tab
- * nav. Recovery and Journal are unused day-to-day (see the "grow" section
- * comment above) and stay real, hidden routes reachable via Quick Switcher
- * rather than a row here. "Ask Hengo" is rendered separately as a pinned
- * card at the top of the sheet (the mobile home for that action), so it's
- * excluded here to avoid listing it twice. Today, Learn, Goals and Progress
- * aren't repeated here either — they're already bottom tabs.
- */
-export const moreGroups: MoreGroup[] = [
-  {
-    id: "memory",
-    label: "Memory",
-    items: [notesItem, memoryHubItem],
-  },
-  {
-    id: "menu",
-    label: "",
-    items: [navItem("goals-calendar"), historyItem, settingsItem],
-  },
-]
 
 /** `soon` placeholders, kept out of the main groups so they don't dominate. */
 export const moreComingSoon: NavItem[] = navSections.flatMap((s) => comingSoonItems(s.items))

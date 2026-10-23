@@ -99,6 +99,7 @@ export function useGoalDetail(id: string) {
       outcomeProgress: progress.outcomeProgress,
       allKeyResultsAchieved: allKeyResultsAchieved(goal.keyResults ?? []),
       activityTotalTasks: totalTasks,
+      activityCompletedTasks: tasks.filter((t) => t.completed).length,
       targetDate: goal.target_date,
       startDate: goal.metadata?.start_date ?? null,
       noDuration: Boolean(goal.no_duration || goal.metadata?.no_duration),

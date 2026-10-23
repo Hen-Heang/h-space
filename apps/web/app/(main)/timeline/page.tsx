@@ -6,7 +6,7 @@ import { motion } from "motion/react"
 import { DailySummaryCard } from "@/components/timeline/DailySummaryCard"
 import { LogActivityDialog } from "@/components/timeline/LogActivityDialog"
 import { TimelineFilters } from "@/components/timeline/TimelineFilters"
-import { PageHero } from "@/components/app/page-hero"
+import { WorkspaceTabs } from "@/components/layout/WorkspaceTabs"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useTimeline } from "@/hooks/useTimeline"
@@ -47,14 +47,16 @@ export default function TimelinePage() {
       variants={containerVariants}
       className="space-y-6 pb-16"
     >
-      <motion.div variants={itemVariants}>
-        <PageHero
-          eyebrow="Progress"
-          title="Timeline"
-          description="Review completed tasks, habit check-ins, Hengo time, journal entries, and manually logged activity. Hengo time measures app usage only."
-          stats={[{ label: "Entries this period", value: loading ? "…" : String(filtered.length) }]}
-          actions={<LogActivityDialog />}
-        />
+      <motion.div variants={itemVariants} className="space-y-3">
+        <WorkspaceTabs sectionId="memory" actions={<LogActivityDialog />} />
+        <p className="text-sm text-muted-foreground">
+          Completed tasks, habit check-ins, journal entries, Hengo time (app usage only), and logged
+          activity, day by day.{" "}
+          <span className="font-medium text-foreground tabular-nums">
+            {loading ? "…" : filtered.length}
+          </span>{" "}
+          {filtered.length === 1 ? "entry" : "entries"} this period.
+        </p>
       </motion.div>
 
       <motion.div variants={itemVariants}>

@@ -1,11 +1,11 @@
 // Pure, deterministic goal-health engine (Goal System v2 — see
 // docs/goal-system-v2-audit.md). No AI here by design — this is the
 // first-version heuristic the spec asks for before any AI enhancement layers
-// on top of it. Every input is a plain value so this is fully unit-testable
-// and has no dependency on Supabase, the clock, or React.
+// on top of it. Every input is a plain value (the clock is passed in) so this
+// is fully unit-testable and has no dependency on Supabase or React.
 import { differenceInDays, parseISO } from "date-fns"
-import { clampPercent } from "@/lib/goal-progress"
-import type { GoalHealthStatus } from "@/lib/goals"
+import { allKeyResultsAchieved, clampPercent, computeGoalProgress } from "@/lib/goal-progress"
+import type { Goal, GoalHealthStatus } from "@/lib/goals"
 
 export interface GoalHealthInput {
   /** Goal.status — "completed" short-circuits everything else. */
@@ -16,6 +16,12 @@ export interface GoalHealthInput {
   allKeyResultsAchieved: boolean
   /** Total task count, used only to distinguish "not started" from "no key results yet but active". */
   activityTotalTasks: number
+  /**
+   * Completed task count. Only consulted for goals without key results, so a
+   * goal whose every task is done isn't labelled "Needs attention" next to a
+   * 100% task bar. Optional for callers that don't have it.
+   */
+  activityCompletedTasks?: number
   targetDate: string | null
   startDate: string | null
   noDuration: boolean
@@ -57,6 +63,31 @@ export const computeGoalHealth = (input: GoalHealthInput): GoalHealth => {
         reason:
           "No key results or tasks yet — add key results to start tracking real outcome progress.",
       }
+    }
+    // Every task done is not the same as the goal being achieved — there's no
+    // outcome measure to say so — so it isn't "completed". But it isn't
+    // behind either, and "Needs attention" beside a full task bar reads as a
+    // contradiction. The status is on track; the reason asks the owner to
+    // confirm the outcome. A passed deadline still needs a decision.
+    if (
+      input.activityCompletedTasks != null &&
+      input.activityCompletedTasks >= input.activityTotalTasks
+    ) {
+      const deadlinePassed =
+        !input.noDuration &&
+        input.targetDate != null &&
+        differenceInDays(parseISO(input.targetDate), input.now) < 0
+      return deadlinePassed
+        ? {
+            status: "attention",
+            reason:
+              "All tasks are done and the deadline has passed — mark the goal complete if its outcome was reached.",
+          }
+        : {
+            status: "on_track",
+            reason:
+              "All tasks are done — mark the goal complete once its outcome is reached, or add key results to measure it.",
+          }
     }
     return {
       status: "attention",
@@ -122,4 +153,30 @@ export const computeGoalHealth = (input: GoalHealthInput): GoalHealth => {
   return candidates.reduce((worst, candidate) =>
     SEVERITY[candidate.status] > SEVERITY[worst.status] ? candidate : worst,
   )
+}
+
+/**
+ * Health for a goal as it appears in a list (the Goals page, Overview's
+ * Active goals card), from the goal row alone. Lists don't fetch each goal's
+ * task detail, so the overdue-high-impact and inactivity signals are omitted
+ * (0 / null) — the goal detail page computes those from its full task list.
+ */
+export const computeListGoalHealth = (goal: Goal, now: Date): GoalHealth => {
+  const progress = computeGoalProgress(goal.taskCounts, goal.keyResults ?? [])
+  return computeGoalHealth({
+    goalStatus: goal.status,
+    hasKeyResults: progress.hasActiveKeyResults,
+    outcomeProgress: progress.outcomeProgress,
+    allKeyResultsAchieved: progress.hasActiveKeyResults
+      ? allKeyResultsAchieved(goal.keyResults ?? [])
+      : false,
+    activityTotalTasks: progress.activityProgress.total,
+    activityCompletedTasks: progress.activityProgress.completed,
+    targetDate: goal.target_date,
+    startDate: goal.metadata?.start_date ?? null,
+    noDuration: Boolean(goal.no_duration || goal.metadata?.no_duration),
+    now,
+    daysSinceLastActivity: null,
+    overdueHighImpactTaskCount: 0,
+  })
 }

@@ -10,7 +10,6 @@ import { EditGoalSlidePanel } from "@/components/goals/EditGoalSlidePanel"
 import { GoalList } from "@/components/goals/GoalList"
 import { GoalSorter } from "@/components/goals/GoalSorter"
 import { GoalsHubHeader } from "@/components/goals/hub/GoalsHubHeader"
-import { GoalsHubNav } from "@/components/goals/hub/GoalsHubNav"
 import { useGoals } from "@/hooks/useGoals"
 import { type Goal } from "@/lib/goals"
 import { cn } from "@/lib/utils"
@@ -90,7 +89,6 @@ export default function GoalsPage() {
   return (
     <div className="space-y-6 pb-12">
       <GoalsHubHeader description="Plan goals, track deadlines, and manage what you're working toward." />
-      <GoalsHubNav />
 
       <div className="min-w-0 space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

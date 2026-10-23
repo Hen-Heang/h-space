@@ -2,25 +2,25 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { LayoutGrid } from "lucide-react"
 
-import { SpacesSheet } from "@/components/layout/SpacesSheet"
+import { MoreSheet } from "@/components/layout/MoreSheet"
 import {
+  isMoreRoute,
   isNavigationItemActive,
-  isSpacesRoute,
-  primaryNavItems,
+  mobileNavItems,
+  moreIcon as MoreIcon,
   type NavSearchParams,
 } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
 const TAB =
-  "relative flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-lg py-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+  "relative flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-md py-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
 
 function TabLabel({ active, children }: { active: boolean; children: React.ReactNode }) {
   return (
     <span
       className={cn(
-        "w-full truncate px-0.5 text-center text-xs leading-none",
+        "w-full truncate px-0.5 text-center text-[11px] leading-none",
         active ? "font-semibold" : "font-medium",
       )}
     >
@@ -30,13 +30,10 @@ function TabLabel({ active, children }: { active: boolean; children: React.React
 }
 
 /**
- * Mobile bottom bar: four workspace tabs — Today, Goals, Learning, Notes
- * (`primaryNavItems`) — plus a "Spaces" trigger that opens every workspace
- * (`SpacesSheet`). Spaces reads as current on any route none of the four
- * tabs owns (Growth, My Apps, AI Assistant, Settings, …).
- *
- * A stable elevated bottom surface — one border, one shadow, no glass
- * container, no sliding pill, no per-icon scaling.
+ * Mobile bottom bar: Home · Plan · Learn · Apps (`mobileNavItems`) plus a
+ * "More" trigger that opens `MoreSheet` (Notes, Growth, AI Assistant,
+ * Settings, and every page by workspace). More reads as current on any route
+ * none of the four tabs owns.
  *
  * When the soft keyboard is open the whole element is unmounted by `AppShell`
  * rather than hidden, so nothing inside stays in the tab order.
@@ -48,16 +45,16 @@ export function MobileBottomNav({
   pathname: string
   searchParams: NavSearchParams
 }) {
-  const [spacesOpen, setSpacesOpen] = useState(false)
-  const spacesActive = isSpacesRoute(pathname, searchParams)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const moreActive = isMoreRoute(pathname, searchParams)
 
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_3px_rgba(0,0,0,0.05)]"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm"
     >
-      <ul className="mx-auto flex max-w-lg items-stretch gap-0.5 px-2 py-1.5">
-        {primaryNavItems.map((item) => {
+      <ul className="mx-auto flex max-w-lg items-stretch gap-0.5 px-2 py-1">
+        {mobileNavItems.map((item) => {
           const active = isNavigationItemActive({ pathname, searchParams, item })
           const Icon = item.icon
           return (
@@ -67,12 +64,7 @@ export function MobileBottomNav({
                 aria-current={active ? "page" : undefined}
                 className={cn(TAB, active ? "text-primary" : "text-muted-foreground")}
               >
-                <Icon
-                  size={21}
-                  strokeWidth={active ? 2.4 : 2}
-                  aria-hidden
-                  className={cn("shrink-0", item.color, !active && "opacity-70")}
-                />
+                <Icon size={20} strokeWidth={active ? 2.3 : 2} aria-hidden className="shrink-0" />
                 <TabLabel active={active}>{item.shortLabel ?? item.label}</TabLabel>
               </Link>
             </li>
@@ -81,24 +73,25 @@ export function MobileBottomNav({
         <li className="flex min-w-0 flex-1">
           <button
             type="button"
-            onClick={() => setSpacesOpen(true)}
+            onClick={() => setMoreOpen(true)}
             aria-haspopup="dialog"
-            aria-expanded={spacesOpen}
-            className={cn(TAB, spacesActive ? "text-primary" : "text-muted-foreground")}
+            aria-expanded={moreOpen}
+            aria-current={moreActive ? "page" : undefined}
+            className={cn(TAB, moreActive ? "text-primary" : "text-muted-foreground")}
           >
-            <LayoutGrid
-              size={21}
-              strokeWidth={spacesActive ? 2.4 : 2}
+            <MoreIcon
+              size={20}
+              strokeWidth={moreActive ? 2.3 : 2}
               aria-hidden
-              className={cn("shrink-0", !spacesActive && "opacity-70")}
+              className="shrink-0"
             />
-            <TabLabel active={spacesActive}>Spaces</TabLabel>
+            <TabLabel active={moreActive}>More</TabLabel>
           </button>
         </li>
       </ul>
-      <SpacesSheet
-        open={spacesOpen}
-        onOpenChange={setSpacesOpen}
+      <MoreSheet
+        open={moreOpen}
+        onOpenChange={setMoreOpen}
         pathname={pathname}
         searchParams={searchParams}
       />

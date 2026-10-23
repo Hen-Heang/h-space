@@ -1,7 +1,6 @@
 "use client"
 
 import { GoalsHubHeader } from "@/components/goals/hub/GoalsHubHeader"
-import { GoalsHubNav } from "@/components/goals/hub/GoalsHubNav"
 import { TodaysTasks } from "@/components/goals/TodaysTasks"
 
 // The single canonical home for the full, interactive Today's Tasks
@@ -11,7 +10,6 @@ export default function GoalsTasksPage() {
   return (
     <div className="space-y-6 pb-12">
       <GoalsHubHeader description="Every task tied to your goals, plus anything else on your plate today." />
-      <GoalsHubNav />
       <TodaysTasks />
     </div>
   )

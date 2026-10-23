@@ -1,6 +1,18 @@
 # Navigation shell audit & redesign
 
-> **Current (2026-10-22): seven workspaces.** The registry in
+> **Current (2026-10-23): six workspaces + tools, local tabs.** The global
+> sidebar and tablet rail show only `workspaceNavItems` (Overview · Planner ·
+> Learning · Notes · My Apps · Growth) and `toolNavItems` (AI Assistant ·
+> Settings); the root cause of the old clutter was `sidebarSections` ignoring
+> `showInSidebar` and listing ~35 routes. A workspace's own pages are its
+> local tabs (`workspaceTabs`, rendered by `components/layout/WorkspaceTabs`).
+> Mobile: Home · Plan · Learn · Apps + **More** (`MoreSheet`: Notes, Growth,
+> AI Assistant, Settings, then every page via `browseSections`). The shell
+> header is `Workspace / Page` and owns the page's only `h1`. Section ids,
+> routes, and `NavMatch` rules are unchanged; `SpacesSheet`,
+> `WorkspaceFlyout` and the V1 exports were deleted.
+
+> **Previous (2026-10-22): seven workspaces.** The registry in
 > `lib/navigation.ts` is organized as Today · Learning · Goals & Tasks ·
 > Growth · Notes & Knowledge · My Apps · AI Assistant (section ids unchanged
 > except `history` → `apps`; `/history` moved into Learning, `/timeline` into

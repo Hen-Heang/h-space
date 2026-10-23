@@ -29,17 +29,10 @@ export default function ProgressPage() {
       className="space-y-6 pb-12 sm:space-y-7"
     >
       <motion.div variants={item}>
-        <p className="app-kicker">Grow</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          Progress
-        </h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">
-          Your daily/weekly review, achievements, and stats — all in one place.
-        </p>
-      </motion.div>
-
-      <motion.div variants={item}>
         <GrowthTabs />
+        <p className="text-sm text-muted-foreground">
+          Your daily and weekly reviews, achievements, and stats.
+        </p>
       </motion.div>
 
       <motion.div variants={item} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -49,7 +42,7 @@ export default function ProgressPage() {
             <Link
               key={card.id}
               href={card.href}
-              className="group flex h-full min-h-11 items-start gap-3 rounded-lg border border-border bg-card p-4 shadow-sm outline-none transition-[border-color,box-shadow] duration-150 hover:border-primary/30 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:bg-slate-900/40"
+              className="group flex h-full min-h-11 items-start gap-3 rounded-lg border border-border bg-card p-4 outline-none transition-colors duration-150 hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <div
                 aria-hidden

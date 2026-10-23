@@ -88,8 +88,8 @@ export function MobileHeader({
           both are one tap away on any root page. */}
       {!detail && (
         <>
-          <ThemeToggle className="h-11 w-11 rounded-xl border-border bg-card shadow-sm" />
-          <NotificationBell />
+          <ThemeToggle className="size-11 rounded-lg border-transparent bg-transparent shadow-none" />
+          <NotificationBell className="size-11 rounded-lg border-transparent bg-transparent shadow-none hover:bg-accent" />
         </>
       )}
     </header>

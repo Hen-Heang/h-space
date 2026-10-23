@@ -93,81 +93,83 @@
   --font-mono:
     "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Consolas, "Liberation Mono", Menlo,
     monospace;
-  --background: oklch(0.984 0.008 210);
-  --foreground: oklch(0.19 0.025 250);
-  --card: oklch(0.997 0.003 210);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  /* Keep primary usable as a solid color; primary actions layer the existing
-     Hengo blue over this navy foundation as a restrained brand gradient. */
+  /* H-Space palette — slate neutrals with one indigo accent. `--accent` is
+     shadcn's hover/selected surface, not the brand color; the brand color is
+     `--primary`. */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  /* Legacy brand tokens, still read by a few marketing surfaces. */
   --primary-navy: rgb(15 34 72);
   --primary-accent: rgb(2 111 215);
   --primary-action-foreground: rgb(255 255 255);
-  --primary: var(--primary-navy);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.96 0.012 220);
-  --secondary-foreground: oklch(0.25 0.02 250);
-  --muted: oklch(0.965 0.008 220);
-  --muted-foreground: oklch(0.47 0.025 250);
-  --accent: oklch(0.965 0.012 185);
-  --accent-foreground: oklch(0.25 0.02 250);
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
   --destructive: oklch(0.577 0.245 27.325);
   --success: oklch(0.62 0.14 160);
   --success-foreground: oklch(0.985 0 0);
-  --border: oklch(0.9 0.012 225);
-  --input: oklch(0.885 0.014 225);
-  --ring: oklch(0.64 0.15 255);
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #6366f1;
   --chart-1: oklch(0.74 0.16 177);
   --chart-2: oklch(0.7 0.14 238);
   --chart-3: oklch(0.78 0.13 85);
   --chart-4: oklch(0.69 0.16 26);
   --chart-5: oklch(0.63 0.17 320);
   --radius: 0.875rem;
-  --sidebar: oklch(0.98 0.008 210);
-  --sidebar-foreground: oklch(0.2 0.02 250);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
   --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #6366f1;
 }
 
 .dark {
-  --background: oklch(0.17 0.02 250);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.22 0.02 250);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.7 0.16 255);
-  --primary-foreground: oklch(0.18 0.02 250);
-  --secondary: oklch(0.27 0.02 250);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.27 0.02 250);
-  --muted-foreground: oklch(0.73 0.01 250);
-  --accent: oklch(0.26 0.025 210);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #0b1120;
+  --foreground: #f1f5f9;
+  --card: #111827;
+  --card-foreground: #f1f5f9;
+  --popover: #111827;
+  --popover-foreground: #f1f5f9;
+  --primary: #818cf8;
+  --primary-foreground: #0f172a;
+  --secondary: #1e293b;
+  --secondary-foreground: #f1f5f9;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f1f5f9;
   --destructive: oklch(0.704 0.191 22.216);
   --success: oklch(0.72 0.15 162);
   --success-foreground: oklch(0.18 0.02 250);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.62 0.13 255);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: #818cf8;
   --chart-1: oklch(0.74 0.16 177);
   --chart-2: oklch(0.72 0.14 238);
   --chart-3: oklch(0.78 0.13 85);
   --chart-4: oklch(0.69 0.16 26);
   --chart-5: oklch(0.63 0.17 320);
-  --sidebar: oklch(0.19 0.02 250);
-  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar: #0d1424;
+  --sidebar-foreground: #f1f5f9;
   --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-primary-foreground: #0f172a;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: #818cf8;
 }
 
 @layer base {
@@ -193,19 +195,8 @@
   }
 
   body {
+    /* Flat background — no decorative gradients behind the workspace. */
     @apply bg-background text-foreground;
-    background-image:
-      radial-gradient(
-        circle at top left,
-        color-mix(in oklab, var(--primary) 13%, transparent),
-        transparent 28%
-      ),
-      radial-gradient(
-        circle at top right,
-        color-mix(in oklab, var(--chart-2) 10%, transparent),
-        transparent 22%
-      ),
-      linear-gradient(180deg, color-mix(in oklab, var(--background) 96%, white), var(--background));
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     line-height: 1.55;
@@ -316,8 +307,9 @@
     scrollbar-width: none;
   }
 
+  /* The standard card surface: one border, no shadow. */
   .app-surface {
-    @apply rounded-lg border border-border/70 bg-card/90 shadow-sm shadow-slate-950/5;
+    @apply rounded-lg border border-border bg-card;
   }
 
   .app-kicker {

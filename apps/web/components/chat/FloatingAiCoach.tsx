@@ -112,16 +112,16 @@ export function FloatingAiCoach({ mobile, bottomNavVisible, keyboardOpen }: Floa
                   id={`${PANEL_ID}-title`}
                   className="truncate text-sm font-semibold text-foreground"
                 >
-                  Hengo Coach
+                  AI Assistant
                 </h2>
-                <p className="truncate text-xs text-muted-foreground">Quick help, right here</p>
+                <p className="truncate text-xs text-muted-foreground">Hengo Coach · quick help</p>
               </div>
               <Button asChild variant="ghost" size="icon-sm">
                 <Link
                   href="/chat"
                   onClick={closeCoach}
-                  aria-label="Open full Hengo Coach"
-                  title="Open full Hengo Coach"
+                  aria-label="Open the full AI Assistant"
+                  title="Open the full AI Assistant"
                 >
                   <Maximize2 className="size-4" aria-hidden="true" />
                 </Link>
@@ -132,7 +132,7 @@ export function FloatingAiCoach({ mobile, bottomNavVisible, keyboardOpen }: Floa
                 variant="ghost"
                 size="icon-sm"
                 onClick={closeCoach}
-                aria-label="Close Hengo Coach"
+                aria-label="Close AI Assistant"
               >
                 <X className="size-4" aria-hidden="true" />
               </Button>
@@ -145,17 +145,18 @@ export function FloatingAiCoach({ mobile, bottomNavVisible, keyboardOpen }: Floa
         </section>
       )}
 
-      {/* Desktop has its own "Hengo Coach" trigger in the top header (see
+      {/* Desktop has its own "AI Assistant" trigger in the top header (see
           DesktopHeader), which dispatches HENGO_COACH_OPEN_EVENT instead of
           rendering a second launcher here — so this floating button is
-          mobile-only, per the "one Hengo Coach entry point on desktop" rule. */}
+          mobile-only: one assistant launcher per screen size. Hengo Coach
+          stays the assistant's internal name (events, routes, prompts). */}
       {mobile && !open && !keyboardOpen && (
         <Button
           ref={launcherRef}
           type="button"
           size="icon"
           onClick={openCoach}
-          aria-label="Open Hengo Coach"
+          aria-label="Open AI Assistant"
           aria-controls={PANEL_ID}
           aria-expanded={false}
           className={cn(

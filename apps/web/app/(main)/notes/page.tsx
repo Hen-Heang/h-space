@@ -4,7 +4,8 @@ import Link from "next/link"
 import { Plus } from "lucide-react"
 import { motion } from "motion/react"
 
-import { PageHero } from "@/components/app/page-hero"
+import { WorkspaceTabs } from "@/components/layout/WorkspaceTabs"
+import { Button } from "@/components/ui/button"
 import { NoteSearch } from "@/components/notes/NoteSearch"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useNotes } from "@/hooks/useNotes"
@@ -25,25 +26,39 @@ export default function NotesPage() {
       variants={containerVariants}
       className="space-y-6 pb-12 sm:space-y-7"
     >
-      <motion.div variants={itemVariants}>
-        <PageHero
-          eyebrow="Dev Notes"
-          title="Knowledge Library"
-          description="Your personal study notes — Java, Spring, SQL, Korean grammar, and anything worth saving."
-          stats={[
-            { label: "Notes", value: loading ? "..." : String(noteCount) },
-            { label: "Topics", value: loading ? "..." : categories > 0 ? String(categories) : "—" },
-          ]}
+      <motion.div variants={itemVariants} className="space-y-3">
+        <WorkspaceTabs
+          sectionId="memory"
           actions={
-            <Link
-              href="/notes/new"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
-            >
-              <Plus size={16} strokeWidth={2.5} />
-              New note
-            </Link>
+            <Button asChild size="sm" className="h-9 gap-1.5 rounded-md">
+              <Link href="/notes/new">
+                <Plus size={16} aria-hidden="true" />
+                New note
+              </Link>
+            </Button>
           }
         />
+        <p className="text-sm text-muted-foreground">
+          Study notes, references, and anything worth keeping.
+          {!loading && !error && (
+            <>
+              {" "}
+              <span className="font-medium text-foreground tabular-nums">{noteCount}</span>{" "}
+              {noteCount === 1 ? "note" : "notes"}
+              {categories > 0 && (
+                <>
+                  {" "}
+                  across{" "}
+                  <span className="font-medium text-foreground tabular-nums">
+                    {categories}
+                  </span>{" "}
+                  {categories === 1 ? "topic" : "topics"}
+                </>
+              )}
+              .
+            </>
+          )}
+        </p>
       </motion.div>
 
       <motion.div variants={itemVariants}>

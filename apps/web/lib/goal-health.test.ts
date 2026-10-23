@@ -39,6 +39,46 @@ describe("computeGoalHealth", () => {
     expect(result.reason).toMatch(/no key results/i)
   })
 
+  it("doesn't flag a goal without key results whose tasks are all done (100% isn't 'needs attention')", () => {
+    const result = computeGoalHealth(
+      baseInput({
+        hasKeyResults: false,
+        activityTotalTasks: 4,
+        activityCompletedTasks: 4,
+        outcomeProgress: null,
+      }),
+    )
+    expect(result.status).toBe("on_track")
+    // Not "completed": finishing every task doesn't prove the outcome was reached.
+    expect(result.reason).toMatch(/mark the goal complete/i)
+  })
+
+  it("asks for a decision when every task is done but the deadline has passed", () => {
+    const result = computeGoalHealth(
+      baseInput({
+        hasKeyResults: false,
+        activityTotalTasks: 2,
+        activityCompletedTasks: 2,
+        outcomeProgress: null,
+        targetDate: "2026-07-01T00:00:00.000Z",
+      }),
+    )
+    expect(result.status).toBe("attention")
+    expect(result.reason).toMatch(/deadline has passed/i)
+  })
+
+  it("keeps the legacy attention status while tasks without key results remain open", () => {
+    const result = computeGoalHealth(
+      baseInput({
+        hasKeyResults: false,
+        activityTotalTasks: 4,
+        activityCompletedTasks: 3,
+        outcomeProgress: null,
+      }),
+    )
+    expect(result.status).toBe("attention")
+  })
+
   it("is on_track when all key results are achieved", () => {
     const result = computeGoalHealth(
       baseInput({ allKeyResultsAchieved: true, outcomeProgress: 100 }),
