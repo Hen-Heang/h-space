@@ -119,12 +119,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-dvh w-full bg-background selection:bg-blue-500/30">
+    <main className="flex min-h-dvh w-full items-center justify-center bg-muted/30 px-4 py-6 selection:bg-blue-500/30 sm:px-6">
       {/* Brand panel — desktop only */}
       <BrandPanel />
 
       {/* Form panel */}
-      <div className="relative flex w-full flex-col px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-8 lg:w-1/2 lg:px-12">
+      <div className="relative flex w-full max-w-[560px] flex-col rounded-3xl border border-border/70 bg-card px-5 py-6 shadow-xl shadow-slate-950/[0.04] sm:px-9 sm:py-8">
         <div className="flex items-center justify-between lg:hidden">
           <Link href="/" className="group flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl shadow-sm">
@@ -145,12 +145,12 @@ export default function RegisterPage() {
           <ThemeToggle />
         </div>
 
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: "easeOut" }}
-            className="w-full max-w-[460px] py-10"
+            className="w-full py-5"
           >
             <div className="mb-7 space-y-3">
               <div className="flex items-center justify-between">
@@ -471,7 +471,7 @@ const FEATURES = [
 
 function BrandPanel() {
   return (
-    <aside className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-slate-950 p-12 text-white lg:flex">
+    <aside className="hidden">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-700 via-indigo-800 to-slate-950" />
         <div className="absolute -left-20 top-1/3 h-[420px] w-[420px] rounded-full bg-sky-400/20 blur-[120px]" />
