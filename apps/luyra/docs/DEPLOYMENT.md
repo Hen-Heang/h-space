@@ -8,6 +8,17 @@ Data lives in **Neon Postgres**; authentication lives in **Supabase Auth**.
 Both are already provisioned — this guide connects a deployment to them, it
 does not create them.
 
+## Existing project and monorepo root
+
+Luyra is being kept as a separate Vercel application inside the H-Space
+repository. The intended Git repository is `Hen-Heang/h-space` and the
+intended Root Directory is `apps/luyra`. Keep the currently serving Luyra
+project, `luyra.henheang.site`, its environment variables, cron schedules,
+auth configuration, and integrations unchanged until a preview has passed
+and a rollback is ready. The source migration does not connect or switch the
+Vercel project. Follow the staged plan in the main repository's
+`docs/ECOSYSTEM-INTEGRATION.md` before changing these settings.
+
 ## 1. Connect the repository
 
 1. Vercel → **Add New… → Project** → import this repository.

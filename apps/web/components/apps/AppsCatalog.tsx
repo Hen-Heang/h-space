@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import {
-  AppWindow,
   ArrowUpRight,
   BriefcaseBusiness,
   Github,
@@ -12,6 +11,7 @@ import {
   ShoppingBag,
   Star,
   Vault,
+  WalletCards,
   type LucideIcon,
 } from "lucide-react"
 
@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils"
 const projectIcons: Record<HSpaceProject["id"], LucideIcon> = {
   "hengo-learning": GraduationCap,
   "h-vault": Vault,
-  luyra: AppWindow,
+  luyra: WalletCards,
   "h-phsar": ShoppingBag,
   portfolio: BriefcaseBusiness,
 }
@@ -73,7 +73,7 @@ function ProjectLink({ link }: { link: HSpaceProject["links"][number] }) {
     )
   }
   return (
-    <a href={link.href} target="_blank" rel="noreferrer" className={className}>
+    <a href={link.href} target="_blank" rel="noopener noreferrer" className={className}>
       <Icon className="size-4" aria-hidden="true" />
       {link.label}
       <span className="sr-only"> (opens in a new tab)</span>

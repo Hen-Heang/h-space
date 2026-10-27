@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { usePathname } from "next/navigation";
+import { ArrowUpLeft } from "lucide-react";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useMobileKeyboard } from "@/hooks/useMobileKeyboard";
@@ -59,7 +60,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 isKeyboardOpen && "pb-10"
               )}
             >
-              <div className="mx-auto w-full max-w-6xl">{children}</div>
+              <div className="mx-auto w-full max-w-6xl">
+                <a
+                  href="https://hengo.henheang.site/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mb-3 inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <ArrowUpLeft size={14} aria-hidden="true" />
+                  Back to H-Space
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+                {children}
+              </div>
             </main>
           </div>
         </div>

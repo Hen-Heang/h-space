@@ -5,7 +5,10 @@
 - Luyra is the only active product surface.
 - Hengo goals, tasks, habits, Today, and learning development is paused.
 - The paused code remains in the repository so it can be resumed later without a rebuild.
-- Current work should deepen Luyra backend behavior, tests, reporting, and deployment.
+- Finance is the active product surface. Transactions, budgets, savings,
+  analytics, financial reviews, reports, preferences, and notifications have
+  current app/API implementations. Keep the paused Hengo routes redirecting to
+  `/finance` unless a separately reviewed product decision changes that scope.
 
 ## Phase 1 — Foundation
 
@@ -16,13 +19,13 @@
 - [x] Today Tasks (remaining/overdue counts, quick add)
 - [x] Today Goals (active goals with progress, quick add)
 
-## Phase 2
+## Finance
 
-- [x] Finance integration foundation (isolated Money Flow Supabase session)
-- [x] Read-only Finance dashboard test slice
-- [ ] Luyra transactions, budgets, savings, analytics, and settings
-- Habits
-- Reminders
+- Finance transaction, category, budget, savings, analytics, review, report,
+  recurring transaction, and settings routes are present in the active source.
+- Telegram, email, Web Push, AI Money Coach, exchange-rate lookup, Vercel Cron,
+  and Vercel Workflow integrations are configured in source; deployment
+  credentials and production execution require separate verification.
 
 ## Phase 3 — Paused
 
@@ -32,6 +35,6 @@
 - Notion — paused
 - AI assistant — paused
 
-## Phase 4
+## Future
 
 - Spring Boot backend migration (see [ARCHITECTURE.md](./ARCHITECTURE.md))

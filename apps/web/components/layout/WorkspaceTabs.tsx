@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { ArrowUpRight } from "lucide-react"
 
 import { getActiveTab, workspaceTabs, type NavSectionId } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
@@ -41,18 +42,31 @@ export function WorkspaceTabs({
             const current = tab.id === active?.id
             return (
               <li key={tab.id}>
-                <Link
-                  href={tab.href}
-                  aria-current={current ? "page" : undefined}
-                  className={cn(
-                    "relative flex min-h-11 items-center whitespace-nowrap rounded-t-md border-b-2 px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-                    current
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {tab.label}
-                </Link>
+                {tab.href.startsWith("http") ? (
+                  <a
+                    href={tab.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative flex min-h-11 items-center gap-1 whitespace-nowrap rounded-t-md border-b-2 border-transparent px-3 text-sm font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  >
+                    {tab.label}
+                    <ArrowUpRight size={14} aria-hidden="true" />
+                    <span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                ) : (
+                  <Link
+                    href={tab.href}
+                    aria-current={current ? "page" : undefined}
+                    className={cn(
+                      "relative flex min-h-11 items-center whitespace-nowrap rounded-t-md border-b-2 px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                      current
+                        ? "border-primary text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {tab.label}
+                  </Link>
+                )}
               </li>
             )
           })}

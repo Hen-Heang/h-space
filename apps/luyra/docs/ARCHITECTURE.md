@@ -16,14 +16,15 @@ Next.js
              Neon Postgres
 ```
 
-For native Luyra domains, Supabase provides session management, login/logout,
-and identity (JWT `claims.sub`). Tasks, goals, and the `users` mirror table live
-in Neon.
+Supabase provides session management, login/logout, and identity (JWT
+`claims.sub`). Finance records and the `users` mirror table live in Luyra's
+Neon database. H-Space and Luyra use independent browser sessions. Luyra's
+paused Hengo routes remain in source, but `proxy.ts` redirects those routes to
+`/finance`; they are not an active duplicate workspace.
 
-That boundary applies to native Luyra domains. Migrated product domains keep
-their existing stores during the test migration: Hengo Learning uses the
-primary Supabase project and Money Flow Finance uses its own Supabase project.
-See [APP-MIGRATION.md](./APP-MIGRATION.md) for the session and data boundaries.
+The Money Flow finance import is already recorded as completed in
+[APP-MIGRATION.md](./APP-MIGRATION.md). That historical database migration
+must not be repeated.
 
 ## Request flow
 

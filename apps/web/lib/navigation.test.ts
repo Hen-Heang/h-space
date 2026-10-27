@@ -361,14 +361,20 @@ describe("workspace tabs (secondary navigation)", () => {
       "growth-journal",
       "grow-progress",
     ])
-    expect(ids(workspaceTabs.apps)).toEqual(["apps-catalog", "apps-vault"])
+    expect(ids(workspaceTabs.apps)).toEqual(["apps-catalog", "apps-vault", "apps-luyra"])
+    expect(navItem("apps-luyra")).toMatchObject({
+      href: "https://luyra.henheang.site/",
+      description: expect.stringContaining("finance"),
+    })
   })
 
   it("only uses registered routes, each inside its own workspace", () => {
     for (const [sectionId, tabs] of Object.entries(workspaceTabs)) {
       for (const tab of tabs!) {
         expect(allNavItems).toContain(tab)
-        expect(getSectionForPath(linkPath(tab.href))?.id).toBe(sectionId)
+        if (!tab.href.startsWith("http")) {
+          expect(getSectionForPath(linkPath(tab.href))?.id).toBe(sectionId)
+        }
       }
     }
   })
@@ -502,7 +508,11 @@ describe("workspace registry details", () => {
   it("lists H-Vault as an internal app in My Apps", () => {
     const apps = navSections.find((s) => s.id === "apps")!
     expect(apps).toMatchObject({ label: "My Apps", href: "/apps" })
-    expect(apps.items.map((i) => i.href)).toEqual(["/apps", "/vault"])
+    expect(apps.items.map((i) => i.href)).toEqual([
+      "/apps",
+      "/vault",
+      "https://luyra.henheang.site/",
+    ])
     expect(getSectionForPath("/vault")?.id).toBe("apps")
     expect(getActiveNavItem("/vault")?.label).toBe("H-Vault")
     // /vault doesn't share /apps' prefix, so My Apps itself stays inactive there.

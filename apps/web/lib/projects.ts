@@ -42,11 +42,13 @@ export const hSpaceProjects: HSpaceProject[] = [
   {
     id: "luyra",
     name: "Luyra",
-    area: "Finance & automation",
-    description:
-      "A personal finance workspace with Supabase authentication, Neon application data, scheduled reviews, AI-assisted money coaching, and notifications.",
+    area: "Personal Finance",
+    description: "Manage income, expenses, budgets, savings, financial analytics, and money goals.",
     stack: ["Next.js 16", "TypeScript", "Supabase Auth", "Neon Postgres", "Vercel Workflow"],
-    links: [{ label: "GitHub", href: "https://github.com/Hen-Heang/luyra-web", kind: "github" }],
+    links: [
+      { label: "Open app", href: "https://luyra.henheang.site/", kind: "app" },
+      { label: "GitHub", href: "https://github.com/Hen-Heang/luyra-web", kind: "github" },
+    ],
   },
   {
     id: "h-phsar",

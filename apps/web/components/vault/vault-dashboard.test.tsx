@@ -367,6 +367,21 @@ describe("H-Vault CSV import", () => {
 })
 
 describe("public My Apps card", () => {
+  it("links to Luyra Finance and its source repository", () => {
+    render(<MyAppsSection />)
+    const card = screen.getByRole("heading", { name: "Luyra" }).closest("article")!
+    const appLink = within(card).getByRole("link", { name: /Open app/ })
+    expect(appLink.getAttribute("href")).toBe("https://luyra.henheang.site/")
+    expect(appLink.getAttribute("target")).toBe("_blank")
+    expect(appLink.getAttribute("rel")).toBe("noopener noreferrer")
+    expect(
+      within(card)
+        .getByRole("link", { name: /GitHub/ })
+        .getAttribute("href"),
+    ).toBe("https://github.com/Hen-Heang/luyra-web")
+    expect(within(card).getByText("Personal Finance")).toBeTruthy()
+  })
+
   it("shows a generic H-Vault card with no account data", () => {
     window.localStorage.setItem(
       "hengo-vault-demo-accounts",

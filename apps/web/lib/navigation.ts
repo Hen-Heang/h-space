@@ -34,6 +34,7 @@ import {
   Target,
   Trophy,
   Vault,
+  WalletCards,
   Wand2,
   Zap,
 } from "lucide-react"
@@ -649,7 +650,20 @@ export const navSections: NavSection[] = [
     icon: LayoutGrid,
     color: "text-cyan-500",
     href: appsItem.href,
-    items: [appsItem, vaultItem],
+    items: [
+      appsItem,
+      vaultItem,
+      {
+        id: "apps-luyra",
+        href: "https://luyra.henheang.site/",
+        label: "Luyra",
+        icon: WalletCards,
+        color: "text-emerald-500",
+        description: "Personal finance: income, expenses, budgets, savings, and reports",
+        keywords: ["finance", "money", "budget", "transactions", "savings"],
+        match: { pathname: "/__external_luyra__" },
+      },
+    ],
   },
   {
     // AI Assistant: the general Hengo Coach chat, its modes, and Ask Hengo
@@ -822,7 +836,7 @@ export const workspaceTabs: Partial<Record<NavSectionId, NavItem[]>> = {
   ),
   memory: ["memory-notes", "memory-hub", "review-timeline"].map(navItem),
   grow: ["growth-hub", "growth-habits", "growth-journal", "grow-progress"].map(navItem),
-  apps: ["apps-catalog", "apps-vault"].map(navItem),
+  apps: [...["apps-catalog", "apps-vault"].map(navItem), navItem("apps-luyra")],
 }
 
 /**
