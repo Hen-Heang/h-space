@@ -17,6 +17,7 @@ import {
   AlarmClock,
   Target,
   Type,
+  UserPlus,
 } from "lucide-react"
 import { motion } from "motion/react"
 import { toast } from "sonner"
@@ -29,6 +30,8 @@ import { authApi, userApi } from "@/lib/api"
 import { getUserId } from "@/lib/auth-store"
 import { refreshProfileImage } from "@/hooks/useProfileImage"
 import { usePush } from "@/hooks/usePush"
+import { useIsAdmin } from "@/hooks/useInvites"
+import { InvitesManager } from "@/components/settings/InvitesManager"
 import { FieldSaveStatus } from "@/components/ui/field-save-status"
 import { TEXT_DEBOUNCE_MS, useFieldAutosave } from "@/hooks/useFieldAutosave"
 import { isCalendarIntegrationsEnabled } from "@/lib/feature-flags"
@@ -103,6 +106,7 @@ const itemVariants = {
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { isAdmin } = useIsAdmin()
   const push = usePush()
   const { saveField, stateOf } = useFieldAutosave()
   const [displayName, setDisplayName] = useState("")
@@ -726,6 +730,25 @@ export default function SettingsPage() {
           </SectionRow>
         </SectionCard>
       </motion.div>
+
+      {/* Invites — admins only; sign-up is invite-only (h-space-api) */}
+      {isAdmin && (
+        <motion.div variants={itemVariants}>
+          <SectionCard>
+            <SectionRow>
+              <SectionHeader
+                icon={UserPlus}
+                title="Invites"
+                description="Sign-up is invite-only. Invite someone to create an H-Space account."
+                color="text-emerald-500"
+              />
+            </SectionRow>
+            <SectionRow last>
+              <InvitesManager />
+            </SectionRow>
+          </SectionCard>
+        </motion.div>
+      )}
 
       {/* Account */}
       <motion.div variants={itemVariants}>

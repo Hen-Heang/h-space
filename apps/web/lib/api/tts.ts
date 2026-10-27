@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase"
+import { getSupabaseAccessToken } from "@/lib/auth-store"
 
 export type TtsOptions = {
   instructions?: string
@@ -10,8 +10,7 @@ export type TtsOptions = {
 // server key); returns an object URL for <audio>.
 export const ttsApi = {
   speak: async (text: string, voice = "marin", options: TtsOptions = {}): Promise<string> => {
-    const { data } = await supabase.auth.getSession()
-    const token = data.session?.access_token
+    const token = await getSupabaseAccessToken()
     const res = await fetch("/api/ai/tts", {
       method: "POST",
       headers: {

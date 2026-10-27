@@ -1,16 +1,11 @@
-import { getToken } from "@/lib/auth-store"
-import { supabase } from "@/lib/supabase"
+import { getSupabaseAccessToken } from "@/lib/auth-store"
 
 // Shared with the SSE routes (chat.ts streamMessage, goals.ts coachStream) so
-// there's one place that attaches the caller's Supabase access token.
+// there's one place that attaches the caller's Supabase access token — the
+// bridge-issued one, since requireUser (lib/server/ai.ts) checks it against
+// Supabase and runs the route's queries under RLS with it.
 export async function authHeaders(): Promise<Record<string, string>> {
-  const cachedToken = getToken()
-  if (cachedToken) {
-    return { Authorization: `Bearer ${cachedToken}` }
-  }
-
-  const { data } = await supabase.auth.getSession()
-  const token = data.session?.access_token
+  const token = await getSupabaseAccessToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 

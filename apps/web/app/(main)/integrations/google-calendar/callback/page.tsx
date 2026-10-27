@@ -9,7 +9,7 @@ import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CircleCheck, Loader2, ShieldOff } from "lucide-react"
 
-import { supabase } from "@/lib/supabase"
+import { getSupabaseAccessToken } from "@/lib/auth-store"
 
 const OAUTH_STATE_STORAGE_KEY = "hengo:gcal-oauth-state"
 
@@ -35,8 +35,7 @@ function CallbackContent() {
         return
       }
 
-      const { data } = await supabase.auth.getSession()
-      const accessToken = data.session?.access_token
+      const accessToken = await getSupabaseAccessToken().catch(() => null)
       if (!accessToken) {
         if (!cancelled) setStatus("error")
         return

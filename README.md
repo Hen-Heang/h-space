@@ -3,14 +3,15 @@
 **My Projects. One Space.**
 
 H-Space is Hen Heang's personal software ecosystem and engineering portfolio.
-It connects real applications for learning, finance, AI engineering,
-productivity, and software development while keeping their technical decisions
-and source code easy to review during job interviews.
+It connects daily planning, learning, knowledge, and finance while keeping each
+application's technical decisions and source code easy to review.
 
 ## Projects
 
-- `apps/web` — Next.js 16 application, H-Space dashboard, Hengo Learning, and
+- `apps/web` — Next.js 16 H-Space application, dashboard, Hengo Learning, and
   Supabase/AI route integration
+- `apps/luyra` — separately deployable Next.js Finance application, using
+  Supabase Auth and Neon Postgres
 - `docs` — development and workflow guidance
 
 The application is a client-side SPA over Supabase plus a focused set of
@@ -31,8 +32,8 @@ run.
 
 - **Hengo Learning** — Korean learning, workplace practice, interview prep,
   spaced repetition, and authenticated AI coaching
-- **Luyra** — finance workspace using Supabase Auth, Neon Postgres, scheduled
-  workflows, and multi-channel notifications
+- **Luyra** — the dedicated Finance application, linked from My Apps and the
+  H-Space dashboard; its existing standalone deployment remains active
 - **H-Phsar Commerce** — Next.js and Spring Boot B2B marketplace for buyers,
   suppliers, and administrators
 - **Developer Portfolio** — recruiter-focused project case studies, backend
@@ -67,3 +68,4 @@ Further documentation:
 - [Hengo Learning product direction](docs/HENGO_V2.md)
 - [Repository history notes](docs/MONOREPO_MIGRATION.md)
 - [Notion MCP workflow](docs/NOTION_MCP.md)
+- [H-Space + Luyra integration and migration](docs/ECOSYSTEM-INTEGRATION.md)
