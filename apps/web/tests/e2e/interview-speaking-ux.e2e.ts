@@ -32,13 +32,17 @@ async function installMocks(page: Page) {
   const progress = new Map<string, ProgressRow>()
   await page.addInitScript(
     ({ userId, token }) => {
+      // lib/auth-store.ts session shape. The cached Supabase token keeps the
+      // test off h-space-api's bridge; REST calls are mocked below.
       window.localStorage.setItem(
-        "koriai-auth",
+        "hspace-auth",
         JSON.stringify({
-          access_token: token,
-          refresh_token: "refresh",
-          expires_at: 2_000_000_000,
-          user: { id: userId, email: "browser-test@example.com" },
+          accessToken: token,
+          refreshToken: "refresh",
+          expiresAt: 2_000_000_000_000,
+          user: { id: userId, email: "browser-test@example.com", name: null, imageUrl: null },
+          supabaseToken: token,
+          supabaseTokenExpiresAt: 2_000_000_000_000,
         }),
       )
       window.localStorage.setItem(`hengo:onboarding:${userId}`, "done")

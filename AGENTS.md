@@ -13,9 +13,11 @@ then overwrite `HANDOFF.md` with the new snapshot.
 
 ## Repository
 
-Hengo is a single application plus its documentation:
+H-Space is a small monorepo with two independently deployable applications:
 
 - `apps/web`: Next.js 16, React 19, TypeScript, Tailwind CSS v4, shadcn/ui
+- `apps/luyra`: standalone Next.js Finance app with its own npm lockfile and
+  Vercel deployment configuration
 
 Data and auth live in Supabase; the only server-side code is the Next.js AI
 routes in `apps/web/app/api/ai`. Read the instructions nearest to the files
@@ -65,4 +67,6 @@ session rather than forcing it into one scoped agent.
 
 ## Deployment layout
 
-- Vercel project Root Directory: `apps/web` — the only deployment target.
+- H-Space Vercel project Root Directory: `apps/web`.
+- Luyra Vercel project Root Directory: `apps/luyra`; keep its existing project,
+  domain, and production configuration unchanged until an approved cutover.

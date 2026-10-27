@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import type { ComponentProps } from "react"
+import { ArrowUpRight } from "lucide-react"
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import type { NavItem } from "@/lib/navigation"
@@ -74,19 +75,8 @@ export function NavRow({
     )
   }
 
-  return (
-    <Link
-      href={item.href}
-      aria-current={active ? "page" : undefined}
-      onClick={onNavigate}
-      className={cn(
-        ROW_BASE,
-        ROW_SIZE[variant],
-        active ? ROW_STATE.active : ROW_STATE.idle,
-        className,
-      )}
-      {...rest}
-    >
+  const content = (
+    <>
       {active && <ActiveIndicator />}
       <Icon
         size={iconSize}
@@ -102,7 +92,41 @@ export function NavRow({
           </span>
         )}
       </span>
+      {item.href.startsWith("http") && <ArrowUpRight size={14} aria-hidden="true" />}
       {trailing}
+    </>
+  )
+
+  if (item.href.startsWith("http")) {
+    return (
+      <a
+        href={item.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onNavigate}
+        className={cn(ROW_BASE, ROW_SIZE[variant], ROW_STATE.idle, className)}
+        {...rest}
+      >
+        {content}
+        <span className="sr-only"> (opens in a new tab)</span>
+      </a>
+    )
+  }
+
+  return (
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
+      onClick={onNavigate}
+      className={cn(
+        ROW_BASE,
+        ROW_SIZE[variant],
+        active ? ROW_STATE.active : ROW_STATE.idle,
+        className,
+      )}
+      {...rest}
+    >
+      {content}
     </Link>
   )
 }
@@ -134,33 +158,56 @@ export function NavIconRow({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Link
-          href={item.href}
-          aria-label={name}
-          aria-current={active ? "page" : undefined}
-          onClick={onNavigate}
-          className={cn(
-            "relative flex w-full flex-col items-center justify-center gap-1 rounded-md outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-            showLabel ? "min-h-14 py-2" : "min-h-10 py-2",
-            active
-              ? "bg-accent text-foreground"
-              : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-            className,
-          )}
-        >
-          {active && <ActiveIndicator />}
-          <Icon size={18} strokeWidth={2} aria-hidden className="shrink-0" />
-          {showLabel && (
-            <span
-              className={cn(
-                "max-w-full truncate px-1 text-[11px] leading-none",
-                active && "font-semibold",
-              )}
-            >
-              {item.shortLabel ?? name}
-            </span>
-          )}
-        </Link>
+        {item.href.startsWith("http") ? (
+          <a
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${name} (opens in a new tab)`}
+            className={cn(
+              "relative flex w-full flex-col items-center justify-center gap-1 rounded-md outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+              showLabel ? "min-h-14 py-2" : "min-h-10 py-2",
+              "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+              className,
+            )}
+          >
+            <Icon size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+            {showLabel && (
+              <span className="max-w-full truncate px-1 text-[11px] leading-none">
+                {item.shortLabel ?? name}
+              </span>
+            )}
+            <ArrowUpRight size={11} aria-hidden className="absolute right-1 top-1" />
+          </a>
+        ) : (
+          <Link
+            href={item.href}
+            aria-label={name}
+            aria-current={active ? "page" : undefined}
+            onClick={onNavigate}
+            className={cn(
+              "relative flex w-full flex-col items-center justify-center gap-1 rounded-md outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+              showLabel ? "min-h-14 py-2" : "min-h-10 py-2",
+              active
+                ? "bg-accent text-foreground"
+                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+              className,
+            )}
+          >
+            {active && <ActiveIndicator />}
+            <Icon size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+            {showLabel && (
+              <span
+                className={cn(
+                  "max-w-full truncate px-1 text-[11px] leading-none",
+                  active && "font-semibold",
+                )}
+              >
+                {item.shortLabel ?? name}
+              </span>
+            )}
+          </Link>
+        )}
       </TooltipTrigger>
       <TooltipContent side="right">{name}</TooltipContent>
     </Tooltip>

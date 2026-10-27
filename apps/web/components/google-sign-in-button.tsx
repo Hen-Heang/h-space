@@ -44,14 +44,16 @@ export function GoogleSignInButton({
         await loadGoogleScript()
         if (cancelled || !containerRef.current || !window.google) return
 
-        const { nonce, hashedNonce } = await makeNonce()
+        // h-space-api doesn't check the nonce yet; Google still embeds it, so
+        // the token is ready for that check once the backend adds it.
+        const { hashedNonce } = await makeNonce()
 
         window.google.accounts.id.initialize({
           client_id: CLIENT_ID,
           nonce: hashedNonce,
           callback: async (response: { credential: string }) => {
             try {
-              await handleGoogleCredential(response.credential, nonce)
+              await handleGoogleCredential(response.credential)
               router.push(redirectTo)
             } catch (error) {
               onError?.(error instanceof Error ? error.message : "Google sign-in failed.")

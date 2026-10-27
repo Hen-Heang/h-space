@@ -52,3 +52,4 @@ goalmap/
 next-env.d.ts
 
 package-lock.json
+!apps/luyra/package-lock.json

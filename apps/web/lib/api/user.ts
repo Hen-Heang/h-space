@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import { getUserEmail } from "@/lib/auth-store"
+import { getUserEmail, requireUserId } from "@/lib/auth-store"
 import { recommendLevel, type CategoryEvidence } from "@/lib/learning/level-engine"
 import { skillsApi } from "./skills"
 
@@ -190,7 +190,7 @@ function aggregateCategory(
 }
 
 // Suggests leveling BEGINNER -> INTERMEDIATE -> ADVANCED from real,
-// multi-category skill-mastery evidence (lib/learning/level-engine.ts) —
+// multicategory skill-mastery evidence (lib/learning/level-engine.ts) —
 // vocabulary alone used to decide this. Never downgrades; the learner must
 // still manually accept the suggestion via apply().
 export const levelApi = {
@@ -227,11 +227,9 @@ export const levelApi = {
     }
   },
   apply: async (level: string) => {
-    const { data: auth } = await supabase.auth.getUser()
-    if (!auth.user) throw new Error("Not signed in")
     const { error } = await supabase
       .from("kori_profiles")
-      .upsert({ id: auth.user.id, korean_level: level })
+      .upsert({ id: requireUserId(), korean_level: level })
     if (error) throw error
   },
 }

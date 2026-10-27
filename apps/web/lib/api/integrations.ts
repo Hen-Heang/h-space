@@ -8,7 +8,7 @@
 // project's account-linking settings. Talking to Google's OAuth endpoints
 // ourselves avoids both — the current Hengo session only identifies which
 // user is connecting, it never mediates the Google grant itself.
-import { getUserId } from "@/lib/auth-store"
+import { getSupabaseAccessToken, getUserId } from "@/lib/auth-store"
 import { supabase } from "@/lib/supabase"
 import type { ExternalCalendarEvent } from "@/lib/external-calendar"
 import type { InboxItemType } from "@/lib/inbox"
@@ -43,8 +43,7 @@ function generateOAuthState(): string {
 // header — supabase-js doesn't attach this to same-origin fetches on its own
 // the way it does to its own PostgREST calls.
 async function authedFetch(path: string, init?: RequestInit): Promise<Response | null> {
-  const { data } = await supabase.auth.getSession()
-  const accessToken = data.session?.access_token
+  const accessToken = await getSupabaseAccessToken()
   if (!accessToken) return null
   return fetch(path, {
     ...init,

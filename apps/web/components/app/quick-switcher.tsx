@@ -267,6 +267,10 @@ export function QuickSwitcher({
       openQuickCapture()
       return
     }
+    if (entry.href.startsWith("http")) {
+      window.open(entry.href, "_blank", "noopener,noreferrer")
+      return
+    }
     router.push(entry.href)
   }
 

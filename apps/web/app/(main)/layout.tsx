@@ -6,7 +6,7 @@ import { useEffect, useState, useSyncExternalStore } from "react"
 import { AppShell } from "@/components/layout/AppShell"
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow"
 import { userApi } from "@/lib/api"
-import { isAuthenticated, getUserId } from "@/lib/auth-store"
+import { isAuthenticated, getUserId, onAuthChange } from "@/lib/auth-store"
 import { hasCompletedOnboarding, markOnboardingComplete } from "@/lib/onboarding-store"
 import { recordLastVisited, type WorkspaceId } from "@/lib/last-visited"
 import { sectionRoutePrefixes } from "@/lib/navigation"
@@ -32,9 +32,16 @@ export default function MainLayout({ children }: Readonly<{ children: React.Reac
   )
 
   useEffect(() => {
-    if (mounted && !isAuthenticated()) {
+    if (!mounted) return
+    if (!isAuthenticated()) {
       router.replace("/login")
+      return
     }
+    // The session can also end mid-visit: a rejected token refresh, or a
+    // sign-out in another tab.
+    return onAuthChange(() => {
+      if (!isAuthenticated()) router.replace("/login")
+    })
   }, [mounted, router])
 
   // Record the current route against its section so Today's "Continue" cards
@@ -53,9 +60,10 @@ export default function MainLayout({ children }: Readonly<{ children: React.Reac
     const userId = getUserId()
     if (!userId || hasCompletedOnboarding(userId)) return
     let active = true
-    // Cross-device fallback: the "seen it" flag is local-only, so also check
-    // whether the profile already has a learning goal set (from a prior
-    // session on another device) before showing the wizard again.
+    // Cross-device fallback: the "seen it" flag is local-only. Accounts that
+    // finished the old Korean-learning wizard have a learning goal set, so
+    // they never see the welcome again. Newer accounts have no server-side
+    // flag and see it once per device.
     userApi
       .getById(userId)
       .then((profile) => {
@@ -79,7 +87,6 @@ export default function MainLayout({ children }: Readonly<{ children: React.Reac
       <AppShell>{children}</AppShell>
       {showOnboarding && (
         <OnboardingFlow
-          userId={getUserId()!}
           onDone={() => {
             markOnboardingComplete(getUserId())
             setShowOnboarding(false)

@@ -35,7 +35,8 @@ Unit/component tests are colocated (`lib/*.test.ts`, `lib/**/*.test.ts`, a few `
 ### Supabase — data + auth
 
 - `lib/supabase.ts` holds the single browser client. The Supabase project is **shared with Orbit/DailyGoalMap**: KoriAI-owned tables are prefixed `kori_`; the goals/tasks domain reuses Orbit's original tables (`goals`, `tasks`, …) and RPCs. All tables have RLS; queries rely on it rather than filtering by user id everywhere.
-- Auth is Supabase auth (email/password + Google via `signInWithIdToken`, see `lib/google-auth.ts`). Session persists under the fixed storage key `koriai-auth` so `lib/auth-store.ts` can read the user id synchronously. The route guard is client-side only: `app/(main)/layout.tsx` redirects to `/login`.
+- Auth is **h-space-api** (the Spring Boot auth service at `NEXT_PUBLIC_AUTH_API_URL`), not Supabase auth: email-or-username + password, "continue with email" 6-digit codes (`components/email-code-sign-in.tsx`, which also signs up new addresses), and Google ID-token login (`lib/google-auth.ts`), all with optional two-step verification, refresh-token rotation, and token-link password reset. `lib/api/auth-http.ts` unwraps its `ApiResponse` envelope. The session persists in localStorage under `hspace-auth` so `lib/auth-store.ts` can read the user id synchronously (refreshes are serialized across tabs with the Web Locks API, since h-space-api revokes a refresh token on use). The route guard is client-side only: `app/(main)/layout.tsx` redirects to `/login`, also when the session ends mid-visit.
+- **Data still uses Supabase through a temporary bridge:** `getSupabaseAccessToken()` exchanges the h-space-api token for a short-lived Supabase-signed one (`POST /api/auth/supabase-token`), and `lib/supabase.ts` passes it via supabase-js's `accessToken` option, so RLS and `requireUser` see the same user id. That option makes **any `supabase.auth.*` access throw** — get tokens and user ids from `lib/auth-store.ts` instead. Known casualty: `/oauth/consent` (the MCP connector's Supabase OAuth server flow) still uses `supabase.auth.oauth` and doesn't work until it's reworked.
 
 ### API layer — `lib/api/` (the single integration point)
 
@@ -105,7 +106,8 @@ Three deliberate conventions coexist — match the one the domain already uses i
 
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — shared Orbit project.
 - `OPENAI_API_KEY` — server-side, required for every `app/api/ai/*` route (set it in Vercel too when deploying).
-- `NEXT_PUBLIC_GOOGLE_CLIENT_ID` — must also be registered under Supabase Auth > Providers > Google.
+- `NEXT_PUBLIC_AUTH_API_URL` — h-space-api's base URL (default `http://localhost:8080`). The API must have the Supabase bridge configured (`SUPABASE_URL`, `SUPABASE_JWT_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`) and list this app's origin in its CORS config.
+- `NEXT_PUBLIC_GOOGLE_CLIENT_ID` — must also be listed in h-space-api's `GOOGLE_CLIENT_IDS`.
 - `NEXT_PUBLIC_VAPID_KEY` — web push, paired with the `kori-send-push` Edge Function; Telegram delivery pairs with `kori-send-telegram`.
 - Optional model overrides: `AI_MODEL`, `TTS_MODEL` globally; `OPENAI_TEXT_MODEL`, `OPENAI_TRANSCRIBE_MODEL`, `OPENAI_TTS_MODEL` for Korean Coach (`lib/server/korean-coach/*`). All server-only — never prefix these with `NEXT_PUBLIC_`.
 - `NEXT_PUBLIC_FEATURE_VAULT_LIVE=true` switches H-Vault (`/vault`) from its browser-local demo adapter to the `kori_vault_accounts` table. Leave it off until that migration is applied. **H-Vault passwords are end-to-end encrypted in the browser** (`lib/vault-crypto.ts`, PBKDF2 → AES-GCM; key held only in memory by `lib/vault-session.ts`). Only `v1.` ciphertext envelopes may reach `password_ciphertext` (enforced in `toWritableRow` and by a DB check). Never add a plaintext password path or persist the master password/key, and still no PIN/token/recovery-code/notes field. See `docs/h-vault.md`.

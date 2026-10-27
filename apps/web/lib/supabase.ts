@@ -1,13 +1,12 @@
 import { createClient } from "@supabase/supabase-js"
 
+import { getSupabaseAccessToken } from "@/lib/auth-store"
+
 // Single Supabase client for the whole app (browser-side). KoriAI shares the
 // Supabase project with Orbit/DailyGoalMap — KoriAI-owned tables are prefixed
 // `kori_`; the goals/tasks domain reuses Orbit's original tables and RPCs.
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""
 export const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? ""
-
-// Fixed storage key so lib/auth-store.ts can read the session synchronously.
-export const SUPABASE_STORAGE_KEY = "koriai-auth"
 
 const MISSING_SUPABASE_URL = "https://missing-supabase-config.invalid"
 const MISSING_SUPABASE_KEY = "missing-supabase-publishable-key"
@@ -39,11 +38,11 @@ export function assertSupabaseConfigured(): void {
 
 // Keep public routes renderable before a developer has created .env.local.
 // Data and auth operations explicitly guard this inert fallback.
+//
+// Sign-in is h-space-api's (lib/auth-store.ts), not Supabase auth: every
+// request carries the bridge-issued token, which RLS reads like a Supabase
+// session. With `accessToken` set, supabase-js disables `supabase.auth.*` —
+// accessing it throws — so session and user lookups go through auth-store.
 export const supabase = createClient(clientConfig.url, clientConfig.key, {
-  auth: {
-    storageKey: SUPABASE_STORAGE_KEY,
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
+  accessToken: getSupabaseAccessToken,
 })

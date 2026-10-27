@@ -69,7 +69,6 @@ function builder(table: string, op: Captured["op"], payload: Record<string, unkn
 }
 
 vi.mock("@/lib/supabase", () => ({
-  SUPABASE_STORAGE_KEY: "koriai-auth",
   supabase: {
     from: (table: string) => ({
       update: (payload: Record<string, unknown>) => builder(table, "update", payload),

@@ -46,14 +46,16 @@ export interface GoogleSessionResult {
 }
 
 /**
- * Establishes a Supabase session from a Google credential (ID token). Google was
- * initialized with the SHA-256 hash of `rawNonce`; Supabase re-hashes the raw
- * value to verify they match (replay protection). The Google provider with this
- * client ID must be enabled under Supabase Auth > Providers.
+ * Establishes an h-space-api session from a Google credential (ID token).
+ * h-space-api verifies it against the client IDs in its `google.client-ids`
+ * setting, which must include NEXT_PUBLIC_GOOGLE_CLIENT_ID.
  */
-export async function handleGoogleCredential(
-  credential: string,
-  rawNonce: string,
-): Promise<GoogleSessionResult> {
-  return authApi.loginWithGoogle(credential, rawNonce)
+export async function handleGoogleCredential(credential: string): Promise<GoogleSessionResult> {
+  const result = await authApi.loginWithGoogle(credential)
+  // h-space-api doesn't challenge Google sign-ins for two-step verification
+  // today; fail loudly if that changes rather than silently not signing in.
+  if (result.status !== "signed_in") {
+    throw new Error("Two-step verification is required. Sign in with your email and password.")
+  }
+  return { userId: result.userId, email: result.email }
 }
