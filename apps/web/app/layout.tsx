@@ -53,9 +53,7 @@ export const metadata: Metadata = {
   },
   manifest: "/site.webmanifest",
   icons: {
-    icon: [
-      { url: "/H%20Space%20Icon.png", type: "image/png" },
-    ],
+    icon: [{ url: "/H%20Space%20Icon.png", type: "image/png" }],
     apple: [{ url: "/H%20Space%20Icon.png", type: "image/png" }],
     shortcut: ["/H%20Space%20Icon.png"],
   },

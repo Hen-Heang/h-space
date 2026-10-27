@@ -68,7 +68,13 @@ export function DesktopSidebar({
           className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md ring-1 ring-border">
-            <Image src="/H%20Space%20Icon.png" alt="" width={32} height={32} className="size-full" />
+            <Image
+              src="/H%20Space%20Icon.png"
+              alt=""
+              width={32}
+              height={32}
+              className="size-full"
+            />
           </span>
           {!collapsed && (
             <span className="min-w-0">
