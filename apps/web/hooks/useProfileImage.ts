@@ -10,6 +10,8 @@ export type ProfileAvatar = {
   url: string | null
   /** Up-to-two-letter fallback derived from the display name / email. */
   initials: string
+  /** First word of the display name, or null when none is set. */
+  firstName: string | null
 }
 
 function deriveInitials(displayName?: string | null, email?: string | null): string {
@@ -40,7 +42,8 @@ async function load(userId: string): Promise<ProfileAvatar> {
       if (user?.hasProfileImage) {
         url = await userApi.getProfileImageUrl(userId).catch(() => null)
       }
-      const data: ProfileAvatar = { url, initials }
+      const firstName = (user?.displayName ?? "").trim().split(/\s+/)[0] || null
+      const data: ProfileAvatar = { url, initials, firstName }
       // Don't cache a fallback from a failed fetch — retry on the next mount
       // instead of sticking with "ME" for the rest of the session.
       if (user) cache = { id: userId, data }
@@ -60,11 +63,13 @@ export function refreshProfileImage() {
 }
 
 /**
- * Current user's avatar (photo URL + initials fallback), fetched once and
+ * Current user's avatar (photo URL + initials fallback) and first name, fetched once and
  * cached for the session. Returns the cached value synchronously on remount.
  */
 export function useProfileImage(): ProfileAvatar {
-  const [data, setData] = useState<ProfileAvatar>(cache?.data ?? { url: null, initials: "ME" })
+  const [data, setData] = useState<ProfileAvatar>(
+    cache?.data ?? { url: null, initials: "ME", firstName: null },
+  )
 
   useEffect(() => {
     const id = getUserId()
