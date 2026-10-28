@@ -1,12 +1,13 @@
-import { authRequest } from "@/lib/api/auth-http"
+import { AuthApiError, authRequest } from "@/lib/api/auth-http"
 import {
   type AuthTokens,
   type AuthUser,
   clearAuth,
   discardSession,
+  getSupabaseAccessToken,
   saveSession,
 } from "@/lib/auth-store"
-import { assertSupabaseConfigured, supabase } from "@/lib/supabase"
+import { assertSupabaseConfigured, IS_SUPABASE_CONFIGURED, supabase } from "@/lib/supabase"
 
 // Auth over h-space-api (see lib/auth-store.ts for the session itself).
 // Three ways in: email-or-username + password, a 6-digit code emailed for
@@ -89,6 +90,18 @@ async function ensureProfile(user: UserResponse) {
   if (pending && user.email) window.localStorage.removeItem(pendingProfileKey(user.email))
 }
 
+async function isSupabaseBridgeAvailable(): Promise<boolean> {
+  if (!IS_SUPABASE_CONFIGURED) return false
+  try {
+    await getSupabaseAccessToken()
+    return true
+  } catch (error) {
+    if (error instanceof AuthApiError && error.httpStatus === 503) return false
+    discardSession()
+    throw error
+  }
+}
+
 async function completeSignIn(tokens: AuthTokens): Promise<SignInResult> {
   if (tokens.mfaRequired) {
     if (!tokens.mfaToken)
@@ -104,6 +117,12 @@ async function completeSignIn(tokens: AuthTokens): Promise<SignInResult> {
     imageUrl: user.imageUrl,
   }
   saveSession(tokens, authUser)
+
+  // Supabase is optional now: with it unconfigured, or h-space-api's bridge
+  // switched off (503), sign-in completes without the kori_profiles row.
+  if (!(await isSupabaseBridgeAvailable())) {
+    return { status: "signed_in", userId: user.id, email: user.email ?? "" }
+  }
 
   // The first Supabase call also proves the data bridge works; if it doesn't,
   // undo the sign-in rather than leave the user in an app that can't load.
@@ -141,7 +160,6 @@ export const authApi = {
 
   /** `identifier` is an email or a username. */
   login: async (input: { identifier: string; password: string }): Promise<SignInResult> => {
-    assertSupabaseConfigured()
     const tokens = await authRequest<AuthTokens>("/api/auth/login", {
       method: "POST",
       body: input,
@@ -159,7 +177,6 @@ export const authApi = {
   // "Continue with email", step 1: h-space-api emails a 6-digit code. It
   // answers OK even when it skips a resend inside its 60s cooldown.
   requestEmailCode: async (email: string) => {
-    assertSupabaseConfigured()
     await authRequest("/api/auth/email-code/request", { method: "POST", body: { email } })
   },
 
@@ -186,7 +203,6 @@ export const authApi = {
   // verifies the token's signature, issuer, audience and expiry, but doesn't
   // take a nonce, so there's no replay check on the nonce Google embeds.
   loginWithGoogle: async (idToken: string): Promise<SignInResult> => {
-    assertSupabaseConfigured()
     const tokens = await authRequest<AuthTokens>("/api/auth/oauth2/google", {
       method: "POST",
       body: { idToken },
