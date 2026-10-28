@@ -22,7 +22,7 @@ vi.mock("next/navigation", () => ({
 }))
 
 vi.mock("@/hooks/useProfileImage", () => ({
-  useProfileImage: () => ({ url: null, initials: "HH" }),
+  useProfileImage: () => ({ url: null, initials: "HH", firstName: null }),
 }))
 
 vi.mock("@/hooks/useNotifications", () => ({

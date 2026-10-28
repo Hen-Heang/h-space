@@ -116,7 +116,7 @@ export default function RegisterPage() {
 
   if (createdFor) {
     return (
-      <AuthShell>
+      <AuthShell brand="signup">
         <AuthHeading
           icon={MailCheck}
           tone="success"
@@ -147,10 +147,21 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthShell footer={<AuthLegal action="creating an account" />}>
+    <AuthShell
+      brand="signup"
+      footer={<AuthLegal action="creating an account" />}
+      topAction={
+        <>
+          Already have an account?{" "}
+          <Link href="/login" className={authLinkClass}>
+            Sign in
+          </Link>
+        </>
+      }
+    >
       <AuthHeading
         title="Create your account"
-        description="One account for your H-Space apps: planner, notes, learning, and more."
+        description="Set up your H-Space in less than a minute."
       />
 
       {invitedEmail && (
@@ -256,19 +267,19 @@ export default function RegisterPage() {
 
       <AuthDivider />
 
-      <Button asChild variant="outline" className={authSubmitClass}>
+      <Button
+        asChild
+        variant="secondary"
+        className={cn(
+          authSubmitClass,
+          "bg-primary/10 font-semibold text-primary shadow-none hover:bg-primary/15",
+        )}
+      >
         <Link href="/login?method=email-code">
           <Mail />
-          Continue with email — no password
+          Prefer no password? Sign up with an email code
         </Link>
       </Button>
-
-      <p className="mt-8 text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link href="/login" className={authLinkClass}>
-          Sign in
-        </Link>
-      </p>
     </AuthShell>
   )
 }

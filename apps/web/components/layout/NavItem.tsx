@@ -26,7 +26,7 @@ const ROW_SIZE: Record<NavRowVariant, string> = {
 }
 
 const ROW_STATE = {
-  active: "bg-accent text-foreground",
+  active: "bg-sidebar-accent font-semibold text-sidebar-accent-foreground",
   idle: "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
   soon: "cursor-default text-muted-foreground/50",
 }
@@ -82,7 +82,10 @@ export function NavRow({
         size={iconSize}
         strokeWidth={2}
         aria-hidden
-        className={cn("shrink-0", active ? "text-foreground" : "text-muted-foreground")}
+        className={cn(
+          "shrink-0",
+          active ? "text-sidebar-accent-foreground" : "text-muted-foreground",
+        )}
       />
       <span className="min-w-0 flex-1">
         <span className="block truncate">{item.label}</span>
@@ -189,7 +192,7 @@ export function NavIconRow({
               "relative flex w-full flex-col items-center justify-center gap-1 rounded-md outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
               showLabel ? "min-h-14 py-2" : "min-h-10 py-2",
               active
-                ? "bg-accent text-foreground"
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
                 : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
               className,
             )}

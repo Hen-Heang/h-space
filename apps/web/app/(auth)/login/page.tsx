@@ -87,7 +87,19 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthShell footer={!mfaToken && <AuthLegal action="signing in" />}>
+    <AuthShell
+      footer={!mfaToken && <AuthLegal action="signing in" />}
+      topAction={
+        !mfaToken && (
+          <>
+            New to H-Space?{" "}
+            <Link href="/register" className={authLinkClass}>
+              Create account
+            </Link>
+          </>
+        )
+      }
+    >
       {mfaToken ? (
         <AuthHeading
           icon={ShieldCheck}
@@ -99,10 +111,17 @@ export default function LoginPage() {
       )}
 
       {!mfaToken && (
+        <>
+          <GoogleSignInButton onError={setError} redirectTo="/home" />
+          <AuthDivider label="or sign in with" />
+        </>
+      )}
+
+      {!mfaToken && (
         <div
           role="tablist"
           aria-label="Sign-in method"
-          className="mb-6 grid grid-cols-2 gap-1 rounded-xl bg-muted p-1"
+          className="mb-6 grid grid-cols-2 gap-1 rounded-[14px] bg-muted p-1"
         >
           {SIGN_IN_METHODS.map((option) => (
             <button
@@ -115,9 +134,9 @@ export default function LoginPage() {
                 setError("")
               }}
               className={cn(
-                "h-9 rounded-lg text-sm font-medium outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring",
+                "h-10 rounded-[11px] text-sm font-medium outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring",
                 method === option.id
-                  ? "bg-background text-foreground shadow-sm"
+                  ? "bg-card font-semibold text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -246,18 +265,14 @@ export default function LoginPage() {
       )}
 
       {!mfaToken && (
-        <>
-          <AuthDivider label="or continue with" />
-
-          <GoogleSignInButton onError={setError} redirectTo="/home" />
-
-          <p className="mt-8 text-center text-sm text-muted-foreground">
-            New to H-Space?{" "}
-            <Link href="/register" className={authLinkClass}>
-              Create an account
-            </Link>
-          </p>
-        </>
+        <p className="mt-6 flex items-center justify-center gap-2 text-[13px] text-muted-foreground">
+          <ShieldCheck
+            size={15}
+            aria-hidden="true"
+            className="text-emerald-600 dark:text-emerald-400"
+          />
+          Protected with optional two-step verification
+        </p>
       )}
     </AuthShell>
   )

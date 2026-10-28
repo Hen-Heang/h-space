@@ -13,7 +13,7 @@ import {
 import { hSpaceProjects, type HSpaceProject } from "@/lib/projects"
 import { cn } from "@/lib/utils"
 
-const projectIcons: Record<HSpaceProject["id"], LucideIcon> = {
+export const projectIcons: Record<HSpaceProject["id"], LucideIcon> = {
   "hengo-learning": GraduationCap,
   "h-vault": Vault,
   luyra: WalletCards,
