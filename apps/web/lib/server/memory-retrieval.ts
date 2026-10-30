@@ -40,12 +40,30 @@ const emptyResult = Promise.resolve({ data: [] as Record<string, unknown>[], err
  * answer can cite exactly where a claim came from and the user can open the
  * original record to verify it.
  */
+export interface RetrievalSources {
+  /**
+   * Full-text search over inbox items held outside Supabase (hspace-api, once
+   * the inbox has moved — see lib/server/hspace-inbox.ts). Same websearch /
+   * English semantics; must already be scoped to the caller.
+   */
+  searchInbox?: (query: string, limit: number) => Promise<InboxSearchRow[]>
+}
+
+export interface InboxSearchRow {
+  id: string
+  title: string | null
+  content: string
+  item_type: string
+}
+
 export async function retrieveMemoryContext(
   db: SupabaseClient,
   question: string,
+  sources: RetrievalSources = {},
 ): Promise<RetrievedItem[]> {
   const searchQuery = sanitizeSearchQuery(question)
   const ftsOptions = { type: "websearch" as const, config: "english" }
+  const { searchInbox } = sources
 
   const [
     notesRes,
@@ -65,13 +83,15 @@ export async function retrieveMemoryContext(
           .textSearch("search", searchQuery, ftsOptions)
           .limit(FTS_LIMIT)
       : emptyResult,
-    searchQuery
-      ? db
-          .from("kori_inbox_items")
-          .select("id, title, content, item_type")
-          .textSearch("search", searchQuery, ftsOptions)
-          .limit(FTS_LIMIT)
-      : emptyResult,
+    !searchQuery
+      ? emptyResult
+      : searchInbox
+        ? searchInbox(searchQuery, FTS_LIMIT).then((data) => ({ data, error: null }))
+        : db
+            .from("kori_inbox_items")
+            .select("id, title, content, item_type")
+            .textSearch("search", searchQuery, ftsOptions)
+            .limit(FTS_LIMIT),
     searchQuery
       ? db
           .from("kori_journal_entries")
@@ -135,12 +155,7 @@ export async function retrieveMemoryContext(
     })
   }
 
-  for (const row of (inboxRes.data ?? []) as {
-    id: string
-    title: string | null
-    content: string
-    item_type: string
-  }[]) {
+  for (const row of (inboxRes.data ?? []) as InboxSearchRow[]) {
     items.push({
       type: "inbox_item",
       id: row.id,
