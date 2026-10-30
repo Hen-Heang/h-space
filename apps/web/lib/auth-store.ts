@@ -80,11 +80,6 @@ export function saveSession(tokens: AuthTokens, user: AuthUser) {
   })
 }
 
-/** Forgets the session locally without calling the server. */
-export function discardSession() {
-  clearLocalAuth()
-}
-
 /** Fires on sign-in, sign-out, a failed refresh, and the same in other tabs. */
 export function onAuthChange(callback: () => void): () => void {
   const onStorage = (e: StorageEvent) => {

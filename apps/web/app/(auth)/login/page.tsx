@@ -73,7 +73,7 @@ export default function LoginPage() {
       }
       router.push("/home")
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Invalid email, username or password.")
+      setError(error instanceof Error ? error.message : "Sign-in failed. Try again.")
       setNeedsVerification(error instanceof AuthApiError && error.code === ACCOUNT_DISABLED)
     } finally {
       setLoading(false)
