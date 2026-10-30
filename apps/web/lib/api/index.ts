@@ -3,6 +3,7 @@
 // (e.g. `import { vocabApi, getApiErrorMessage } from "@/lib/api"`).
 export * from "./errors"
 export * from "./auth"
+export * from "./mfa"
 export * from "./invites"
 export * from "./chat"
 export * from "./user"
