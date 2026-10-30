@@ -3,6 +3,8 @@ import { z } from "zod"
 import { AI_PROVIDER_OPTIONS, DEFAULT_MODEL, aiModel, requireUser } from "@/lib/server/ai"
 import { checkRateLimit, recordUsage } from "@/lib/server/ai-limits"
 import { formatRetrievedContext, retrieveMemoryContext } from "@/lib/server/memory-retrieval"
+import { hspaceInboxSearch } from "@/lib/server/hspace-inbox"
+import { isSpringInboxEnabled } from "@/lib/feature-flags"
 import { memoryCandidateFromRow, type MemoryCandidateRow } from "@/lib/memory"
 import type { AskHengoAnswer, AskHengoSource } from "@/lib/api/memory"
 
@@ -76,7 +78,13 @@ export async function POST(req: Request): Promise<Response> {
   const { question } = parsed.data
 
   try {
-    const items = await retrieveMemoryContext(db, question)
+    // Once the inbox lives in hspace-api, its Supabase table is a stale copy:
+    // search hspace-api, or skip the inbox rather than cite old rows.
+    const items = await retrieveMemoryContext(
+      db,
+      question,
+      isSpringInboxEnabled() ? { searchInbox: hspaceInboxSearch(req) ?? (async () => []) } : {},
+    )
     const prompt =
       `${formatRetrievedContext(items)}\n\n` +
       `The user's question: "${question}"\n\n` +

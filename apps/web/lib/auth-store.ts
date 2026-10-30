@@ -187,6 +187,16 @@ export async function getValidAccessToken(): Promise<string | null> {
   return (await refreshSession(auth.refreshToken))?.accessToken ?? null
 }
 
+/**
+ * Renews the h-space-api access token now, whatever its expiry says — for a
+ * request the server just refused with 401. Null once the session is over.
+ */
+export async function refreshAccessToken(): Promise<string | null> {
+  const auth = readAuth()
+  if (!auth) return null
+  return (await refreshSession(auth.refreshToken))?.accessToken ?? null
+}
+
 let bridgeInFlight: Promise<string | null> | null = null
 
 async function fetchSupabaseToken(): Promise<string | null> {
