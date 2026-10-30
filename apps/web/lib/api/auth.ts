@@ -120,7 +120,7 @@ export const authApi = {
   register: async (input: RegisterInput) => {
     assertSupabaseConfigured()
     savePendingProfile(input)
-    const tokens = await authRequest<AuthTokens>("/api/auth/signup", {
+    const tokens = await authRequest<Partial<AuthTokens>>("/api/auth/signup", {
       method: "POST",
       body: {
         name: input.displayName,
@@ -129,13 +129,16 @@ export const authApi = {
         username: input.username,
       },
     })
-    // Signup returns tokens, but the account can't sign in until its email is
-    // verified — revoke them rather than keep a session that skips that step.
-    await authRequest("/api/auth/logout", {
-      method: "POST",
-      body: { refreshToken: tokens.refreshToken },
-      token: tokens.accessToken,
-    }).catch(() => undefined)
+    // h-space-api issues no tokens until the email is verified. An older
+    // deployment still returned some — revoke those rather than keep a
+    // session that skips that step.
+    if (tokens.refreshToken) {
+      await authRequest("/api/auth/logout", {
+        method: "POST",
+        body: { refreshToken: tokens.refreshToken },
+        token: tokens.accessToken,
+      }).catch(() => undefined)
+    }
     return { userId: null, email: input.email, needsEmailConfirmation: true }
   },
 
