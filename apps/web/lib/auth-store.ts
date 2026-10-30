@@ -209,7 +209,10 @@ async function fetchSupabaseToken(): Promise<string | null> {
     )
     return res.accessToken
   } catch (error) {
-    if (error instanceof AuthApiError && error.httpStatus === 401) {
+    // The access token itself was refused (revoked, its account gone or no
+    // longer verified): the session is over. Other errors, like the bridge
+    // being unconfigured (503), leave it alone.
+    if (error instanceof AuthApiError && (error.httpStatus === 401 || error.httpStatus === 403)) {
       clearLocalAuth()
       return null
     }

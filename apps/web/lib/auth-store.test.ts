@@ -142,6 +142,17 @@ describe("getSupabaseAccessToken", () => {
     expect(await getSupabaseAccessToken()).toBe("sb2")
   })
 
+  it.each([401, 403])(
+    "ends the session when the bridge refuses the access token (%i)",
+    async (status) => {
+      saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 3600 }, USER)
+      fetchMock.mockResolvedValueOnce(envelope(null, { status, code: status, message: "Refused" }))
+
+      expect(await getSupabaseAccessToken()).toBeNull()
+      expect(isAuthenticated()).toBe(false)
+    },
+  )
+
   it("surfaces the bridge's error, e.g. when it isn't configured", async () => {
     saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 3600 }, USER)
     fetchMock.mockResolvedValueOnce(
