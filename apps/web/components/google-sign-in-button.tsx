@@ -23,13 +23,22 @@ const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
 
 export function GoogleSignInButton({
   onError,
+  onMfaRequired,
   redirectTo = "/home",
 }: {
   onError?: (message: string) => void
+  /** The Google account has two-step verification; finish with authApi.verifyMfa. */
+  onMfaRequired?: (mfaToken: string) => void
   redirectTo?: string
 }) {
   const router = useRouter()
   const containerRef = useRef<HTMLDivElement>(null)
+  // Read at callback time, so an inline handler doesn't re-initialize Google
+  // Identity Services on every render.
+  const onMfaRequiredRef = useRef(onMfaRequired)
+  useEffect(() => {
+    onMfaRequiredRef.current = onMfaRequired
+  })
 
   useEffect(() => {
     if (!CLIENT_ID) {
@@ -53,7 +62,13 @@ export function GoogleSignInButton({
           nonce: hashedNonce,
           callback: async (response: { credential: string }) => {
             try {
-              await handleGoogleCredential(response.credential)
+              const result = await handleGoogleCredential(response.credential)
+              if (result.status === "mfa_required") {
+                const handleMfa = onMfaRequiredRef.current
+                if (handleMfa) handleMfa(result.mfaToken)
+                else onError?.("Two-step verification is required. Sign in from the login page.")
+                return
+              }
               router.push(redirectTo)
             } catch (error) {
               onError?.(error instanceof Error ? error.message : "Google sign-in failed.")

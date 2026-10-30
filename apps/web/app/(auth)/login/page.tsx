@@ -249,7 +249,14 @@ export default function LoginPage() {
         <>
           <AuthDivider label="or continue with" />
 
-          <GoogleSignInButton onError={setError} redirectTo="/home" />
+          <GoogleSignInButton
+            onError={setError}
+            onMfaRequired={(token) => {
+              setError("")
+              setMfaToken(token)
+            }}
+            redirectTo="/home"
+          />
 
           <p className="mt-8 text-center text-sm text-muted-foreground">
             New to H-Space?{" "}
