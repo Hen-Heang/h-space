@@ -30,3 +30,13 @@ export const isCalendarIntegrationsEnabled = (): boolean =>
  */
 export const isVaultLiveEnabled = (): boolean =>
   process.env.NEXT_PUBLIC_FEATURE_VAULT_LIVE === "true"
+
+/**
+ * Quick Capture Inbox reads and writes hspace-api (Spring) instead of
+ * Supabase's `kori_inbox_items` — the first area moved off Supabase
+ * (h-space-api docs/spring-migration-plan.md, Phase 1). Off by default; turn
+ * on only after the inbox rows have been copied across. Turning it back off
+ * is the rollback: the copy leaves the Supabase table untouched.
+ */
+export const isSpringInboxEnabled = (): boolean =>
+  process.env.NEXT_PUBLIC_DATA_SOURCE_INBOX === "spring"

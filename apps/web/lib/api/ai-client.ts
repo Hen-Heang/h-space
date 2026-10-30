@@ -1,12 +1,23 @@
-import { getSupabaseAccessToken } from "@/lib/auth-store"
+import { HSPACE_TOKEN_HEADER } from "@/lib/api/auth-http"
+import { getSupabaseAccessToken, getValidAccessToken } from "@/lib/auth-store"
+import { isSpringInboxEnabled } from "@/lib/feature-flags"
 
 // Shared with the SSE routes (chat.ts streamMessage, goals.ts coachStream) so
 // there's one place that attaches the caller's Supabase access token — the
 // bridge-issued one, since requireUser (lib/server/ai.ts) checks it against
 // Supabase and runs the route's queries under RLS with it.
+//
+// Once an area has moved to hspace-api (today: the inbox), the route also
+// needs the caller's h-space-api token to read it there, so that rides along
+// as HSPACE_TOKEN_HEADER. These are same-origin requests to this app only.
 export async function authHeaders(): Promise<Record<string, string>> {
   const token = await getSupabaseAccessToken()
-  return token ? { Authorization: `Bearer ${token}` } : {}
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+  if (isSpringInboxEnabled()) {
+    const hspaceToken = await getValidAccessToken()
+    if (hspaceToken) headers[HSPACE_TOKEN_HEADER] = hspaceToken
+  }
+  return headers
 }
 
 // Helper for the AI features that used to run on the Spring backend and now

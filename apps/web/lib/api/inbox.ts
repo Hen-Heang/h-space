@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import { requireUserId } from "@/lib/auth-store"
+import { isSpringInboxEnabled } from "@/lib/feature-flags"
 import {
   buildJournalConversionPayload,
   buildNoteConversionPayload,
@@ -11,12 +12,50 @@ import {
   type InboxItemType,
 } from "@/lib/inbox"
 
+import { hspaceRequest } from "./hspace-http"
 import { notesApi } from "./notes"
 import { tasksApi } from "./goals"
 import { journalApi } from "./journal"
 
-// Quick Capture Inbox over kori_inbox_items. Mirrors the notesApi shape:
-// plain async functions, row<->camelCase mapping here, requireUserId() on writes.
+// Quick Capture Inbox. Mirrors the notesApi shape: plain async functions,
+// requireUserId() on Supabase writes.
+//
+// Two stores share one interface while the inbox moves off Supabase
+// (h-space-api docs/spring-migration-plan.md, Phase 1):
+// - `supabaseInbox` — kori_inbox_items, owner-scoped by RLS.
+// - `springInbox` — hspace-api /api/v1/inbox-items, owner taken from the JWT.
+// `isSpringInboxEnabled()` picks one; conversions still create the Note /
+// Task / Journal entry in Supabase until those areas move too.
+
+export interface InboxListParams {
+  status?: InboxItemStatus | "all"
+  itemType?: InboxItemType | "all"
+  /** Bounded fetch, mirroring the rest of lib/api/* (personal-scale data, not paginated yet). */
+  limit?: number
+}
+
+export type InboxItemPatch = Partial<{
+  title: string | null
+  content: string
+  itemType: InboxItemType
+  tags: string[]
+  eventAt: string | null
+  goalId: string | null
+  pinned: boolean
+  status: InboxItemStatus
+}>
+
+interface InboxStore {
+  list(params: InboxListParams): Promise<InboxItem[]>
+  get(id: string): Promise<InboxItem>
+  create(input: InboxItemInput): Promise<InboxItem>
+  update(id: string, patch: InboxItemPatch): Promise<InboxItem>
+  remove(id: string): Promise<void>
+  /** Stamps the source item as processed once it has been converted. */
+  markConverted(id: string, type: InboxConversionTarget, convertedId?: string): Promise<void>
+}
+
+// ─── Supabase ───────────────────────────────────────────────────────────────
 
 type InboxItemRow = {
   id: string
@@ -59,15 +98,8 @@ function toInboxItem(row: InboxItemRow): InboxItem {
   }
 }
 
-export interface InboxListParams {
-  status?: InboxItemStatus | "all"
-  itemType?: InboxItemType | "all"
-  /** Bounded fetch, mirroring the rest of lib/api/* (personal-scale data, not paginated yet). */
-  limit?: number
-}
-
-export const inboxApi = {
-  list: async (params: InboxListParams = {}): Promise<InboxItem[]> => {
+const supabaseInbox: InboxStore = {
+  list: async (params) => {
     let query = supabase
       .from("kori_inbox_items")
       .select(SELECT_COLUMNS)
@@ -80,7 +112,7 @@ export const inboxApi = {
     return (data as unknown as InboxItemRow[]).map(toInboxItem)
   },
 
-  get: async (id: string): Promise<InboxItem> => {
+  get: async (id) => {
     const { data, error } = await supabase
       .from("kori_inbox_items")
       .select(SELECT_COLUMNS)
@@ -90,7 +122,7 @@ export const inboxApi = {
     return toInboxItem(data as unknown as InboxItemRow)
   },
 
-  create: async (input: InboxItemInput): Promise<InboxItem> => {
+  create: async (input) => {
     const { data, error } = await supabase
       .from("kori_inbox_items")
       .insert({
@@ -109,19 +141,7 @@ export const inboxApi = {
     return toInboxItem(data as unknown as InboxItemRow)
   },
 
-  update: async (
-    id: string,
-    patch: Partial<{
-      title: string | null
-      content: string
-      itemType: InboxItemType
-      tags: string[]
-      eventAt: string | null
-      goalId: string | null
-      pinned: boolean
-      status: InboxItemStatus
-    }>,
-  ): Promise<InboxItem> => {
+  update: async (id, patch) => {
     const { data, error } = await supabase
       .from("kori_inbox_items")
       .update({
@@ -142,10 +162,89 @@ export const inboxApi = {
     return toInboxItem(data as unknown as InboxItemRow)
   },
 
-  remove: async (id: string) => {
+  remove: async (id) => {
     const { error } = await supabase.from("kori_inbox_items").delete().eq("id", id)
     if (error) throw error
   },
+
+  markConverted: async (id, type, convertedId) => {
+    await supabase
+      .from("kori_inbox_items")
+      .update({
+        converted_to_type: type,
+        ...(convertedId !== undefined ? { converted_to_id: convertedId } : {}),
+        status: "processed",
+      })
+      .eq("id", id)
+  },
+}
+
+// ─── hspace-api (Spring) ─────────────────────────────────────────────────────
+
+const INBOX_PATH = "/api/v1/inbox-items"
+
+// The API answers with the same camelCase fields as InboxItem.
+export const springInbox: InboxStore = {
+  list: async (params) => {
+    const query = new URLSearchParams()
+    if (params.status && params.status !== "all") query.set("status", params.status)
+    if (params.itemType && params.itemType !== "all") query.set("itemType", params.itemType)
+    query.set("limit", String(params.limit ?? 500))
+    return (await hspaceRequest<InboxItem[]>(`${INBOX_PATH}?${query}`)) ?? []
+  },
+
+  get: (id) => hspaceRequest<InboxItem>(`${INBOX_PATH}/${encodeURIComponent(id)}`),
+
+  create: (input) =>
+    hspaceRequest<InboxItem>(INBOX_PATH, {
+      method: "POST",
+      body: {
+        title: input.title?.trim() || null,
+        content: input.content.trim(),
+        itemType: input.itemType,
+        tags: input.tags ?? [],
+        eventAt: input.eventAt ?? null,
+        goalId: input.goalId ?? null,
+        source: input.source ?? "manual",
+      },
+    }),
+
+  // JSON.stringify drops undefined keys, so only the fields in `patch` are
+  // sent; an explicit null clears the field (PATCH semantics on the server).
+  update: (id, patch) =>
+    hspaceRequest<InboxItem>(`${INBOX_PATH}/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: patch,
+    }),
+
+  remove: async (id) => {
+    await hspaceRequest(`${INBOX_PATH}/${encodeURIComponent(id)}`, { method: "DELETE" })
+  },
+
+  markConverted: async (id, type, convertedId) => {
+    await hspaceRequest(`${INBOX_PATH}/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: {
+        convertedToType: type,
+        ...(convertedId !== undefined ? { convertedToId: convertedId } : {}),
+        status: "processed",
+      },
+    })
+  },
+}
+
+const store = (): InboxStore => (isSpringInboxEnabled() ? springInbox : supabaseInbox)
+
+export const inboxApi = {
+  list: (params: InboxListParams = {}): Promise<InboxItem[]> => store().list(params),
+
+  get: (id: string): Promise<InboxItem> => store().get(id),
+
+  create: (input: InboxItemInput): Promise<InboxItem> => store().create(input),
+
+  update: (id: string, patch: InboxItemPatch): Promise<InboxItem> => store().update(id, patch),
+
+  remove: (id: string): Promise<void> => store().remove(id),
 
   togglePinned: async (id: string, pinned: boolean): Promise<InboxItem> =>
     inboxApi.update(id, { pinned }),
@@ -164,10 +263,7 @@ export const inboxApi = {
       existing.map((n) => n.slug),
     )
     await notesApi.create(payload)
-    await supabase
-      .from("kori_inbox_items")
-      .update({ converted_to_type: "note", status: "processed" })
-      .eq("id", item.id)
+    await store().markConverted(item.id, "note")
     return { slug: payload.slug }
   },
 
@@ -175,10 +271,7 @@ export const inboxApi = {
   convertToTask: async (item: InboxItem, date: string): Promise<{ id: string }> => {
     const payload = buildTaskConversionPayload(item, date)
     const task = await tasksApi.create(payload)
-    await supabase
-      .from("kori_inbox_items")
-      .update({ converted_to_type: "task", converted_to_id: task.id, status: "processed" })
-      .eq("id", item.id)
+    await store().markConverted(item.id, "task", task.id)
     return { id: task.id }
   },
 
@@ -186,10 +279,7 @@ export const inboxApi = {
   convertToJournal: async (item: InboxItem): Promise<{ id: string }> => {
     const payload = buildJournalConversionPayload(item)
     const entry = await journalApi.create(payload)
-    await supabase
-      .from("kori_inbox_items")
-      .update({ converted_to_type: "journal", converted_to_id: entry.id, status: "processed" })
-      .eq("id", item.id)
+    await store().markConverted(item.id, "journal", entry.id)
     return { id: entry.id }
   },
 }
