@@ -1,4 +1,4 @@
-import { authApi } from "@/lib/api"
+import { authApi, type SignInResult } from "@/lib/api"
 
 const GIS_SRC = "https://accounts.google.com/gsi/client"
 
@@ -40,22 +40,13 @@ export async function makeNonce(): Promise<{ nonce: string; hashedNonce: string 
   return { nonce, hashedNonce }
 }
 
-export interface GoogleSessionResult {
-  userId: string
-  email: string
-}
-
 /**
  * Establishes an h-space-api session from a Google credential (ID token).
  * h-space-api verifies it against the client IDs in its `google.client-ids`
- * setting, which must include NEXT_PUBLIC_GOOGLE_CLIENT_ID.
+ * setting, which must include NEXT_PUBLIC_GOOGLE_CLIENT_ID. Like a password,
+ * Google is only the first factor: an account with two-step verification
+ * answers mfa_required, finished with authApi.verifyMfa.
  */
-export async function handleGoogleCredential(credential: string): Promise<GoogleSessionResult> {
-  const result = await authApi.loginWithGoogle(credential)
-  // h-space-api doesn't challenge Google sign-ins for two-step verification
-  // today; fail loudly if that changes rather than silently not signing in.
-  if (result.status !== "signed_in") {
-    throw new Error("Two-step verification is required. Sign in with your email and password.")
-  }
-  return { userId: result.userId, email: result.email }
+export function handleGoogleCredential(credential: string): Promise<SignInResult> {
+  return authApi.loginWithGoogle(credential)
 }
