@@ -1,11 +1,5 @@
 import { authRequest } from "@/lib/api/auth-http"
-import {
-  type AuthTokens,
-  type AuthUser,
-  clearAuth,
-  discardSession,
-  saveSession,
-} from "@/lib/auth-store"
+import { type AuthTokens, type AuthUser, clearAuth, saveSession } from "@/lib/auth-store"
 import { assertSupabaseConfigured, supabase } from "@/lib/supabase"
 
 // Auth over h-space-api (see lib/auth-store.ts for the session itself).
@@ -89,6 +83,9 @@ async function ensureProfile(user: UserResponse) {
   if (pending && user.email) window.localStorage.removeItem(pendingProfileKey(user.email))
 }
 
+export const PROFILE_LOAD_FAILED =
+  "You signed in, but H-Space couldn't load your data, so you've been signed out. Try again in a moment."
+
 async function completeSignIn(tokens: AuthTokens): Promise<SignInResult> {
   if (tokens.mfaRequired) {
     if (!tokens.mfaToken)
@@ -107,11 +104,16 @@ async function completeSignIn(tokens: AuthTokens): Promise<SignInResult> {
 
   // The first Supabase call also proves the data bridge works; if it doesn't,
   // undo the sign-in rather than leave the user in an app that can't load.
+  // supabase-js reports a failure as a plain { message, ... } object, not an
+  // Error, so the forms would fall back to "Invalid email, username or
+  // password" — wrong, since the credentials were accepted. Say what happened.
+  // clearAuth() also revokes the tokens server-side, so undoing the sign-in
+  // doesn't leave a live refresh token behind.
   try {
     await ensureProfile(user)
   } catch (error) {
-    discardSession()
-    throw error
+    await clearAuth()
+    throw new Error(PROFILE_LOAD_FAILED, { cause: error })
   }
   return { status: "signed_in", userId: user.id, email: user.email ?? "" }
 }
