@@ -450,6 +450,28 @@ export default function SettingsPage() {
         </SectionCard>
       </motion.div>
 
+      <motion.div variants={itemVariants}>
+        <SectionCard>
+          <button
+            type="button"
+            onClick={() => router.push("/settings/security")}
+            className="group flex w-full items-center justify-between px-5 py-4 text-left transition-all hover:bg-accent/5 active:scale-[0.98] sm:px-6"
+          >
+            <SectionHeader
+              icon={ShieldCheck}
+              title="Two-step verification"
+              description="Protect sign-in with an authenticator app and backup codes"
+              color="text-emerald-500"
+            />
+            <ChevronRight
+              size={14}
+              strokeWidth={2}
+              className="shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5"
+            />
+          </button>
+        </SectionCard>
+      </motion.div>
+
       {/* Integrations — hidden until Plan is navigable (see
           lib/feature-flags.ts). The code and the privacy copy stay put; only
           the entry point and the page body are gated. */}
