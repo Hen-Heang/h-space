@@ -1,11 +1,15 @@
 "use client"
 
-import { useMemo, useRef, useState, useSyncExternalStore } from "react"
+import { useMemo, useRef, useState } from "react"
+import Link from "next/link"
 import { motion } from "motion/react"
 import {
   FileUp,
   FlaskConical,
+  KeyRound,
   Lock,
+  LockKeyhole,
+  ShieldAlert,
   Plus,
   RefreshCw,
   SearchX,
@@ -18,15 +22,21 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getApiErrorMessage, resetVaultDemoData } from "@/lib/api"
-import { useVaultAccounts, useVaultMutations } from "@/hooks/useVault"
+import { getApiErrorMessage, newVaultItemId, resetVaultDemoData } from "@/lib/api"
+import { getUserId } from "@/lib/auth-store"
+import {
+  currentVaultKey,
+  useVaultAccounts,
+  useVaultKeyset,
+  useVaultMutations,
+  useVaultUnlocked,
+} from "@/hooks/useVault"
 import { containerVariants, itemVariants } from "@/lib/motion"
 import {
   accountToFormValues,
   applyVaultFilters,
   countByCategory,
   defaultVaultFilters,
-  firstPasswordEnvelope,
   formValuesToInput,
   getCategoryLabel,
   hasActiveVaultFilters,
@@ -43,17 +53,12 @@ import {
   VaultDecryptError,
   type VaultKey,
 } from "@/lib/vault-crypto"
-import {
-  getVaultKey,
-  isVaultUnlocked,
-  lockVault,
-  setVaultKey,
-  subscribeVaultSession,
-} from "@/lib/vault-session"
+import { lockVault, setVaultKey } from "@/lib/vault-session"
 import { categoryStyle } from "./vaultMeta"
 import { accountTitle, VaultAccountCard, type VaultAccountActions } from "./VaultAccountCard"
 import { VaultAccountDetailsDialog } from "./VaultAccountDetailsDialog"
 import { VaultAccountFormDialog } from "./VaultAccountFormDialog"
+import { VaultChangePasswordDialog } from "./VaultChangePasswordDialog"
 import { copyPassword, PasswordNotice } from "./VaultAccountParts"
 import { VaultDeleteDialog } from "./VaultDeleteDialog"
 import { VaultEmptyState } from "./VaultEmptyState"
@@ -122,8 +127,13 @@ function AccountGrid({
 }
 
 export function VaultDashboard() {
-  const { accounts, loading, error, retry, retrying, isLive } = useVaultAccounts()
-  const { create, update, setFavorite, remove, createMany } = useVaultMutations()
+  const userId = getUserId()
+  const { accounts, loading, locked, error, retry, retrying, isLive, mfaRequired } =
+    useVaultAccounts()
+  const vaultKeyset = useVaultKeyset()
+  const { create, update, setFavorite, remove, createMany, saveKeyset, reset } =
+    useVaultMutations()
+  const needsMfa = mfaRequired || vaultKeyset.mfaRequired
 
   const [filters, setFilters] = useState<VaultFilters>(defaultVaultFilters)
   const [grouped, setGrouped] = useState(false)
@@ -132,11 +142,12 @@ export function VaultDashboard() {
   const [pendingDelete, setPendingDelete] = useState<VaultAccount | null>(null)
   const [unlockOpen, setUnlockOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const unlockRequest = useRef<{
     resolve: (key: VaultKey) => void
     reject: (reason: Error) => void
   } | null>(null)
-  const unlocked = useSyncExternalStore(subscribeVaultSession, isVaultUnlocked, () => false)
+  const unlocked = useVaultUnlocked()
 
   const stats = useMemo(() => vaultStats(accounts), [accounts])
   const categoryCounts = useMemo(() => countByCategory(accounts), [accounts])
@@ -157,7 +168,7 @@ export function VaultDashboard() {
 
   /** The unlocked key, asking for the master password first if needed. Rejects on cancel. */
   const requestKey = (): Promise<VaultKey> => {
-    const key = getVaultKey()
+    const key = currentVaultKey()
     if (key) return Promise.resolve(key)
     unlockRequest.current?.reject(new Error("Unlock cancelled."))
     return new Promise<VaultKey>((resolve, reject) => {
@@ -188,13 +199,13 @@ export function VaultDashboard() {
       return null
     }
     try {
-      return await decryptVaultPassword(account.passwordCiphertext, key)
+      return await decryptVaultPassword(account.passwordCiphertext, account.id, key)
     } catch (err) {
-      // A different master password was used for this one (e.g. edited on
-      // another device before the vault was unlocked here).
+      // Encrypted under another vault key (e.g. saved before a reset), or the
+      // envelope was moved from another account.
       toast.error(
         err instanceof VaultDecryptError
-          ? "This password was saved with a different master password."
+          ? "This password can't be decrypted with this vault's key."
           : "Couldn't decrypt the password.",
       )
       return null
@@ -206,37 +217,37 @@ export function VaultDashboard() {
     if (value != null) await copyPassword(value)
   }
 
-  const handleResetSavedPasswords = async () => {
-    for (const account of accounts) {
-      if (!account.passwordCiphertext) continue
-      await update.mutateAsync({ id: account.id, data: { passwordCiphertext: null } })
-    }
-    lockVault()
-  }
-
   const handleSubmit = async (values: VaultAccountFormValues) => {
     const base = formValuesToInput(values)
-    // Encrypt BEFORE anything leaves the form: only the envelope is ever sent.
-    let passwordCiphertext: string | null | undefined
-    if (values.password && !values.removePassword) {
-      let key: VaultKey
+    const editing = formState?.mode === "edit" ? formState.account : null
+    // The id comes first: the password envelope is bound to it.
+    const id = editing?.id ?? newVaultItemId()
+    // Encrypt BEFORE anything leaves the form: only envelopes are ever sent.
+    // With hspace-api the whole account is encrypted too, so any save needs
+    // the key.
+    const wantsPassword = Boolean(values.password && !values.removePassword)
+    let key: VaultKey | null = null
+    if (wantsPassword || isLive) {
       try {
         key = await requestKey()
       } catch (err) {
-        toast.error("Unlock with your master password to save the password.")
+        toast.error("Unlock your vault with your master password to save.")
         throw err
       }
-      passwordCiphertext = await encryptVaultPassword(values.password, key)
+    }
+    let passwordCiphertext: string | null | undefined
+    if (wantsPassword && key) {
+      passwordCiphertext = await encryptVaultPassword(values.password, id, key)
     } else if (values.removePassword) {
       passwordCiphertext = null
     }
     const input = passwordCiphertext === undefined ? base : { ...base, passwordCiphertext }
     try {
-      if (formState?.mode === "edit") {
-        await update.mutateAsync({ id: formState.account.id, data: input })
+      if (editing) {
+        await update.mutateAsync({ account: editing, data: input })
         toast.success(`Saved ${input.serviceName}`)
       } else {
-        await create.mutateAsync(input)
+        await create.mutateAsync({ id, data: input })
         toast.success(`Added ${input.serviceName}`)
       }
     } catch (err) {
@@ -247,7 +258,7 @@ export function VaultDashboard() {
 
   const handleToggleFavorite = async (account: VaultAccount) => {
     try {
-      await setFavorite.mutateAsync({ id: account.id, isFavorite: !account.isFavorite })
+      await setFavorite.mutateAsync({ account, isFavorite: !account.isFavorite })
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Couldn't update favorite."))
     }
@@ -282,6 +293,47 @@ export function VaultDashboard() {
   )
 
   const renderResults = () => {
+    if (needsMfa) {
+      return (
+        <VaultEmptyState
+          tone="error"
+          icon={ShieldAlert}
+          title="Turn on two-step verification first"
+          description="H-Vault only opens for accounts protected by an authenticator app, so a stolen password alone can't reach it."
+          actions={
+            <Button asChild>
+              <Link href="/settings/security">Open security settings</Link>
+            </Button>
+          }
+        />
+      )
+    }
+
+    if (locked) {
+      const settingUp = !vaultKeyset.loading && vaultKeyset.keyset == null
+      return (
+        <VaultEmptyState
+          icon={LockKeyhole}
+          title={settingUp ? "Set up your vault" : "Your vault is locked"}
+          description={
+            settingUp
+              ? "Everything you save is encrypted in this browser with a master password only you know, then synced to your other devices."
+              : "Enter your master password to see your accounts. They're encrypted until you do."
+          }
+          actions={
+            <Button
+              onClick={() => requestKey().catch(() => {})}
+              disabled={vaultKeyset.loading || Boolean(vaultKeyset.error)}
+              className="min-h-11"
+            >
+              <LockKeyhole aria-hidden="true" />
+              {settingUp ? "Set up vault" : "Unlock vault"}
+            </Button>
+          }
+        />
+      )
+    }
+
     if (loading) {
       return (
         <div
@@ -454,22 +506,36 @@ export function VaultDashboard() {
             </div>
           </div>
           <div className="flex w-full flex-col gap-2 min-[420px]:flex-row min-[420px]:flex-wrap sm:w-auto lg:justify-end">
-            {addButton}
-            <Button variant="outline" onClick={() => setImportOpen(true)} className="min-h-11">
-              <FileUp aria-hidden="true" />
-              Import CSV
-            </Button>
+            {!locked && !needsMfa && (
+              <>
+                {addButton}
+                <Button variant="outline" onClick={() => setImportOpen(true)} className="min-h-11">
+                  <FileUp aria-hidden="true" />
+                  Import CSV
+                </Button>
+              </>
+            )}
+            {unlocked && vaultKeyset.keyset && (
+              <Button
+                variant="outline"
+                onClick={() => setChangePasswordOpen(true)}
+                className="min-h-11"
+              >
+                <KeyRound aria-hidden="true" />
+                Change master password
+              </Button>
+            )}
             {unlocked && (
               <Button
                 variant="outline"
                 onClick={() => {
                   lockVault()
-                  toast.success("Passwords locked")
+                  toast.success("Vault locked")
                 }}
                 className="min-h-11"
               >
                 <Lock aria-hidden="true" />
-                Lock passwords
+                Lock vault
               </Button>
             )}
           </div>
@@ -489,8 +555,8 @@ export function VaultDashboard() {
             />
             <span>
               <strong className="font-semibold">Demo mode.</strong> Showing fictional sample
-              accounts saved only in this browser. Syncing to your H-Space account starts once the
-              H-Vault database migration is approved and applied.
+              accounts saved only in this browser. Syncing to your H-Space account starts once
+              H-Vault&apos;s server side passes its security review and is turned on.
             </span>
           </p>
         )}
@@ -576,16 +642,36 @@ export function VaultDashboard() {
         onOpenChange={setImportOpen}
         existingAccounts={accounts}
         requestKey={requestKey}
+        requireUnlock={isLive}
         importItems={(items, onProgress) => createMany.mutateAsync({ items, onProgress })}
       />
 
-      <VaultUnlockDialog
-        open={unlockOpen}
-        existingEnvelope={firstPasswordEnvelope(accounts)}
-        onUnlocked={(key) => finishUnlock(key)}
-        onCancel={() => finishUnlock(null)}
-        onResetPasswords={handleResetSavedPasswords}
-      />
+      {userId && (
+        <VaultUnlockDialog
+          open={unlockOpen}
+          userId={userId}
+          keyset={vaultKeyset.keyset}
+          live={isLive}
+          saveKeyset={(data, version) => saveKeyset.mutateAsync({ data, version })}
+          onReset={() => reset.mutateAsync()}
+          onUnlocked={(key) => finishUnlock(key)}
+          onCancel={() => finishUnlock(null)}
+        />
+      )}
+
+      {userId && (
+        <VaultChangePasswordDialog
+          open={changePasswordOpen}
+          userId={userId}
+          keyset={vaultKeyset.keyset}
+          saveKeyset={(data, version) => saveKeyset.mutateAsync({ data, version })}
+          onChanged={(key) => {
+            setVaultKey(key)
+            toast.success("Master password changed")
+          }}
+          onOpenChange={setChangePasswordOpen}
+        />
+      )}
 
       <VaultDeleteDialog
         account={pendingDelete}

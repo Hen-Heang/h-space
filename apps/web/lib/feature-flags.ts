@@ -22,11 +22,10 @@ export const isCalendarIntegrationsEnabled = (): boolean =>
   process.env.NEXT_PUBLIC_FEATURE_INTEGRATIONS === "true"
 
 /**
- * H-Vault live persistence (docs/h-vault.md). Off by default because the
- * `kori_vault_accounts` migration needs the maintainer's approval before it is
- * applied to the shared Supabase project; until then `/vault` runs on the
- * browser-local demo adapter with fictional data. Turn on only after the
- * migration is applied.
+ * H-Vault synced through hspace-api (`/api/hub/vault`, docs/h-vault.md). Off
+ * by default: until the independent security review of the vault design
+ * (h-space-api docs/vault-design.md §9) is done and hub-api is deployed,
+ * `/vault` runs on the browser-local demo backend with fictional data.
  */
 export const isVaultLiveEnabled = (): boolean =>
   process.env.NEXT_PUBLIC_FEATURE_VAULT_LIVE === "true"

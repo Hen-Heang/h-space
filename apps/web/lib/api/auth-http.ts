@@ -41,7 +41,7 @@ type Envelope<T> = {
 export async function authRequest<T>(
   path: string,
   options: {
-    method?: "GET" | "POST" | "PATCH" | "DELETE"
+    method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
     body?: unknown
     token?: string | null
     /** Defaults to AUTH_API_URL. */

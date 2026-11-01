@@ -1,32 +1,46 @@
 /** @vitest-environment jsdom */
 
-// H-Vault dashboard behaviour on the demo adapter (fictional data only).
-// The real lib/api/vault demo adapter runs against jsdom's localStorage;
-// Supabase is mocked out entirely so nothing can reach a live project.
+// H-Vault dashboard behaviour (fictional data only). Mostly on the demo
+// backend, which runs against jsdom's localStorage; the hspace-api client is
+// mocked so nothing can reach a real server, and the "live" tests drive it
+// through an in-memory fake.
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
+const live = vi.hoisted(() => ({
+  on: false,
+  handler: (path: string): unknown => {
+    throw new Error(`hspace-api must not be called in demo mode (${path})`)
+  },
+}))
 vi.mock("@/lib/supabase", () => ({
   supabase: {
     from: () => {
-      throw new Error("Supabase must not be called in demo mode")
+      throw new Error("H-Vault must never query Supabase")
     },
   },
+}))
+vi.mock("@/lib/api/hspace-http", () => ({
+  hspaceRequest: vi.fn(async (path: string) => live.handler(path)),
 }))
 vi.mock("@/lib/auth-store", () => ({
   getUserId: () => "user-a",
   requireUserId: () => "user-a",
 }))
-vi.mock("@/lib/feature-flags", () => ({ isVaultLiveEnabled: () => false }))
+vi.mock("@/lib/feature-flags", () => ({ isVaultLiveEnabled: () => live.on }))
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 const { VaultDashboard } = await import("./VaultDashboard")
 const { MyAppsSection } = await import("@/components/home/MyAppsSection")
 const { DEMO_VAULT_ACCOUNTS } = await import("@/lib/vault-demo")
 const { VAULT_PASSWORD_NOTICE } = await import("@/lib/vault")
-const { encryptVaultPassword, isVaultEnvelope, unlockVault } = await import("@/lib/vault-crypto")
+const { createVaultKeyset, encryptVaultPassword, isVaultEnvelope } = await import(
+  "@/lib/vault-crypto"
+)
+const { VAULT_DEMO_KEYSET_KEY } = await import("@/lib/api/vault")
+const { AuthApiError } = await import("@/lib/api/auth-http")
 const { lockVault } = await import("@/lib/vault-session")
 
 // Fictional values for the password flow tests.
@@ -51,6 +65,10 @@ beforeAll(() => {
 })
 
 beforeEach(() => {
+  live.on = false
+  live.handler = (path: string) => {
+    throw new Error(`hspace-api must not be called in demo mode (${path})`)
+  }
   window.localStorage.clear()
   clipboardWrite.mockClear()
   // The unlocked key is module memory; never let one test inherit another's.
@@ -216,28 +234,27 @@ describe("H-Vault dashboard", () => {
     fireEvent.change(within(dialog).getByLabelText(/^Password/), { target: { value: SAMPLE } })
     fireEvent.click(within(dialog).getByRole("button", { name: "Add account" }))
 
-    // First time: create a master password (typed twice, min length).
-    expect(await screen.findByRole("heading", { name: /Create a master password/ })).toBeTruthy()
+    // First time: set up the vault (master password typed twice, min length).
+    expect(await screen.findByRole("heading", { name: /Set up your vault/ })).toBeTruthy()
     fireEvent.change(screen.getByLabelText("Master password"), { target: { value: "short" } })
     fireEvent.change(screen.getByLabelText("Confirm master password"), {
       target: { value: "short" },
     })
-    fireEvent.click(screen.getByRole("button", { name: "Create and unlock" }))
+    fireEvent.click(screen.getByRole("button", { name: "Create vault" }))
     expect(await screen.findByText(/at least 12 characters/)).toBeTruthy()
 
-    fireEvent.change(screen.getByLabelText("Master password"), { target: { value: MASTER } })
-    fireEvent.change(screen.getByLabelText("Confirm master password"), {
-      target: { value: MASTER },
-    })
-    fireEvent.click(screen.getByRole("button", { name: "Create and unlock" }))
+    const recoveryKey = await setUpVault()
 
     const card = await screen.findByRole("article", { name: "Figma" }, { timeout: 20_000 })
     expect(within(card).getByRole("button", { name: "Copy password for Figma" })).toBeTruthy()
     expect(card.textContent).not.toContain(SAMPLE)
 
     const stored = window.localStorage.getItem("hengo-vault-demo-accounts") ?? ""
-    expect(stored).not.toContain(SAMPLE)
-    expect(stored).not.toContain(MASTER)
+    const keyset = window.localStorage.getItem(VAULT_DEMO_KEYSET_KEY) ?? ""
+    for (const secret of [SAMPLE, MASTER, recoveryKey.replace(/-/g, "")]) {
+      expect(stored).not.toContain(secret)
+      expect(keyset).not.toContain(secret)
+    }
     const figma = (
       JSON.parse(stored) as Array<{ serviceName: string; passwordCiphertext: string }>
     ).find((a) => a.serviceName === "Figma")!
@@ -246,17 +263,13 @@ describe("H-Vault dashboard", () => {
   }, 30_000)
 
   it("asks for the master password to copy, rejects a wrong one, and copies once unlocked", async () => {
-    const key = await unlockVault(MASTER, null)
-    const envelope = await encryptVaultPassword(SAMPLE, key)
-    window.localStorage.setItem(
-      "hengo-vault-demo-accounts",
-      JSON.stringify([{ ...DEMO_VAULT_ACCOUNTS[0], passwordCiphertext: envelope }]),
-    )
+    const { recoveryKey } = await seedDemoVaultWithPassword()
+    void recoveryKey
     renderDashboard()
     await ready()
 
     fireEvent.click(screen.getByRole("button", { name: /Copy password for GitHub/ }))
-    expect(await screen.findByRole("heading", { name: /Unlock passwords/ })).toBeTruthy()
+    expect(await screen.findByRole("heading", { name: /Unlock your vault/ })).toBeTruthy()
     fireEvent.change(screen.getByLabelText("Master password"), {
       target: { value: "the wrong master password" },
     })
@@ -269,8 +282,30 @@ describe("H-Vault dashboard", () => {
     await waitFor(() => expect(clipboardWrite).toHaveBeenCalledWith(SAMPLE), { timeout: 20_000 })
 
     // Unlocked now: Lock is offered, and locking forgets the key.
-    fireEvent.click(await screen.findByRole("button", { name: "Lock passwords" }))
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Lock passwords" })).toBeNull())
+    fireEvent.click(await screen.findByRole("button", { name: "Lock vault" }))
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Lock vault" })).toBeNull())
+  }, 40_000)
+
+  it("recovers with the recovery key and a new master password, keeping saved passwords", async () => {
+    const { recoveryKey } = await seedDemoVaultWithPassword()
+    renderDashboard()
+    await ready()
+
+    fireEvent.click(screen.getByRole("button", { name: /Copy password for GitHub/ }))
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Forgot master password\? Use your recovery key/ }),
+    )
+    fireEvent.change(screen.getByLabelText("Recovery key"), {
+      target: { value: recoveryKey.toLowerCase() },
+    })
+    fireEvent.change(screen.getByLabelText("New master password"), {
+      target: { value: "a different fictional master password" },
+    })
+    fireEvent.change(screen.getByLabelText("Confirm master password"), {
+      target: { value: "a different fictional master password" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Recover and unlock" }))
+    await waitFor(() => expect(clipboardWrite).toHaveBeenCalledWith(SAMPLE), { timeout: 20_000 })
   }, 40_000)
 
   it("still has no PIN, recovery-code, token, or notes field", async () => {
@@ -286,6 +321,70 @@ describe("H-Vault dashboard", () => {
         .getByLabelText(/^Password/)
         .getAttribute("autocomplete"),
     ).toBe("new-password")
+  })
+})
+
+/** Fills in the setup dialog, confirms the recovery key step, and returns the key shown. */
+async function setUpVault(): Promise<string> {
+  fireEvent.change(screen.getByLabelText("Master password"), { target: { value: MASTER } })
+  fireEvent.change(screen.getByLabelText("Confirm master password"), {
+    target: { value: MASTER },
+  })
+  fireEvent.click(screen.getByRole("button", { name: "Create vault" }))
+  await screen.findByRole("heading", { name: /Save your recovery key/ }, { timeout: 20_000 })
+  const recoveryKey = screen.getByLabelText("Recovery key").textContent ?? ""
+  expect(recoveryKey).toMatch(/^([A-Z2-7]{4}-){12}[A-Z2-7]{4}$/)
+  const open = screen.getByRole("button", { name: "Open my vault" })
+  expect(open).toHaveProperty("disabled", true)
+  fireEvent.click(screen.getByRole("checkbox", { name: /saved my recovery key/ }))
+  fireEvent.click(open)
+  return recoveryKey
+}
+
+/** A demo keyset plus GitHub's sample account with an encrypted password. */
+async function seedDemoVaultWithPassword() {
+  const { keyset, recoveryKey, vaultKey } = await createVaultKeyset(MASTER, "user-a")
+  window.localStorage.setItem(VAULT_DEMO_KEYSET_KEY, JSON.stringify({ ...keyset, version: 0 }))
+  const github = DEMO_VAULT_ACCOUNTS[0]
+  const envelope = await encryptVaultPassword(SAMPLE, github.id, vaultKey)
+  window.localStorage.setItem(
+    "hengo-vault-demo-accounts",
+    JSON.stringify([{ ...github, passwordCiphertext: envelope }]),
+  )
+  return { recoveryKey }
+}
+
+describe("H-Vault synced through hspace-api", () => {
+  it("shows nothing until the vault is set up and unlocked", async () => {
+    live.on = true
+    const sent: string[] = []
+    live.handler = (path: string) => {
+      sent.push(path)
+      if (path.endsWith("/keyset")) throw new AuthApiError("Vault isn't set up yet.", 404, 40400)
+      throw new Error(`unexpected ${path}`)
+    }
+    renderDashboard()
+
+    expect(await screen.findByRole("heading", { name: "Set up your vault" })).toBeTruthy()
+    expect(screen.queryAllByRole("article")).toHaveLength(0)
+    expect(screen.queryByRole("button", { name: "Add account" })).toBeNull()
+    expect(screen.queryByText(/Demo mode/)).toBeNull()
+    // The encrypted list is never requested while locked.
+    expect(sent.some((p) => p.endsWith("/items"))).toBe(false)
+  })
+
+  it("asks to turn on two-step verification when the account has no MFA", async () => {
+    live.on = true
+    live.handler = () => {
+      throw new AuthApiError("Turn on authenticator-app MFA to use the vault", 403, 40301)
+    }
+    renderDashboard()
+    expect(
+      await screen.findByRole("heading", { name: "Turn on two-step verification first" }),
+    ).toBeTruthy()
+    expect(screen.getByRole("link", { name: "Open security settings" }).getAttribute("href")).toBe(
+      "/settings/security",
+    )
   })
 })
 
@@ -318,14 +417,9 @@ describe("H-Vault CSV import", () => {
 
     fireEvent.click(within(dialog).getByRole("button", { name: "Import 2 accounts" }))
 
-    // A password is included, so the master password is created first.
-    fireEvent.change(await screen.findByLabelText("Master password"), {
-      target: { value: MASTER },
-    })
-    fireEvent.change(screen.getByLabelText("Confirm master password"), {
-      target: { value: MASTER },
-    })
-    fireEvent.click(screen.getByRole("button", { name: "Create and unlock" }))
+    // A password is included, so the vault is set up first.
+    await screen.findByRole("heading", { name: /Set up your vault/ })
+    await setUpVault()
 
     expect(
       await screen.findByText(/Imported 2 accounts, tagged #imported/, {}, { timeout: 20_000 }),
