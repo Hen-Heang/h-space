@@ -1,16 +1,17 @@
 # H-Vault — private account directory
 
-_Implemented 2026-10-23 (demo). Rebuilt 2026-11-01 for the hspace-api backend
+_Implemented 2026-10-23 (demo). Rebuilt 2026-11-01 for the hub-api backend
 with the v2 key hierarchy (h-space-api `docs/vault-design.md`). Status: works
-end to end against hspace-api behind `NEXT_PUBLIC_FEATURE_VAULT_LIVE`; stays
-on the browser-local demo until the independent security review (design
-§9–10) — **no real passwords before that**._
+end to end against hub-api behind `NEXT_PUBLIC_FEATURE_VAULT_LIVE`, which is
+**on in Production and Preview since 2026-11-01** — turned on by the owner
+before the independent security review (design §9–10), which is still
+open._
 
 H-Vault answers "which account do I use for this service?". It organizes
 accounts by category, supports several accounts per service (GitHub ·
 Personal / Secondary), favorites, search, filters and sorting, and opens each
 service's login page. Each account can also hold an **optional password**.
-With hspace-api the **whole vault is end-to-end encrypted in the browser**
+With hub-api the **whole vault is end-to-end encrypted in the browser**
 and synced to every device; the server stores ciphertext only.
 
 ## Where it lives
@@ -25,7 +26,7 @@ and synced to every device; the server stores ciphertext only.
 | CSV import (e.g. Notion)       | `lib/vault-import.ts` (+ test), `components/vault/VaultImportDialog.tsx`                      |
 | Unlock state (memory only)     | `lib/vault-session.ts`                                                                        |
 | Fictional sample data          | `lib/vault-demo.ts` — `example.com` / `example.org` identifiers, no passwords                 |
-| Data access                    | `lib/api/vault.ts` (+ test) — `vaultApi`, hspace-api + demo backends                          |
+| Data access                    | `lib/api/vault.ts` (+ test) — `vaultApi`, hub-api + demo backends                             |
 | Query hooks                    | `hooks/useVault.ts` (+ test)                                                                  |
 | UI                             | `components/vault/*` — dashboard, setup/unlock/recovery, change password, form, details, …    |
 | Content-Security-Policy        | `lib/csp.ts` (+ test), applied in `next.config.ts`                                            |
@@ -63,23 +64,23 @@ been removed; Supabase never holds vault data.
    one, save the keyset. Instant, whatever the number of accounts; the
    recovery key keeps working.
 6. **Reset.** Lost both: reset deletes the keyset and everything only it
-   could read (hspace-api: every account; demo: saved passwords).
+   could read (hub-api: every account; demo: saved passwords).
 7. **Use.** _Copy password_ decrypts and copies, and the clipboard is cleared
    after 30 seconds. _Reveal_ shows it for 30 seconds or until the dialog
    closes. A saved password is never decrypted back into the edit form.
 
 ## Security controls
 
-- **Server sees ciphertext only** (hspace-api): requests carry an id and an
+- **Server sees ciphertext only** (hub-api): requests carry an id and an
   envelope, nothing readable (a request-capture test checks this). The
   server validates envelope shapes and rejects unknown fields.
-- **MFA required:** hspace-api refuses vault calls from accounts without
+- **MFA required:** hub-api refuses vault calls from accounts without
   authenticator-app MFA (403, code 40301); the page then links to
   `/settings/security`.
 - **Ownership on the server:** the user comes from the JWT; another user's
   item is 404. A key unlocked by one user is never used for another
   (`currentVaultKey`).
-- **Unlock-gated list:** with hspace-api the list query only runs while
+- **Unlock-gated list:** with hub-api the list query only runs while
   unlocked, and the decrypted list is removed from the query cache the moment
   the vault locks.
 - **Plaintext can't be written:** `pickInput` throws unless
@@ -131,19 +132,32 @@ been removed; Supabase never holds vault data.
   in `hengo-vault-demo-keyset`). The server is never called. The list is
   readable without unlocking (it's sample data); saved passwords use the same
   v2 keyset and envelopes. "Restore sample data" resets the accounts.
-- **`"true"`:** the hspace-api backend (`/api/hub/vault` on
+- **`"true"`:** the hub-api backend (`/api/hub/vault` on
   `NEXT_PUBLIC_HSPACE_API_URL`, defaulting to the auth API's URL). The list
   appears only after unlocking.
 
-### Going live (needs the maintainer's approval)
+### Going live (status 2026-11-01)
 
-1. Independent security review of the design and this code (h-space-api
-   `docs/vault-design.md` §9); fix findings.
-2. Deploy hub-api next to security-api (Caddy routes `/api/hub/*` to it).
-3. Test end to end with fictional entries, including a restore drill.
-4. Set `NEXT_PUBLIC_FEATURE_VAULT_LIVE=true` in Vercel and redeploy.
+1. [ ] Independent security review of the design and this code (h-space-api
+       `docs/vault-design.md` §9); fix findings. **Still open.**
+2. [x] Deploy hub-api next to security-api (Caddy routes `/api/hub/*` to it).
+3. [ ] Test end to end, including a restore drill. The live flow works (the
+       owner's first CSV import is stored as `v2.` ciphertext); the restore
+       drill is still open.
+4. [x] Set `NEXT_PUBLIC_FEATURE_VAULT_LIVE=true` in Vercel and redeploy —
+       done before step 1, by the owner's choice.
 
 Demo data stays in its browser and isn't migrated.
+
+**Turning it off:** remove the variable (or set it to anything but `"true"`)
+in Vercel and redeploy. The UI goes back to demo mode; vault data in Neon
+stays encrypted and untouched.
+
+**Stale tabs after flipping the flag:** the flag is baked in at build time,
+so a `/vault` tab opened before the redeploy keeps running the old bundle.
+If it still shows the yellow "Demo mode" banner, hard-reload it (⌘⇧R)
+before setting up or importing — otherwise the data lands in that
+browser's localStorage, not in Neon.
 
 ## Importing from Notion (CSV, in the browser)
 
