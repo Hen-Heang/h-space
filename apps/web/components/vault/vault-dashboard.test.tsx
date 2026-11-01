@@ -128,6 +128,23 @@ describe("H-Vault dashboard", () => {
     )
   })
 
+  it("switches to a compact list without losing account actions", async () => {
+    renderDashboard()
+    await ready()
+
+    fireEvent.click(screen.getByRole("button", { name: "Compact list view" }))
+    expect(screen.getByRole("button", { name: "Compact list view", pressed: true })).toBeTruthy()
+    expect(screen.getAllByRole("article")).toHaveLength(DEMO_VAULT_ACCOUNTS.length)
+
+    const card = screen.getByRole("article", { name: "Vercel" })
+    expect(within(card).getByRole("button", { name: "Details for Vercel" })).toBeTruthy()
+    expect(within(card).getByRole("button", { name: "Add Vercel to favorites" })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "Card view" }))
+    expect(screen.getByRole("button", { name: "Card view", pressed: true })).toBeTruthy()
+    expect(screen.getAllByRole("article")).toHaveLength(DEMO_VAULT_ACCOUNTS.length)
+  })
+
   it("toggles a favorite", async () => {
     renderDashboard()
     await ready()
