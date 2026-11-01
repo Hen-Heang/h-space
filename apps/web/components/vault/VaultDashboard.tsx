@@ -522,7 +522,7 @@ export function VaultDashboard() {
                 Account vault
               </h1>
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                Find and manage your accounts in one secure place.
+                Quickly find the right login for each service, organized by category.
               </p>
             </div>
           </div>
