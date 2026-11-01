@@ -19,7 +19,7 @@ import { DesktopSidebar, SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_EXPANDED_WIDTH } from 
 import { MobileBottomNav } from "./MobileBottomNav"
 import { MobileHeader } from "./MobileHeader"
 import { MobileHeaderTitleProvider } from "./mobile-header-title"
-import { RAIL_WIDTH, TabletNavigationRail } from "./TabletNavigationRail"
+import { RAIL_WIDTH_CSS, TabletNavigationRail } from "./TabletNavigationRail"
 
 /**
  * `useSearchParams()` must sit under a Suspense boundary or Next fails the
@@ -183,7 +183,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               fallback={
                 <div
                   aria-hidden
-                  style={{ width: RAIL_WIDTH }}
+                  style={{ width: RAIL_WIDTH_CSS }}
                   className="shrink-0 border-r border-border bg-sidebar"
                 />
               }
@@ -214,7 +214,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               tabIndex={-1}
               className={cn(
                 "min-h-0 flex-1 overflow-x-hidden outline-none",
-                contentFullBleed ? "p-0" : "px-4 pt-5 sm:px-6 lg:px-8",
+                // The max() keeps content clear of the notch / rounded corners
+                // when a phone is turned sideways; the insets are 0 otherwise.
+                contentFullBleed
+                  ? "p-0"
+                  : "pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-5 sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] lg:px-8",
                 isCalendarRoute && "overflow-y-hidden",
                 isCalendarRoute && showBottomNav
                   ? "pb-[calc(3.75rem+env(safe-area-inset-bottom))]"

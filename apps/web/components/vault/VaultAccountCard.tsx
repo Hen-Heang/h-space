@@ -63,11 +63,13 @@ export function VaultAccountCard({
           websiteUrl={account.websiteUrl}
         />
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold text-foreground">
+          <h3 className="min-w-0 text-base font-semibold text-foreground">
             <button
               type="button"
               onClick={() => onView(account)}
-              className="max-w-full truncate rounded-sm text-left outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+              // -my/py grows the tap area to ~44px without moving the layout.
+              // The button truncates itself; a clipping h3 would cut the padding off.
+              className="-my-2.5 block max-w-full truncate rounded-sm py-2.5 text-left outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
             >
               {account.serviceName}
             </button>

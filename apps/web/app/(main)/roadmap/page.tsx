@@ -1146,7 +1146,8 @@ export default function RoadmapPage() {
                   type="button"
                   onClick={() => setOpenPhase((o) => (o === phase.id ? null : phase.id))}
                   className={cn(
-                    "flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-semibold transition-all active:scale-95",
+                    // ::after grows the tap area to ~44px tall; the chip looks the same.
+                    "relative flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-semibold transition-all after:absolute after:-inset-y-2 after:inset-x-0 after:content-[''] active:scale-95",
                     complete
                       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                       : started
