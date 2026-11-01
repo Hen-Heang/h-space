@@ -21,11 +21,14 @@ export function ReminderButton({
   entityId,
   deepLink,
   defaultTitle,
+  allowCreate = true,
 }: {
   entityType: ReminderEntityType
   entityId?: string | null
   deepLink?: string | null
   defaultTitle: string
+  /** False hides "Add reminder"; an existing reminder can still be paused or cancelled. */
+  allowCreate?: boolean
 }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const { reminders, loading } = useReminders({
@@ -83,6 +86,8 @@ export function ReminderButton({
       </DropdownMenu>
     )
   }
+
+  if (!allowCreate) return null
 
   return (
     <>

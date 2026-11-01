@@ -6,6 +6,17 @@
 export const AUTH_API_URL =
   (process.env.NEXT_PUBLIC_AUTH_API_URL ?? "").trim().replace(/\/+$/, "") || "http://localhost:8080"
 
+// hspace-api, where H-Space data moves as it leaves Supabase
+// (h-space-api docs/spring-migration-plan.md). It accepts the same tokens and
+// answers in the same envelope; the same server as AUTH_API_URL unless set.
+export const HSPACE_API_URL =
+  (process.env.NEXT_PUBLIC_HSPACE_API_URL ?? "").trim().replace(/\/+$/, "") || AUTH_API_URL
+
+// Carries the caller's h-space-api access token to this app's own AI routes
+// (lib/api/ai-client.ts), for data they read from hspace-api rather than
+// Supabase. Never sent to any other origin.
+export const HSPACE_TOKEN_HEADER = "x-hspace-token"
+
 const SUCCESS_CODE = 200
 const LEGACY_SYSTEM_ERROR = 5000
 
@@ -29,11 +40,17 @@ type Envelope<T> = {
 
 export async function authRequest<T>(
   path: string,
-  options: { method?: "GET" | "POST" | "DELETE"; body?: unknown; token?: string | null } = {},
+  options: {
+    method?: "GET" | "POST" | "PATCH" | "DELETE"
+    body?: unknown
+    token?: string | null
+    /** Defaults to AUTH_API_URL. */
+    baseUrl?: string
+  } = {},
 ): Promise<T> {
   let res: Response
   try {
-    res = await fetch(`${AUTH_API_URL}${path}`, {
+    res = await fetch(`${options.baseUrl ?? AUTH_API_URL}${path}`, {
       method: options.method ?? "GET",
       headers: {
         Accept: "application/json",

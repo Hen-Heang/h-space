@@ -28,6 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ReminderButton } from "@/components/reminders/ReminderButton"
+import { isSpringInboxEnabled } from "@/lib/feature-flags"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -111,6 +112,9 @@ export function InboxItemCard({ item }: { item: InboxItem }) {
             entityId={item.id}
             deepLink="https://hengo.henheang.site/inbox"
             defaultTitle={item.title?.trim() || item.content.slice(0, 60)}
+            // Reminders can't follow an item that lives only in hspace-api yet
+            // (see remindersApi.create).
+            allowCreate={!isSpringInboxEnabled()}
           />
           <Button
             type="button"
