@@ -1,14 +1,17 @@
 # H-Vault — private account directory
 
-_Implemented 2026-10-23. Encrypted passwords added the same day (maintainer's
-decision). Status: UI complete on a browser-local demo adapter; live
-persistence pending approval of the database migration._
+_Implemented 2026-10-23 (demo). Rebuilt 2026-11-01 for the hspace-api backend
+with the v2 key hierarchy (h-space-api `docs/vault-design.md`). Status: works
+end to end against hspace-api behind `NEXT_PUBLIC_FEATURE_VAULT_LIVE`; stays
+on the browser-local demo until the independent security review (design
+§9–10) — **no real passwords before that**._
 
 H-Vault answers "which account do I use for this service?". It organizes
 accounts by category, supports several accounts per service (GitHub ·
 Personal / Secondary), favorites, search, filters and sorting, and opens each
-service's login page. Each account can also hold an **optional password,
-end-to-end encrypted in the browser**.
+service's login page. Each account can also hold an **optional password**.
+With hspace-api the **whole vault is end-to-end encrypted in the browser**
+and synced to every device; the server stores ciphertext only.
 
 ## Where it lives
 
@@ -18,73 +21,76 @@ end-to-end encrypted in the browser**.
 | Nav entry (My Apps workspace)  | `vaultItem` in `lib/navigation.ts`                                                            |
 | Public catalog card (generic)  | `h-vault` in `lib/projects.ts`, rendered by `components/home/MyAppsSection.tsx` (also on `/`) |
 | Domain types, rules, filtering | `lib/vault.ts` (+ `lib/vault.test.ts`)                                                        |
-| Password encryption            | `lib/vault-crypto.ts` (+ `lib/vault-crypto.test.ts`)                                          |
+| Encryption (v2 key hierarchy)  | `lib/vault-crypto.ts` (+ `lib/vault-crypto.test.ts`)                                          |
 | CSV import (e.g. Notion)       | `lib/vault-import.ts` (+ test), `components/vault/VaultImportDialog.tsx`                      |
 | Unlock state (memory only)     | `lib/vault-session.ts`                                                                        |
 | Fictional sample data          | `lib/vault-demo.ts` — `example.com` / `example.org` identifiers, no passwords                 |
-| Data access                    | `lib/api/vault.ts` (+ test) — `vaultApi`, Supabase + demo adapters                            |
+| Data access                    | `lib/api/vault.ts` (+ test) — `vaultApi`, hspace-api + demo backends                          |
 | Query hooks                    | `hooks/useVault.ts` (+ test)                                                                  |
-| UI                             | `components/vault/*` — dashboard, toolbar, card, form, details, delete, unlock dialogs        |
-| Migration (not applied)        | `supabase/migrations/20261023000000_vault_accounts.sql`                                       |
-| RLS checks (local/branch only) | `supabase/tests/vault_accounts_rls.sql`                                                       |
+| UI                             | `components/vault/*` — dashboard, setup/unlock/recovery, change password, form, details, …    |
+| Content-Security-Policy        | `lib/csp.ts` (+ test), applied in `next.config.ts`                                            |
+| Server (owner of the data)     | h-space-api `hub-api`, `/api/hub/vault` — tables `vault_keysets`, `vault_items` (Neon)        |
 | E2E (signed-out surface)       | `tests/e2e/vault.e2e.ts`                                                                      |
 
-## Data model — `kori_vault_accounts`
+The old Supabase design (`kori_vault_accounts`) was never applied and has
+been removed; Supabase never holds vault data.
 
-`id`, `user_id` (defaults to `auth.uid()`), `service_name` (1–120),
-`account_label` (≤ 80), `login_identifier` (≤ 254), `website_url` (≤ 2000,
-must start `https://`), `category` (free text ≤ 40, default `other`), `tags`
-(≤ 20), `is_favorite`, `status` (`active` · `needs_review` · `inactive`),
-**`password_ciphertext`** (nullable, encrypted envelope only), `created_at`,
-`updated_at` (set by the app, house style).
+## How the encryption works (v2)
 
-There is still no PIN, token, recovery-code, API-key, TOTP or private-key
-column, and no free-text notes field, because notes are where secrets leak.
-
-## How password encryption works
-
-1. **Master password.** The first time a password is saved, the user creates
-   a master password (at least 12 characters, typed twice). It is **never
-   stored or sent anywhere**: not to Supabase, not to localStorage, not to
-   logs.
-2. **Key derivation.** PBKDF2-SHA256 with 600,000 iterations (OWASP's
-   recommendation) and a random 16-byte salt produce a non-extractable
-   AES-256-GCM key, using the browser's Web Crypto API (no dependency).
-3. **Encryption.** Each password is encrypted with a fresh 12-byte IV. Only
-   the envelope `v1.<salt>.<iv>.<ciphertext+tag>` (base64) leaves the form.
-   All of a user's envelopes share one salt, so one unlock covers them all.
-4. **Unlock.** Later, the master password is proven by decrypting an existing
-   envelope (AES-GCM's auth tag fails on a wrong password), so a typo can't
-   start encrypting under a different key. The derived key lives only in tab
-   memory (`lib/vault-session.ts`). It is dropped on **Lock passwords**, on
-   reload, and after **10 minutes** of inactivity.
-5. **Use.** _Copy password_ decrypts in the browser and copies, and the
-   clipboard is cleared after 30 seconds. _Reveal_ (in the details dialog)
-   shows the password for 30 seconds or until the dialog closes. A saved
-   password is never decrypted back into the edit form: typing a new one
-   replaces it, and "Remove saved password" deletes it.
-
-**There is no recovery.** If the master password is forgotten, nobody can
-decrypt the saved passwords, including the maintainer. The unlock dialog
-offers a destructive reset: after confirmation, it clears all saved encrypted
-passwords and lets the user create a new master password. Account details
-(service, username, link) are unaffected. The account passwords themselves
-must be reset on each service's website.
+1. **Setup.** The user creates a master password (≥ 12 characters, typed
+   twice). The browser makes a random 256-bit **vault key** and a random
+   256-bit **recovery key**, and wraps the vault key twice with AES-256-GCM:
+   under a key derived from the master password (PBKDF2-SHA256, 600,000
+   iterations, random salt) and under one derived from the recovery key
+   (HKDF-SHA256). Only the two wrapped keys and the public KDF settings are
+   saved (the **keyset**). The recovery key is shown **once**, to print or
+   write down; the dialog can't be closed until the user confirms it's saved.
+2. **Unlock.** The master password unwraps the vault key; a wrong one fails
+   AES-GCM's tag check. The vault key is imported **non-extractable** and
+   held only in tab memory (`lib/vault-session.ts`): dropped on **Lock
+   vault**, on reload, after **10 minutes** of inactivity, and on reset.
+3. **Items.** Each account is serialized, padded to a multiple of 256 bytes,
+   and encrypted under the vault key as one `v2.<iv>.<ciphertext>` envelope.
+   Its password is a separate envelope inside it, so loading the list never
+   puts plaintext passwords in memory. Every envelope's associated data binds
+   it to the **user and the account id**: a server that swaps envelopes
+   between rows or users makes decryption fail instead of showing the wrong
+   password under an account. Ids are chosen in the browser before
+   encrypting.
+4. **Recovery.** Forgot the master password: the recovery key unwraps the
+   vault key and the user picks a new master password. Nothing is lost.
+5. **Change master password.** Unwrap with the old one, re-wrap with the new
+   one, save the keyset. Instant, whatever the number of accounts; the
+   recovery key keeps working.
+6. **Reset.** Lost both: reset deletes the keyset and everything only it
+   could read (hspace-api: every account; demo: saved passwords).
+7. **Use.** _Copy password_ decrypts and copies, and the clipboard is cleared
+   after 30 seconds. _Reveal_ shows it for 30 seconds or until the dialog
+   closes. A saved password is never decrypted back into the edit form.
 
 ## Security controls
 
-- **End-to-end encryption:** the database, Supabase staff and dashboard, the
-  service role, backups, and anyone holding a leaked row only ever see
-  ciphertext.
-- **Plaintext can't be written:** `toWritableRow` throws unless
-  `passwordCiphertext` is a valid envelope, and the database's check
-  constraint rejects anything else too. `assertNoSecretFields` still refuses
-  a plain `password` field and PIN, token and recovery-code style fields.
-- **RLS:** four owner-scoped policies (select/insert/update/delete) using
-  `(select auth.uid()) = user_id`. `anon` has no privileges.
-- **Ownership can't move:** `authenticated` gets `UPDATE` only on the account
-  columns, so `id`, `user_id` and `created_at` aren't updatable. On insert,
-  `user_id` comes from the session (`requireUserId()`), never from input.
+- **Server sees ciphertext only** (hspace-api): requests carry an id and an
+  envelope, nothing readable (a request-capture test checks this). The
+  server validates envelope shapes and rejects unknown fields.
+- **MFA required:** hspace-api refuses vault calls from accounts without
+  authenticator-app MFA (403, code 40301); the page then links to
+  `/settings/security`.
+- **Ownership on the server:** the user comes from the JWT; another user's
+  item is 404. A key unlocked by one user is never used for another
+  (`currentVaultKey`).
+- **Unlock-gated list:** with hspace-api the list query only runs while
+  unlocked, and the decrypted list is removed from the query cache the moment
+  the vault locks.
+- **Plaintext can't be written:** `pickInput` throws unless
+  `passwordCiphertext` is a v2 envelope; `assertNoSecretFields` refuses a
+  plain `password` field and PIN, token and recovery-code style fields.
+- **Sync conflicts:** every save sends the version it was read at; a newer
+  save from another device fails with 409 instead of being overwritten.
+- **Content-Security-Policy** (`lib/csp.ts`): `connect-src` limits where the
+  page can send data to the services it uses; the only third-party script is
+  Google sign-in; no framing, plugins, or foreign form posts. Inline scripts
+  are still allowed (Next.js bootstrap) until nonces are added.
 - **Links:** only `https://` URLs with a dotted hostname and no embedded
   credentials are accepted. They are re-checked at render time and open with
   `rel="noopener noreferrer"`.
@@ -99,18 +105,18 @@ must be reset on each service's website.
 - **Public pages:** the My Apps card is static copy and never reads account
   data. A test asserts this.
 
-### Remaining risks (accepted by the maintainer)
+### Remaining risks
 
-- **A compromised page means compromised passwords while unlocked.** Because
-  decryption happens in the browser, an XSS bug or a malicious npm dependency
-  running in the page could read passwords during an unlocked session, or
-  capture the master password as it's typed. Encryption protects the data at
-  rest and on the server, not a compromised client. Keep dependencies lean
-  and audited; the 10-minute auto-lock limits the window.
+- **A compromised page means a compromised vault while unlocked.** Decryption
+  happens in the browser, so an XSS bug or a malicious npm dependency running
+  in the page could read the vault during an unlocked session, or capture the
+  master password as it's typed. The CSP narrows what such code can do; the
+  10-minute auto-lock limits the window. Keep dependencies lean and audited.
 - **A weak master password.** Leaked ciphertext can be attacked offline.
   PBKDF2 slows guessing, but a short or reused master password is still weak.
-  Use a long, unique passphrase.
-- **No autofill, breach alerts, 2FA or sharing.** A dedicated password manager
+- **The recovery key is as powerful as the master password.** Anyone holding
+  it can open the vault. Keep it offline.
+- **No autofill, breach alerts or sharing.** A dedicated password manager
   provides these features.
 - **Clipboard:** other apps can read the clipboard during the 30-second
   window. The wipe is unconditional, so it may also clear something copied
@@ -120,25 +126,24 @@ must be reset on each service's website.
 
 `NEXT_PUBLIC_FEATURE_VAULT_LIVE` (`lib/feature-flags.ts`):
 
-- **unset / not `"true"` (default):** `demoVaultAdapter` keeps accounts in this
-  browser's localStorage under `hengo-vault-demo-accounts`. Supabase is never
-  called. Passwords saved in demo mode are encrypted the same way, so only
-  envelopes are written to localStorage. "Restore sample data" resets it.
-- **`"true"`:** `supabaseVaultAdapter` reads and writes `kori_vault_accounts`.
-  Enable it **only after** the migration is applied.
+- **unset / not `"true"` (default):** the demo backend keeps fictional
+  accounts in this browser's localStorage (`hengo-vault-demo-accounts`, keyset
+  in `hengo-vault-demo-keyset`). The server is never called. The list is
+  readable without unlocking (it's sample data); saved passwords use the same
+  v2 keyset and envelopes. "Restore sample data" resets the accounts.
+- **`"true"`:** the hspace-api backend (`/api/hub/vault` on
+  `NEXT_PUBLIC_HSPACE_API_URL`, defaulting to the auth API's URL). The list
+  appears only after unlocking.
 
 ### Going live (needs the maintainer's approval)
 
-1. Review `supabase/migrations/20261023000000_vault_accounts.sql`.
-2. Run `supabase/tests/vault_accounts_rls.sql` against a local stack or a
-   Supabase branch (it is rolled back and uses fictional users). It should end
-   with `ALL PASSED`.
-3. Apply the migration to the shared project (it only creates the new table).
-4. Set `NEXT_PUBLIC_FEATURE_VAULT_LIVE=true` in `.env.local` and in Vercel, then
-   redeploy.
+1. Independent security review of the design and this code (h-space-api
+   `docs/vault-design.md` §9); fix findings.
+2. Deploy hub-api next to security-api (Caddy routes `/api/hub/*` to it).
+3. Test end to end with fictional entries, including a restore drill.
+4. Set `NEXT_PUBLIC_FEATURE_VAULT_LIVE=true` in Vercel and redeploy.
 
-Passwords added in demo mode stay in that browser and are not migrated to the
-live table. Re-enter them after going live.
+Demo data stays in its browser and isn't migrated.
 
 ## Importing from Notion (CSV, in the browser)
 
@@ -174,10 +179,9 @@ others.
 
 ## Known gaps / next steps
 
-- Live persistence waits on migration approval.
-- Changing the master password isn't supported yet (it would mean
-  re-encrypting every envelope).
+- Live use waits on the security review (above).
+- Rotating the recovery key (a new one, replacing the old wrap) isn't in the
+  UI yet.
+- CSP nonces instead of `'unsafe-inline'` for scripts.
 - No export (import is CSV only).
 - Search is client-side, which is fine at ~100 rows.
-- Possible later additions: a password generator, a "password last changed"
-  date, custom categories, `?account=` deep links.

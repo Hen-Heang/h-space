@@ -18,6 +18,7 @@ import {
   type VaultAccount,
   type VaultAccountInput,
 } from "@/lib/vault"
+import { newVaultItemId } from "@/lib/api"
 import { encryptVaultPassword, type VaultKey } from "@/lib/vault-crypto"
 import {
   buildImportRows,
@@ -51,14 +52,17 @@ export function VaultImportDialog({
   onOpenChange,
   existingAccounts,
   requestKey,
+  requireUnlock = false,
   importItems,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   existingAccounts: VaultAccount[]
   requestKey: () => Promise<VaultKey>
+  /** The whole account is encrypted (hspace-api), so even rows without a password need the key. */
+  requireUnlock?: boolean
   importItems: (
-    items: VaultAccountInput[],
+    items: Array<{ id: string; data: VaultAccountInput }>,
     onProgress: (done: number) => void,
   ) => Promise<ImportOutcome>
 }) {
@@ -114,7 +118,7 @@ export function VaultImportDialog({
     if (selected.length === 0) return
 
     let key: VaultKey | null = null
-    if (selected.some((r) => r.password)) {
+    if (requireUnlock || selected.some((r) => r.password)) {
       try {
         key = await requestKey()
       } catch {
@@ -122,22 +126,27 @@ export function VaultImportDialog({
       }
     }
 
-    // Encrypt everything first, then drop the plaintext from state.
-    const items: VaultAccountInput[] = []
+    // Encrypt everything first, then drop the plaintext from state. Each row
+    // gets its id now: its password envelope is bound to it.
+    const items: Array<{ id: string; data: VaultAccountInput }> = []
     for (const row of selected) {
+      const id = newVaultItemId()
       items.push({
-        serviceName: row.serviceName,
-        accountLabel: row.accountLabel,
-        loginIdentifier: row.loginIdentifier,
-        websiteUrl: row.websiteUrl,
-        category: row.category,
-        tags: [IMPORT_TAG],
-        isFavorite: false,
-        status: row.status,
-        loginMethod: DEFAULT_VAULT_LOGIN_METHOD,
-        ...(row.password && key
-          ? { passwordCiphertext: await encryptVaultPassword(row.password, key) }
-          : {}),
+        id,
+        data: {
+          serviceName: row.serviceName,
+          accountLabel: row.accountLabel,
+          loginIdentifier: row.loginIdentifier,
+          websiteUrl: row.websiteUrl,
+          category: row.category,
+          tags: [IMPORT_TAG],
+          isFavorite: false,
+          status: row.status,
+          loginMethod: DEFAULT_VAULT_LOGIN_METHOD,
+          ...(row.password && key
+            ? { passwordCiphertext: await encryptVaultPassword(row.password, id, key) }
+            : {}),
+        },
       })
     }
     setStep({ kind: "importing", done: 0, total: items.length })

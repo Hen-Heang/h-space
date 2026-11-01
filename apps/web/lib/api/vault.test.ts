@@ -1,340 +1,332 @@
 /** @vitest-environment jsdom */
 
-// Tests for vaultApi's two adapters.
+// Tests for vaultApi's two backends.
 //
-// SAFETY: `@/lib/supabase` is replaced by an in-memory fake that records
-// every call, so nothing here can reach a live project. The fake models the
-// one server behaviour that matters for ownership — RLS — by scoping every
-// read/update/delete to the signed-in user, which lets the "another user's
-// row" tests show that the client never tries to bypass it (no user filter
-// is ever dropped or overridden from input).
+// SAFETY: `@/lib/api/hspace-http` is replaced by an in-memory fake of
+// hspace-api's /api/hub/vault that records every request, so nothing here can
+// reach a real server. Like the real one it scopes rows to the signed-in user
+// and only ever sees what the client sends — which is what the "only
+// ciphertext leaves the browser" tests inspect. All values are fictional.
 
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-type Row = Record<string, unknown>
+type Row = { id: string; userId: string; payloadCiphertext: string; version: number }
 
 const state = vi.hoisted(() => ({
-  rows: [] as Record<string, unknown>[],
-  currentUser: "user-a" as string | null,
   live: true,
-  failNext: null as { message: string; code?: string } | null,
-  inserts: [] as Record<string, unknown>[],
-  updates: [] as Record<string, unknown>[],
-  tables: [] as string[],
+  currentUser: "00000000-0000-4000-8000-00000000000a",
+  rows: [] as Array<{ id: string; userId: string; payloadCiphertext: string; version: number }>,
+  keysets: {} as Record<string, Record<string, unknown>>,
+  sent: [] as Array<{ path: string; method: string; body?: unknown }>,
+  failNext: null as { status: number; code?: number; message: string } | null,
 }))
 
 vi.mock("@/lib/feature-flags", () => ({ isVaultLiveEnabled: () => state.live }))
 
-vi.mock("@/lib/auth-store", () => ({
-  requireUserId: () => {
-    if (!state.currentUser) throw new Error("Not signed in")
-    return state.currentUser
-  },
-  getUserId: () => state.currentUser,
-}))
-
-vi.mock("@/lib/supabase", () => {
-  function visible(): Row[] {
-    // RLS: a user only ever sees their own rows.
-    return state.rows.filter((r) => r.user_id === state.currentUser)
-  }
-
-  function builder(table: string) {
-    state.tables.push(table)
-    let op: "select" | "insert" | "update" | "delete" = "select"
-    let payload: Row | null = null
-    const filters: Array<[string, unknown]> = []
-
-    const run = (): { data: unknown; error: unknown } => {
-      if (state.failNext) {
-        const error = state.failNext
-        state.failNext = null
-        return { data: null, error }
-      }
-      const match = (r: Row) => filters.every(([k, v]) => r[k] === v)
-      if (op === "insert") {
-        // RLS `with check`: the row must belong to the caller.
-        if (payload!.user_id !== state.currentUser) {
-          return {
-            data: null,
-            error: { message: "new row violates row-level security policy", code: "42501" },
+vi.mock("@/lib/api/hspace-http", async () => {
+  const { AuthApiError } = await import("@/lib/api/auth-http")
+  const stamp = "2026-11-01T00:00:00Z"
+  const toItem = (r: Row) => ({
+    id: r.id,
+    payloadCiphertext: r.payloadCiphertext,
+    createdAt: stamp,
+    updatedAt: stamp,
+    version: r.version,
+  })
+  return {
+    hspaceRequest: vi.fn(
+      async (path: string, options: { method?: string; body?: unknown } = {}) => {
+        const method = options.method ?? "GET"
+        state.sent.push({ path, method, body: options.body })
+        if (state.failNext) {
+          const f = state.failNext
+          state.failNext = null
+          throw new AuthApiError(f.message, f.status, f.code)
+        }
+        const me = state.currentUser
+        const body = (options.body ?? {}) as Record<string, unknown>
+        const itemId = path.match(/\/items\/(.+)$/)?.[1]
+        if (path === "/api/hub/vault/keyset" && method === "GET") {
+          if (!state.keysets[me]) throw new AuthApiError("Vault isn't set up yet.", 404, 40400)
+          return state.keysets[me]
+        }
+        if (path === "/api/hub/vault/keyset" && method === "PUT") {
+          const current = state.keysets[me]
+          state.keysets[me] = { ...body, version: current ? (current.version as number) + 1 : 0 }
+          return state.keysets[me]
+        }
+        if (path === "/api/hub/vault/reset") {
+          state.rows = state.rows.filter((r) => r.userId !== me)
+          delete state.keysets[me]
+          return {}
+        }
+        if (path === "/api/hub/vault/items" && method === "GET") {
+          return state.rows.filter((r) => r.userId === me).map(toItem)
+        }
+        if (path === "/api/hub/vault/items" && method === "POST") {
+          const row = {
+            id: body.id as string,
+            userId: me,
+            payloadCiphertext: body.payloadCiphertext as string,
+            version: 0,
           }
+          state.rows.push(row)
+          return toItem(row)
         }
-        const row = {
-          id: `id-${state.rows.length + 1}`,
-          created_at: "2026-10-23T00:00:00.000Z",
-          updated_at: "2026-10-23T00:00:00.000Z",
-          tags: [],
-          is_favorite: false,
-          status: "active",
-          category: "other",
-          account_label: null,
-          login_identifier: null,
-          website_url: null,
-          password_ciphertext: null,
-          ...payload,
+        const row = state.rows.find((r) => r.id === itemId && r.userId === me)
+        if (!row) throw new AuthApiError("Vault item not found", 404, 40400)
+        if (method === "PUT") {
+          if (body.version !== row.version)
+            throw new AuthApiError("Changed on another device.", 409, 40900)
+          row.payloadCiphertext = body.payloadCiphertext as string
+          row.version += 1
+          return toItem(row)
         }
-        state.rows.push(row)
-        return { data: row, error: null }
-      }
-      const targets = visible().filter(match)
-      if (op === "update") {
-        if (targets.length === 0)
-          return { data: null, error: { message: "0 rows", code: "PGRST116" } }
-        Object.assign(targets[0], payload)
-        return { data: targets[0], error: null }
-      }
-      if (op === "delete") {
-        state.rows = state.rows.filter((r) => !targets.includes(r))
-        return { data: null, error: null }
-      }
-      return { data: targets, error: null }
-    }
-
-    const b = {
-      select: () => b,
-      order: () => b,
-      eq: (k: string, v: unknown) => {
-        filters.push([k, v])
-        return b
+        if (method === "DELETE") {
+          state.rows = state.rows.filter((r) => r !== row)
+          return {}
+        }
+        throw new Error(`unexpected ${method} ${path}`)
       },
-      insert: (p: Row) => {
-        op = "insert"
-        payload = p
-        state.inserts.push(p)
-        return b
-      },
-      update: (p: Row) => {
-        op = "update"
-        payload = p
-        state.updates.push(p)
-        return b
-      },
-      delete: () => {
-        op = "delete"
-        return b
-      },
-      single: () => Promise.resolve(run()),
-      then: (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) =>
-        Promise.resolve(run()).then(resolve, reject),
-    }
-    return b
+    ),
   }
-
-  return { supabase: { from: (table: string) => builder(table) } }
 })
 
-const { vaultApi, toWritableRow, VAULT_DEMO_STORAGE_KEY, resetVaultDemoData } =
-  await import("./vault")
+const {
+  vaultApi,
+  VaultLockedError,
+  VaultMfaRequiredError,
+  VAULT_DEMO_STORAGE_KEY,
+  VAULT_DEMO_KEYSET_KEY,
+  resetVaultDemoData,
+} = await import("./vault")
 const { DEMO_VAULT_ACCOUNTS } = await import("@/lib/vault-demo")
-const { decryptVaultPassword, deriveVaultKey, encryptVaultPassword, newVaultSalt } =
+const { createVaultKeyset, decryptVaultPassword, encryptVaultPassword } =
   await import("@/lib/vault-crypto")
 
 const input = {
-  serviceName: "GitHub",
+  serviceName: "Example Service",
   accountLabel: "Personal",
-  loginIdentifier: "demo-dev",
-  websiteUrl: "https://github.com/login",
-  category: "development",
-  tags: ["code"],
+  loginIdentifier: "someone@example.com",
+  websiteUrl: "https://example.com",
+  category: "dev",
+  tags: ["sample"],
   isFavorite: false,
   status: "active" as const,
   loginMethod: "password" as const,
 }
 
+const ITEM = "10000000-0000-4000-8000-000000000001"
+const ITEM_2 = "10000000-0000-4000-8000-000000000002"
+const unlock = async (userId = state.currentUser) =>
+  (await createVaultKeyset("a long fictional master password", userId, 1_000)).vaultKey
+
 beforeEach(() => {
-  state.rows = []
-  state.currentUser = "user-a"
   state.live = true
+  state.currentUser = "00000000-0000-4000-8000-00000000000a"
+  state.rows = []
+  state.keysets = {}
+  state.sent = []
   state.failNext = null
-  state.inserts = []
-  state.updates = []
-  state.tables = []
   window.localStorage.clear()
 })
 
-describe("live adapter (Supabase)", () => {
-  it("creates metadata owned by the signed-in user and maps it to camelCase", async () => {
-    const created = await vaultApi.create(input)
-    expect(state.tables).toEqual(["kori_vault_accounts"])
-    expect(state.inserts[0]).toEqual({
-      service_name: "GitHub",
-      account_label: "Personal",
-      login_identifier: "demo-dev",
-      website_url: "https://github.com/login",
-      category: "development",
-      tags: ["code"],
-      is_favorite: false,
-      status: "active",
-      login_method: "password",
-      user_id: "user-a",
-    })
-    expect(created).toMatchObject({ serviceName: "GitHub", loginIdentifier: "demo-dev" })
+describe("hspace-api backend", () => {
+  it("sends only the id and ciphertext — nothing readable leaves the browser", async () => {
+    const key = await unlock()
+    const password = await encryptVaultPassword("not-a-real-password", ITEM, key)
+    await vaultApi.create(ITEM, { ...input, passwordCiphertext: password }, key)
+
+    const sent = JSON.stringify(state.sent)
+    for (const value of [
+      "Example Service",
+      "someone@example.com",
+      "example.com",
+      "Personal",
+      "sample",
+    ]) {
+      expect(sent).not.toContain(value)
+    }
+    const post = state.sent.find((r) => r.method === "POST")!
+    expect(Object.keys(post.body as object).sort()).toEqual(["id", "payloadCiphertext"])
   })
 
-  it("reads only the caller's rows", async () => {
-    await vaultApi.create(input)
-    state.currentUser = "user-b"
-    await vaultApi.create({ ...input, loginIdentifier: "other-dev" })
-    const list = await vaultApi.list()
-    expect(list.map((a) => a.loginIdentifier)).toEqual(["other-dev"])
-  })
+  it("lists by decrypting in the browser, keeping the password itself encrypted", async () => {
+    const key = await unlock()
+    const password = await encryptVaultPassword("not-a-real-password", ITEM, key)
+    await vaultApi.create(ITEM, { ...input, passwordCiphertext: password }, key)
 
-  it("updates metadata, stamps updated_at, and never sends user_id", async () => {
-    const created = await vaultApi.create(input)
-    const updated = await vaultApi.update(created.id, { accountLabel: "Work" })
-    expect(updated.accountLabel).toBe("Work")
-    expect(state.updates[0]).toHaveProperty("updated_at")
-    expect(state.updates[0]).not.toHaveProperty("user_id")
-  })
-
-  it("toggles favorite", async () => {
-    const created = await vaultApi.create(input)
-    expect((await vaultApi.setFavorite(created.id, true)).isFavorite).toBe(true)
-  })
-
-  it("deletes the caller's row", async () => {
-    const created = await vaultApi.create(input)
-    await vaultApi.remove(created.id)
-    expect(await vaultApi.list()).toEqual([])
-  })
-
-  it("cannot update or delete another user's row", async () => {
-    const created = await vaultApi.create(input)
-    state.currentUser = "user-b"
-    await expect(vaultApi.update(created.id, { accountLabel: "hijacked" })).rejects.toBeTruthy()
-    await vaultApi.remove(created.id)
-    state.currentUser = "user-a"
-    const [row] = await vaultApi.list()
-    expect(row.accountLabel).toBe("Personal")
-  })
-
-  it("ignores a user_id smuggled into input — ownership always comes from the session", async () => {
-    await vaultApi.create({ ...input, user_id: "user-b" } as unknown as typeof input)
-    expect(state.inserts[0].user_id).toBe("user-a")
-    await vaultApi.update("id-1", { user_id: "user-b" } as never)
-    expect(state.updates[0]).not.toHaveProperty("user_id")
-    expect(state.rows[0].user_id).toBe("user-a")
-  })
-
-  it("refuses to write when signed out", async () => {
-    state.currentUser = null
-    await expect(vaultApi.create(input)).rejects.toThrow("Not signed in")
-    await expect(vaultApi.update("id-1", { accountLabel: "x" })).rejects.toThrow("Not signed in")
-    await expect(vaultApi.remove("id-1")).rejects.toThrow("Not signed in")
-    expect(state.inserts).toEqual([])
-  })
-
-  it("surfaces data errors", async () => {
-    state.failNext = { message: "network down" }
-    await expect(vaultApi.list()).rejects.toMatchObject({ message: "network down" })
-    state.failNext = { message: "insert failed" }
-    await expect(vaultApi.create(input)).rejects.toMatchObject({ message: "insert failed" })
-  })
-
-  it("rejects secret-like fields before anything is sent", async () => {
-    await expect(
-      vaultApi.create({ ...input, password: "not-a-real-password" } as unknown as typeof input),
-    ).rejects.toThrow(/Refusing secret-like/)
-    await expect(vaultApi.update("id-1", { recoveryCodes: "x" } as never)).rejects.toThrow(
-      /Refusing secret-like/,
+    const [account] = await vaultApi.list(key)
+    expect(account).toMatchObject({ ...input, id: ITEM, version: 0 })
+    expect(account.passwordCiphertext).toBe(password)
+    expect(await decryptVaultPassword(account.passwordCiphertext!, ITEM, key)).toBe(
+      "not-a-real-password",
     )
-    expect(state.inserts).toEqual([])
-    expect(state.updates).toEqual([])
   })
 
-  it("writes only allowlisted metadata columns", () => {
-    const row = toWritableRow({ ...input, id: "x", createdAt: "y", extra: 1 } as never)
-    expect(Object.keys(row).sort()).toEqual([
-      "account_label",
-      "category",
-      "is_favorite",
-      "login_identifier",
-      "login_method",
-      "service_name",
-      "status",
-      "tags",
-      "website_url",
-    ])
+  it("needs the unlocked key to list, create or update", async () => {
+    await expect(vaultApi.list(null)).rejects.toBeInstanceOf(VaultLockedError)
+    await expect(vaultApi.create(ITEM, input, null)).rejects.toBeInstanceOf(VaultLockedError)
+    expect(state.sent).toEqual([])
   })
 
-  it("refuses an unencrypted value in passwordCiphertext", async () => {
+  it("re-encrypts the whole account on update and sends the version it read", async () => {
+    const key = await unlock()
+    const created = await vaultApi.create(ITEM, input, key)
+    const updated = await vaultApi.update(created, { accountLabel: "Work" }, key)
+
+    expect(updated).toMatchObject({ ...input, accountLabel: "Work", version: 1 })
+    const put = state.sent.find((r) => r.method === "PUT")!
+    expect(put.path).toBe(`/api/hub/vault/items/${ITEM}`)
+    expect(put.body).toMatchObject({ version: 0 })
+    expect(JSON.stringify(put.body)).not.toContain("Work")
+  })
+
+  it("surfaces a change made on another device (stale version)", async () => {
+    const key = await unlock()
+    const created = await vaultApi.create(ITEM, input, key)
+    await vaultApi.update(created, { accountLabel: "Phone" }, key)
+    await expect(vaultApi.setFavorite(created, true, key)).rejects.toThrow(/another device/)
+  })
+
+  it("never shows another user's items, and skips ones bound to another user", async () => {
+    const key = await unlock()
+    await vaultApi.create(ITEM, input, key)
+    // The server hands this user a row that was encrypted for someone else.
+    const otherKey = await unlock("00000000-0000-4000-8000-00000000000b")
+    state.currentUser = "00000000-0000-4000-8000-00000000000b"
+    await vaultApi.create(ITEM_2, { ...input, serviceName: "Theirs" }, otherKey)
+    state.rows.find((r) => r.id === ITEM_2)!.userId = "00000000-0000-4000-8000-00000000000a"
+    state.currentUser = "00000000-0000-4000-8000-00000000000a"
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    const list = await vaultApi.list(key)
+    expect(list.map((a) => a.id)).toEqual([ITEM])
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining(ITEM_2))
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("Theirs")
+    warn.mockRestore()
+  })
+
+  it("rejects secret-like fields and unencrypted passwords before anything is sent", async () => {
+    const key = await unlock()
     await expect(
-      vaultApi.create({ ...input, passwordCiphertext: "not-a-real-password" }),
-    ).rejects.toThrow("Refusing to save an unencrypted password.")
+      vaultApi.create(ITEM, { ...input, password: "x" } as unknown as typeof input, key),
+    ).rejects.toThrow(/Refusing secret-like/)
     await expect(
-      vaultApi.update("id-1", { passwordCiphertext: "not-a-real-password" }),
-    ).rejects.toThrow("Refusing to save an unencrypted password.")
-    expect(state.inserts).toEqual([])
-    expect(state.updates).toEqual([])
+      vaultApi.create(ITEM, { ...input, passwordCiphertext: "plain text" }, key),
+    ).rejects.toThrow(/unencrypted/)
+    expect(state.sent).toEqual([])
   })
 
-  it("stores and returns only the encrypted envelope, which decrypts with the key", async () => {
-    const key = await deriveVaultKey("a long master password", newVaultSalt(), 1_000)
-    const envelope = await encryptVaultPassword("not-a-real-password", key)
-    const created = await vaultApi.create({ ...input, passwordCiphertext: envelope })
-    expect(state.inserts[0].password_ciphertext).toBe(envelope)
-    expect(JSON.stringify(state.rows)).not.toContain("not-a-real-password")
-    expect(created.passwordCiphertext).toBe(envelope)
-    expect(await decryptVaultPassword(created.passwordCiphertext!, key)).toBe("not-a-real-password")
+  it("treats a missing keyset as not set up, and sends the version only when replacing", async () => {
+    expect(await vaultApi.getKeyset()).toBeNull()
+    const { keyset } = await createVaultKeyset(
+      "a long fictional master password",
+      state.currentUser,
+      1_000,
+    )
+    const first = await vaultApi.saveKeyset(keyset, null)
+    expect(state.sent.at(-1)!.body).not.toHaveProperty("version")
+    await vaultApi.saveKeyset(keyset, first.version)
+    expect(state.sent.at(-1)!.body).toMatchObject({ version: 0 })
+    expect(await vaultApi.getKeyset()).toMatchObject({ wrappedKey: keyset.wrappedKey, version: 1 })
   })
 
-  it("leaves the password untouched when omitted, and removes it with null", async () => {
-    const key = await deriveVaultKey("a long master password", newVaultSalt(), 1_000)
-    const envelope = await encryptVaultPassword("x", key)
-    const created = await vaultApi.create({ ...input, passwordCiphertext: envelope })
-    await vaultApi.update(created.id, { accountLabel: "Work" })
-    expect(state.updates[0]).not.toHaveProperty("password_ciphertext")
-    expect((await vaultApi.list())[0].passwordCiphertext).toBe(envelope)
-    await vaultApi.update(created.id, { passwordCiphertext: null })
-    expect((await vaultApi.list())[0].passwordCiphertext).toBeNull()
+  it("maps the server's MFA requirement to VaultMfaRequiredError", async () => {
+    state.failNext = { status: 403, code: 40301, message: "Turn on MFA" }
+    await expect(vaultApi.getKeyset()).rejects.toBeInstanceOf(VaultMfaRequiredError)
+  })
+
+  it("resets with an explicit confirmation and deletes by id", async () => {
+    const key = await unlock()
+    await vaultApi.create(ITEM, input, key)
+    await vaultApi.remove(ITEM)
+    expect(state.sent.at(-1)).toMatchObject({
+      method: "DELETE",
+      path: `/api/hub/vault/items/${ITEM}`,
+    })
+    await vaultApi.reset()
+    expect(state.sent.at(-1)).toMatchObject({
+      method: "POST",
+      path: "/api/hub/vault/reset",
+      body: { confirm: "RESET" },
+    })
   })
 })
 
-describe("demo adapter (browser-local)", () => {
+describe("demo backend (browser-local)", () => {
   beforeEach(() => {
     state.live = false
   })
 
-  it("starts with the fictional sample set and never touches Supabase", async () => {
-    const list = await vaultApi.list()
+  it("starts with the fictional sample set and never calls the server", async () => {
+    const list = await vaultApi.list(null)
     expect(list).toHaveLength(DEMO_VAULT_ACCOUNTS.length)
     expect(vaultApi.isLive()).toBe(false)
-    await vaultApi.create(input)
-    expect(state.tables).toEqual([])
+    expect(vaultApi.listNeedsUnlock()).toBe(false)
+    await vaultApi.create(ITEM, input, null)
+    expect(state.sent).toEqual([])
   })
 
-  it("supports create, update, favorite, and delete", async () => {
-    const created = await vaultApi.create(input)
-    expect((await vaultApi.list())[0].id).toBe(created.id)
+  it("supports create with a chosen id, update, favorite, and delete", async () => {
+    const created = await vaultApi.create(ITEM, input, null)
+    expect(created.id).toBe(ITEM)
+    expect((await vaultApi.list(null))[0].id).toBe(ITEM)
 
-    const updated = await vaultApi.update(created.id, { accountLabel: "Work" })
+    const updated = await vaultApi.update(created, { accountLabel: "Work" }, null)
     expect(updated.accountLabel).toBe("Work")
-    expect((await vaultApi.setFavorite(created.id, true)).isFavorite).toBe(true)
+    expect((await vaultApi.setFavorite(updated, true, null)).isFavorite).toBe(true)
 
-    await vaultApi.remove(created.id)
-    expect((await vaultApi.list()).some((a) => a.id === created.id)).toBe(false)
+    await vaultApi.remove(ITEM)
+    expect((await vaultApi.list(null)).some((a) => a.id === ITEM)).toBe(false)
   })
 
   it("persists under its own isolated storage key, without secret fields", async () => {
     await expect(
-      vaultApi.create({ ...input, password: "x" } as unknown as typeof input),
+      vaultApi.create(ITEM, { ...input, password: "x" } as unknown as typeof input, null),
     ).rejects.toThrow(/Refusing secret-like/)
-    await vaultApi.create({ ...input, extra: "dropped" } as unknown as typeof input)
+    await vaultApi.create(ITEM, { ...input, extra: "dropped" } as unknown as typeof input, null)
     const stored = JSON.parse(window.localStorage.getItem(VAULT_DEMO_STORAGE_KEY)!)
     expect(stored[0]).not.toHaveProperty("extra")
     expect(stored[0]).not.toHaveProperty("password")
   })
 
-  it("reports a missing account on update", async () => {
-    await expect(vaultApi.update("nope", { accountLabel: "x" })).rejects.toThrow(
-      "Account not found.",
+  it("drops old v1 password envelopes it can no longer read", async () => {
+    window.localStorage.setItem(
+      VAULT_DEMO_STORAGE_KEY,
+      JSON.stringify([{ ...DEMO_VAULT_ACCOUNTS[0], passwordCiphertext: "v1.a.b.c" }]),
     )
+    expect((await vaultApi.list(null))[0].passwordCiphertext).toBeNull()
   })
 
-  it("restores the sample data on reset", async () => {
+  it("keeps a keyset locally and reset clears it and every saved password", async () => {
+    const { keyset, vaultKey } = await createVaultKeyset(
+      "a long fictional master password",
+      state.currentUser,
+      1_000,
+    )
+    await vaultApi.saveKeyset(keyset, null)
+    expect(await vaultApi.getKeyset()).toMatchObject({ wrappedKey: keyset.wrappedKey })
+    await vaultApi.create(
+      ITEM,
+      { ...input, passwordCiphertext: await encryptVaultPassword("x1", ITEM, vaultKey) },
+      null,
+    )
+
+    await vaultApi.reset()
+    expect(window.localStorage.getItem(VAULT_DEMO_KEYSET_KEY)).toBeNull()
+    expect((await vaultApi.list(null)).every((a) => a.passwordCiphertext === null)).toBe(true)
+  })
+
+  it("reports a missing account on update", async () => {
+    await expect(
+      vaultApi.update({ ...DEMO_VAULT_ACCOUNTS[0], id: "nope" }, { accountLabel: "x" }, null),
+    ).rejects.toThrow("Account not found.")
+  })
+
+  it("restores the sample data", async () => {
     await vaultApi.remove(DEMO_VAULT_ACCOUNTS[0].id)
     resetVaultDemoData()
-    expect(await vaultApi.list()).toHaveLength(DEMO_VAULT_ACCOUNTS.length)
+    expect(await vaultApi.list(null)).toHaveLength(DEMO_VAULT_ACCOUNTS.length)
   })
 })

@@ -24,7 +24,7 @@ function isRefusedToken(error: unknown): boolean {
 
 export async function hspaceRequest<T>(
   path: string,
-  options: { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown } = {},
+  options: { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; body?: unknown } = {},
 ): Promise<T> {
   const token = await getValidAccessToken()
   if (!token) throw new AuthApiError("Your session has ended. Sign in again to continue.", 401)

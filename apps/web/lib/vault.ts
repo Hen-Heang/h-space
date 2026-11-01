@@ -3,11 +3,11 @@ import { z } from "zod"
 // H-Vault — a private directory of your accounts: which email/username you use
 // for which service, plus an optional password. Passwords are only ever
 // handled as end-to-end-encrypted envelopes (lib/vault-crypto.ts): the plain
-// password exists only in the form field and in memory while revealed/copied,
-// and only the ciphertext reaches the API layer (lib/api/vault.ts) and the
-// table (kori_vault_accounts). Every other secret field — PINs, recovery
-// codes, API keys, TOTP seeds — is still refused. Framework-free and tested
-// (lib/vault.test.ts).
+// password exists only in the form field and in memory while revealed/copied.
+// With the hspace-api backend the whole account is encrypted as well
+// (lib/api/vault.ts), so the server sees ciphertext only. Every other secret
+// field — PINs, recovery codes, API keys, TOTP seeds — is still refused.
+// Framework-free and tested (lib/vault.test.ts).
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 
@@ -110,10 +110,12 @@ export type VaultAccount = {
   isFavorite: boolean
   status: VaultStatus
   loginMethod: VaultLoginMethod
-  /** AES-GCM envelope (`v1.…`) or null. Never a plain password. */
+  /** AES-GCM envelope (`v2.…`) bound to this account's id, or null. Never a plain password. */
   passwordCiphertext: string | null
   createdAt: string
   updatedAt: string
+  /** Server row version (hspace-api backend); a stale one makes an update fail with 409. */
+  version?: number
 }
 
 /** Everything the user can write. Ownership (`user_id`) is never part of it. */
@@ -418,9 +420,4 @@ export function countByCategory(accounts: VaultAccount[]): Record<string, number
 // ─── Passwords ────────────────────────────────────────────────────────────────
 
 export const VAULT_PASSWORD_NOTICE =
-  "Passwords are encrypted in your browser with your master password before they're saved. H-Vault never stores your master password and can't recover it if you forget it."
-
-/** The first saved envelope — what an unlock proves the master password against. */
-export function firstPasswordEnvelope(accounts: VaultAccount[]): string | null {
-  return accounts.find((a) => a.passwordCiphertext)?.passwordCiphertext ?? null
-}
+  "Your vault is encrypted in your browser with your master password before anything is saved. H-Vault never stores your master password; if you forget it, your recovery key is the only way back in."
