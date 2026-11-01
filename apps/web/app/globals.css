@@ -43,6 +43,7 @@
   --color-primary: var(--primary);
   --color-primary-navy: var(--primary-navy);
   --color-primary-accent: var(--primary-accent);
+  --color-brand-surface: var(--brand-surface);
   --color-primary-action-foreground: var(--primary-action-foreground);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -93,33 +94,36 @@
   --font-mono:
     "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Consolas, "Liberation Mono", Menlo,
     monospace;
-  /* H-Space palette — slate neutrals with one indigo accent. `--accent` is
+  /* H-Space palette (Figma "H-Space / Semantic colors") — cool neutrals with
+     one violet accent. `--accent` is
      shadcn's hover/selected surface, not the brand color; the brand color is
      `--primary`. */
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f6f7fb;
+  --foreground: #1f2847;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #1f2847;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover-foreground: #1f2847;
   /* Legacy brand tokens, still read by a few marketing surfaces. */
   --primary-navy: rgb(15 34 72);
   --primary-accent: rgb(2 111 215);
   --primary-action-foreground: rgb(255 255 255);
-  --primary: #4f46e5;
+  --primary: #6757f5;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
+  /* Deep indigo for brand panels (auth, Overview banner); same in both themes. */
+  --brand-surface: #26245a;
+  --secondary: #f1f3f9;
+  --secondary-foreground: #1f2847;
+  --muted: #f1f3f9;
+  --muted-foreground: #66708c;
+  --accent: #f1f3f9;
+  --accent-foreground: #1f2847;
   --destructive: oklch(0.577 0.245 27.325);
   --success: oklch(0.62 0.14 160);
   --success-foreground: oklch(0.985 0 0);
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #6366f1;
+  --border: #e8ebf3;
+  --input: #e8ebf3;
+  --ring: #6757f5;
   --chart-1: oklch(0.74 0.16 177);
   --chart-2: oklch(0.7 0.14 238);
   --chart-3: oklch(0.78 0.13 85);
@@ -127,13 +131,13 @@
   --chart-5: oklch(0.63 0.17 320);
   --radius: 0.875rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #0f172a;
+  --sidebar-foreground: #1f2847;
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f1f5f9;
-  --sidebar-accent-foreground: #0f172a;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #6366f1;
+  --sidebar-accent: #eeecff;
+  --sidebar-accent-foreground: #5b4be0;
+  --sidebar-border: #e8ebf3;
+  --sidebar-ring: #6757f5;
 }
 
 .dark {
@@ -143,7 +147,7 @@
   --card-foreground: #f1f5f9;
   --popover: #111827;
   --popover-foreground: #f1f5f9;
-  --primary: #818cf8;
+  --primary: #8b7ff8;
   --primary-foreground: #0f172a;
   --secondary: #1e293b;
   --secondary-foreground: #f1f5f9;
@@ -156,7 +160,7 @@
   --success-foreground: oklch(0.18 0.02 250);
   --border: oklch(1 0 0 / 9%);
   --input: oklch(1 0 0 / 14%);
-  --ring: #818cf8;
+  --ring: #8b7ff8;
   --chart-1: oklch(0.74 0.16 177);
   --chart-2: oklch(0.72 0.14 238);
   --chart-3: oklch(0.78 0.13 85);
@@ -166,10 +170,10 @@
   --sidebar-foreground: #f1f5f9;
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #0f172a;
-  --sidebar-accent: #1e293b;
-  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-accent: rgb(139 127 248 / 16%);
+  --sidebar-accent-foreground: #c4bdff;
   --sidebar-border: oklch(1 0 0 / 9%);
-  --sidebar-ring: #818cf8;
+  --sidebar-ring: #8b7ff8;
 }
 
 @layer base {
