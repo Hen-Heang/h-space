@@ -72,7 +72,9 @@ export function SpeakButton({
       onClick={handleSpeak}
       disabled={loading || playing}
       title={title}
-      className={`inline-flex items-center justify-center rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50 ${className}`}
+      // The ::after layer widens the tap area to ~44px on phones without
+      // changing the icon's visual size or the surrounding layout.
+      className={`relative inline-flex items-center justify-center rounded-full p-1.5 text-muted-foreground after:absolute after:-inset-2 after:content-[''] transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50 ${className}`}
     >
       {loading ? (
         <Loader2 className="size-3.5 animate-spin" />

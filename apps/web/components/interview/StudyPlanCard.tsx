@@ -251,7 +251,7 @@ export function StudyPlanCard() {
             type="button"
             onClick={addTask}
             disabled={!newTask.trim()}
-            className="shrink-0 rounded-lg bg-amber-500/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-amber-700 disabled:opacity-40 dark:text-amber-400"
+            className="relative shrink-0 rounded-lg bg-amber-500/15 px-2.5 py-1 text-xs after:absolute after:-inset-y-2.5 after:inset-x-0 after:content-[''] font-bold uppercase tracking-wide text-amber-700 disabled:opacity-40 dark:text-amber-400"
           >
             Add
           </button>

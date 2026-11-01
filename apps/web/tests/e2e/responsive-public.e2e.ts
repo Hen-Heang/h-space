@@ -4,6 +4,8 @@ const viewports = [
   { name: "small-mobile", width: 360, height: 800 },
   { name: "iphone-12-pro-max", width: 428, height: 926 },
   { name: "iphone-12-pro-max-landscape", width: 926, height: 428 },
+  { name: "iphone-15-pro-max", width: 430, height: 932 },
+  { name: "iphone-15-pro-max-landscape", width: 932, height: 430 },
   { name: "tablet", width: 768, height: 1024 },
   { name: "laptop", width: 1280, height: 800 },
   { name: "desktop", width: 1440, height: 900 },

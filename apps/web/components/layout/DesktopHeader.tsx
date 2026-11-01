@@ -29,7 +29,7 @@ export function DesktopHeader({
   const { title, crumbs } = getHeaderTrail(pathname, searchParams)
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-border bg-background/90 px-6 backdrop-blur-sm">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-border bg-background/90 pl-6 pr-[max(1.5rem,env(safe-area-inset-right))] backdrop-blur-sm">
       <div className="flex min-w-0 items-center gap-1.5">
         {crumbs.length > 0 && (
           <>

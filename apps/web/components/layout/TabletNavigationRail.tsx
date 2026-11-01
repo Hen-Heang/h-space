@@ -15,6 +15,8 @@ import {
 import { ProfileMenu } from "./ProfileMenu"
 
 export const RAIL_WIDTH = 76
+/** Rail width including the left safe-area inset (0 everywhere but landscape notched phones). */
+export const RAIL_WIDTH_CSS = `calc(${RAIL_WIDTH}px + env(safe-area-inset-left))`
 
 /**
  * 768–1199px navigation: the same workspaces and tools as the desktop
@@ -32,8 +34,11 @@ export function TabletNavigationRail({
   return (
     <aside
       aria-label="Main navigation"
-      style={{ width: RAIL_WIDTH }}
-      className="sticky top-0 flex h-dvh shrink-0 flex-col border-r border-border bg-sidebar"
+      // In landscape on a notched iPhone (e.g. 15 Pro Max at 932×430) the
+      // rail sits on the Dynamic Island side; grow it by the inset so the
+      // icons stay clear, and keep the profile button above the home bar.
+      style={{ width: RAIL_WIDTH_CSS }}
+      className="sticky top-0 flex h-dvh shrink-0 flex-col border-r border-border bg-sidebar pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]"
     >
       <div className="flex h-14 shrink-0 items-center justify-center px-2">
         <Link
