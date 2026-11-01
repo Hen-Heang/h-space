@@ -60,11 +60,11 @@ describe("inboxApi on hspace-api", () => {
     http.hspaceRequest.mockResolvedValue([item])
 
     await expect(inboxApi.list({ status: "all", itemType: "idea" })).resolves.toEqual([item])
-    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/v1/inbox-items?itemType=idea&limit=500")
+    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/hub/inbox-items?itemType=idea&limit=500")
 
     await inboxApi.list({ status: "archived", limit: 20 })
     expect(http.hspaceRequest).toHaveBeenLastCalledWith(
-      "/api/v1/inbox-items?status=archived&limit=20",
+      "/api/hub/inbox-items?status=archived&limit=20",
     )
   })
 
@@ -76,7 +76,7 @@ describe("inboxApi on hspace-api", () => {
   it("creates with trimmed text and defaults, never sending a user id", async () => {
     await inboxApi.create({ title: "  ", content: "  Buy milk  ", itemType: "task" })
 
-    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/v1/inbox-items", {
+    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/hub/inbox-items", {
       method: "POST",
       body: {
         title: null,
@@ -94,7 +94,7 @@ describe("inboxApi on hspace-api", () => {
     await inboxApi.update("item-1", { title: null, pinned: true })
 
     const [path, options] = http.hspaceRequest.mock.calls[0]
-    expect(path).toBe("/api/v1/inbox-items/item-1")
+    expect(path).toBe("/api/hub/inbox-items/item-1")
     expect(options.method).toBe("PATCH")
     expect(JSON.parse(JSON.stringify(options.body))).toEqual({ title: null, pinned: true })
   })
@@ -105,9 +105,9 @@ describe("inboxApi on hspace-api", () => {
     await inboxApi.remove("item-1")
 
     expect(http.hspaceRequest.mock.calls).toEqual([
-      ["/api/v1/inbox-items/item-1", { method: "PATCH", body: { status: "archived" } }],
-      ["/api/v1/inbox-items/item-1", { method: "PATCH", body: { status: "inbox" } }],
-      ["/api/v1/inbox-items/item-1", { method: "DELETE" }],
+      ["/api/hub/inbox-items/item-1", { method: "PATCH", body: { status: "archived" } }],
+      ["/api/hub/inbox-items/item-1", { method: "PATCH", body: { status: "inbox" } }],
+      ["/api/hub/inbox-items/item-1", { method: "DELETE" }],
     ])
   })
 
@@ -122,7 +122,7 @@ describe("inboxApi on hspace-api", () => {
     reminders.cancelForEntity.mockRejectedValueOnce(new Error("offline"))
 
     await expect(inboxApi.remove("item-1")).resolves.toBeUndefined()
-    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/v1/inbox-items/item-1", {
+    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/hub/inbox-items/item-1", {
       method: "DELETE",
     })
     warn.mockRestore()
@@ -139,7 +139,7 @@ describe("inboxApi on hspace-api", () => {
     await expect(inboxApi.convertToTask(item, "2026-10-31")).resolves.toEqual({ id: "task-1" })
 
     expect(conversions.tasks.create).toHaveBeenCalled()
-    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/v1/inbox-items/item-1", {
+    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/hub/inbox-items/item-1", {
       method: "PATCH",
       body: { convertedToType: "task", convertedToId: "task-1", status: "processed" },
     })
@@ -148,7 +148,7 @@ describe("inboxApi on hspace-api", () => {
 
   it("encodes ids into the path", async () => {
     await inboxApi.get("a/b")
-    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/v1/inbox-items/a%2Fb")
+    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/hub/inbox-items/a%2Fb")
   })
 })
 

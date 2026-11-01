@@ -33,7 +33,7 @@ describe("hspaceInboxSearch", () => {
     ])
 
     const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toBe(`${HSPACE_API_URL}/api/v1/inbox-items?q=sql+indexes&limit=5&status=all`)
+    expect(url).toBe(`${HSPACE_API_URL}/api/hub/inbox-items?q=sql+indexes&limit=5&status=all`)
     expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer spring-token")
   })
 })
