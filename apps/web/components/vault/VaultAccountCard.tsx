@@ -54,7 +54,7 @@ export function VaultAccountCard({
   return (
     <article
       aria-label={title}
-      className="group flex min-w-0 flex-col rounded-2xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/30 dark:bg-slate-900/40"
+      className="group flex h-full min-w-0 flex-col rounded-2xl border border-border bg-card p-4 shadow-sm shadow-slate-950/5 transition-colors hover:border-primary/35 hover:bg-muted/10 dark:bg-slate-900/40"
     >
       <div className="flex items-start gap-3">
         <ServiceAvatar
@@ -122,22 +122,21 @@ export function VaultAccountCard({
       </div>
 
       {account.passwordCiphertext && (
-        <div className="mt-2 flex min-h-11 items-center gap-1 rounded-xl bg-muted/50 py-1 pr-1 pl-3">
-          <KeyRound className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-          <span className="sr-only">Password: saved, encrypted</span>
-          <span
-            aria-hidden="true"
-            className="min-w-0 flex-1 truncate pl-1 font-mono text-[0.8rem] tracking-widest text-muted-foreground"
-          >
-            ••••••••
+        <div className="mt-2 flex min-h-10 items-center justify-between gap-2 rounded-xl border border-dashed border-border/80 px-3 py-1.5">
+          <span className="flex items-center gap-2 text-xs text-muted-foreground">
+            <KeyRound className="size-3.5 shrink-0" aria-hidden="true" />
+            Password saved
+            <span className="sr-only">, encrypted</span>
           </span>
           <Button
             variant="ghost"
-            size="icon-sm"
+            size="sm"
             onClick={() => onCopyPassword(account)}
             aria-label={`Copy password for ${title}`}
+            className="min-h-9"
           >
             <Copy className="size-4" aria-hidden="true" />
+            Copy
           </Button>
         </div>
       )}
@@ -147,7 +146,7 @@ export function VaultAccountCard({
         <span>Updated {updated}</span>
       </div>
 
-      <div className="mt-3 flex items-center gap-1 border-t border-border pt-3">
+      <div className="mt-auto flex items-center gap-1 border-t border-border pt-3 [@supports(margin-top:1rem)]:mt-4">
         {href ? (
           <a
             href={href}
@@ -159,9 +158,7 @@ export function VaultAccountCard({
             Open website
             <span className="sr-only"> for {title} (opens in a new tab)</span>
           </a>
-        ) : (
-          <span className="px-3 text-xs text-muted-foreground">No website</span>
-        )}
+        ) : null}
         <Button variant="ghost" size="sm" onClick={() => onView(account)} className="ml-auto">
           <Eye aria-hidden="true" />
           Details
