@@ -126,9 +126,7 @@ export function VaultAccountRow({
             onClick={() => onToggleFavorite(account)}
             aria-pressed={account.isFavorite}
             aria-label={
-              account.isFavorite
-                ? `Remove ${title} from favorites`
-                : `Add ${title} to favorites`
+              account.isFavorite ? `Remove ${title} from favorites` : `Add ${title} to favorites`
             }
             className={cn(account.isFavorite ? "text-amber-500" : "text-muted-foreground")}
           >
