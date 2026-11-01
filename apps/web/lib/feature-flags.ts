@@ -37,6 +37,11 @@ export const isVaultLiveEnabled = (): boolean =>
  * (h-space-api docs/spring-migration-plan.md, Phase 1). Off by default; turn
  * on only after the inbox rows have been copied across. Turning it back off
  * is the rollback: the copy leaves the Supabase table untouched.
+ *
+ * While on, new reminders can't be set on inbox items: the reminder
+ * dispatcher only checks `kori_inbox_items`, so it would cancel them
+ * (remindersApi.create refuses; existing reminders stay manageable, and
+ * deleting an item cancels its reminders).
  */
 export const isSpringInboxEnabled = (): boolean =>
   process.env.NEXT_PUBLIC_DATA_SOURCE_INBOX === "spring"

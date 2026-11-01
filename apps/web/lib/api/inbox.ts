@@ -16,6 +16,7 @@ import { hspaceRequest } from "./hspace-http"
 import { notesApi } from "./notes"
 import { tasksApi } from "./goals"
 import { journalApi } from "./journal"
+import { remindersApi } from "./reminders"
 
 // Quick Capture Inbox. Mirrors the notesApi shape: plain async functions,
 // requireUserId() on Supabase writes.
@@ -219,6 +220,14 @@ export const springInbox: InboxStore = {
 
   remove: async (id) => {
     await hspaceRequest(`${INBOX_PATH}/${encodeURIComponent(id)}`, { method: "DELETE" })
+    // Reminders still live in Supabase, where the copied kori_inbox_items row
+    // outlives this delete, so the dispatcher would keep firing them for an
+    // item that's gone. Best effort: the item is already deleted.
+    try {
+      await remindersApi.cancelForEntity("inbox_item", id)
+    } catch (error) {
+      console.warn("Couldn't cancel reminders for a deleted inbox item", error)
+    }
   },
 
   markConverted: async (id, type, convertedId) => {

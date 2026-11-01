@@ -22,6 +22,8 @@ const conversions = vi.hoisted(() => ({
 vi.mock("./notes", () => ({ notesApi: conversions.notes }))
 vi.mock("./goals", () => ({ tasksApi: conversions.tasks }))
 vi.mock("./journal", () => ({ journalApi: conversions.journal }))
+const reminders = vi.hoisted(() => ({ cancelForEntity: vi.fn(async () => undefined) }))
+vi.mock("./reminders", () => ({ remindersApi: reminders }))
 
 import type { InboxItem } from "@/lib/inbox"
 import { inboxApi } from "./inbox"
@@ -109,6 +111,30 @@ describe("inboxApi on hspace-api", () => {
     ])
   })
 
+  it("cancels the deleted item's reminders, which the Supabase dispatcher can no longer check", async () => {
+    await inboxApi.remove("item-1")
+
+    expect(reminders.cancelForEntity).toHaveBeenCalledWith("inbox_item", "item-1")
+  })
+
+  it("still deletes when cancelling its reminders fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+    reminders.cancelForEntity.mockRejectedValueOnce(new Error("offline"))
+
+    await expect(inboxApi.remove("item-1")).resolves.toBeUndefined()
+    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/v1/inbox-items/item-1", {
+      method: "DELETE",
+    })
+    warn.mockRestore()
+  })
+
+  it("does not cancel reminders when the delete itself fails", async () => {
+    http.hspaceRequest.mockRejectedValueOnce(new Error("404"))
+
+    await expect(inboxApi.remove("item-1")).rejects.toThrow("404")
+    expect(reminders.cancelForEntity).not.toHaveBeenCalled()
+  })
+
   it("stamps a conversion on the hspace-api item", async () => {
     await expect(inboxApi.convertToTask(item, "2026-10-31")).resolves.toEqual({ id: "task-1" })
 
@@ -140,5 +166,18 @@ describe("inboxApi with the flag off", () => {
 
     expect(supabaseFrom).toHaveBeenCalledWith("kori_inbox_items")
     expect(http.hspaceRequest).not.toHaveBeenCalled()
+  })
+
+  it("leaves reminders to the dispatcher when deleting from Supabase", async () => {
+    flags.isSpringInboxEnabled.mockReturnValue(false)
+    supabaseFrom.mockReturnValue({
+      delete: vi.fn().mockReturnThis(),
+      eq: vi.fn(async () => ({ error: null })),
+    })
+
+    await inboxApi.remove("item-1")
+
+    expect(supabaseFrom).toHaveBeenCalledWith("kori_inbox_items")
+    expect(reminders.cancelForEntity).not.toHaveBeenCalled()
   })
 })
