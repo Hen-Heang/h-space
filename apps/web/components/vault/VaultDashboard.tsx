@@ -7,6 +7,8 @@ import {
   FileUp,
   FlaskConical,
   KeyRound,
+  LayoutGrid,
+  List,
   Lock,
   LockKeyhole,
   ShieldAlert,
@@ -56,6 +58,7 @@ import {
 import { lockVault, setVaultKey } from "@/lib/vault-session"
 import { categoryStyle } from "./vaultMeta"
 import { accountTitle, VaultAccountCard, type VaultAccountActions } from "./VaultAccountCard"
+import { VaultAccountRow } from "./VaultAccountRow"
 import { VaultAccountDetailsDialog } from "./VaultAccountDetailsDialog"
 import { VaultAccountFormDialog } from "./VaultAccountFormDialog"
 import { VaultChangePasswordDialog } from "./VaultChangePasswordDialog"
@@ -67,6 +70,7 @@ import { VaultImportDialog } from "./VaultImportDialog"
 import { VaultUnlockDialog } from "./VaultUnlockDialog"
 
 type FormState = { mode: "create" } | { mode: "edit"; account: VaultAccount } | null
+type AccountLayout = "cards" | "list"
 
 function StatTile({
   label,
@@ -108,13 +112,27 @@ function StatTile({
   )
 }
 
-function AccountGrid({
+function AccountCollection({
   accounts,
   actions,
+  layout,
 }: {
   accounts: VaultAccount[]
   actions: VaultAccountActions
+  layout: AccountLayout
 }) {
+  if (layout === "list") {
+    return (
+      <ul className="divide-y divide-border/70 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        {accounts.map((account) => (
+          <li key={account.id} className="min-w-0">
+            <VaultAccountRow account={account} {...actions} />
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
   return (
     <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {accounts.map((account) => (
@@ -136,6 +154,7 @@ export function VaultDashboard() {
 
   const [filters, setFilters] = useState<VaultFilters>(defaultVaultFilters)
   const [grouped, setGrouped] = useState(false)
+  const [accountLayout, setAccountLayout] = useState<AccountLayout>("cards")
   const [formState, setFormState] = useState<FormState>(null)
   const [detailsId, setDetailsId] = useState<string | null>(null)
   const [pendingDelete, setPendingDelete] = useState<VaultAccount | null>(null)
@@ -461,7 +480,7 @@ export function VaultDashboard() {
                   {getCategoryLabel(categoryId)}
                   <span className="text-xs font-medium text-muted-foreground">{items.length}</span>
                 </h2>
-                <AccountGrid accounts={items} actions={cardActions} />
+                <AccountCollection accounts={items} actions={cardActions} layout={accountLayout} />
               </section>
             )
           })}
@@ -469,7 +488,7 @@ export function VaultDashboard() {
       )
     }
 
-    return <AccountGrid accounts={visible} actions={cardActions} />
+    return <AccountCollection accounts={visible} actions={cardActions} layout={accountLayout} />
   }
 
   const statValue = (n: number) => (loading ? "…" : String(n))
@@ -498,9 +517,12 @@ export function VaultDashboard() {
             >
               <Vault className="size-6" />
             </span>
-            <div className="min-w-0">
-              <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-[0.95rem]">
-                Find which email or username you use for every service, organized by category.
+            <div className="min-w-0 space-y-1">
+              <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                Account vault
+              </h1>
+              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                Find and manage your accounts in one secure place.
               </p>
             </div>
           </div>
@@ -607,11 +629,43 @@ export function VaultDashboard() {
                 ? `${accounts.length} ${accounts.length === 1 ? "account" : "accounts"}`
                 : `${visible.length} of ${accounts.length} accounts`}
             </p>
-            {filtersActive && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                Clear filters
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {filtersActive && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              )}
+              <div
+                role="group"
+                aria-label="Account layout"
+                className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-muted/40 p-1"
+              >
+                <button
+                  type="button"
+                  aria-label="Card view"
+                  aria-pressed={accountLayout === "cards"}
+                  onClick={() => setAccountLayout("cards")}
+                  className={cn(
+                    "flex size-9 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+                    accountLayout === "cards" && "bg-background text-foreground shadow-sm",
+                  )}
+                >
+                  <LayoutGrid className="size-4" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Compact list view"
+                  aria-pressed={accountLayout === "list"}
+                  onClick={() => setAccountLayout("list")}
+                  className={cn(
+                    "flex size-9 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+                    accountLayout === "list" && "bg-background text-foreground shadow-sm",
+                  )}
+                >
+                  <List className="size-4" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
           </div>
         )}
         {renderResults()}
