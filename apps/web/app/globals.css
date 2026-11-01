@@ -5,6 +5,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Only theme changes replace the default cross-fade with a circular reveal. */
+html[data-theme-transition]::view-transition-old(root),
+html[data-theme-transition]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html[data-theme-transition]::view-transition-old(root) {
+  z-index: 1;
+}
+
+html[data-theme-transition]::view-transition-new(root) {
+  z-index: 9999;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

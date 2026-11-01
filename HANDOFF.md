@@ -2,11 +2,12 @@
 
 ## Snapshot
 
-- **Updated:** 2026-10-23
-- **Branch:** `integrate/luyra-finance` (local; not pushed).
-- **Working tree:** Luyra imported under `apps/luyra` via a full-history Git subtree commit. H-Space My Apps catalog, workspace navigation, Quick Switcher, mobile More list, and dashboard quick access link to Luyra. Both apps remain independent deployable Next.js apps; production was not changed.
-- **Verification:** H-Space lint passed with 5 existing warnings; 1,344 tests passed; production build passed; responsive Playwright passed at six viewport sizes. Changed H-Space files pass Prettier, while repository `format:check` reports 8 pre-existing files. Luyra npm lint, 130 tests, and production build passed. No database or live integration tests were run.
+- **Updated:** 2026-11-01
+- **Branch:** `feat/theme-switch-reveal` (pull request open; not merged or deployed).
+- **Current changes:** Adapted the circular theme-switch reveal from `Hen-Heang/henheang` after reading its source through GitHub MCP. H-Space retains its palette and Light / Dark / System dropdown. Changes are in `apps/web/components/theme-toggle.tsx` and `apps/web/app/globals.css`.
+- **Behavior:** A 480ms circular reveal starts at the theme trigger after the dropdown closes. Reduced motion, unavailable/failed View Transitions, and unchanged resolved themes use a plain swap. CSS is scoped to theme transitions; newer selections supersede pending older callbacks.
+- **Verification:** Production build passed; lint passed with 5 existing warnings. TypeScript and changed-file ESLint passed. Playwright Chromium checks at 1440x1000 and 390x844 passed for animation, menu snapshot removal, persistence, System mode, reduced motion, missing/throwing API, keyboard selection, rapid choices, overflow, and page errors.
 
 ## Current focus
 
-Review the Luyra migration preview and deployment configuration before switching the existing Vercel project. Keep the original Luyra repository available for rollback. Details and exact steps are in `docs/ECOSYSTEM-INTEGRATION.md`.
+Review the theme-switch animation locally. No deployment or database changes were made. Previous Luyra integration/deployment context is preserved in `HANDOFF_HISTORY.md` and `docs/ECOSYSTEM-INTEGRATION.md`.
