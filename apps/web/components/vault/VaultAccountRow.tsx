@@ -1,7 +1,16 @@
 "use client"
 
 import { formatDistanceToNow } from "date-fns"
-import { Copy, ExternalLink, Eye, KeyRound, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react"
+import {
+  Copy,
+  ExternalLink,
+  Eye,
+  KeyRound,
+  MoreHorizontal,
+  Pencil,
+  Star,
+  Trash2,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -128,10 +137,14 @@ export function VaultAccountRow({
               aria-hidden="true"
             />
           </Button>
-          <Button variant="outline" size="sm" onClick={() => onView(account)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onView(account)}
+            aria-label={`Details for ${title}`}
+          >
             <Eye className="size-4" aria-hidden="true" />
             Details
-            <span className="sr-only"> for {title}</span>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
