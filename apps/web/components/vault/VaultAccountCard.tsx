@@ -146,7 +146,7 @@ export function VaultAccountCard({
         <span>Updated {updated}</span>
       </div>
 
-      <div className="mt-auto flex items-center gap-1 border-t border-border pt-3 [@supports(margin-top:1rem)]:mt-4">
+      <div className="mt-auto flex items-center gap-1 border-t border-border pt-3">
         {href ? (
           <a
             href={href}
