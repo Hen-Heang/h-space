@@ -46,7 +46,9 @@ describe("content security policy", () => {
   it("adapts to local development and Vercel previews", () => {
     const dev = buildContentSecurityPolicy({ development: true })
     expect(directive(dev, "script-src")).toContain("'unsafe-eval'")
-    expect(directive(dev, "connect-src")).toEqual(expect.arrayContaining(["http://localhost:8080", "ws:"]))
+    expect(directive(dev, "connect-src")).toEqual(
+      expect.arrayContaining(["http://localhost:8080", "ws:"]),
+    )
     expect(dev).not.toContain("upgrade-insecure-requests")
 
     const preview = buildContentSecurityPolicy({ vercelPreview: true })

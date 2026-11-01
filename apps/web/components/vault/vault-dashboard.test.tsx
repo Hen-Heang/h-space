@@ -36,9 +36,8 @@ const { VaultDashboard } = await import("./VaultDashboard")
 const { MyAppsSection } = await import("@/components/home/MyAppsSection")
 const { DEMO_VAULT_ACCOUNTS } = await import("@/lib/vault-demo")
 const { VAULT_PASSWORD_NOTICE } = await import("@/lib/vault")
-const { createVaultKeyset, encryptVaultPassword, isVaultEnvelope } = await import(
-  "@/lib/vault-crypto"
-)
+const { createVaultKeyset, encryptVaultPassword, isVaultEnvelope } =
+  await import("@/lib/vault-crypto")
 const { VAULT_DEMO_KEYSET_KEY } = await import("@/lib/api/vault")
 const { AuthApiError } = await import("@/lib/api/auth-http")
 const { lockVault } = await import("@/lib/vault-session")

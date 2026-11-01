@@ -176,6 +176,7 @@ encrypted with the master password before anything is saved.
 Every imported account is tagged `#imported`. Limits: 1 MB and 500 rows per
 file. Import runs row by row, so a failed row is reported without losing the
 others.
+
 ## Known gaps / next steps
 
 - Live use waits on the security review (above).

@@ -131,8 +131,7 @@ export function VaultDashboard() {
   const { accounts, loading, locked, error, retry, retrying, isLive, mfaRequired } =
     useVaultAccounts()
   const vaultKeyset = useVaultKeyset()
-  const { create, update, setFavorite, remove, createMany, saveKeyset, reset } =
-    useVaultMutations()
+  const { create, update, setFavorite, remove, createMany, saveKeyset, reset } = useVaultMutations()
   const needsMfa = mfaRequired || vaultKeyset.mfaRequired
 
   const [filters, setFilters] = useState<VaultFilters>(defaultVaultFilters)

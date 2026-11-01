@@ -134,18 +134,18 @@ export function VaultImportDialog({
       items.push({
         id,
         data: {
-        serviceName: row.serviceName,
-        accountLabel: row.accountLabel,
-        loginIdentifier: row.loginIdentifier,
-        websiteUrl: row.websiteUrl,
-        category: row.category,
-        tags: [IMPORT_TAG],
-        isFavorite: false,
-        status: row.status,
-        loginMethod: DEFAULT_VAULT_LOGIN_METHOD,
-        ...(row.password && key
-          ? { passwordCiphertext: await encryptVaultPassword(row.password, id, key) }
-          : {}),
+          serviceName: row.serviceName,
+          accountLabel: row.accountLabel,
+          loginIdentifier: row.loginIdentifier,
+          websiteUrl: row.websiteUrl,
+          category: row.category,
+          tags: [IMPORT_TAG],
+          isFavorite: false,
+          status: row.status,
+          loginMethod: DEFAULT_VAULT_LOGIN_METHOD,
+          ...(row.password && key
+            ? { passwordCiphertext: await encryptVaultPassword(row.password, id, key) }
+            : {}),
         },
       })
     }

@@ -377,10 +377,7 @@ export async function encryptItemPayload(
   vaultKey: VaultKey,
 ): Promise<string> {
   const json = JSON.stringify(payload)
-  const padded = json.padEnd(
-    Math.ceil((json.length + 1) / PAYLOAD_PADDING) * PAYLOAD_PADDING,
-    " ",
-  )
+  const padded = json.padEnd(Math.ceil((json.length + 1) / PAYLOAD_PADDING) * PAYLOAD_PADDING, " ")
   return seal(vaultKey.key, utf8(padded), itemAad(vaultKey.userId, itemId))
 }
 

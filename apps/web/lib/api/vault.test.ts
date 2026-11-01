@@ -34,67 +34,75 @@ vi.mock("@/lib/api/hspace-http", async () => {
     version: r.version,
   })
   return {
-    hspaceRequest: vi.fn(async (path: string, options: { method?: string; body?: unknown } = {}) => {
-      const method = options.method ?? "GET"
-      state.sent.push({ path, method, body: options.body })
-      if (state.failNext) {
-        const f = state.failNext
-        state.failNext = null
-        throw new AuthApiError(f.message, f.status, f.code)
-      }
-      const me = state.currentUser
-      const body = (options.body ?? {}) as Record<string, unknown>
-      const itemId = path.match(/\/items\/(.+)$/)?.[1]
-      if (path === "/api/hub/vault/keyset" && method === "GET") {
-        if (!state.keysets[me]) throw new AuthApiError("Vault isn't set up yet.", 404, 40400)
-        return state.keysets[me]
-      }
-      if (path === "/api/hub/vault/keyset" && method === "PUT") {
-        const current = state.keysets[me]
-        state.keysets[me] = { ...body, version: current ? (current.version as number) + 1 : 0 }
-        return state.keysets[me]
-      }
-      if (path === "/api/hub/vault/reset") {
-        state.rows = state.rows.filter((r) => r.userId !== me)
-        delete state.keysets[me]
-        return {}
-      }
-      if (path === "/api/hub/vault/items" && method === "GET") {
-        return state.rows.filter((r) => r.userId === me).map(toItem)
-      }
-      if (path === "/api/hub/vault/items" && method === "POST") {
-        const row = {
-          id: body.id as string,
-          userId: me,
-          payloadCiphertext: body.payloadCiphertext as string,
-          version: 0,
+    hspaceRequest: vi.fn(
+      async (path: string, options: { method?: string; body?: unknown } = {}) => {
+        const method = options.method ?? "GET"
+        state.sent.push({ path, method, body: options.body })
+        if (state.failNext) {
+          const f = state.failNext
+          state.failNext = null
+          throw new AuthApiError(f.message, f.status, f.code)
         }
-        state.rows.push(row)
-        return toItem(row)
-      }
-      const row = state.rows.find((r) => r.id === itemId && r.userId === me)
-      if (!row) throw new AuthApiError("Vault item not found", 404, 40400)
-      if (method === "PUT") {
-        if (body.version !== row.version) throw new AuthApiError("Changed on another device.", 409, 40900)
-        row.payloadCiphertext = body.payloadCiphertext as string
-        row.version += 1
-        return toItem(row)
-      }
-      if (method === "DELETE") {
-        state.rows = state.rows.filter((r) => r !== row)
-        return {}
-      }
-      throw new Error(`unexpected ${method} ${path}`)
-    }),
+        const me = state.currentUser
+        const body = (options.body ?? {}) as Record<string, unknown>
+        const itemId = path.match(/\/items\/(.+)$/)?.[1]
+        if (path === "/api/hub/vault/keyset" && method === "GET") {
+          if (!state.keysets[me]) throw new AuthApiError("Vault isn't set up yet.", 404, 40400)
+          return state.keysets[me]
+        }
+        if (path === "/api/hub/vault/keyset" && method === "PUT") {
+          const current = state.keysets[me]
+          state.keysets[me] = { ...body, version: current ? (current.version as number) + 1 : 0 }
+          return state.keysets[me]
+        }
+        if (path === "/api/hub/vault/reset") {
+          state.rows = state.rows.filter((r) => r.userId !== me)
+          delete state.keysets[me]
+          return {}
+        }
+        if (path === "/api/hub/vault/items" && method === "GET") {
+          return state.rows.filter((r) => r.userId === me).map(toItem)
+        }
+        if (path === "/api/hub/vault/items" && method === "POST") {
+          const row = {
+            id: body.id as string,
+            userId: me,
+            payloadCiphertext: body.payloadCiphertext as string,
+            version: 0,
+          }
+          state.rows.push(row)
+          return toItem(row)
+        }
+        const row = state.rows.find((r) => r.id === itemId && r.userId === me)
+        if (!row) throw new AuthApiError("Vault item not found", 404, 40400)
+        if (method === "PUT") {
+          if (body.version !== row.version)
+            throw new AuthApiError("Changed on another device.", 409, 40900)
+          row.payloadCiphertext = body.payloadCiphertext as string
+          row.version += 1
+          return toItem(row)
+        }
+        if (method === "DELETE") {
+          state.rows = state.rows.filter((r) => r !== row)
+          return {}
+        }
+        throw new Error(`unexpected ${method} ${path}`)
+      },
+    ),
   }
 })
 
-const { vaultApi, VaultLockedError, VaultMfaRequiredError, VAULT_DEMO_STORAGE_KEY, VAULT_DEMO_KEYSET_KEY, resetVaultDemoData } =
-  await import("./vault")
+const {
+  vaultApi,
+  VaultLockedError,
+  VaultMfaRequiredError,
+  VAULT_DEMO_STORAGE_KEY,
+  VAULT_DEMO_KEYSET_KEY,
+  resetVaultDemoData,
+} = await import("./vault")
 const { DEMO_VAULT_ACCOUNTS } = await import("@/lib/vault-demo")
-const { createVaultKeyset, decryptVaultPassword, encryptVaultPassword } = await import(
-  "@/lib/vault-crypto"
-)
+const { createVaultKeyset, decryptVaultPassword, encryptVaultPassword } =
+  await import("@/lib/vault-crypto")
 
 const input = {
   serviceName: "Example Service",
@@ -130,7 +138,13 @@ describe("hspace-api backend", () => {
     await vaultApi.create(ITEM, { ...input, passwordCiphertext: password }, key)
 
     const sent = JSON.stringify(state.sent)
-    for (const value of ["Example Service", "someone@example.com", "example.com", "Personal", "sample"]) {
+    for (const value of [
+      "Example Service",
+      "someone@example.com",
+      "example.com",
+      "Personal",
+      "sample",
+    ]) {
       expect(sent).not.toContain(value)
     }
     const post = state.sent.find((r) => r.method === "POST")!
@@ -206,7 +220,11 @@ describe("hspace-api backend", () => {
 
   it("treats a missing keyset as not set up, and sends the version only when replacing", async () => {
     expect(await vaultApi.getKeyset()).toBeNull()
-    const { keyset } = await createVaultKeyset("a long fictional master password", state.currentUser, 1_000)
+    const { keyset } = await createVaultKeyset(
+      "a long fictional master password",
+      state.currentUser,
+      1_000,
+    )
     const first = await vaultApi.saveKeyset(keyset, null)
     expect(state.sent.at(-1)!.body).not.toHaveProperty("version")
     await vaultApi.saveKeyset(keyset, first.version)
@@ -223,7 +241,10 @@ describe("hspace-api backend", () => {
     const key = await unlock()
     await vaultApi.create(ITEM, input, key)
     await vaultApi.remove(ITEM)
-    expect(state.sent.at(-1)).toMatchObject({ method: "DELETE", path: `/api/hub/vault/items/${ITEM}` })
+    expect(state.sent.at(-1)).toMatchObject({
+      method: "DELETE",
+      path: `/api/hub/vault/items/${ITEM}`,
+    })
     await vaultApi.reset()
     expect(state.sent.at(-1)).toMatchObject({
       method: "POST",
@@ -279,10 +300,18 @@ describe("demo backend (browser-local)", () => {
   })
 
   it("keeps a keyset locally and reset clears it and every saved password", async () => {
-    const { keyset, vaultKey } = await createVaultKeyset("a long fictional master password", state.currentUser, 1_000)
+    const { keyset, vaultKey } = await createVaultKeyset(
+      "a long fictional master password",
+      state.currentUser,
+      1_000,
+    )
     await vaultApi.saveKeyset(keyset, null)
     expect(await vaultApi.getKeyset()).toMatchObject({ wrappedKey: keyset.wrappedKey })
-    await vaultApi.create(ITEM, { ...input, passwordCiphertext: await encryptVaultPassword("x1", ITEM, vaultKey) }, null)
+    await vaultApi.create(
+      ITEM,
+      { ...input, passwordCiphertext: await encryptVaultPassword("x1", ITEM, vaultKey) },
+      null,
+    )
 
     await vaultApi.reset()
     expect(window.localStorage.getItem(VAULT_DEMO_KEYSET_KEY)).toBeNull()

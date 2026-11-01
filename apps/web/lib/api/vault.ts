@@ -329,8 +329,7 @@ export const demoVault: VaultBackend = {
     writeDemoAccounts(readDemoAccounts().map((a) => ({ ...a, passwordCiphertext: null })))
   },
 
-  list: async () =>
-    [...readDemoAccounts()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+  list: async () => [...readDemoAccounts()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
 
   create: async (id, data) => {
     const now = new Date().toISOString()

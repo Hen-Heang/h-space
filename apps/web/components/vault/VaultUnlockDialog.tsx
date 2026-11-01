@@ -282,7 +282,11 @@ export function VaultUnlockDialog({
               disabled={busy || !password || (mode === "recover" && !recoveryInput)}
             >
               {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
-              {mode === "setup" ? "Create vault" : mode === "recover" ? "Recover and unlock" : "Unlock"}
+              {mode === "setup"
+                ? "Create vault"
+                : mode === "recover"
+                  ? "Recover and unlock"
+                  : "Unlock"}
             </Button>
           </DialogFooter>
 
@@ -298,7 +302,9 @@ export function VaultUnlockDialog({
                 }}
                 disabled={busy}
               >
-                {mode === "recover" ? "Use my master password instead" : "Forgot master password? Use your recovery key"}
+                {mode === "recover"
+                  ? "Use my master password instead"
+                  : "Forgot master password? Use your recovery key"}
               </Button>
               <Button
                 type="button"

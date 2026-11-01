@@ -421,4 +421,3 @@ export function countByCategory(accounts: VaultAccount[]): Record<string, number
 
 export const VAULT_PASSWORD_NOTICE =
   "Your vault is encrypted in your browser with your master password before anything is saved. H-Vault never stores your master password; if you forget it, your recovery key is the only way back in."
-

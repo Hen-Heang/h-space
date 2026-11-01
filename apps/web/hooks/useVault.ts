@@ -75,7 +75,8 @@ export function useVaultAccounts() {
     /** True while an encrypted vault is locked: there is nothing to show yet. */
     locked: needsUnlock && !unlocked,
     mfaRequired: error instanceof VaultMfaRequiredError,
-    error: isError && !(error instanceof VaultMfaRequiredError) ? "Couldn't load your accounts." : "",
+    error:
+      isError && !(error instanceof VaultMfaRequiredError) ? "Couldn't load your accounts." : "",
     retry: refetch,
     retrying: isRefetching,
     isLive: vaultApi.isLive(),

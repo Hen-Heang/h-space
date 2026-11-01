@@ -31,8 +31,13 @@ vi.mock("@/lib/api", async () => {
 })
 vi.mock("@/lib/auth-store", () => ({ getUserId: () => auth.userId }))
 
-const { useVaultAccounts, useVaultKeyset, useVaultMutations, vaultAccountsQueryKey, currentVaultKey } =
-  await import("./useVault")
+const {
+  useVaultAccounts,
+  useVaultKeyset,
+  useVaultMutations,
+  vaultAccountsQueryKey,
+  currentVaultKey,
+} = await import("./useVault")
 const { lockVault, setVaultKey } = await import("@/lib/vault-session")
 const { VaultMfaRequiredError } = await import("@/lib/api/vault")
 
