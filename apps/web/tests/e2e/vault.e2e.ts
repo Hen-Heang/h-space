@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test"
 
 // H-Vault public-surface checks. These run signed out: account management
-// needs a login, and the data boundary is RLS (see
-// supabase/tests/vault_accounts_rls.sql), so the browser-level checks here
-// are that the route is login-gated and that public pages carry no account
-// data.
+// needs a login, and the data boundary is hspace-api's owner/MFA checks plus
+// browser-side encryption (h-space-api VaultControllerIntegrationTest,
+// lib/api/vault.test.ts), so the browser-level checks here are that the route
+// is login-gated and that public pages carry no account data.
 
 test.describe("H-Vault (signed out)", () => {
   test("deep link to /vault redirects to login", async ({ page }) => {
