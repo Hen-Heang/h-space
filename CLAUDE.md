@@ -12,7 +12,7 @@ Product promise: **My Projects. One Space.** Keep the Hengo Learning experience 
 2. **Planner:** goals, tasks, due dates, priorities, recurring routines, progress tracking, and a useful daily dashboard.
 3. **Reminders:** opt-in push/email notifications with timezone support (default user setting, not a hard-coded timezone); deduplication, retry safety, and preferences. Never assume reminders are delivered without observability.
 4. **Luyra / finance:** finance stays independently deployable for now; provide a clear entry point from H-Space. Design future consolidated views with precise amounts, consistent USD/KRW conversion rules, and explicit transaction ownership. Do not silently migrate money records.
-5. **H-Vault / credentials:** an eventual sensitive-data vault for saved accounts and usernames. Treat existing UI as untrusted for real secrets until a dedicated security design, audit, and recovery plan are completed. Do **not** store real personal passwords in a prototype.
+5. **H-Vault / credentials:** a sensitive-data vault for saved accounts, usernames and optional passwords, end-to-end encrypted in the browser and synced through h-space-api `hub-api` (design: h-space-api `docs/vault-design.md`; recovery key, MFA required). **Live in production since 2026-11-01, turned on by the owner before the independent security audit, which is still required.** Until that audit and a restore drill are done, treat the vault as unreviewed: don't widen it, don't claim zero-knowledge, and fix findings promptly.
 6. **Learning, Notes, Growth, AI:** retain current Hengo functionality; add only when it improves the daily workflow.
 
 ## Current architecture — inspect before changing
