@@ -18,7 +18,7 @@ export function hspaceInboxSearch(
   return async (query, limit) => {
     const params = new URLSearchParams({ q: query, limit: String(limit), status: "all" })
     const items =
-      (await authRequest<InboxItem[]>(`/api/v1/inbox-items?${params}`, {
+      (await authRequest<InboxItem[]>(`/api/hub/inbox-items?${params}`, {
         token,
         baseUrl: HSPACE_API_URL,
       })) ?? []

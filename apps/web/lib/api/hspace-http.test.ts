@@ -39,8 +39,8 @@ describe("hspaceRequest", () => {
   it("calls hspace-api with the access token and unwraps data", async () => {
     fetchMock.mockResolvedValue(ok([{ id: "a" }]))
 
-    await expect(hspaceRequest("/api/v1/inbox-items")).resolves.toEqual([{ id: "a" }])
-    expect(fetchMock.mock.calls[0][0]).toBe(`${HSPACE_API_URL}/api/v1/inbox-items`)
+    await expect(hspaceRequest("/api/hub/inbox-items")).resolves.toEqual([{ id: "a" }])
+    expect(fetchMock.mock.calls[0][0]).toBe(`${HSPACE_API_URL}/api/hub/inbox-items`)
     expect(bearer(0)).toBe("Bearer access-1")
     expect(authStore.refreshAccessToken).not.toHaveBeenCalled()
   })
@@ -49,7 +49,7 @@ describe("hspaceRequest", () => {
     fetchMock.mockResolvedValueOnce(json(null, 401)).mockResolvedValueOnce(ok({ id: "a" }))
 
     await expect(
-      hspaceRequest("/api/v1/inbox-items/a", { method: "PATCH", body: { pinned: true } }),
+      hspaceRequest("/api/hub/inbox-items/a", { method: "PATCH", body: { pinned: true } }),
     ).resolves.toEqual({ id: "a" })
     expect(authStore.refreshAccessToken).toHaveBeenCalledTimes(1)
     expect(bearer(1)).toBe("Bearer access-2")
@@ -61,14 +61,14 @@ describe("hspaceRequest", () => {
       .mockResolvedValueOnce(json({ status: { code: 1004, message: "expired" } }, 401))
       .mockResolvedValueOnce(ok([]))
 
-    await expect(hspaceRequest("/api/v1/inbox-items")).resolves.toEqual([])
+    await expect(hspaceRequest("/api/hub/inbox-items")).resolves.toEqual([])
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
   it("doesn't retry a 401 that isn't about the token", async () => {
     fetchMock.mockResolvedValue(json({ status: { code: 1008, message: "Invalid code" } }, 401))
 
-    await expect(hspaceRequest("/api/v1/inbox-items")).rejects.toMatchObject({ code: 1008 })
+    await expect(hspaceRequest("/api/hub/inbox-items")).rejects.toMatchObject({ code: 1008 })
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(authStore.refreshAccessToken).not.toHaveBeenCalled()
   })
@@ -76,7 +76,7 @@ describe("hspaceRequest", () => {
   it("gives up after one retry", async () => {
     fetchMock.mockResolvedValue(json(null, 401))
 
-    await expect(hspaceRequest("/api/v1/inbox-items")).rejects.toMatchObject({ httpStatus: 401 })
+    await expect(hspaceRequest("/api/hub/inbox-items")).rejects.toMatchObject({ httpStatus: 401 })
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
@@ -84,14 +84,14 @@ describe("hspaceRequest", () => {
     fetchMock.mockResolvedValue(json(null, 401))
     authStore.refreshAccessToken.mockResolvedValue(null)
 
-    await expect(hspaceRequest("/api/v1/inbox-items")).rejects.toBeInstanceOf(AuthApiError)
+    await expect(hspaceRequest("/api/hub/inbox-items")).rejects.toBeInstanceOf(AuthApiError)
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
   it("refuses without a session, before calling the server", async () => {
     authStore.getValidAccessToken.mockResolvedValue(null)
 
-    await expect(hspaceRequest("/api/v1/inbox-items")).rejects.toMatchObject({ httpStatus: 401 })
+    await expect(hspaceRequest("/api/hub/inbox-items")).rejects.toMatchObject({ httpStatus: 401 })
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
@@ -100,7 +100,7 @@ describe("hspaceRequest", () => {
       json({ status: { code: 40400, message: "Inbox item not found" } }, 404),
     )
 
-    await expect(hspaceRequest("/api/v1/inbox-items/x")).rejects.toMatchObject({
+    await expect(hspaceRequest("/api/hub/inbox-items/x")).rejects.toMatchObject({
       httpStatus: 404,
       message: "Inbox item not found",
     })

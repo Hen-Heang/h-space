@@ -24,7 +24,7 @@ import { remindersApi } from "./reminders"
 // Two stores share one interface while the inbox moves off Supabase
 // (h-space-api docs/spring-migration-plan.md, Phase 1):
 // - `supabaseInbox` — kori_inbox_items, owner-scoped by RLS.
-// - `springInbox` — hspace-api /api/v1/inbox-items, owner taken from the JWT.
+// - `springInbox` — hspace-api /api/hub/inbox-items, owner taken from the JWT.
 // `isSpringInboxEnabled()` picks one; conversions still create the Note /
 // Task / Journal entry in Supabase until those areas move too.
 
@@ -182,7 +182,7 @@ const supabaseInbox: InboxStore = {
 
 // ─── hspace-api (Spring) ─────────────────────────────────────────────────────
 
-const INBOX_PATH = "/api/v1/inbox-items"
+const INBOX_PATH = "/api/hub/inbox-items"
 
 // The API answers with the same camelCase fields as InboxItem.
 export const springInbox: InboxStore = {
