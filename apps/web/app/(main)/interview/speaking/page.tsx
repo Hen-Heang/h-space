@@ -38,6 +38,7 @@ import {
   recommendedDifficulty,
   selectFocusQueue,
   selectTodaysQueue,
+  todayQueueStorageKey,
   type PracticeDifficulty,
   type QuestionBankItem,
   type QuestionProgress,
@@ -161,7 +162,7 @@ export default function SpeakingDrillPage() {
 
   function startToday() {
     const dateKey = dateKeyInTimeZone(new Date(), INTERVIEW_TIME_ZONE)
-    const storageKey = `koriai.interview.today:${dateKey}:${difficulty}`
+    const storageKey = todayQueueStorageKey(dateKey, difficulty)
     let storedIds: string[] = []
     try {
       storedIds = JSON.parse(window.localStorage.getItem(storageKey) ?? "[]") as string[]

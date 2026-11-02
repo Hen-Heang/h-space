@@ -254,6 +254,36 @@ function compareRank(a: number[], b: number[]): number {
  * written during a drill cannot reshuffle the same Seoul-day queue on refresh.
  * A short difficulty pool is filled from the remaining mixed bank.
  */
+/**
+ * localStorage key that pins one Seoul day's Today's 5 per difficulty. The
+ * format is load-bearing (existing devices hold these keys) — don't change it.
+ */
+export function todayQueueStorageKey(dateKey: string, difficulty: PracticeDifficulty): string {
+  return `koriai.interview.today:${dateKey}:${difficulty}`
+}
+
+/**
+ * How many of today's pinned questions were practiced on the same Seoul day.
+ * Uses `lastPracticedAt` from the synced progress rows, so it works across
+ * devices; a question practiced yesterday doesn't count for today.
+ */
+export function countDoneToday(
+  queueIds: string[],
+  progressByQuestionId: Record<string, QuestionProgress>,
+  now: Date = new Date(),
+  timeZone = INTERVIEW_TIME_ZONE,
+): { done: number; total: number } {
+  const today = dateKeyInZone(now, timeZone)
+  const unique = [...new Set(queueIds)]
+  const done = unique.filter((id) => {
+    const practicedAt = progressByQuestionId[id]?.lastPracticedAt
+    if (!practicedAt) return false
+    const date = new Date(practicedAt)
+    return !Number.isNaN(date.getTime()) && dateKeyInZone(date, timeZone) === today
+  }).length
+  return { done, total: unique.length }
+}
+
 export function selectTodaysQueue(
   questions: QuestionBankItem[],
   progressByQuestionId: Record<string, QuestionProgress>,

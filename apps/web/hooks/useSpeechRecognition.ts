@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 
+import { classifySpeechError, speechErrorMessage, type SpeechErrorKind } from "@/lib/mic-access"
 import { SPEECH_AUDIO_START_EVENT, stopSpeechAudio } from "@/lib/speech-audio"
 
 // Minimal typing for the browser Web Speech API (no DOM lib types ship for it).
@@ -64,7 +65,23 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
 
   const [status, setStatus] = useState<RecognitionStatus>("idle")
   const [transcript, setTranscriptState] = useState("")
-  const [error, setError] = useState("")
+  const [error, setErrorState] = useState("")
+  // Why the last capture failed, for UI that needs more than the message
+  // (mic-blocked notices, typing fallback). Null for app-set messages.
+  const [errorKind, setErrorKind] = useState<SpeechErrorKind | null>(null)
+  const fail = useCallback((kind: SpeechErrorKind) => {
+    setErrorState(speechErrorMessage(kind))
+    setErrorKind(kind)
+  }, [])
+  const clearError = useCallback(() => {
+    setErrorState("")
+    setErrorKind(null)
+  }, [])
+  // Public setter for app-level messages ("Record or type an answer…").
+  const setError = useCallback((message: string) => {
+    setErrorState(message)
+    setErrorKind(null)
+  }, [])
   // Mirrors `transcript` so callbacks held across renders (e.g. start() fired
   // after question audio ends) never seed a capture from a stale closure.
   const transcriptRef = useRef("")
@@ -121,7 +138,7 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       }
       listeningRef.current = true
       setStatus("listening")
-      setError("")
+      clearError()
     }
 
     recognition.onresult = (event) => {
@@ -184,24 +201,23 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       if (event.error === "aborted") {
         return
       }
+      const kind = classifySpeechError(event.error)
 
-      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+      if (kind === "permission") {
         manualStopRef.current = true
         startingRef.current = false
         listeningRef.current = false
         setStatus("idle")
-        setError(
-          "Microphone permission is blocked. Allow microphone access in the browser and try again.",
-        )
+        fail("permission")
         return
       }
 
-      if (event.error === "no-speech") {
+      if (kind === "no-speech") {
         // Continuous captures just keep waiting (onend restarts the engine);
         // only a single-shot capture treats silence as a failed take.
         if (continuous) return
         setStatus("idle")
-        setError("No speech was detected. Try holding the phone closer and speaking once clearly.")
+        fail("no-speech")
         return
       }
 
@@ -209,11 +225,7 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       startingRef.current = false
       listeningRef.current = false
       setStatus("idle")
-      setError(
-        event.error === "audio-capture"
-          ? "No microphone was found. Connect or enable a microphone, then try again."
-          : "Speech capture failed. You can still type or edit the transcript manually.",
-      )
+      fail(kind)
     }
 
     recognitionRef.current = recognition
@@ -249,17 +261,17 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       }
       recognitionRef.current = null
     }
-  }, [lang, continuous, setTranscript])
+  }, [lang, continuous, setTranscript, fail, clearError])
 
   function start() {
     if (!recognitionRef.current) {
-      setError("Speech recognition is not available here. Use the manual transcript box instead.")
+      fail("unsupported")
       return false
     }
 
     if (startingRef.current || listeningRef.current || status === "listening") return false
 
-    setError("")
+    clearError()
     // Do not let the examiner's TTS or a replay become the candidate answer.
     stopSpeechAudio()
     manualStopRef.current = false
@@ -283,7 +295,7 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       startingRef.current = false
       manualStopRef.current = true
       setStatus("idle")
-      setError("Could not start microphone capture. Wait a moment and try again.")
+      fail("start-failed")
       return false
     }
   }
@@ -323,7 +335,7 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
     interimRef.current = ""
     setStatus("idle")
     setTranscript("")
-    setError("")
+    clearError()
   }
 
   return {
@@ -332,6 +344,7 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
     transcript,
     setTranscript,
     error,
+    errorKind,
     setError,
     start,
     stop,

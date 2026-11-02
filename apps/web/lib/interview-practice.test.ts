@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   averageScore,
   computeNextProgress,
+  countDoneToday,
   daysRemainingInSeoul,
   difficultyCounts,
   duplicateVersionLabel,
@@ -15,6 +16,7 @@ import {
   shouldRecommendRetry,
   suggestUniqueVersionLabel,
   summarizeQuestionProgress,
+  todayQueueStorageKey,
   transitionRetryFlow,
   versionsToDeactivate,
   type QuestionBankItem,
@@ -235,6 +237,57 @@ describe("selectTodaysQueue", () => {
 
   it("derives level counts from the bank", () => {
     expect(difficultyCounts(bank)).toEqual({ beginner: 5, normal: 1, challenging: 0, mixed: 6 })
+  })
+})
+
+describe("todayQueueStorageKey", () => {
+  it("keeps the key format existing devices already store", () => {
+    expect(todayQueueStorageKey("2026-11-02", "normal")).toBe(
+      "koriai.interview.today:2026-11-02:normal",
+    )
+  })
+})
+
+describe("countDoneToday", () => {
+  // 2026-11-02 09:30 KST
+  const now = new Date("2026-11-02T00:30:00Z")
+  const practiced = (iso: string | null) => progress({ lastPracticedAt: iso })
+
+  it("counts questions practiced on the same Seoul day", () => {
+    const result = countDoneToday(
+      ["a", "b", "c"],
+      {
+        a: practiced("2026-11-02T00:10:00Z"), // 09:10 KST today
+        b: practiced("2026-11-01T10:00:00Z"), // 19:00 KST yesterday
+      },
+      now,
+    )
+    expect(result).toEqual({ done: 1, total: 3 })
+  })
+
+  it("uses the Seoul day boundary, not UTC", () => {
+    // 2026-11-01 15:30Z is 00:30 KST on Nov 2 — today in Seoul, yesterday in UTC.
+    const result = countDoneToday(["a"], { a: practiced("2026-11-01T15:30:00Z") }, now)
+    expect(result.done).toBe(1)
+    // 2026-11-01 14:59Z is 23:59 KST on Nov 1 — yesterday in Seoul.
+    expect(countDoneToday(["a"], { a: practiced("2026-11-01T14:59:00Z") }, now).done).toBe(0)
+  })
+
+  it("ignores never-practiced, unknown, malformed, and duplicate ids", () => {
+    const result = countDoneToday(
+      ["a", "a", "b", "missing", "bad"],
+      {
+        a: practiced("2026-11-02T01:00:00Z"),
+        b: practiced(null),
+        bad: practiced("not a date"),
+      },
+      now,
+    )
+    expect(result).toEqual({ done: 1, total: 4 })
+  })
+
+  it("is empty before today's queue is pinned", () => {
+    expect(countDoneToday([], {}, now)).toEqual({ done: 0, total: 0 })
   })
 })
 
