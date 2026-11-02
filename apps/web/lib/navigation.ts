@@ -404,6 +404,7 @@ export const navSections: NavSection[] = [
         label: "Foundations",
         icon: Languages,
         color: "text-indigo-500",
+        description: "Hangul and grammar basics, lesson by lesson",
         keywords: ["grammar", "hangul", "basics", "korean"],
         match: { pathname: "/phrasebook", query: { mode: "foundations" } },
         showInSidebar: false,
@@ -418,6 +419,7 @@ export const navSections: NavSection[] = [
         label: "Reading",
         icon: BookOpenText,
         color: "text-teal-500",
+        description: "Short passages with comprehension quizzes",
         keywords: ["articles", "comprehension", "korean"],
         match: { pathname: "/phrasebook", query: { mode: "reading" } },
         showInSidebar: false,
@@ -437,6 +439,7 @@ export const navSections: NavSection[] = [
         label: "Scenarios",
         icon: Drama,
         color: "text-pink-500",
+        description: "Role-play real situations in a text chat",
         keywords: ["roleplay", "workplace", "situations", "korean"],
         showInSidebar: false,
       },
@@ -446,6 +449,7 @@ export const navSections: NavSection[] = [
         label: "Exam Prep",
         icon: GraduationCap,
         color: "text-orange-500",
+        description: "Mock interview, drills, and your exam script",
         keywords: ["topik", "interview", "test", "exam"],
         showInSidebar: false,
       },
@@ -827,8 +831,11 @@ export function isMoreRoute(pathname: string, searchParams?: NavSearchParams): b
 
 /**
  * Local navigation inside each workspace. Workspaces without an entry
- * (Overview, Learning, AI Assistant) navigate with their own page content —
- * the Learning Hub's cards, the chat's mode switcher.
+ * (Overview, AI Assistant) navigate with their own page content — the chat's
+ * mode switcher. Learning's tabs are its everyday areas; the rest of the
+ * workspace (Foundations, Reading, Scenarios, Exam Prep, History) is the
+ * Learning Hub's Library list. `WorkspaceTabs` matches without search params,
+ * so Phrasebook stays lit in its Reading/Foundations modes.
  */
 export const workspaceTabs: Partial<Record<NavSectionId, NavItem[]>> = {
   plan: ["goals-tasks", "goals-goals", "goals-calendar", "goals-overview", "plan-inbox"].map(
@@ -836,6 +843,14 @@ export const workspaceTabs: Partial<Record<NavSectionId, NavItem[]>> = {
   ),
   memory: ["memory-notes", "memory-hub", "review-timeline"].map(navItem),
   grow: ["growth-hub", "growth-habits", "growth-journal", "grow-progress"].map(navItem),
+  learn: [
+    "learn-hub",
+    "learn-practice",
+    "learn-vocab",
+    "learn-phrasebook",
+    "learn-korean-coach",
+    "learn-listening",
+  ].map(navItem),
   apps: [...["apps-catalog", "apps-vault"].map(navItem), navItem("apps-luyra")],
 }
 

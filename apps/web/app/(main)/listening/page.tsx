@@ -18,6 +18,7 @@ import {
 import { motion } from "motion/react"
 
 import { PageHero } from "@/components/app/page-hero"
+import { WorkspaceTabs } from "@/components/layout/WorkspaceTabs"
 import { Button } from "@/components/ui/button"
 import { ChipSelect } from "@/components/ui/chip-select"
 import { ErrorBanner } from "@/components/ui/error-banner"
@@ -45,9 +46,12 @@ const PLAYBACK_RATES = [
 
 export default function ListeningPage() {
   return (
-    <Suspense fallback={null}>
-      <ListeningPageContent />
-    </Suspense>
+    <div className="space-y-6">
+      <WorkspaceTabs sectionId="learn" />
+      <Suspense fallback={null}>
+        <ListeningPageContent />
+      </Suspense>
+    </div>
   )
 }
 

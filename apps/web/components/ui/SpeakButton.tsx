@@ -69,17 +69,19 @@ export function SpeakButton({
 
   return (
     <button
+      type="button"
       onClick={handleSpeak}
       disabled={loading || playing}
       title={title}
+      aria-label={title}
       // The ::after layer widens the tap area to ~44px on phones without
       // changing the icon's visual size or the surrounding layout.
       className={`relative inline-flex items-center justify-center rounded-full p-1.5 text-muted-foreground after:absolute after:-inset-2 after:content-[''] transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50 ${className}`}
     >
       {loading ? (
-        <Loader2 className="size-3.5 animate-spin" />
+        <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
       ) : (
-        <Volume2 className={`size-3.5 ${playing ? "text-indigo-500" : ""}`} />
+        <Volume2 aria-hidden="true" className={`size-3.5 ${playing ? "text-indigo-500" : ""}`} />
       )}
     </button>
   )

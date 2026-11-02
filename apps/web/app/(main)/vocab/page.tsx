@@ -17,6 +17,7 @@ import { motion } from "motion/react"
 import { toast } from "sonner"
 
 import { PageHero } from "@/components/app/page-hero"
+import { WorkspaceTabs } from "@/components/layout/WorkspaceTabs"
 import { BlurFade } from "@/components/ui/blur-fade"
 import { Button } from "@/components/ui/button"
 import { ErrorBanner } from "@/components/ui/error-banner"
@@ -58,9 +59,12 @@ const itemVariants = {
 
 export default function VocabPage() {
   return (
-    <Suspense fallback={null}>
-      <VocabPageContent />
-    </Suspense>
+    <div className="space-y-6">
+      <WorkspaceTabs sectionId="learn" />
+      <Suspense fallback={null}>
+        <VocabPageContent />
+      </Suspense>
+    </div>
   )
 }
 

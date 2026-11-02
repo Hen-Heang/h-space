@@ -5,6 +5,7 @@ import Link from "next/link"
 import { BookOpenCheck, Drama, Flame, Headphones, Mic, Settings2 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
+import { WorkspaceTabs } from "@/components/layout/WorkspaceTabs"
 import { Badge } from "@/components/ui/badge"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -17,6 +18,15 @@ import { getApiErrorMessage, koreanCoachApi, type KoreanCoachDashboard } from "@
 // history) moved to /korean-coach/history and /korean-coach/preferences;
 // see docs/HENGO_SMART_LEARNING_PLAN.md for the reasoning.
 export default function KoreanCoachDashboardPage() {
+  return (
+    <div className="space-y-5">
+      <WorkspaceTabs sectionId="learn" />
+      <KoreanCoachDashboard />
+    </div>
+  )
+}
+
+function KoreanCoachDashboard() {
   useSessionTimer("korean_coach")
   const [dashboard, setDashboard] = useState<KoreanCoachDashboard | null>(null)
   const [loading, setLoading] = useState(true)
