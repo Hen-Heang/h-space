@@ -32,6 +32,10 @@ export function useAnswerMode(
     errorKind: speech.errorKind,
   })
   const typingForced = isTypingForced(access)
+  // Latch: once recording failed (blocked, no mic), stay on typing even after
+  // a retry or reset clears the error — until the learner chooses the mic
+  // again ("Use the microphone" / "Try the microphone again").
+  if (typingForced && !typingRequested) setTypingRequested(true)
   const typing = typingRequested || typingForced
   return { access, typing, typingForced, setTypingRequested, canAutoListen: !typing }
 }

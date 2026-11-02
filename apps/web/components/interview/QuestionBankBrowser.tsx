@@ -84,7 +84,7 @@ export function QuestionBankBrowser({
         <div>
           <Button variant="ghost" onClick={onBack} className="-ml-3 rounded-xl">
             <ArrowLeft className="mr-2 size-4" />
-            Back to dashboard
+            Back to practice
           </Button>
           <h2 className="mt-2 text-2xl font-bold text-foreground">Question Bank</h2>
           <p className="mt-1 text-sm text-muted-foreground">

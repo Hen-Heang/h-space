@@ -79,9 +79,10 @@ The shared question bank seeds in `supabase/seed/` (`kori_interview_questions.sq
 
 ## Using the app to practice
 
-- **Mock Interview** (`/interview` → Start Interview) — an AI examiner asks one question at a time; answer by voice or typed text and get feedback after each turn. Finish a session to get a scorecard against the four exam criteria; scores build a trend over time.
-- **Speaking Drill** (`/interview/speaking`) — Today's 5 from the question bank: listen, answer, get an AI check against the transcript, retry once. Answers sync to `kori_interview_answers`.
-- **Listening Drill** (`/interview/listening`) — audio-only questions; answer out loud, then reveal the transcript with word notes.
+- **Exam Prep home** (`/interview`) — four cards: Today's practice, Mock interview, My exam script, Progress. Everything else (question bank, listening practice, Q&A review, study plan, tips, study pack, vocabulary) is under "More practice & materials".
+- **Mock Interview** (home → Mock interview; Practice or Exam Simulation) — an AI examiner asks one question at a time; answer by voice or typed text and get feedback after each turn. Finish a session to get a scorecard against the four exam criteria; scores build a trend over time.
+- **Answer practice** (`/interview/speaking`, `components/interview/AnswerPracticeSession.tsx`) — one flow for every question: **Listen → Answer → Review → Retry**. Opens straight into Today's 5 (resuming at the first question not done today). Review is either an AI **check** (scored against the transcript, saved to `kori_interview_answers`, updates question progress) or a free **compare** with the bank's model answer. "Change questions" switches to weak questions, questions picked from the bank, or AI questions, and sets the level. State machine: `lib/answer-practice.ts`.
+- **Listening practice** (`/interview/listening`) — the same session with the listening preset: the Korean text stays hidden until review, play limits and slow replay follow the listening level (Easy → Exam Mode), "Reveal & compare" comes first, and checked answers are saved as `listening_drill`.
 - **Repeat Drill** (`/interview/repeat`) — listen & repeat: the app speaks a sentence from your script (or a key phrase), the mic opens, you say it back, and missed words are marked word by word (`lib/repeat-drill.ts`, matched locally — no AI call). Without speech recognition (or by choice) you can type the sentence instead; that checks recall, not speaking.
 - **Write my script** (`/interview/script`) — the Google-Docs-style editor for the 7-section script and Q&A prep, described above.
 - **Study Pack** — vocabulary, key phrases, and likely questions for the weather topic, each with TTS playback.
