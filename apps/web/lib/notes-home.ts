@@ -50,10 +50,7 @@ export function projectIdOf(note: NoteMeta, knownProjectIds?: Set<string>): stri
  * Real projects (in the order given) with their note counts, followed by a
  * "No project" bucket when any note has no (known) project.
  */
-export function groupNotesIntoProjects(
-  notes: NoteMeta[],
-  projects: Project[] = [],
-): NoteProject[] {
+export function groupNotesIntoProjects(notes: NoteMeta[], projects: Project[] = []): NoteProject[] {
   const known = new Set(projects.map((p) => p.id))
   const byProject = new Map<string, NoteMeta[]>()
   for (const note of notes) {
@@ -140,8 +137,7 @@ export function buildNoteSearchResults({
   const projectHits =
     normalizedQuery && !scopedProject
       ? projects.filter(
-          (p) =>
-            !p.isInbox && includesQuery([p.name, p.description, ...p.tags], normalizedQuery),
+          (p) => !p.isInbox && includesQuery([p.name, p.description, ...p.tags], normalizedQuery),
         )
       : []
 

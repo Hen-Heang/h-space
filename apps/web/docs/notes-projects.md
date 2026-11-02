@@ -10,7 +10,7 @@ and section 4 of the H-Space Design Handoff.
   scope ("Searching: All notes" / "In: <project>") over server-side full-text results, Recently
   opened projects (3), All projects with status filters, the full note list (type + pinned
   filters, "No project" filter), and a side column — Quick Capture (→ Inbox, `item_type =
-  'note'`), Pinned, Recent (5), and Reference notes. Selection logic: `lib/notes-home.ts`.
+'note'`), Pinned, Recent (5), and Reference notes. Selection logic: `lib/notes-home.ts`.
 - **Projects** (`kori_note_projects`, `lib/note-projects.ts`, `lib/api/note-projects.ts`,
   `hooks/useNoteProjects.ts`): name (required), description, type, status, tags, repository/docs
   link, start/target dates, `last_opened_at`. New/Edit dialog: `ProjectFormDialog.tsx`.
@@ -25,7 +25,7 @@ and section 4 of the H-Space Design Handoff.
 
 - Supabase owns projects, same as notes. RLS: `(select auth.uid()) = user_id` on all operations.
 - `kori_notes.project_id` is nullable. A composite FK `(project_id, user_id) →
-  kori_note_projects(id, user_id)` guarantees a note can only point at a project **owned by the
+kori_note_projects(id, user_id)` guarantees a note can only point at a project **owned by the
   same user**, enforced in the database. Deleting a project sets `project_id` to null (notes stay).
 - Notes with no project (every pre-existing note) appear under **No project** and in All notes.
 

@@ -45,7 +45,13 @@ import {
   selectRecentNotes,
   type NoteProject,
 } from "@/lib/notes-home"
-import { filterNotesMeta, NOTE_TYPES, sortNotesMeta, type NoteMeta, type NoteType } from "@/lib/notes"
+import {
+  filterNotesMeta,
+  NOTE_TYPES,
+  sortNotesMeta,
+  type NoteMeta,
+  type NoteType,
+} from "@/lib/notes"
 import { cn } from "@/lib/utils"
 
 const sectionTitle = "text-base font-semibold tracking-tight text-foreground"
@@ -83,8 +89,7 @@ function NoteRow({
       <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
         <NoteTypeChip noteType={note.noteType} />
         {projectName && <span className="max-w-[16rem] truncate">{projectName}</span>}
-        {!compact &&
-          (note.tags ?? []).slice(0, 3).map((tag) => <span key={tag}>#{tag}</span>)}
+        {!compact && (note.tags ?? []).slice(0, 3).map((tag) => <span key={tag}>#{tag}</span>)}
         {updated && <span>Updated {updated}</span>}
       </span>
     </Link>
@@ -467,7 +472,11 @@ export function NotesHome({
                       All projects · <span className="tabular-nums">{projects.length}</span>
                     </h2>
                     {projects.length > 0 && (
-                      <div role="group" aria-label="Project status" className="flex flex-wrap gap-1.5">
+                      <div
+                        role="group"
+                        aria-label="Project status"
+                        className="flex flex-wrap gap-1.5"
+                      >
                         {STATUS_FILTERS.map((s) => (
                           <FilterChip
                             key={s.value}
@@ -608,11 +617,7 @@ export function NotesHome({
               )}
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs text-muted-foreground">Saved to Inbox</span>
-                <Button
-                  className="h-11"
-                  onClick={saveCapture}
-                  disabled={captureMutation.isPending}
-                >
+                <Button className="h-11" onClick={saveCapture} disabled={captureMutation.isPending}>
                   {captureMutation.isPending ? "Saving…" : "Capture"}
                 </Button>
               </div>
@@ -651,8 +656,8 @@ export function NotesHome({
                 Knowledge resources
               </h2>
               <p className="text-sm text-muted-foreground">
-                Docs links, repos, commands and prompts. These are regular notes with the
-                Reference type.
+                Docs links, repos, commands and prompts. These are regular notes with the Reference
+                type.
               </p>
               <button
                 type="button"

@@ -26,7 +26,13 @@ import {
   type ProjectInput,
 } from "@/lib/note-projects"
 import { selectRecentNotes } from "@/lib/notes-home"
-import { filterNotesMeta, NOTE_TYPES, sortNotesMeta, type NoteMeta, type NoteType } from "@/lib/notes"
+import {
+  filterNotesMeta,
+  NOTE_TYPES,
+  sortNotesMeta,
+  type NoteMeta,
+  type NoteType,
+} from "@/lib/notes"
 import { cn } from "@/lib/utils"
 
 const panel = "rounded-xl border border-border bg-card"
@@ -223,10 +229,12 @@ export function ProjectWorkspace({ project, notes }: { project: Project; notes: 
               Overview
             </TabsTrigger>
             <TabsTrigger value="notes" className="h-11 px-3">
-              Notes <span className="tabular-nums text-muted-foreground">{projectNotes.length}</span>
+              Notes{" "}
+              <span className="tabular-nums text-muted-foreground">{projectNotes.length}</span>
             </TabsTrigger>
             <TabsTrigger value="decisions" className="h-11 px-3">
-              Decisions <span className="tabular-nums text-muted-foreground">{decisions.length}</span>
+              Decisions{" "}
+              <span className="tabular-nums text-muted-foreground">{decisions.length}</span>
             </TabsTrigger>
             <TabsTrigger value="mentor" className="h-11 px-3">
               Mentor Feedback
@@ -294,7 +302,10 @@ export function ProjectWorkspace({ project, notes }: { project: Project; notes: 
             </section>
 
             {decisions.length > 0 && (
-              <section aria-labelledby="ws-latest-decision" className={cn(panel, "space-y-1.5 p-4")}>
+              <section
+                aria-labelledby="ws-latest-decision"
+                className={cn(panel, "space-y-1.5 p-4")}
+              >
                 <h3 id="ws-latest-decision" className={cardTitle}>
                   Latest decision
                 </h3>

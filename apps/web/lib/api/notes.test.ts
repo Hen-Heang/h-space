@@ -23,7 +23,10 @@ vi.mock("@/lib/supabase", () => {
         },
         insert: (payload: Record<string, unknown>) => {
           insertPayloads.push(payload)
-          return chain(() => ({ data: { ...payload, id: "n1", created_at: "", updated_at: "" }, error: null }))
+          return chain(() => ({
+            data: { ...payload, id: "n1", created_at: "", updated_at: "" },
+            error: null,
+          }))
         },
       }),
     },

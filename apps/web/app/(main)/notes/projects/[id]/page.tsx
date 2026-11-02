@@ -74,7 +74,10 @@ export default function ProjectWorkspacePage() {
   return (
     <div className="pb-12">
       {notesError && (
-        <p role="alert" className="mb-4 rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">
+        <p
+          role="alert"
+          className="mb-4 rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive"
+        >
           {notesError} The project&apos;s notes may be missing below.
         </p>
       )}

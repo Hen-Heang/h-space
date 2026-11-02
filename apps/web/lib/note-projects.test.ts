@@ -56,13 +56,17 @@ describe("validateProjectInput", () => {
   })
 
   it("rejects an over-long name", () => {
-    expect(validateProjectInput({ name: "x".repeat(MAX_PROJECT_NAME_LENGTH + 1) }).name).toBeTruthy()
+    expect(
+      validateProjectInput({ name: "x".repeat(MAX_PROJECT_NAME_LENGTH + 1) }).name,
+    ).toBeTruthy()
   })
 
   it("rejects non-http links", () => {
     expect(validateProjectInput({ name: "a", repoUrl: "javascript:alert(1)" }).repoUrl).toBeTruthy()
     expect(validateProjectInput({ name: "a", repoUrl: "github.com/x" }).repoUrl).toBeTruthy()
-    expect(validateProjectInput({ name: "a", repoUrl: "https://github.com/x" }).repoUrl).toBeUndefined()
+    expect(
+      validateProjectInput({ name: "a", repoUrl: "https://github.com/x" }).repoUrl,
+    ).toBeUndefined()
   })
 
   it("rejects a target date before the start date", () => {
@@ -141,8 +145,18 @@ describe("project selection", () => {
 
   it("selects only the project's Decision notes, newest first", () => {
     const notes = [
-      makeNote({ slug: "d1", noteType: "decision", projectId: "p1", updatedAt: "2026-02-01T00:00:00.000Z" }),
-      makeNote({ slug: "d2", noteType: "decision", projectId: "p1", updatedAt: "2026-03-01T00:00:00.000Z" }),
+      makeNote({
+        slug: "d1",
+        noteType: "decision",
+        projectId: "p1",
+        updatedAt: "2026-02-01T00:00:00.000Z",
+      }),
+      makeNote({
+        slug: "d2",
+        noteType: "decision",
+        projectId: "p1",
+        updatedAt: "2026-03-01T00:00:00.000Z",
+      }),
       makeNote({ slug: "other-project", noteType: "decision", projectId: "p2" }),
       makeNote({ slug: "tech", noteType: "technical", projectId: "p1" }),
       makeNote({ slug: "loose", noteType: "decision", projectId: null }),

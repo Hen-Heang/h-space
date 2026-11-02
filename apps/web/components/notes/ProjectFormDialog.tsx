@@ -100,11 +100,7 @@ export function ProjectFormDialog({
           </DialogDescription>
         </DialogHeader>
         {open && (
-          <ProjectForm
-            project={project}
-            onCancel={() => onOpenChange(false)}
-            onSubmit={onSubmit}
-          />
+          <ProjectForm project={project} onCancel={() => onOpenChange(false)} onSubmit={onSubmit} />
         )}
       </DialogContent>
     </Dialog>
@@ -124,7 +120,11 @@ function ProjectForm({
   const [state, setState] = useState<FormState>(() => initialState(project))
   const [showErrors, setShowErrors] = useState(false)
   const [moreOpen, setMoreOpen] = useState(
-    () => editing && Boolean(project?.tags.length || project?.repoUrl || project?.startDate || project?.targetDate),
+    () =>
+      editing &&
+      Boolean(
+        project?.tags.length || project?.repoUrl || project?.startDate || project?.targetDate,
+      ),
   )
   const [saving, setSaving] = useState(false)
   const [submitError, setSubmitError] = useState("")
