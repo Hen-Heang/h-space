@@ -50,6 +50,7 @@ vi.mock("@/lib/quick-capture-bus", () => ({
 }))
 
 import { QuickSwitcher } from "@/components/app/quick-switcher"
+import { DesktopHeader } from "./DesktopHeader"
 import { DesktopSidebar } from "./DesktopSidebar"
 import { getHeaderTrail } from "./header-trail"
 import { MobileBottomNav } from "./MobileBottomNav"
@@ -407,6 +408,15 @@ describe("DesktopSidebar", () => {
   it("still gives Account access through the profile menu", () => {
     setup("/practice", false)
     expect(screen.getByRole("button", { name: "Account menu" })).toBeTruthy()
+  })
+})
+
+// ─── Desktop header ───────────────────────────────────────────────────────────
+
+describe("DesktopHeader", () => {
+  it("leaves the Account menu to the sidebar so it isn't shown twice", () => {
+    renderWithTooltips(<DesktopHeader pathname="/practice" searchParams={undefined} />)
+    expect(screen.queryByRole("button", { name: "Account menu" })).toBeNull()
   })
 })
 
