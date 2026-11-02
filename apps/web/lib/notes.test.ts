@@ -119,3 +119,12 @@ describe("sortNotesMeta", () => {
     expect(sortNotesMeta(notes).map((n) => n.slug)).toEqual(["pinned-old", "new", "old"])
   })
 })
+
+describe("isReservedNoteSlug", () => {
+  it("blocks slugs that collide with /notes routes", async () => {
+    const { isReservedNoteSlug } = await import("./notes")
+    expect(isReservedNoteSlug("new")).toBe(true)
+    expect(isReservedNoteSlug(" Projects ")).toBe(true)
+    expect(isReservedNoteSlug("project-notes")).toBe(false)
+  })
+})
