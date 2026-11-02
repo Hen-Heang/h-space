@@ -19,7 +19,8 @@ import { clearAuth, getUserEmail } from "@/lib/auth-store"
 import { cn } from "@/lib/utils"
 
 /**
- * Account entry point for the sidebar and desktop header. Replaces the bare
+ * Account entry point for the desktop sidebar and tablet rail (the top bar
+ * deliberately has none, so it isn't shown twice). Replaces the bare
  * avatar-linking-to-settings that used to sit in every header — profile,
  * theme and sign out now live behind one menu.
  */
