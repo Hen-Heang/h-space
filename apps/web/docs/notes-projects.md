@@ -32,8 +32,9 @@ kori_note_projects(id, user_id)` guarantees a note can only point at a project *
 ## Migration and deploy order
 
 Migration: `supabase/migrations/20261102120000_note_projects.sql` (rollback SQL in its header).
-It is **not applied automatically** — the database is shared with Orbit/DailyGoalMap; take a
-backup and apply it deliberately.
+**Applied to the live `hengo` project on 2026-11-02** (recorded there as `20261102031849_note_projects`).
+The database is shared with Orbit/DailyGoalMap; apply future changes deliberately, after a
+backup.
 
 The app tolerates the migration being absent, so either order is safe:
 
