@@ -481,7 +481,7 @@ describe("public My Apps card", () => {
     render(<MyAppsSection />)
     const card = screen.getByRole("heading", { name: "Luyra" }).closest("article")!
     const appLink = within(card).getByRole("link", { name: /Open app/ })
-    expect(appLink.getAttribute("href")).toBe("https://luyra.henheang.site/")
+    expect(appLink.getAttribute("href")).toBe("https://luyra.henheang.site/finance")
     expect(appLink.getAttribute("target")).toBe("_blank")
     expect(appLink.getAttribute("rel")).toBe("noopener noreferrer")
     expect(

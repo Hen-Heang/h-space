@@ -1,3 +1,10 @@
+/**
+ * Luyra Finance's landing page. Luyra deploys separately; H-Space only links to
+ * it. Shared by the My Apps cards and the nav registry so every Finance entry
+ * point opens the same place.
+ */
+export const LUYRA_FINANCE_URL = "https://luyra.henheang.site/finance"
+
 export type HSpaceProject = {
   id: "hengo-learning" | "h-vault" | "luyra" | "h-phsar" | "portfolio"
   name: string
@@ -46,7 +53,7 @@ export const hSpaceProjects: HSpaceProject[] = [
     description: "Manage income, expenses, budgets, savings, financial analytics, and money goals.",
     stack: ["Next.js 16", "TypeScript", "Supabase Auth", "Neon Postgres", "Vercel Workflow"],
     links: [
-      { label: "Open app", href: "https://luyra.henheang.site/", kind: "app" },
+      { label: "Open app", href: LUYRA_FINANCE_URL, kind: "app" },
       { label: "GitHub", href: "https://github.com/Hen-Heang/luyra-web", kind: "github" },
     ],
   },

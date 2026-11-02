@@ -39,6 +39,8 @@ import {
   Zap,
 } from "lucide-react"
 
+import { LUYRA_FINANCE_URL } from "@/lib/projects"
+
 // Single source of truth for the whole nav surface — desktop sidebar, tablet
 // rail, mobile bottom bar, the "More" sheet, and the Quick Switcher all render
 // from this file. Adding a new module later (Career, Fitness, …) means adding
@@ -658,13 +660,15 @@ export const navSections: NavSection[] = [
       appsItem,
       vaultItem,
       {
+        // The one Finance entry point. Luyra deploys separately, so this opens
+        // it in a new tab. The id stays "apps-luyra" (stored nav state).
         id: "apps-luyra",
-        href: "https://luyra.henheang.site/",
-        label: "Luyra",
+        href: LUYRA_FINANCE_URL,
+        label: "Finance",
         icon: WalletCards,
         color: "text-emerald-500",
-        description: "Personal finance: income, expenses, budgets, savings, and reports",
-        keywords: ["finance", "money", "budget", "transactions", "savings"],
+        description: "Luyra: income, expenses, budgets, savings, and reports",
+        keywords: ["luyra", "finance", "money", "budget", "transactions", "savings"],
         match: { pathname: "/__external_luyra__" },
       },
     ],
