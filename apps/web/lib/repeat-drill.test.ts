@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { INTERVIEW_TOPICS } from "./interview"
 import {
   compareRepeat,
+  REPEAT_GRADE_LABELS,
   phrasesToRepeatSentences,
   scriptToRepeatSentences,
   splitIntoSentences,
@@ -98,5 +99,13 @@ describe("compareRepeat", () => {
     const shuffled = "갑니다 학교에 오늘 저는"
     const result = compareRepeat(target, shuffled)
     expect(result.similarity).toBeLessThan(90)
+  })
+})
+
+describe("REPEAT_GRADE_LABELS", () => {
+  it("describes a transcript match, never a pronunciation verdict", () => {
+    for (const label of Object.values(REPEAT_GRADE_LABELS)) {
+      expect(label.toLowerCase()).not.toMatch(/perfect|pronunciation|완벽/)
+    }
   })
 })

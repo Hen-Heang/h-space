@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import {
   AlertCircle,
@@ -169,21 +169,32 @@ export default function InterviewPage() {
   const topic = INTERVIEW_TOPICS[0]
   const cfg = INTERVIEW_MODES[mode]
 
-  // Merge remote attempt history into the local trend. Best-effort: offline or
-  // pre-migration accounts just keep the local copy.
-  useEffect(() => {
-    let active = true
+  // Merge remote attempt history into the local trend. The local copy always
+  // renders; a failed sync is shown (with Retry) instead of being swallowed, so
+  // a short trend isn't mistaken for "no other attempts".
+  const [historySync, setHistorySync] = useState<"loading" | "ok" | "failed">("loading")
+  const historyActiveRef = useRef(true)
+  const syncHistory = useCallback(() => {
     interviewApi
       .listAttempts()
       .then((attempts) => {
-        if (!active || attempts.length === 0) return
-        setHistory(mergeScorecards(loadScorecards(), attempts.map(toScorecardRecord)))
+        if (!historyActiveRef.current) return
+        if (attempts.length > 0) {
+          setHistory(mergeScorecards(loadScorecards(), attempts.map(toScorecardRecord)))
+        }
+        setHistorySync("ok")
       })
-      .catch(() => {})
-    return () => {
-      active = false
-    }
+      .catch(() => {
+        if (historyActiveRef.current) setHistorySync("failed")
+      })
   }, [])
+  useEffect(() => {
+    historyActiveRef.current = true
+    syncHistory()
+    return () => {
+      historyActiveRef.current = false
+    }
+  }, [syncHistory])
 
   useEffect(
     () => () => {
@@ -495,6 +506,32 @@ export default function InterviewPage() {
               />
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-6 border-t border-border p-4 sm:p-5">
+              {historySync === "failed" && (
+                <div
+                  role="alert"
+                  className="flex flex-col gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <p className="flex items-start gap-2 text-sm text-foreground/90">
+                    <AlertCircle
+                      aria-hidden="true"
+                      className="mt-0.5 size-4 shrink-0 text-amber-600"
+                    />
+                    Couldn&apos;t load mock results saved to your account. Showing results from this
+                    device only.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setHistorySync("loading")
+                      syncHistory()
+                    }}
+                    className="h-10"
+                  >
+                    <RotateCcw aria-hidden="true" /> Retry
+                  </Button>
+                </div>
+              )}
               {/* Renders itself only after mount + when scorecards exist. */}
               <ScoreTrend records={history} />
               <InterviewProgressCard topicId={topic.id} />

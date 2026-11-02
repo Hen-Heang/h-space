@@ -7,6 +7,10 @@ import { motion } from "motion/react"
 
 import { PageHero } from "@/components/app/page-hero"
 import { AnalyticsCard } from "@/components/interview/AnalyticsCard"
+import {
+  MOCK_SCORECARD_DISCLAIMER,
+  ScoreHonestyNote,
+} from "@/components/interview/ScoreHonestyNote"
 import { AnimatedCircularProgressBar } from "@/components/ui/animated-circular-progress-bar"
 import { BlurFade } from "@/components/ui/blur-fade"
 import { Button } from "@/components/ui/button"
@@ -99,7 +103,7 @@ export function EvaluationSummary({
           headingLevel="h2"
           eyebrow={`Mock Interview · ${mode.label} · Result`}
           title="Your Evaluation"
-          description="An overall read on this session across the four official exam criteria — speaking, pronunciation, vocabulary, and confidence. Practice again to push each score up."
+          description="An AI read of this session's transcript against the four exam criteria — speaking, pronunciation, vocabulary, and confidence. Treat it as practice feedback, not an official grade."
           stats={[
             { label: "Overall", value: overall ? `${overall.toFixed(1)} / 5` : "—" },
             { label: "Mode", value: mode.label },
@@ -162,6 +166,7 @@ export function EvaluationSummary({
                 No scores were returned — see the summary below.
               </p>
             )}
+            {scores.length > 0 && <ScoreHonestyNote>{MOCK_SCORECARD_DISCLAIMER}</ScoreHonestyNote>}
           </CardContent>
         </Card>
       </motion.div>

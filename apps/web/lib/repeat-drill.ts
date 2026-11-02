@@ -22,6 +22,18 @@ export interface RepeatWordMark {
 
 export type RepeatGrade = "perfect" | "good" | "retry"
 
+/**
+ * What each grade tells the learner. The grade compares a speech-to-text (or
+ * typed) transcript with the target, so the labels describe a word match and
+ * must never claim pronunciation quality. The "perfect" id is kept because
+ * saved last-session summaries count it.
+ */
+export const REPEAT_GRADE_LABELS: Record<RepeatGrade, string> = {
+  perfect: "Matched the sentence",
+  good: "Close — check the missed words",
+  retry: "Listen once more and try again",
+}
+
 export interface RepeatComparison {
   /** Target-sentence words in order, marked hit/miss. */
   marks: RepeatWordMark[]
