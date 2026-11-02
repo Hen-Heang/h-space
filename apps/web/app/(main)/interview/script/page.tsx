@@ -5,7 +5,6 @@ import Link from "next/link"
 import {
   ArrowLeft,
   BookOpenText,
-  Check,
   ChevronDown,
   ChevronUp,
   ClipboardCopy,
@@ -18,9 +17,12 @@ import {
   Languages,
   ListTree,
   MessagesSquare,
+  MoreHorizontal,
   Plus,
+  Repeat2,
   Trash2,
 } from "lucide-react"
+import { toast } from "sonner"
 
 import {
   AlertDialog,
@@ -32,7 +34,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { ListenRepeatPractice } from "@/components/interview/ListenRepeatPractice"
 import { Badge } from "@/components/ui/badge"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { SpeakButton } from "@/components/ui/SpeakButton"
 import { Button } from "@/components/ui/button"
 import { interviewApi } from "@/lib/api"
@@ -49,6 +59,15 @@ import { SCRIPT_DUE_LABEL } from "@/lib/study-plan"
 import { cn } from "@/lib/utils"
 
 const topic = INTERVIEW_TOPICS[0]
+const SCRIPT_MODES = ["script", "qa", "read", "repeat"] as const
+type ScriptMode = (typeof SCRIPT_MODES)[number]
+
+const subscribeNever = () => () => undefined
+function readTabParam(): ScriptMode | null {
+  const tab = new URLSearchParams(window.location.search).get("tab")
+  return tab && (SCRIPT_MODES as readonly string[]).includes(tab) ? (tab as ScriptMode) : null
+}
+
 const STORAGE_KEY = `koriai-interview-script:${topic.id}`
 const STORAGE_UPDATED_AT_KEY = `${STORAGE_KEY}:updated-at`
 // Custom (user-added) section definitions live separately from the section text
@@ -194,11 +213,15 @@ export default function InterviewScriptPage() {
   const [values, setValues] = useState<Record<string, string>>(loadInitial)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [synced, setSynced] = useState(false)
-  const [copied, setCopied] = useState(false)
   const [confirmClear, setConfirmClear] = useState(false)
   const [activeSection, setActiveSection] = useState<string>("")
   const [customSections, setCustomSections] = useState<CustomSection[]>(loadInitialCustom)
-  const [mode, setMode] = useState<"script" | "qa" | "read">("script")
+  // Deep link: /interview/script?tab=repeat (from /interview/repeat), qa, or
+  // read. Read as an external store so the server renders "script" and the
+  // client switches after hydration without a mismatch; a tap overrides it.
+  const urlTab = useSyncExternalStore(subscribeNever, readTabParam, () => null)
+  const [chosenMode, setMode] = useState<ScriptMode | null>(null)
+  const mode: ScriptMode = chosenMode ?? urlTab ?? "script"
   // Show/hide English support in both the Script and Q&A Prep views.
   const [showEnglish, setShowEnglish] = useState(true)
   // Starts from the hardcoded seed (instant, offline-safe) and upgrades to the
@@ -225,7 +248,6 @@ export default function InterviewScriptPage() {
       .then(setVersions)
       .catch(() => {})
   }, [])
-  const copyTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const syncTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Avoid a hydration mismatch: the server has no localStorage, so render the
@@ -241,7 +263,6 @@ export default function InterviewScriptPage() {
 
   useEffect(() => {
     return () => {
-      if (copyTimeout.current) clearTimeout(copyTimeout.current)
       if (syncTimeout.current) clearTimeout(syncTimeout.current)
     }
   }, [])
@@ -518,11 +539,9 @@ export default function InterviewScriptPage() {
     if (!exportDocument) return
     try {
       await navigator.clipboard.writeText(exportDocument)
-      setCopied(true)
-      if (copyTimeout.current) clearTimeout(copyTimeout.current)
-      copyTimeout.current = setTimeout(() => setCopied(false), 2000)
+      toast.success("Script copied")
     } catch {
-      // Clipboard blocked — download is the fallback.
+      toast.error("Couldn't copy — use Download instead.")
     }
   }
 
@@ -727,46 +746,34 @@ export default function InterviewScriptPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={copyAll}
-              aria-label={copied ? "Script copied" : "Copy script"}
-              disabled={!exportDocument}
-              className="h-8 rounded-lg font-bold disabled:opacity-40"
-            >
-              {copied ? (
-                <>
-                  <Check size={15} className="mr-1.5 text-blue-500" /> Copied
-                </>
-              ) : (
-                <>
-                  <ClipboardCopy size={15} className="mr-1.5" />{" "}
-                  <span className="hidden sm:inline">Copy</span>
-                </>
-              )}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={downloadTxt}
-              aria-label="Download script as text"
-              disabled={!exportDocument}
-              className="h-8 rounded-lg font-bold disabled:opacity-40"
-            >
-              <Download size={15} className="sm:mr-1.5" />{" "}
-              <span className="hidden sm:inline">Download</span>
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setConfirmClear(true)}
-              aria-label="Clear script"
-              disabled={!exportDocument}
-              className="h-8 rounded-lg border-destructive/30 font-bold text-destructive hover:bg-destructive/5 disabled:opacity-40"
-            >
-              <Trash2 aria-hidden="true" size={15} />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Script actions"
+                  className="size-10 rounded-lg"
+                >
+                  <MoreHorizontal aria-hidden="true" size={18} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onSelect={() => void copyAll()} disabled={!exportDocument}>
+                  <ClipboardCopy aria-hidden="true" /> Copy script
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={downloadTxt} disabled={!exportDocument}>
+                  <Download aria-hidden="true" /> Download as text
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setConfirmClear(true)}
+                  disabled={!exportDocument}
+                >
+                  <Trash2 aria-hidden="true" /> Clear script…
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <AlertDialog open={confirmClear} onOpenChange={setConfirmClear}>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -799,6 +806,7 @@ export default function InterviewScriptPage() {
               <button
                 type="button"
                 onClick={() => setMode("script")}
+                aria-pressed={mode === "script"}
                 className={cn(
                   "flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
                   mode === "script"
@@ -811,6 +819,7 @@ export default function InterviewScriptPage() {
               <button
                 type="button"
                 onClick={() => setMode("qa")}
+                aria-pressed={mode === "qa"}
                 className={cn(
                   "flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
                   mode === "qa"
@@ -823,6 +832,7 @@ export default function InterviewScriptPage() {
               <button
                 type="button"
                 onClick={() => setMode("read")}
+                aria-pressed={mode === "read"}
                 className={cn(
                   "flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
                   mode === "read"
@@ -831,6 +841,19 @@ export default function InterviewScriptPage() {
                 )}
               >
                 <BookOpenText size={14} strokeWidth={2.6} /> Read
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("repeat")}
+                aria-pressed={mode === "repeat"}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
+                  mode === "repeat"
+                    ? "bg-blue-600 text-white shadow"
+                    : "text-muted-foreground/70 hover:text-foreground",
+                )}
+              >
+                <Repeat2 size={14} strokeWidth={2.6} /> Listen &amp; Repeat
               </button>
             </div>
 
@@ -1267,6 +1290,11 @@ export default function InterviewScriptPage() {
                   </button>
                 </div>
               </article>
+            </div>
+          ) : mode === "repeat" ? (
+            // Practices the editor's live text, including edits not yet synced.
+            <div className="mx-auto w-full max-w-[816px]">
+              <ListenRepeatPractice scriptSections={values} />
             </div>
           ) : mode === "read" ? (
             <article className="mx-auto w-full max-w-[816px] rounded-sm bg-white px-6 py-10 shadow-[0_1px_3px_rgba(60,64,67,0.15),0_4px_24px_rgba(60,64,67,0.1)] ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/10 sm:px-14 sm:py-16 lg:px-[96px]">
