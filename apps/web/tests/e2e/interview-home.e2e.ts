@@ -124,10 +124,11 @@ test("Continue resumes today's 5 at the first question not yet done", async ({ p
   await expect(page.getByText("2 / 5")).toBeVisible()
 })
 
-test("the plain Speaking URL still opens its dashboard", async ({ page }) => {
+test("the plain Speaking URL opens today's 5 directly", async ({ page }) => {
   await installMocks(page)
   await page.goto("/interview/speaking")
-  await expect(page.getByRole("button", { name: "Practice Today's 5" })).toBeVisible()
+  await expect(page.getByText("Answer practice")).toBeVisible()
+  await expect(page.getByText("1 / 5")).toBeVisible()
 })
 
 test("mode picker switches the mock interview with the keyboard", async ({ page }) => {

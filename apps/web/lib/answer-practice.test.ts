@@ -5,10 +5,18 @@ import {
   answerPracticeReducer,
   canReplay,
   canSubmitAnswer,
+  checkedAttempts,
+  firstOpenIndex,
+  fromBankItem,
   initialAnswerPracticeState,
+  recordAttempt,
+  selectWeakQueue,
+  uniquePracticeQueue,
   type AnswerPracticeEvent,
   type AnswerPracticeState,
+  type PracticeQuestion,
 } from "./answer-practice"
+import type { QuestionBankItem, QuestionProgress } from "./interview-practice"
 
 const speaking = ANSWER_PRACTICE_PRESETS.speaking
 const listening = ANSWER_PRACTICE_PRESETS.listening
@@ -76,6 +84,16 @@ describe("answerPracticeReducer", () => {
     expect(failed.error).toBeNull()
   })
 
+  it("can still check an answer after comparing it", () => {
+    const compared = run([{ type: "audio-ended" }, { type: "compare" }], listening)
+    const checking = answerPracticeReducer(compared, { type: "submit" }, listening)
+    expect(checking.phase).toBe("checking")
+    const checked = answerPracticeReducer(checking, { type: "check-succeeded" }, listening)
+    expect(checked).toMatchObject({ phase: "review", review: "checked", attempts: 2 })
+    // A checked review can't be checked again without a new answer.
+    expect(answerPracticeReducer(checked, { type: "submit" }, listening)).toBe(checked)
+  })
+
   it("compares without a check and reveals the text", () => {
     const state = run([{ type: "audio-ended" }, { type: "compare" }], listening)
     expect(state.review).toBe("compared")
@@ -128,5 +146,134 @@ describe("ANSWER_PRACTICE_PRESETS", () => {
   it("uses session types the answers table already accepts", () => {
     expect(speaking.sessionType).toBe("speaking_drill")
     expect(listening.sessionType).toBe("listening_drill")
+  })
+})
+
+// ── Session helpers ────────────────────────────────────────────────────────
+
+function bankItem(id: string, overrides: Partial<QuestionBankItem> = {}): QuestionBankItem {
+  return {
+    id,
+    questionKo: `질문 ${id}`,
+    questionEn: `Question ${id}`,
+    sampleAnswerKo: `답변 ${id}`,
+    sampleAnswerEn: null,
+    category: "korean_summer",
+    difficulty: "normal",
+    priority: "recommended",
+    keywords: [],
+    displayOrder: 0,
+    ownedByUser: false,
+    ...overrides,
+  }
+}
+
+function progressRow(id: string, overrides: Partial<QuestionProgress> = {}): QuestionProgress {
+  return {
+    questionId: id,
+    timesPracticed: 1,
+    avgScore: 2.5,
+    lastScore: 2.5,
+    lastPracticedAt: "2026-11-01T10:00:00Z",
+    status: "practicing",
+    ...overrides,
+  }
+}
+
+describe("fromBankItem", () => {
+  it("keeps the id and model answer so checks update progress", () => {
+    expect(fromBankItem(bankItem("q1", { questionEn: null }))).toEqual({
+      id: "q1",
+      ko: "질문 q1",
+      en: "",
+      sampleAnswerKo: "답변 q1",
+      sampleAnswerEn: null,
+    })
+  })
+})
+
+describe("uniquePracticeQueue", () => {
+  it("drops repeats by id or Korean text and caps the size", () => {
+    const queue: PracticeQuestion[] = [
+      { id: "a", ko: "가", en: "" },
+      { id: "a", ko: "가", en: "" },
+      { ko: "나", en: "" },
+      { ko: "나", en: "" },
+      { ko: "다", en: "" },
+    ]
+    expect(uniquePracticeQueue(queue, 2).map((q) => q.ko)).toEqual(["가", "나"])
+  })
+})
+
+describe("selectWeakQueue", () => {
+  const questions = ["q1", "q2", "q3"].map((id) => bankItem(id))
+
+  it("is empty before anything was practiced", () => {
+    expect(selectWeakQueue(questions, {}, 5)).toEqual([])
+  })
+
+  it("leaves out strong questions", () => {
+    const queue = selectWeakQueue(
+      questions,
+      {
+        q1: progressRow("q1"),
+        q2: progressRow("q2", { status: "strong", avgScore: 4.6, timesPracticed: 4 }),
+      },
+      5,
+    )
+    expect(queue.map((q) => q.id)).toContain("q1")
+    expect(queue.map((q) => q.id)).not.toContain("q2")
+  })
+})
+
+describe("firstOpenIndex", () => {
+  const now = new Date("2026-11-02T00:30:00Z")
+  const queue = ["q1", "q2", "q3"].map((id) => fromBankItem(bankItem(id)))
+
+  it("skips questions already practiced today (Seoul)", () => {
+    const progress = { q1: progressRow("q1", { lastPracticedAt: "2026-11-02T00:10:00Z" }) }
+    expect(firstOpenIndex(queue, progress, now)).toBe(1)
+  })
+
+  it("starts over when every question is done", () => {
+    const progress = Object.fromEntries(
+      ["q1", "q2", "q3"].map((id) => [
+        id,
+        progressRow(id, { lastPracticedAt: "2026-11-02T00:10:00Z" }),
+      ]),
+    )
+    expect(firstOpenIndex(queue, progress, now)).toBe(0)
+  })
+
+  it("treats questions without an id (AI) as open", () => {
+    expect(firstOpenIndex([{ ko: "가", en: "" }], {}, now)).toBe(0)
+  })
+})
+
+describe("recordAttempt", () => {
+  const question: PracticeQuestion = { id: "q1", ko: "질문", en: "" }
+  const result = {
+    scores: {
+      speaking: 3,
+      grammar: 3,
+      vocabulary: 3,
+      pronunciation: 3,
+      confidence: 3,
+      naturalness: 3,
+    },
+    feedback: "",
+    correctedAnswer: "",
+    betterAlternative: "",
+    tip: "",
+  }
+
+  it("groups attempts per question and keeps their order", () => {
+    let runs = recordAttempt([], question, { answer: "첫 답", review: "compared" })
+    runs = recordAttempt(runs, question, { answer: "첫 답", review: "checked", result })
+    runs = recordAttempt(runs, { ko: "다른", en: "" }, { answer: "x", review: "compared" })
+    expect(runs).toHaveLength(2)
+    expect(runs[0].attempts.map((a) => a.review)).toEqual(["compared", "checked"])
+    expect(checkedAttempts(runs[0])).toHaveLength(1)
+    expect(checkedAttempts(runs[1])).toHaveLength(0)
   })
 })

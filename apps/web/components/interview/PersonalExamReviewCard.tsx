@@ -1,22 +1,40 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import {
   BookOpenText,
   ChevronDown,
   ChevronUp,
   Headphones,
   MessageCircleQuestion,
+  PencilLine,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { SpeakButton } from "@/components/ui/SpeakButton"
-import { PERSONAL_EXAM_QA, PERSONAL_EXAM_SCRIPT } from "@/lib/personal-exam-prep"
+import { useSavedScript } from "@/hooks/useExamPrepHome"
+import { INTERVIEW_TOPICS } from "@/lib/interview"
+import { PERSONAL_EXAM_QA } from "@/lib/personal-exam-prep"
 
+/**
+ * Real-story Q&A (curated reference) plus the learner's own script. The Script
+ * tab reads the script editor's newest copy — device or account — so it never
+ * disagrees with what the learner wrote; blank sections show the drafted text.
+ */
 export function PersonalExamReviewCard() {
   const [mode, setMode] = useState<"script" | "qa">("qa")
+  const topic = INTERVIEW_TOPICS[0]
+  const saved = useSavedScript(topic.id)
+  const scriptSections = (topic.scriptOutline ?? [])
+    .map((section, index) => {
+      const savedText = saved.snapshot?.sections[section.id] ?? ""
+      const text = savedText.trim() ? savedText : (topic.scriptSeed?.[section.id] ?? "")
+      return { id: section.id, title: `${index}. ${section.titleKo}`, text }
+    })
+    .filter((section) => section.text.trim())
   const [openQuestion, setOpenQuestion] = useState<string | null>(PERSONAL_EXAM_QA[0]?.id ?? null)
 
   return (
@@ -172,11 +190,20 @@ export function PersonalExamReviewCard() {
           </div>
         ) : (
           <div className="mt-6 space-y-3">
-            <p className="max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
-              This is the short personal version. Seonyudo and Han River cycling stay outside the
-              main script as backup stories for follow-up questions.
-            </p>
-            {PERSONAL_EXAM_SCRIPT.map((section) => (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
+                {saved.snapshot?.updatedAt
+                  ? "Your script from the editor, as last saved."
+                  : "Your drafted script — edit it in My exam script."}
+                {saved.syncFailed && " Showing this device's copy."}
+              </p>
+              <Button asChild variant="outline" size="sm" className="h-10 shrink-0">
+                <Link href="/interview/script">
+                  <PencilLine aria-hidden="true" /> Edit script
+                </Link>
+              </Button>
+            </div>
+            {scriptSections.map((section) => (
               <div
                 key={section.id}
                 className="rounded-xl border border-border bg-background/60 p-4 sm:p-5"

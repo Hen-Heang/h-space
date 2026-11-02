@@ -1,9 +1,3 @@
-export interface PersonalScriptSection {
-  id: string
-  title: string
-  text: string
-}
-
 export interface PersonalExamQA {
   id: string
   question: string
@@ -13,53 +7,8 @@ export interface PersonalExamQA {
   answerKeywords: string[]
   note?: string
 }
-
-// Final script for the 제6회 topic "한국에 온 후 새로 생긴 습관/취미" (Notion:
-// "K-Specialist 6th — Henry" MAIN SCRIPT). Keep this as the speaking source of
-// truth for the personal Exam Review card. Memory order:
-// 교통 → 날씨 → 분리배출/요리 → 운동 → 친구/여행 → 한국어 → 변화.
-export const PERSONAL_EXAM_SCRIPT: PersonalScriptSection[] = [
-  {
-    id: "opening",
-    title: "0. 인사 · 주제 소개",
-    text: "안녕하세요. 오늘은 한국에 온 후 새로 생긴 습관과 취미에 대해 말씀드릴게요. 한국에 온 지 거의 1년이 되었어요. 그동안 제 생활이 많이 달라졌어요. 예전에는 하지 않았던 일들이 지금은 제 습관이 되었어요.",
-  },
-  {
-    id: "transport",
-    title: "1. 교통 습관",
-    text: "캄보디아에서는 출근하거나 밖에 갈 때 보통 오토바이나 차를 이용했어요. 하지만 한국에서는 매일 걸어서 출근해요. 멀리 갈 때는 버스나 지하철을 이용해요. 처음에는 지하철 노선이 복잡해서 조금 어려웠어요. 하지만 지금은 혼자서도 잘 다닐 수 있어요.",
-  },
-  {
-    id: "weather-check",
-    title: "2. 날씨 확인 습관",
-    text: "그리고 밖에 나가기 전에 날씨를 꼭 확인해요. 비가 오는지, 눈이 오는지, 많이 추운지 확인해요. 그래서 우산이나 옷을 미리 준비해요. 이것도 한국에 와서 생긴 새로운 습관이에요.",
-  },
-  {
-    id: "recycling-cooking",
-    title: "3. 분리배출과 요리",
-    text: "또 하나는 쓰레기 분리배출이에요. 캄보디아에서는 쓰레기를 많이 나누지 않았어요. 하지만 한국에서는 음식물 쓰레기와 재활용을 따로 버려야 해요. 처음에는 조금 헷갈렸어요. 하지만 지금은 버리기 전에 꼭 확인해요. 이 습관 때문에 환경도 더 생각하게 되었어요. 음식 습관도 조금 바뀌었어요. 예전에는 밖에서 사 먹거나 배달을 많이 했어요. 하지만 요즘은 가끔 집에서 직접 요리해요. 이제는 간단한 음식은 혼자서 만들 수 있어요.",
-  },
-  {
-    id: "exercise",
-    title: "4. 운동 취미",
-    text: "그리고 한국에 온 후 새로운 취미도 생겼어요. 예전에는 배구와 축구를 좋아했어요. 요즘은 산책, 조깅, 자전거 타기를 좋아해요. 퇴근 후나 주말에는 여의도공원에서 자주 걷거나 조깅을 해요. 특히 한강에서 자전거 타는 것을 정말 좋아해요. 자전거를 타면서 한강을 보면 기분이 정말 상쾌해요. 운동을 하고 나면 조금 피곤하지만 기분은 좋아요.",
-  },
-  {
-    id: "friends-travel",
-    title: "5. 친구와 새로운 곳 가기",
-    text: "또 한국에 살면서 새로운 캄보디아 친구들도 만났어요. 쉬는 날에는 친구들과 새로운 곳에 가 보기도 해요. 수원, 대전, 부산 같은 곳에도 가 봤어요. 친구들도 만나고 한국의 여러 곳도 볼 수 있어서 좋아요.",
-  },
-  {
-    id: "korean-study",
-    title: "6. 한국어 공부 습관",
-    text: "마지막으로, 한국어 공부도 제 습관이 되었어요. 회사와 일상생활에서 한국어가 필요해서 매일 조금씩 공부하고 있어요. 처음에는 듣기와 말하기가 많이 어려웠어요. 하지만 지금은 예전보다 조금 더 잘 이해할 수 있어요.",
-  },
-  {
-    id: "closing",
-    title: "7. 마무리",
-    text: "한국에 오기 전에는 이런 습관이 많지 않았어요. 하지만 한국에서 생활하면서 혼자 할 수 있는 일이 많아졌어요. 그리고 건강한 습관도 많이 생겼어요. 이런 작은 변화들이 저에게 좋은 경험이 되었다고 생각해요. 앞으로도 좋은 습관을 계속 유지하고, 한국에서 새로운 경험도 많이 해 보고 싶어요. 감사합니다.",
-  },
-]
+// The main script itself lives in lib/interview.ts (HABITS_SCRIPT_SEED, the
+// script editor's draft); the review card reads the learner's saved copy.
 
 // Catch → Understand → Short Answer → Follow-up. Answers stay at 1–3 short
 // sentences and reuse the script's wording so memorized Q&A never conflicts

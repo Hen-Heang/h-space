@@ -167,109 +167,133 @@ async function installMocks(page: Page) {
   })
 }
 
-test("dashboard, listening, correction, retry, question bank, and mobile layout", async ({
+const KO_ANSWER = "한국 여름은 덜고 습합니다."
+const KO_RETRY = "한국 여름은 덜고 습합니다. 그러나 지금은 적응했습니다."
+
+async function noHorizontalOverflow(page: Page) {
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth),
+  ).toBeLessThanOrEqual(0)
+}
+
+test("answer practice: listen, blocked mic, check, retry, all five, bank, and layout", async ({
   page,
 }) => {
   await installMocks(page)
-  await page.goto("http://127.0.0.1:3000/interview/speaking")
-  await expect(
-    page.getByRole("heading", { name: "Practice the five questions that matter today" }),
-  ).toBeVisible()
-  await expect(page.getByText("17 available")).toBeVisible()
-  await expect(page.getByText("21 available")).toBeVisible()
-  await expect(page.getByText("12 available")).toBeVisible()
-  await expect(page.getByText("50 available")).toBeVisible()
-  await page.screenshot({ path: "test-results/interview-dashboard-428.png", fullPage: true })
+  await page.goto("/interview/speaking")
 
-  await page.getByRole("button", { name: "Practice Today's 5" }).click()
+  // Opens straight into Today's 5 — no dashboard in between.
+  await expect(page.getByText("Answer practice")).toBeVisible()
+  await expect(page.getByText("1 / 5")).toBeVisible()
   await expect(page.getByText("Listen before reading")).toBeVisible()
-  await expect(page.getByRole("button", { name: "Reveal Korean" })).toBeVisible()
-  await page.screenshot({ path: "test-results/interview-listening-428.png", fullPage: true })
   await page.getByRole("button", { name: "Play question normally" }).click()
   await page.getByRole("button", { name: "Play question slowly" }).click()
   await page.getByRole("button", { name: "Reveal Korean" }).click()
+
+  // The mocked recognizer reports "not-allowed": the box explains and switches to typing.
   await page.getByRole("button", { name: "Start recording" }).click()
   await expect(
-    page.getByText(
-      "Microphone permission is blocked. Allow microphone access in the browser and try again.",
-    ),
+    page.getByRole("alert").filter({ hasText: "Microphone access is blocked" }),
   ).toBeVisible()
+  const answer = page.getByLabel("Your answer")
+  await expect(answer).toBeEditable()
+  await answer.fill(KO_ANSWER)
 
-  const transcript = page.getByLabel("Confirmed transcript")
-  await expect(transcript).toBeEditable()
-  await transcript.fill("\uD55C\uAD6D \uC5EC\uB984\uC740 \uB35C\uACE0 \uC2B5\uD569\uB2C8\uB2E4.")
-  await page.getByRole("button", { name: "Submit confirmed transcript" }).click()
+  await page.getByRole("button", { name: "Check my answer" }).click()
   await expect(page.getByText("Correction available")).toBeVisible()
-  await expect(page.getByRole("button", { name: "Retry Answer" })).toBeVisible()
   await expect(page.getByText(/not direct audio pronunciation analysis/)).toBeVisible()
   await page.screenshot({ path: "test-results/interview-correction-428.png", fullPage: true })
 
   await page.getByRole("button", { name: "Retry Answer" }).click()
-  await expect(page.getByText("Retrying")).toBeVisible()
-  await transcript.fill(
-    "\uD55C\uAD6D \uC5EC\uB984\uC740 \uB35C\uACE0 \uC2B5\uD569\uB2C8\uB2E4. \uADF8\uB7EC\uB098 \uC9C0\uAE08\uC740 \uC801\uC751\uD588\uC2B5\uB2C8\uB2E4.",
-  )
-  await page.getByRole("button", { name: "Submit confirmed transcript" }).click()
+  await answer.fill(KO_RETRY)
+  await page.getByRole("button", { name: "Check my answer" }).click()
   await expect(page.getByText(/Improvement \+1.4/)).toBeVisible()
 
   await page.getByRole("button", { name: "Next Question" }).click()
   for (let questionNumber = 2; questionNumber <= 5; questionNumber += 1) {
-    await expect(transcript).toBeEditable()
-    await transcript.fill(
-      `\uD55C\uAD6D \uC5EC\uB984 ${questionNumber}\uBC88 \uB2F5\uBCC0\uC785\uB2C8\uB2E4.`,
-    )
-    await page.getByRole("button", { name: "Submit confirmed transcript" }).click()
+    await expect(page.getByText(`${questionNumber} / 5`)).toBeVisible()
+    await answer.fill(`한국 여름 ${questionNumber}번 답변입니다.`)
+    await page.getByRole("button", { name: "Check my answer" }).click()
     await expect(page.getByText("Correction available")).toBeVisible()
-    if (questionNumber < 5) {
-      await page.getByRole("button", { name: "Next Question" }).click()
-    } else {
-      await page.getByRole("button", { name: "Complete session" }).click()
-    }
+    await page
+      .getByRole("button", { name: questionNumber < 5 ? "Next Question" : "Complete session" })
+      .click()
   }
-  await expect(page.getByRole("heading", { name: "Today's practice is complete" })).toBeVisible()
-  await page.getByRole("button", { name: "Back to exam dashboard" }).click()
-  await expect(page.getByText("5 / 50 practised")).toBeVisible()
-  await page.reload()
-  await expect(page.getByText("5 / 50 practised")).toBeVisible()
 
-  await page.getByRole("button", { name: "Browse Question Bank" }).click()
+  await expect(page.getByRole("heading", { name: "Practice set complete" })).toBeVisible()
+  await expect(page.getByText(/checked 5, and retried 1/)).toBeVisible()
+  await page.getByRole("link", { name: "Back to Exam Prep" }).click()
+  await expect(page.getByText("5 of 50 questions practiced")).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByText("All 5 done today")).toBeVisible()
+  await page.reload()
+  await expect(page.getByText("5 of 50 questions practiced")).toBeVisible()
+
+  // Advanced selection lives in the "Change questions" sheet.
+  await page.goto("/interview/speaking")
+  await page.getByRole("button", { name: "Change questions" }).click()
+  await expect(page.getByRole("dialog", { name: "Change questions" })).toBeVisible()
+  await expect(page.getByRole("radio", { name: /Weak questions/ })).toBeEnabled()
+  await page.getByRole("button", { name: /choose questions from the bank/ }).click()
   await expect(page.getByRole("heading", { name: "Question Bank" })).toBeVisible()
   await page.getByPlaceholder("Search Korean text, English, or keyword").fill("question 50")
   await expect(page.getByText("Showing 1 of 50")).toBeVisible()
+  await page.getByRole("button", { name: "Back to practice" }).click()
 
   await page.setViewportSize({ width: 375, height: 812 })
-  await page.getByRole("button", { name: "Back to dashboard" }).click()
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - window.innerWidth,
-  )
-  expect(overflow).toBeLessThanOrEqual(0)
-  await page.screenshot({ path: "test-results/interview-dashboard-375.png", fullPage: true })
+  await noHorizontalOverflow(page)
+  await page.screenshot({ path: "test-results/interview-practice-375.png", fullPage: true })
 
   await page.evaluate(() => window.localStorage.setItem("theme", "dark"))
   await page.reload()
-  await expect(
-    page.getByRole("heading", { name: "Practice the five questions that matter today" }),
-  ).toBeVisible()
-  expect(
-    await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth),
-  ).toBeLessThanOrEqual(0)
-
+  await expect(page.getByText("Answer practice")).toBeVisible()
   for (const viewport of [
     { width: 390, height: 844 },
     { width: 768, height: 1024 },
     { width: 1440, height: 900 },
   ]) {
     await page.setViewportSize(viewport)
-    expect(
-      await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth),
-    ).toBeLessThanOrEqual(0)
+    await noHorizontalOverflow(page)
   }
-
   await page.setViewportSize({ width: 428, height: 926 })
   await page.evaluate(() => {
     document.documentElement.style.fontSize = "20px"
   })
-  expect(
-    await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth),
-  ).toBeLessThanOrEqual(0)
+  await noHorizontalOverflow(page)
+})
+
+test("listening practice: audio only until review, compare for free, then AI feedback", async ({
+  page,
+}) => {
+  await installMocks(page)
+  await page.goto("/interview/listening")
+
+  await expect(page.getByText("Listening practice")).toBeVisible()
+  await expect(page.getByText(/Audio only — answer what you heard/)).toBeVisible()
+  // No early reveal and no English before answering.
+  await expect(page.getByRole("button", { name: "Reveal Korean" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "Show English" })).toHaveCount(0)
+
+  // Comprehension only: reveal without answering is allowed.
+  await page.getByRole("button", { name: "Reveal & compare" }).click()
+  await expect(page.getByText("What was asked")).toBeVisible()
+  await expect(page.getByText("Model answer from your bank")).toBeVisible()
+  await expect(page.getByText(/You revealed without answering/)).toBeVisible()
+
+  await page.getByRole("button", { name: "Try again" }).click()
+  await page.getByRole("button", { name: "Start recording" }).click()
+  const answer = page.getByLabel("Your answer")
+  await answer.fill(KO_ANSWER)
+  await page.getByRole("button", { name: "Reveal & compare" }).click()
+  await expect(page.getByText("Your answer", { exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "Get AI feedback" }).click()
+  await expect(page.getByText("Correction available")).toBeVisible()
+
+  // Exam level: one listen, normal speed only, no English anywhere.
+  await page.getByRole("button", { name: "Change questions" }).click()
+  await page.getByRole("radio", { name: /Exam Mode/ }).click()
+  await page.getByRole("button", { name: "Start this set" }).click()
+  await page.getByRole("button", { name: "Start new set" }).click()
+  await expect(page.getByText(/Listening practice · .+ · Exam Mode/)).toBeVisible()
+  await expect(page.getByText(/listens? left|No listens left/)).toBeVisible()
+  await expect(page.getByRole("button", { name: "Play question slowly" })).toHaveCount(0)
 })

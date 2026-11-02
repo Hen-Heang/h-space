@@ -41,6 +41,34 @@ function parseLocalScript(raw: string | null, updatedAt: string | null): ScriptS
   }
 }
 
+/**
+ * The script as the editor would show it: the newer of this device's autosave
+ * and the account copy. `snapshot` is null only when neither exists (callers
+ * then fall back to the drafted script, like the editor).
+ */
+export function useSavedScript(topicId: string) {
+  const userId = getUserId()
+  const remoteScript = useQuery({
+    queryKey: interviewScriptQueryKey(userId, topicId),
+    queryFn: () => interviewApi.getScript(topicId),
+    enabled: userId != null,
+    ...FRESH_ON_MOUNT,
+  })
+  const scriptKeys = interviewScriptStorageKeys(topicId)
+  const [localScriptRaw] = useBrowserStorage("local", scriptKeys.sections)
+  const [localScriptUpdatedAt] = useBrowserStorage("local", scriptKeys.updatedAt)
+  const remote = remoteScript.data
+  const snapshot = pickNewerScript(
+    parseLocalScript(localScriptRaw, localScriptUpdatedAt),
+    remote ? { sections: remote.sections ?? {}, updatedAt: remote.updatedAt } : null,
+  )
+  return {
+    snapshot,
+    loading: remoteScript.isPending && !snapshot,
+    syncFailed: remoteScript.isError,
+  }
+}
+
 /** Everything the Exam Prep home reads, from the existing tables and keys only. */
 export function useExamPrepHome(topicId: string, difficulty: PracticeDifficulty) {
   const userId = getUserId()
@@ -58,27 +86,13 @@ export function useExamPrepHome(topicId: string, difficulty: PracticeDifficulty)
     enabled,
     ...FRESH_ON_MOUNT,
   })
-  const remoteScript = useQuery({
-    queryKey: interviewScriptQueryKey(userId, topicId),
-    queryFn: () => interviewApi.getScript(topicId),
-    enabled,
-    ...FRESH_ON_MOUNT,
-  })
+  const script = useSavedScript(topicId)
 
   const todayKey = todayQueueStorageKey(
     dateKeyInTimeZone(new Date(), INTERVIEW_TIME_ZONE),
     difficulty,
   )
   const [storedQueueRaw] = useBrowserStorage("local", todayKey)
-  const scriptKeys = interviewScriptStorageKeys(topicId)
-  const [localScriptRaw] = useBrowserStorage("local", scriptKeys.sections)
-  const [localScriptUpdatedAt] = useBrowserStorage("local", scriptKeys.updatedAt)
-
-  const remote = remoteScript.data
-  const script = pickNewerScript(
-    parseLocalScript(localScriptRaw, localScriptUpdatedAt),
-    remote ? { sections: remote.sections ?? {}, updatedAt: remote.updatedAt } : null,
-  )
 
   return {
     practice: {
@@ -93,10 +107,6 @@ export function useExamPrepHome(topicId: string, difficulty: PracticeDifficulty)
       },
     },
     // The script card always has something to show: the local copy or the draft.
-    script: {
-      snapshot: script,
-      loading: remoteScript.isPending && !script,
-      syncFailed: remoteScript.isError,
-    },
+    script,
   }
 }

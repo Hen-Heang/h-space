@@ -7,6 +7,7 @@ import { ChevronDown, Headphones, ListChecks, Repeat2 } from "lucide-react"
 import { ExamHomeHeader } from "@/components/interview/ExamHomeHeader"
 import { ExamProgressCard } from "@/components/interview/ExamProgressCard"
 import { MockInterviewCard } from "@/components/interview/MockInterviewCard"
+import { PersonalExamReviewCard } from "@/components/interview/PersonalExamReviewCard"
 import { ScriptCard } from "@/components/interview/ScriptCard"
 import { SpeakingTipsCard } from "@/components/interview/SpeakingTipsCard"
 import { StudyPack } from "@/components/interview/StudyPack"
@@ -52,7 +53,7 @@ const PRACTICE_TOOLS = [
   },
   {
     href: "/interview/listening",
-    label: "Listening drill",
+    label: "Listening practice",
     description: "Audio-only questions: understand before you read.",
     icon: Headphones,
   },
@@ -157,7 +158,8 @@ export function ExamPrepHome({
               More practice &amp; materials
             </span>
             <span className="block text-xs text-muted-foreground">
-              Question bank, listening drill, study plan, speaking tips, study pack, vocabulary
+              Question bank, listening practice, Q&A review, study plan, tips, study pack,
+              vocabulary
             </span>
           </span>
           <ChevronDown
@@ -188,6 +190,8 @@ export function ExamPrepHome({
               ))}
             </ul>
           </nav>
+          {/* Real-story Q&A and question catcher (formerly on the Speaking dashboard). */}
+          <PersonalExamReviewCard />
           <TopicVocabCard />
           <StudyPlanCard />
           <SpeakingTipsCard />

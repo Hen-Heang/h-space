@@ -221,7 +221,7 @@ export function StudyPack({
                     className="h-11 w-full rounded-xl bg-violet-600 font-bold text-white hover:bg-violet-700 sm:w-auto"
                   >
                     <Link href="/interview/listening">
-                      <Headphones size={17} className="mr-2" /> Open Full Listening Drill
+                      <Headphones size={17} className="mr-2" /> Open listening practice
                     </Link>
                   </Button>
 
