@@ -15,7 +15,8 @@ import { Switch } from "@/components/ui/switch"
 import { TagEditor } from "@/components/ui/tag-editor"
 import { Textarea } from "@/components/ui/textarea"
 import { renderMarkdown } from "@/lib/notes-markdown"
-import { NOTE_TYPES, validateNoteInput, type NoteType } from "@/lib/notes"
+import { useNoteProjects } from "@/hooks/useNoteProjects"
+import { isReservedNoteSlug, NOTE_TYPES, validateNoteInput, type NoteType } from "@/lib/notes"
 import { slugify } from "@/lib/slug"
 import { cn } from "@/lib/utils"
 
@@ -30,7 +31,12 @@ export interface NoteEditorValues {
   sourceUrl: string
   pinned: boolean
   content: string
+  /** kori_note_projects id, or "" for no project. */
+  projectId: string
 }
+
+/** Select value for "no project" — Radix Select can't use an empty string. */
+const NO_PROJECT_VALUE = "__none__"
 
 interface NoteEditorProps {
   mode: "create" | "edit"
@@ -51,6 +57,11 @@ export function NoteEditor({ mode, initial, onSave, onCancel }: NoteEditorProps)
   const [draftRestored, setDraftRestored] = useState(false)
   const [draftSaved, setDraftSaved] = useState(true)
   const initialRef = useRef(initial)
+  const { projects, unavailable: projectsUnavailable } = useNoteProjects()
+  // A project id we can't find (deleted, or not loaded) still shows as itself
+  // rather than silently reading as "No project".
+  const projectMissing =
+    Boolean(values.projectId) && !projects.some((p) => p.id === values.projectId)
 
   // Autosave draft protection — restores work-in-progress if the tab/browser
   // closed before saving. Cleared on successful save or explicit discard.
@@ -59,13 +70,16 @@ export function NoteEditor({ mode, initial, onSave, onCancel }: NoteEditorProps)
     try {
       const raw = window.localStorage.getItem(key)
       if (raw) {
-        const draft = JSON.parse(raw) as NoteEditorValues
-        setValues(draft)
+        // Drafts saved before projects existed have no projectId — keep the initial one.
+        const draft = JSON.parse(raw) as Partial<NoteEditorValues>
+        setValues({ ...draft, projectId: draft.projectId ?? initial.projectId } as NoteEditorValues)
         setDraftRestored(true)
       }
     } catch {
       // Corrupt/unavailable storage — fall back to the initial values.
     }
+    // Only re-run for a different note; initial.projectId is read once as the fallback.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial.slug, mode])
 
   useEffect(() => {
@@ -102,6 +116,8 @@ export function NoteEditor({ mode, initial, onSave, onCancel }: NoteEditorProps)
       return
     }
     if (!values.slug.trim()) return setError("Slug is required.")
+    if (mode === "create" && isReservedNoteSlug(slugify(values.slug)))
+      return setError(`"${slugify(values.slug)}" is reserved. Choose a different slug.`)
     setError("")
     setIsSaving(true)
     try {
@@ -216,7 +232,12 @@ export function NoteEditor({ mode, initial, onSave, onCancel }: NoteEditorProps)
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 border-t border-border/60 pt-4 sm:grid-cols-3">
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-3 border-t border-border/60 pt-4",
+            projectsUnavailable ? "sm:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-4",
+          )}
+        >
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Type</label>
             <Select
@@ -235,6 +256,32 @@ export function NoteEditor({ mode, initial, onSave, onCancel }: NoteEditorProps)
               </SelectContent>
             </Select>
           </div>
+          {!projectsUnavailable && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Project</label>
+              <Select
+                value={values.projectId || NO_PROJECT_VALUE}
+                onValueChange={(value) =>
+                  set({ projectId: value === NO_PROJECT_VALUE ? "" : value })
+                }
+              >
+                <SelectTrigger className="w-full" aria-label="Project">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_PROJECT_VALUE}>No project</SelectItem>
+                  {projectMissing && (
+                    <SelectItem value={values.projectId}>Current project</SelectItem>
+                  )}
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Category</label>
             <Input

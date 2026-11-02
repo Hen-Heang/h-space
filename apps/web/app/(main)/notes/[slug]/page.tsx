@@ -58,6 +58,7 @@ export default function NotePage() {
       sourceUrl: note.sourceUrl ?? "",
       pinned: note.pinned,
       content: note.content,
+      projectId: note.projectId ?? "",
     }
     return (
       <div className="mx-auto max-w-4xl py-4 sm:py-8">
@@ -78,6 +79,11 @@ export default function NotePage() {
                 tags: values.tags,
                 pinned: values.pinned,
                 sourceUrl: values.sourceUrl.trim() || null,
+                // Only sent when changed, so editing a note never depends on
+                // the projects migration being applied.
+                ...(values.projectId !== (note.projectId ?? "")
+                  ? { projectId: values.projectId || null }
+                  : {}),
               },
             })
             toast.success("Note saved")

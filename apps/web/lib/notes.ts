@@ -28,6 +28,8 @@ export interface NoteMeta {
   goalId?: string | null
   taskId?: string | null
   inboxItemId?: string | null
+  /** kori_note_projects id; null/undefined means "No project". */
+  projectId?: string | null
   createdAt?: string
   updatedAt?: string
 }
@@ -50,10 +52,21 @@ export interface NoteInput {
   goalId?: string | null
   taskId?: string | null
   inboxItemId?: string | null
+  projectId?: string | null
 }
 
 export const MAX_NOTE_TITLE_LENGTH = 200
 export const MAX_NOTE_CONTENT_LENGTH = 50_000
+
+/**
+ * Slugs that collide with static routes under /notes (`/notes/new`,
+ * `/notes/projects/[id]`) — a note with one of these would be unreachable.
+ */
+export const RESERVED_NOTE_SLUGS = ["new", "projects"] as const
+
+export function isReservedNoteSlug(slug: string): boolean {
+  return (RESERVED_NOTE_SLUGS as readonly string[]).includes(slug.trim().toLowerCase())
+}
 
 export interface NoteValidationErrors {
   title?: string
