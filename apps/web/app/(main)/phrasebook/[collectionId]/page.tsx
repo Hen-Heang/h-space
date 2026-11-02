@@ -25,16 +25,13 @@ import { useRomanizationPreference } from "@/hooks/useRomanizationPreference"
 import { containerVariants, itemVariants } from "@/lib/motion"
 import type { PhraseCardWithProgress, PhraseCollection } from "@/lib/types"
 
+// One primary action per collection: reviewing what's due, or learning when
+// nothing is. The other study modes are neutral secondary buttons.
 const MODE_ACTIONS = [
-  { mode: "learn", label: "Learn", icon: BookOpen, className: "bg-sky-600 hover:bg-sky-500" },
-  { mode: "listen", label: "Listen", icon: Headphones, className: "bg-blue-600 hover:bg-blue-500" },
-  { mode: "speak", label: "Speak", icon: Mic, className: "bg-violet-600 hover:bg-violet-500" },
-  {
-    mode: "review",
-    label: "Review Due",
-    icon: RotateCcw,
-    className: "bg-emerald-600 hover:bg-emerald-500",
-  },
+  { mode: "review", label: "Review due", icon: RotateCcw },
+  { mode: "learn", label: "Learn", icon: BookOpen },
+  { mode: "listen", label: "Listen", icon: Headphones },
+  { mode: "speak", label: "Speak", icon: Mic },
 ] as const
 
 export default function PhraseCollectionPage() {
@@ -146,8 +143,10 @@ export default function PhraseCollectionPage() {
         <Badge variant="outline" className="mb-2 uppercase">
           {collection.category}
         </Badge>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">{collection.titleEn}</h1>
-        <p className="mt-0.5 text-base font-medium text-muted-foreground">{collection.titleKo}</p>
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">{collection.titleEn}</h2>
+        <p lang="ko" className="mt-0.5 text-base font-medium text-muted-foreground">
+          {collection.titleKo}
+        </p>
         {collection.description && (
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {collection.description}
@@ -167,18 +166,21 @@ export default function PhraseCollectionPage() {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {MODE_ACTIONS.map(({ mode, label, icon: Icon, className }) => (
-            <Button
-              key={mode}
-              className={className}
-              disabled={cards.length === 0}
-              onClick={() =>
-                router.push(`/phrasebook/practice?mode=${mode}&collectionId=${collectionId}`)
-              }
-            >
-              <Icon size={14} className="mr-1.5" /> {label}
-            </Button>
-          ))}
+          {MODE_ACTIONS.filter(({ mode }) => mode !== "review" || dueCount > 0).map(
+            ({ mode, label, icon: Icon }, index) => (
+              <Button
+                key={mode}
+                variant={index === 0 ? "default" : "outline"}
+                disabled={cards.length === 0}
+                onClick={() =>
+                  router.push(`/phrasebook/practice?mode=${mode}&collectionId=${collectionId}`)
+                }
+              >
+                <Icon aria-hidden="true" /> {label}
+                {mode === "review" && ` (${dueCount})`}
+              </Button>
+            ),
+          )}
         </div>
       </motion.div>
 

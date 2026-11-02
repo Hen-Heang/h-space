@@ -16,10 +16,10 @@ interface ReviewModeViewProps {
 }
 
 const GRADE_STYLES: Record<ReviewRating, { label: string; classes: string }> = {
-  AGAIN: { label: "Again", classes: "bg-[#ff4b4b] border-[#e63b3b] text-white" },
-  HARD: { label: "Hard", classes: "bg-[#ff9600] border-[#e08400] text-white" },
-  GOOD: { label: "Good", classes: "bg-[#58cc02] border-[#46a302] text-white" },
-  EASY: { label: "Easy", classes: "bg-[#1cb0f6] border-[#1499e0] text-white" },
+  AGAIN: { label: "Again", classes: "bg-grade-again" },
+  HARD: { label: "Hard", classes: "bg-grade-hard" },
+  GOOD: { label: "Good", classes: "bg-grade-good" },
+  EASY: { label: "Easy", classes: "bg-grade-easy" },
 }
 
 export function ReviewModeView({ cards, onExhausted }: ReviewModeViewProps) {
@@ -76,7 +76,10 @@ export function ReviewModeView({ cards, onExhausted }: ReviewModeViewProps) {
 
       <div className="flex flex-col items-center gap-3 rounded-3xl border-2 border-b-[6px] border-border bg-card p-6 text-center dark:bg-slate-900/60 sm:p-8">
         <PhraseRegisterBadge register={card.question.register} />
-        <p className="break-keep text-2xl font-bold leading-snug text-foreground [overflow-wrap:anywhere] sm:text-3xl">
+        <p
+          lang="ko"
+          className="break-keep text-2xl font-bold leading-snug text-foreground [overflow-wrap:anywhere] sm:text-3xl"
+        >
           {card.question.korean}
         </p>
         <SpeakButton text={card.question.korean} title="Listen to the question" />
@@ -95,10 +98,13 @@ export function ReviewModeView({ cards, onExhausted }: ReviewModeViewProps) {
         </button>
       ) : (
         <div className="space-y-4">
-          <div className="rounded-2xl border-2 border-[#58cc02]/40 bg-[#58cc02]/[0.06] p-5 text-center dark:bg-[#58cc02]/[0.08]">
+          <div className="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/[0.06] p-5 text-center">
             {recommended && (
               <>
-                <p className="break-keep text-xl font-bold text-foreground [overflow-wrap:anywhere]">
+                <p
+                  lang="ko"
+                  className="break-keep text-xl font-bold text-foreground [overflow-wrap:anywhere]"
+                >
                   {recommended.korean}
                 </p>
                 <p className="mt-1 text-sm font-medium text-muted-foreground">
@@ -107,12 +113,12 @@ export function ReviewModeView({ cards, onExhausted }: ReviewModeViewProps) {
               </>
             )}
             {card.answers.filter((a) => a !== recommended).length > 0 && (
-              <div className="mt-3 space-y-1 border-t border-[#58cc02]/20 pt-3 text-left">
+              <div className="mt-3 space-y-1 border-t border-emerald-500/20 pt-3 text-left">
                 {card.answers
                   .filter((a) => a !== recommended)
                   .map((a, i) => (
                     <p key={i} className="text-sm text-muted-foreground">
-                      {a.korean} — {a.english}
+                      <span lang="ko">{a.korean}</span> — {a.english}
                     </p>
                   ))}
               </div>
@@ -127,14 +133,14 @@ export function ReviewModeView({ cards, onExhausted }: ReviewModeViewProps) {
                 disabled={saving}
                 onClick={() => grade(rating)}
                 className={cn(
-                  "flex h-16 min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl border-b-4 px-1 transition-all active:translate-y-[3px] active:border-b-0 disabled:opacity-60",
+                  "flex h-16 min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl border-b-4 border-black/25 px-1 text-white transition-all active:translate-y-[3px] active:border-b-0 disabled:opacity-60",
                   GRADE_STYLES[rating].classes,
                 )}
               >
-                <span className="max-w-full truncate text-[11px] font-bold uppercase tracking-wider sm:text-xs">
+                <span className="max-w-full truncate text-xs font-bold uppercase tracking-wider">
                   {GRADE_STYLES[rating].label}
                 </span>
-                <span className="max-w-full truncate text-[11px] font-bold opacity-80 sm:text-[12px]">
+                <span className="max-w-full truncate text-xs font-semibold opacity-90">
                   {formatInterval(previewIntervalDays(srsState, rating))}
                 </span>
               </button>

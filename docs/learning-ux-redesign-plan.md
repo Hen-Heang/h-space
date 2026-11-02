@@ -604,6 +604,38 @@ Each phase is one PR, waits for your approval to start, and ends with `pnpm lint
   - Korean terms use `lang="ko"`.
   - Component tests: `components/vocab/ReviewSession.test.tsx`.
 
+**Phase 3 was skipped at the owner's request.** Phase 4 shipped before it, so `StudySession` and `CorrectionDiff` still don't exist.
+
+**Phase 4: what shipped and where it differs.**
+
+- **Shared pieces:**
+  - `lib/learning/course.ts` (tested) maps Foundations, Reading, and Phrasebook progress onto New / In progress / Review due / Completed / Mastered, and picks what Continue opens.
+  - `components/learn/{StatusBadge,CourseProgress,LearnHeader,LanguageAids}.tsx`.
+  - `hooks/useBrowserStorage.ts`: storage read through `useSyncExternalStore`, the same pattern as `useSidebarState`.
+- **B8:** `/phrasebook` derives its mode from the URL on every render. Before, a link to plain `/phrasebook` while Reading was open changed the URL but kept showing Reading.
+- **B1:** each mode's PageHero became one `LearnHeader` line.
+  - Phrases: a review card is the primary action, and the counts appear once.
+  - The Phrasebook home's error state no longer renders empty sections.
+- **B2/B3:**
+  - Foundations has a per-track `CourseProgress` with Continue, lesson rows with status badges, and the track remembered per tab in sessionStorage. The URL is unchanged.
+  - Reading has `CourseProgress` with Continue and the same badges.
+  - Phrase cards show "Review due" instead of a separate red "Due" badge.
+- **Lesson reader:**
+  - `LanguageAids` with the old defaults (romanization and English on); "never" hides romanization.
+  - English hides example translations only. A card's meaning _is_ the lesson, so it stays visible.
+  - `SpeakButton` on each card and example (TTS only on tap). "Next lesson" is the primary action after a pass.
+  - `aria-live` feedback that names the right answer. The link-wrapped button is fixed.
+  - **Deviation:** the aids bar is _not_ sticky. The shell's sticky header sits at `top-0` with a safe-area-dependent height, so a sticky sub-bar would hide under it.
+- **Reading unit:**
+  - The "Show all translations" choice is remembered (English only — units have no romanization data).
+  - Delete uses an AlertDialog instead of `window.confirm`. Icon buttons have `aria-label`s.
+  - `lang="ko"`, reader-size type (17–18px, 38em measure), the tap-to-look-up hint visible on phones, and quiz results in `role="status"`.
+  - Reading Home's pin is now a sibling of the link.
+- **B4:** Learn mode ends on Finish. Practice-again remounts the mode views at card 1. Review grades use `--grade-*`.
+- **B7:** the collection card has one link (a stretched title) plus a sibling pin, and the pin icon shows the current state.
+- **The collection page has one primary action:** Review due, or Learn when nothing is due.
+- **V7 is still deferred:** vocabulary flashcards don't use `LanguageAids` yet. Phrasebook already honors the preference through `RevealText`.
+
 ---
 
 ## 10. Acceptance criteria and testing checklist

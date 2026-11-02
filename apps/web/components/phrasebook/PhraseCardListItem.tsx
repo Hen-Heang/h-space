@@ -11,21 +11,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { StatusBadge } from "@/components/learn/StatusBadge"
 import { PhraseRegisterBadge } from "./PhraseRegisterBadge"
 import { RevealText } from "./RevealText"
-import { isCardDue } from "@/lib/korean-phrasebook/mastery"
-import { cn } from "@/lib/utils"
+import { phraseStatus } from "@/lib/learning/course"
 import type { PhraseCardWithProgress } from "@/lib/types"
 import type { RomanizationMode } from "@/lib/korean-coach/schemas"
-
-const STATE_LABEL: Record<string, { label: string; className: string }> = {
-  new: { label: "New", className: "bg-sky-500/10 text-sky-600 dark:text-sky-400" },
-  learning: { label: "Learning", className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
-  mastered: {
-    label: "Mastered",
-    className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  },
-}
 
 export function PhraseCardListItem({
   card,
@@ -41,8 +32,6 @@ export function PhraseCardListItem({
   onDelete?: () => void
 }) {
   const recommended = card.answers.find((a) => a.isRecommended) ?? card.answers[0]
-  const state = card.progress?.state ?? "new"
-  const due = card.progress ? isCardDue(card.progress.nextReviewAt) : false
   const romanizationVisible = romanizationPreference === "always"
 
   return (
@@ -52,17 +41,14 @@ export function PhraseCardListItem({
           <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
             <Badge variant="outline">{card.situation}</Badge>
             <PhraseRegisterBadge register={card.question.register} />
-            <span
-              className={cn(
-                "inline-flex h-5 items-center rounded-full px-2 text-[11px] font-bold",
-                STATE_LABEL[state].className,
-              )}
-            >
-              {STATE_LABEL[state].label}
-            </span>
-            {due && <Badge variant="destructive">Due</Badge>}
+            {/* Shared Learning status words: a due review shows as "Review
+                due" instead of a separate red "Due" badge beside the state. */}
+            <StatusBadge status={phraseStatus(card.progress)} />
           </div>
-          <p className="break-keep text-lg font-bold leading-snug text-foreground [overflow-wrap:anywhere]">
+          <p
+            lang="ko"
+            className="break-keep text-lg font-bold leading-snug text-foreground [overflow-wrap:anywhere]"
+          >
             {card.question.korean}
           </p>
           {romanizationPreference !== "never" && (

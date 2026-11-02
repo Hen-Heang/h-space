@@ -21,6 +21,18 @@ import {
 import { motion } from "motion/react"
 import { toast } from "sonner"
 
+import { useLanguageAids } from "@/components/learn/LanguageAids"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { SmartPeek } from "@/components/ui/SmartPeek"
 import { SpeakButton } from "@/components/ui/SpeakButton"
@@ -48,6 +60,9 @@ const itemVariants = {
   hidden: { opacity: 0, y: 8 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" } },
 } as const
+
+// Quiz options mix Korean and English; mark only the Korean ones.
+const hasHangul = (text: string) => /[ᄀ-ᇿ㄰-㆏가-힯]/.test(text)
 
 /** Splits Korean text into words so each one becomes tappable via SmartPeek. */
 function PeekableText({ text }: { text: string }) {
@@ -102,7 +117,13 @@ export default function ReadingUnitPage() {
   const progress = (unit && progressMap[unit.id]) || { status: "not_started" as const }
 
   const [visibleTranslations, setVisibleTranslations] = useState<Set<number>>(new Set())
-  const [allTranslations, setAllTranslations] = useState(false)
+  // "Show all translations" is remembered per viewer (off by default, as
+  // before); single paragraphs can still be revealed on their own.
+  const { showEnglish: allTranslations, toggle: toggleAids } = useLanguageAids("reading-unit", {
+    romanization: false,
+    english: false,
+  })
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const [savedWords, setSavedWords] = useState<Set<string>>(new Set())
   const [savingWord, setSavingWord] = useState<string | null>(null)
@@ -227,7 +248,7 @@ export default function ReadingUnitPage() {
 
   async function handleDelete() {
     if (!unit) return
-    if (!window.confirm(`Delete "${unit.title}"? This cannot be undone.`)) return
+    setConfirmDelete(false)
     try {
       await deleteReadingUnit(unit.id)
       toast.success("Unit deleted.")
@@ -275,26 +296,51 @@ export default function ReadingUnitPage() {
               <Link
                 href={`/reading/${unit.id}/edit`}
                 title="Edit unit"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground shadow-sm transition-all hover:text-foreground active:scale-95"
+                aria-label="Edit unit"
+                className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground shadow-sm transition-all after:absolute after:-inset-1 after:content-[''] hover:text-foreground active:scale-95"
               >
-                <Pencil size={15} strokeWidth={2.5} />
+                <Pencil aria-hidden="true" size={15} strokeWidth={2.5} />
               </Link>
-              <button
-                type="button"
-                onClick={handleDelete}
-                title="Delete unit"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground shadow-sm transition-all hover:border-destructive/30 hover:text-destructive active:scale-95"
-              >
-                <Trash2 size={15} strokeWidth={2.5} />
-              </button>
+              <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+                <AlertDialogTrigger asChild>
+                  <button
+                    type="button"
+                    title="Delete unit"
+                    aria-label="Delete unit"
+                    className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground shadow-sm transition-all after:absolute after:-inset-1 after:content-[''] hover:border-destructive/30 hover:text-destructive active:scale-95"
+                  >
+                    <Trash2 aria-hidden="true" size={15} strokeWidth={2.5} />
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this unit?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      “{unit.title}” and its progress will be removed. This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => void handleDelete()}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
 
           <div className="mt-4 flex items-center gap-3">
-            <h1 className="min-w-0 break-words text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+            <h2
+              lang="ko"
+              className="min-w-0 break-words text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl"
+            >
               {unit.episode ? `${unit.episode} · ` : ""}
               {unit.title}
-            </h1>
+            </h2>
             <SpeakButton text={unit.title} className="shrink-0" />
           </div>
           <p className="mt-1 text-base font-bold text-muted-foreground">{unit.titleEnglish}</p>
@@ -334,14 +380,12 @@ export default function ReadingUnitPage() {
               className="text-emerald-600 dark:text-emerald-400"
             />
             <h3 className="text-base font-bold tracking-tight text-foreground">Read</h3>
-            <span className="hidden text-[11px] font-bold text-muted-foreground/60 sm:inline">
-              Tap any word to look it up · tap 🔊 to listen
-            </span>
           </div>
           <button
             type="button"
-            onClick={() => setAllTranslations((v) => !v)}
-            className="inline-flex shrink-0 items-center gap-1.5 py-2 text-xs font-bold text-emerald-600 hover:underline dark:text-emerald-400"
+            onClick={() => toggleAids("english")}
+            aria-pressed={allTranslations}
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-300"
           >
             {allTranslations ? (
               <EyeOff size={13} strokeWidth={3} />
@@ -351,6 +395,10 @@ export default function ReadingUnitPage() {
             {allTranslations ? "Hide all translations" : "Show all translations"}
           </button>
         </div>
+        {/* Shown on phones too — that's where tap-to-look-up matters most. */}
+        <p className="px-1 text-xs text-muted-foreground">
+          Tap any word to look it up · tap the speaker to listen
+        </p>
 
         <div className="space-y-3">
           {unit.paragraphs.map((p, i) => {
@@ -370,7 +418,10 @@ export default function ReadingUnitPage() {
                   >
                     {i + 1}
                   </span>
-                  <p className="min-w-0 flex-1 break-words text-[15px] font-medium leading-8 text-foreground sm:text-base sm:leading-9">
+                  <p
+                    lang="ko"
+                    className="min-w-0 max-w-[38em] flex-1 break-keep text-[1.0625rem] font-medium leading-8 text-foreground [overflow-wrap:anywhere] sm:text-lg sm:leading-9"
+                  >
                     <PeekableText text={p.korean} />
                   </p>
                   <button
@@ -382,8 +433,13 @@ export default function ReadingUnitPage() {
                         ? "Saved to your Vocab deck"
                         : "Save this sentence to your Vocab deck"
                     }
+                    aria-label={
+                      savedSentences.has(i)
+                        ? `Paragraph ${i + 1} saved to your Vocab deck`
+                        : `Save paragraph ${i + 1} to your Vocab deck`
+                    }
                     className={cn(
-                      "mt-1 shrink-0 rounded-xl p-1.5 transition-all active:scale-90",
+                      "relative mt-1 shrink-0 rounded-xl p-1.5 transition-all after:absolute after:-inset-2 after:content-[''] active:scale-90",
                       savedSentences.has(i)
                         ? "text-emerald-600 dark:text-emerald-400"
                         : "text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -479,7 +535,9 @@ export default function ReadingUnitPage() {
                       >
                         {vi + 1}
                       </span>
-                      <p className="font-extrabold text-foreground">{v.term}</p>
+                      <p lang="ko" className="font-extrabold text-foreground">
+                        {v.term}
+                      </p>
                       <SpeakButton text={v.term} />
                     </div>
                     <p className="mt-0.5 text-sm font-medium text-muted-foreground">{v.meaning}</p>
@@ -494,6 +552,9 @@ export default function ReadingUnitPage() {
                     onClick={() => handleSaveWord(v.term, v.meaning, v.example)}
                     disabled={saved || savingWord === v.term}
                     title={saved ? "Saved to flashcards" : "Save to flashcards"}
+                    aria-label={
+                      saved ? `${v.term} saved to flashcards` : `Save ${v.term} to flashcards`
+                    }
                     className={cn(
                       "mt-1 shrink-0 rounded-xl border p-2 transition-all active:scale-90",
                       saved
@@ -558,6 +619,7 @@ export default function ReadingUnitPage() {
           <>
             {submitted && (
               <div
+                role="status"
                 className={cn(
                   "flex items-center justify-between rounded-[1.8rem] border p-5",
                   passed
@@ -634,7 +696,7 @@ export default function ReadingUnitPage() {
                                     : "border-border text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                             )}
                           >
-                            <span>{opt}</span>
+                            <span lang={hasHangul(opt) ? "ko" : undefined}>{opt}</span>
                             {isCorrect && (
                               <CheckCircle2 size={15} strokeWidth={3} className="shrink-0" />
                             )}

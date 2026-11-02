@@ -2,23 +2,19 @@
 
 import Link from "next/link"
 import { useEffect, useState, useSyncExternalStore } from "react"
-import {
-  BookOpenText,
-  CheckCircle2,
-  ChevronRight,
-  CircleDashed,
-  Clock3,
-  Loader2,
-  Pin,
-  Plus,
-} from "lucide-react"
+import { BookOpenText, ChevronRight, Loader2, Pin, Plus, RotateCw } from "lucide-react"
 import { motion } from "motion/react"
 import { toast } from "sonner"
 
-import { PageHero } from "@/components/app/page-hero"
-import { CardGrid } from "@/components/ui/card-grid"
+import { CourseProgress } from "@/components/learn/CourseProgress"
+import { LearnHeader } from "@/components/learn/LearnHeader"
+import { StatusBadge } from "@/components/learn/StatusBadge"
+import { Button } from "@/components/ui/button"
+import { ErrorBanner } from "@/components/ui/error-banner"
+import { Skeleton } from "@/components/ui/skeleton"
 import { getApiErrorMessage } from "@/lib/api"
-import { READING_CATEGORIES, type ReadingCategory, type ReadingProgressEntry } from "@/lib/reading"
+import { continueReadingUnit, readingStatus } from "@/lib/learning/course"
+import { READING_CATEGORIES, type ReadingCategory } from "@/lib/reading"
 import {
   getReadingProgress,
   getReadingProgressServerSnapshot,
@@ -46,28 +42,6 @@ const itemVariants = {
 
 const CATEGORY_ORDER: ReadingCategory[] = ["DAILY_LIFE", "CULTURE", "BEGINNER_STORY"]
 
-function StatusBadge({ entry }: { entry: ReadingProgressEntry }) {
-  if (entry.status === "completed") {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-        <CheckCircle2 size={11} strokeWidth={3} /> Completed
-      </span>
-    )
-  }
-  if (entry.status === "in_progress") {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-        <Clock3 size={11} strokeWidth={3} /> In progress
-      </span>
-    )
-  }
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
-      <CircleDashed size={11} strokeWidth={3} /> Not started
-    </span>
-  )
-}
-
 export function ReadingHome() {
   const progress = useSyncExternalStore(
     subscribeReadingProgress,
@@ -82,6 +56,7 @@ export function ReadingHome() {
 
   const [loaded, setLoaded] = useState(isReadingUnitsLoaded())
   const [loadError, setLoadError] = useState("")
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     let active = true
@@ -94,9 +69,10 @@ export function ReadingHome() {
     return () => {
       active = false
     }
-  }, [])
+  }, [attempt])
 
   const completedCount = units.filter((u) => progress[u.id]?.status === "completed").length
+  const upNext = continueReadingUnit(units, progress)
   const [pinningId, setPinningId] = useState<string | null>(null)
 
   async function handleTogglePin(unitId: string) {
@@ -112,69 +88,73 @@ export function ReadingHome() {
     }
   }
 
+  const newUnitButton = (
+    <Button asChild>
+      <Link href="/reading/new">
+        <Plus aria-hidden="true" /> New unit
+      </Link>
+    </Button>
+  )
+
   return (
     <motion.div
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="space-y-8 pb-12"
+      className="space-y-6 pb-12"
     >
       <motion.div variants={itemVariants}>
-        <PageHero
-          eyebrow="Reading"
-          title="Reading Units"
-          description="Real Korean articles, podcast transcripts, and stories — organized into units. Read with tap-to-translate and audio, save the vocabulary, then pass the quiz to complete each unit. Add your own texts too."
-          actions={
-            <Link
-              href="/reading/new"
-              className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-500 active:scale-95"
-            >
-              <Plus size={14} strokeWidth={3} /> New unit
-            </Link>
-          }
-          stats={[
-            { label: "Units", value: String(units.length) },
-            { label: "Completed", value: `${completedCount}/${units.length}` },
-            { label: "Flow", value: "Read · Vocab · Quiz" },
-          ]}
+        <LearnHeader
+          description="Real Korean articles, transcripts, and stories. Read with tap-to-look-up and audio, save the vocabulary, then pass the quiz to complete each unit."
+          actions={newUnitButton}
         />
       </motion.div>
 
       {loadError && (
-        <motion.div
-          variants={itemVariants}
-          className="rounded-3xl border border-destructive/20 bg-destructive/5 p-5 text-sm font-bold text-destructive"
-        >
-          {loadError}
+        <motion.div variants={itemVariants} className="space-y-3">
+          <ErrorBanner>{loadError}</ErrorBanner>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setLoadError("")
+              setAttempt((n) => n + 1)
+            }}
+          >
+            <RotateCw aria-hidden="true" /> Try again
+          </Button>
         </motion.div>
       )}
 
       {!loadError && !loaded && units.length === 0 && (
-        <motion.div
-          variants={itemVariants}
-          className="flex items-center justify-center gap-2 py-20 text-muted-foreground"
-        >
-          <Loader2 size={18} className="animate-spin" />
-          <span className="text-sm font-bold">Loading reading units…</span>
-        </motion.div>
+        <div role="status" aria-label="Loading reading units" className="space-y-3">
+          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-40 w-full rounded-lg" />
+        </div>
       )}
 
       {!loadError && loaded && units.length === 0 && (
         <motion.div
           variants={itemVariants}
-          className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border bg-card/50 py-16 text-center"
+          className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-14 text-center"
         >
-          <BookOpenText size={28} className="text-muted-foreground/50" strokeWidth={2} />
-          <p className="text-sm font-bold text-foreground">No reading units yet.</p>
-          <p className="max-w-xs text-xs font-medium text-muted-foreground">
+          <BookOpenText aria-hidden="true" size={28} className="text-muted-foreground/60" />
+          <p className="text-sm font-semibold text-foreground">No reading units yet.</p>
+          <p className="max-w-xs text-sm text-muted-foreground">
             Add your first text — paste an article, podcast transcript, or message to study.
           </p>
-          <Link
-            href="/reading/new"
-            className="mt-1 inline-flex h-10 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-500 active:scale-95"
-          >
-            <Plus size={14} strokeWidth={3} /> New unit
-          </Link>
+          {newUnitButton}
+        </motion.div>
+      )}
+
+      {units.length > 0 && (
+        <motion.div variants={itemVariants}>
+          <CourseProgress
+            title="Reading units"
+            completed={completedCount}
+            total={units.length}
+            continueHref={upNext ? `/reading/${upNext.id}` : undefined}
+            continueLabel={upNext ? upNext.title : undefined}
+          />
         </motion.div>
       )}
 
@@ -191,105 +171,98 @@ export function ReadingHome() {
         const done = categoryUnits.filter((u) => progress[u.id]?.status === "completed").length
 
         return (
-          <motion.section key={category} variants={itemVariants} className="space-y-3">
-            <div className="flex items-end justify-between px-1">
+          <motion.section
+            key={category}
+            variants={itemVariants}
+            aria-labelledby={`reading-${category}`}
+            className="space-y-3"
+          >
+            <div className="flex items-end justify-between gap-3">
               <div>
-                <h3 className="text-base font-bold tracking-tight text-foreground">
+                <h3 id={`reading-${category}`} className="text-base font-semibold text-foreground">
                   {READING_CATEGORIES[category].label}
                 </h3>
-                <p className="mt-0.5 text-xs font-medium text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   {READING_CATEGORIES[category].description}
                 </p>
               </div>
-              <span className="text-xs font-bold text-muted-foreground/70">
-                {done}/{categoryUnits.length} done
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {done} of {categoryUnits.length} done
               </span>
             </div>
 
-            <CardGrid minCardWidth={260} className="gap-3">
+            <ul className="app-surface divide-y divide-border">
               {categoryUnits.map((unit) => {
-                const entry = progress[unit.id] ?? { status: "not_started" as const }
-                const pinned = Boolean(entry.pinned)
+                const entry = progress[unit.id]
+                const pinned = Boolean(entry?.pinned)
                 return (
-                  <Link
-                    key={unit.id}
-                    href={`/reading/${unit.id}`}
-                    className={cn(
-                      "group relative flex flex-col rounded-3xl border bg-card p-5 shadow-sm transition-all hover:shadow-lg active:scale-[0.99] dark:bg-slate-900/40",
-                      entry.status === "completed"
-                        ? "border-blue-500/30"
-                        : "border-border hover:border-blue-500/30",
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                        <BookOpenText size={18} strokeWidth={2.5} />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <StatusBadge entry={entry} />
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            void handleTogglePin(unit.id)
-                          }}
-                          disabled={pinningId === unit.id}
-                          title={pinned ? "Unpin this unit" : "Pin this unit to the top"}
-                          className={cn(
-                            "flex h-7 w-7 items-center justify-center rounded-lg border transition-all active:scale-90",
-                            pinned
-                              ? "border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                              : "border-border text-muted-foreground/50 hover:text-foreground",
-                          )}
+                  // The link and the pin are siblings — a button inside a link
+                  // is invalid and confuses keyboard and screen-reader users.
+                  <li key={unit.id} className="flex items-center gap-1 pr-2">
+                    <Link
+                      href={`/reading/${unit.id}`}
+                      className="group flex min-h-16 min-w-0 flex-1 items-center gap-3 px-4 py-3 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span
+                          lang="ko"
+                          className="block truncate text-base font-semibold text-foreground"
                         >
-                          {pinningId === unit.id ? (
-                            <Loader2 size={12} className="animate-spin" />
-                          ) : (
-                            <Pin
-                              size={12}
-                              strokeWidth={2.5}
-                              className={cn(pinned && "fill-current")}
-                            />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <h4 className="mt-4 text-lg font-extrabold tracking-tight text-foreground">
-                      {unit.episode ? `${unit.episode} · ` : ""}
-                      {unit.title}
-                    </h4>
-                    <p className="text-sm font-bold text-muted-foreground">{unit.titleEnglish}</p>
-                    <p className="mt-2 line-clamp-2 text-[13px] font-medium leading-relaxed text-muted-foreground/80">
-                      {unit.summary}
-                    </p>
-
-                    <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
-                      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60">
-                        <span>{unit.level}</span>
-                        <span>·</span>
-                        <span>{unit.vocab.length} words</span>
-                        <span>·</span>
-                        <span>{unit.quiz.length} questions</span>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        {typeof entry.quizScore === "number" && (
-                          <span className="text-[11px] font-bold text-muted-foreground/50">
-                            Quiz {entry.quizScore}/{entry.quizTotal}
+                          {unit.episode ? `${unit.episode} · ` : ""}
+                          {unit.title}
+                        </span>
+                        <span className="block truncate text-sm text-muted-foreground">
+                          {unit.titleEnglish}
+                        </span>
+                        {unit.summary && (
+                          <span className="mt-0.5 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                            {unit.summary}
                           </span>
                         )}
-                        <ChevronRight
+                        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                          <StatusBadge status={readingStatus(entry)} />
+                          <span>{unit.level}</span>
+                          <span>{unit.vocab.length} words</span>
+                          <span>{unit.quiz.length} questions</span>
+                          {typeof entry?.quizScore === "number" && (
+                            <span>
+                              Quiz {entry.quizScore}/{entry.quizTotal}
+                            </span>
+                          )}
+                        </span>
+                      </span>
+                      <ChevronRight
+                        aria-hidden="true"
+                        className="size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5"
+                      />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => void handleTogglePin(unit.id)}
+                      disabled={pinningId === unit.id}
+                      aria-pressed={pinned}
+                      aria-label={pinned ? `Unpin ${unit.title}` : `Pin ${unit.title} to the top`}
+                      className={cn(
+                        "flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors",
+                        pinned
+                          ? "text-primary hover:bg-primary/10"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      {pinningId === unit.id ? (
+                        <Loader2 aria-hidden="true" size={16} className="animate-spin" />
+                      ) : (
+                        <Pin
+                          aria-hidden="true"
                           size={16}
-                          strokeWidth={3}
-                          className="text-muted-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-blue-500"
+                          className={cn(pinned && "fill-current")}
                         />
-                      </div>
-                    </div>
-                  </Link>
+                      )}
+                    </button>
+                  </li>
                 )
               })}
-            </CardGrid>
+            </ul>
           </motion.section>
         )
       })}

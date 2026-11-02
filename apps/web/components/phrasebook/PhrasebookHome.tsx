@@ -3,17 +3,16 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus, Upload } from "lucide-react"
+import { ArrowRight, Plus, RotateCw, Upload } from "lucide-react"
 import { motion } from "motion/react"
 
-import { PageHero } from "@/components/app/page-hero"
+import { LearnHeader } from "@/components/learn/LearnHeader"
 import { Button } from "@/components/ui/button"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PhraseCollectionCard } from "@/components/phrasebook/PhraseCollectionCard"
 import { PhraseCardListItem } from "@/components/phrasebook/PhraseCardListItem"
 import { PhraseFilters } from "@/components/phrasebook/PhraseFilters"
-import { PhrasebookMasterySummary } from "@/components/phrasebook/PhrasebookMasterySummary"
 import { ImportPhrasesDialog } from "@/components/phrasebook/ImportPhrasesDialog"
 import { phrasebookApi, getApiErrorMessage } from "@/lib/api"
 import { useRomanizationPreference } from "@/hooks/useRomanizationPreference"
@@ -24,6 +23,7 @@ import {
   type PhraseFilters as PhraseFiltersValue,
 } from "@/lib/korean-phrasebook/mastery"
 import { containerVariants, itemVariants } from "@/lib/motion"
+import { cn } from "@/lib/utils"
 import type { PhraseCardWithProgress, PhraseCollection } from "@/lib/types"
 
 export function PhrasebookHome() {
@@ -100,8 +100,21 @@ export function PhrasebookHome() {
   if (loading) {
     return (
       <div className="space-y-6 pb-12">
-        <Skeleton className="h-40 w-full rounded-3xl" />
-        <Skeleton className="h-64 w-full rounded-3xl" />
+        <Skeleton className="h-28 w-full rounded-lg" />
+        <Skeleton className="h-64 w-full rounded-lg" />
+      </div>
+    )
+  }
+
+  // A failed load shows the error and a retry — not empty sections that read
+  // as "you have no phrases".
+  if (error) {
+    return (
+      <div className="space-y-3 pb-12">
+        <ErrorBanner>{error}</ErrorBanner>
+        <Button variant="outline" onClick={() => void load()}>
+          <RotateCw aria-hidden="true" /> Try again
+        </Button>
       </div>
     )
   }
@@ -114,37 +127,55 @@ export function PhrasebookHome() {
       className="space-y-8 pb-12"
     >
       <motion.div variants={itemVariants}>
-        <PageHero
-          eyebrow="Learn"
-          title="Phrasebook"
-          description="Common Korean questions and answers for the workplace and daily life — listen, answer aloud, get feedback, and review with spaced repetition."
-          stats={[
-            { label: "Due today", value: String(counts.due) },
-            { label: "Learned", value: String(counts.learning + counts.mastered) },
-            { label: "Mastered", value: String(counts.mastered) },
-          ]}
+        <LearnHeader
+          description="Common Korean questions and answers for work and daily life — listen, answer aloud, and review with spaced repetition."
           actions={
             <>
               <Button variant="outline" onClick={() => setImportOpen(true)}>
-                <Upload size={14} className="mr-1.5" /> Import
+                <Upload aria-hidden="true" /> Import
               </Button>
-              <Button onClick={() => router.push("/phrasebook/new")}>
-                <Plus size={14} className="mr-1.5" /> New Q&A
+              <Button variant="outline" onClick={() => router.push("/phrasebook/new")}>
+                <Plus aria-hidden="true" /> New Q&A
               </Button>
             </>
           }
         />
       </motion.div>
 
-      {error && (
-        <motion.div variants={itemVariants}>
-          <ErrorBanner>{error}</ErrorBanner>
-        </motion.div>
-      )}
-
-      <motion.div variants={itemVariants}>
-        <PhrasebookMasterySummary counts={counts} />
-      </motion.div>
+      {/* The one primary action: review what's due (or learn, when nothing
+          is). Counts appear once, here. */}
+      <motion.section
+        variants={itemVariants}
+        aria-labelledby="phrase-review-heading"
+        className={cn(
+          "app-surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6",
+          counts.due > 0 && "border-primary/30 bg-linear-to-br from-primary/[0.06] to-card",
+        )}
+      >
+        <div className="min-w-0">
+          <h2 id="phrase-review-heading" className="text-xl font-semibold text-foreground">
+            {counts.due > 0
+              ? `${counts.due} ${counts.due === 1 ? "phrase" : "phrases"} due for review`
+              : "All caught up"}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {counts.new} new · {counts.learning} learning · {counts.mastered} mastered
+            {counts.overdue > 0 && ` · ${counts.overdue} overdue`}
+          </p>
+        </div>
+        <Button size="lg" asChild className="shrink-0">
+          <Link
+            href={
+              counts.due > 0
+                ? "/phrasebook/practice?mode=review"
+                : "/phrasebook/practice?mode=learn"
+            }
+          >
+            {counts.due > 0 ? "Start review" : "Learn phrases"}
+            <ArrowRight aria-hidden="true" />
+          </Link>
+        </Button>
+      </motion.section>
 
       <motion.div variants={itemVariants}>
         <PhraseFilters
