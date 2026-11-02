@@ -273,15 +273,25 @@ export function countDoneToday(
   now: Date = new Date(),
   timeZone = INTERVIEW_TIME_ZONE,
 ): { done: number; total: number } {
-  const today = dateKeyInZone(now, timeZone)
   const unique = [...new Set(queueIds)]
-  const done = unique.filter((id) => {
-    const practicedAt = progressByQuestionId[id]?.lastPracticedAt
-    if (!practicedAt) return false
-    const date = new Date(practicedAt)
-    return !Number.isNaN(date.getTime()) && dateKeyInZone(date, timeZone) === today
-  }).length
+  const done = unique.filter((id) =>
+    wasPracticedToday(progressByQuestionId[id], now, timeZone),
+  ).length
   return { done, total: unique.length }
+}
+
+/** True when the progress row's last practice falls on `now`'s day in `timeZone`. */
+export function wasPracticedToday(
+  progress: QuestionProgress | undefined,
+  now: Date = new Date(),
+  timeZone = INTERVIEW_TIME_ZONE,
+): boolean {
+  const practicedAt = progress?.lastPracticedAt
+  if (!practicedAt) return false
+  const date = new Date(practicedAt)
+  return (
+    !Number.isNaN(date.getTime()) && dateKeyInZone(date, timeZone) === dateKeyInZone(now, timeZone)
+  )
 }
 
 export function selectTodaysQueue(
