@@ -581,6 +581,29 @@ Each phase is one PR, waits for your approval to start, and ends with `pnpm lint
 | **4 — Phrasebook, Reading, Foundations** | Single header, StatusBadge mapping, CourseProgress + Continue, lesson reader typography + LanguageAids + TTS on tap, Next lesson, Learn-mode completion, a11y fixes (nesting, labels, confirm dialogs), tab back/forward sync | L           | Continue resumes the right lesson/unit. Status words are the same in all three. No nested interactive elements (axe).                  |
 | **5 — Exam Prep, History, polish**       | Exam hub reorder, session action bar + leave guard, results breakdown with diff, script editor toolbar/mobile sections/labels/`lang`, History error state/diff/mobile streak strip. Final pass at all widths, both themes     | L           | Start above the fold. No silent session loss. History shows an error instead of a false empty state. Full responsive checklist passes. |
 
+### Delivery notes
+
+**Phase 1 (PR #46).** Learning tabs use the registry labels; see §3.2.
+
+**Phase 2: where it differs from the plan above.**
+
+- **R2/R3 shipped.**
+  - `missionItemHref("vocab_review")` is now `/vocab?review=session`, so the Hub's own special case was removed.
+  - The Phrases tab (`components/vocab/PhrasesTab.tsx`) shows today's phrase via `useDailyPhrase`. It mounts only while the tab is open, so `getToday` is no more eager than before. The `/daily-phrase` stub is unchanged, but nothing in `/vocab` links to it any more.
+- **V2: correction.** `/practice/today`'s summary grid did **not** duplicate the top section. Topic, mode, streak, and this week appear only there, so it was compacted into one row, not removed.
+  - On `/vocab`, the PageHero stats and the VocabStats card were removed. The batch and backlog are on the Memory Lab card, and mastered/average strength are in the library header.
+- **V1:** the plan's "Library · Decks · Courses" became **Library · Courses**. The library _is_ the deck browser, so a separate Decks view would repeat it.
+- **V5:** the plan's "Shortcuts" hint is per-button instead: key numbers on the grade buttons, flashcards only.
+- **V7 deferred to Phase 4.** `useRomanizationPreference` defaults to `on-request`, so honoring it in flashcards would hide romanization for everyone who never set the preference. Ship it together with `LanguageAids`, which also needs a visible reveal.
+- **The `StudySession` layout moved to Phase 3**, where recording needs the sticky action bar. `/practice` kept its stepper and Learning tabs, and got retry, progressbar semantics, an announced step counter, stable preview skeletons, and primary-token buttons.
+- **ReviewSession:**
+  - The three fullscreen screens are now a Radix Dialog (`LabOverlay`): focus trap and restore, Escape, an accessible name, and initial focus on the dialog so Space/Enter still flip the card.
+  - A leave confirmation appears once anything is graded.
+  - Answers are announced through `aria-live`.
+  - Grade buttons use the `--grade-*` tokens.
+  - Korean terms use `lang="ko"`.
+  - Component tests: `components/vocab/ReviewSession.test.tsx`.
+
 ---
 
 ## 10. Acceptance criteria and testing checklist

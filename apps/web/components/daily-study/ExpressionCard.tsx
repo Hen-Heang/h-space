@@ -16,7 +16,10 @@ export function ExpressionCard({
     <article className="min-w-0 rounded-2xl border border-border bg-card p-4 shadow-sm">
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="break-keep text-lg font-semibold leading-snug [overflow-wrap:anywhere]">
+          <p
+            lang="ko"
+            className="break-keep text-lg font-semibold leading-snug [overflow-wrap:anywhere]"
+          >
             {expression.korean}
           </p>
           {showRomanization && (
@@ -36,11 +39,11 @@ export function ExpressionCard({
       <div className="mt-3 rounded-xl bg-muted/55 p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="break-keep text-sm font-medium [overflow-wrap:anywhere]">
+            <p lang="ko" className="break-keep text-sm font-medium [overflow-wrap:anywhere]">
               {expression.example}
             </p>
             {showRomanization && (
-              <p className="mt-1 break-words text-[11px] text-blue-600/80 dark:text-blue-400/80">
+              <p className="mt-1 break-words text-xs text-blue-700 dark:text-blue-300">
                 {expression.exampleRomanization}
               </p>
             )}
@@ -49,7 +52,7 @@ export function ExpressionCard({
           <SpeakButton text={expression.example} className="min-h-10 min-w-10 shrink-0" />
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-medium">
+      <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium">
         <span className="rounded-full bg-blue-500/10 px-2.5 py-1 text-blue-700 dark:text-blue-300">
           {expression.difficulty}
         </span>

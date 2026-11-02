@@ -59,7 +59,10 @@ export function DailyPhraseCard({
             </span>
           )}
           <div className="mt-4 flex items-center gap-2">
-            <h3 className="text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">
+            <h3
+              lang="ko"
+              className="break-keep text-xl font-extrabold tracking-tight text-foreground sm:text-2xl"
+            >
               {phrase.phrase}
             </h3>
             <SpeakButton text={phrase.phrase} className="shrink-0" />

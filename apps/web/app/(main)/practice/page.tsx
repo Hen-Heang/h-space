@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, ChevronLeft, ChevronRight, Flame, PartyPopper } from "lucide-react"
+import { CheckCircle2, ChevronLeft, ChevronRight, Flame, PartyPopper, RotateCw } from "lucide-react"
 import { motion } from "motion/react"
 
 import { WorkspaceTabs } from "@/components/layout/WorkspaceTabs"
 import { MissionItemIcon } from "@/components/practice/MissionItemIcon"
+import { Button } from "@/components/ui/button"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SpeakButton } from "@/components/ui/SpeakButton"
@@ -112,8 +113,12 @@ function PracticeSession() {
 
   if (error || !mission) {
     return (
-      <div className="mx-auto max-w-2xl px-4 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-6 sm:pt-6">
-        <ErrorBanner>Couldn&apos;t load today&apos;s practice. Try refreshing.</ErrorBanner>
+      <div className="mx-auto max-w-2xl space-y-3 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-6 sm:pt-6">
+        <ErrorBanner>Couldn&apos;t load today&apos;s practice.</ErrorBanner>
+        <Button variant="outline" onClick={() => void refreshMission()}>
+          <RotateCw aria-hidden="true" />
+          Try again
+        </Button>
       </div>
     )
   }
@@ -142,7 +147,7 @@ function PracticeSession() {
     >
       <motion.div variants={itemVariants}>
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-lg font-bold text-foreground">Today&apos;s Practice</h1>
+          <h2 className="text-lg font-bold text-foreground">Today&apos;s Practice</h2>
           {viewIndex !== null && (
             <div className="flex items-center gap-2">
               <button
@@ -154,8 +159,15 @@ function PracticeSession() {
               >
                 <ChevronLeft size={16} strokeWidth={2.5} />
               </button>
-              <span className="text-xs font-bold tabular-nums text-muted-foreground">
-                {viewIndex + 1} / {items.length}
+              <span
+                aria-live="polite"
+                className="text-xs font-bold tabular-nums text-muted-foreground"
+              >
+                <span className="sr-only">Step </span>
+                {viewIndex + 1}
+                <span aria-hidden="true"> / </span>
+                <span className="sr-only"> of </span>
+                {items.length}
               </span>
               <button
                 type="button"
@@ -169,9 +181,16 @@ function PracticeSession() {
             </div>
           )}
         </div>
-        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-accent/40">
+        <div
+          role="progressbar"
+          aria-label="Steps completed today"
+          aria-valuemin={0}
+          aria-valuemax={items.length}
+          aria-valuenow={completedCount}
+          className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-accent/40"
+        >
           <div
-            className="h-full rounded-full bg-violet-500 transition-all"
+            className="h-full rounded-full bg-primary transition-all"
             style={{ width: `${items.length ? (completedCount / items.length) * 100 : 0}%` }}
           />
         </div>
@@ -194,11 +213,11 @@ function StepCard({ item }: { item: MissionItem }) {
   return (
     <div className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-900/40 sm:p-8">
       <div className="flex items-center gap-2.5">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 ring-1 ring-inset ring-violet-500/15 dark:text-violet-400">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/15">
           <MissionItemIcon type={item.type} size={17} strokeWidth={2.2} />
         </span>
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-400">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
             {missionItemLabel(item.type)}
           </p>
           <p className="text-sm font-medium text-muted-foreground">{missionItemSummary(item)}</p>
@@ -240,7 +259,7 @@ function StepAction({ item }: { item: MissionItem }) {
     return (
       <Link
         href={href}
-        className="mt-6 flex h-12 w-full items-center justify-center rounded-xl bg-violet-600 text-sm font-bold text-white shadow-sm shadow-violet-600/20 transition-colors hover:bg-violet-500 active:scale-[0.985] dark:bg-violet-500 dark:hover:bg-violet-400"
+        className="mt-6 flex h-12 w-full items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 active:scale-[0.985]"
       >
         {ctaLabel}
       </Link>
@@ -277,7 +296,7 @@ function StepAction({ item }: { item: MissionItem }) {
         type="button"
         onClick={() => void startScenario()}
         disabled={starting}
-        className="mt-6 flex h-12 w-full items-center justify-center rounded-xl bg-violet-600 text-sm font-bold text-white shadow-sm shadow-violet-600/20 transition-colors hover:bg-violet-500 active:scale-[0.985] disabled:opacity-60 dark:bg-violet-500 dark:hover:bg-violet-400"
+        className="mt-6 flex h-12 w-full items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 active:scale-[0.985] disabled:opacity-60"
       >
         {starting ? "Starting…" : ctaLabel}
       </button>
@@ -289,7 +308,8 @@ function StepAction({ item }: { item: MissionItem }) {
 
 function VocabPreview({ item }: { item: MissionItem }) {
   const { dueToday, loading } = useVocab()
-  if (loading) return null
+  // Fixed-height placeholder so the card doesn't jump when the words arrive.
+  if (loading) return <Skeleton className="h-20 w-full rounded-lg" />
   const words = dueToday.filter((w) => item.referenceIds.includes(w.id)).slice(0, 3)
   if (words.length === 0) return null
 
@@ -309,7 +329,8 @@ function VocabPreview({ item }: { item: MissionItem }) {
 
 function DailyPhrasePreview() {
   const { phrase, loading } = useDailyPhrase()
-  if (loading || !phrase) return null
+  if (loading) return <Skeleton className="h-8 w-2/3 rounded-lg" />
+  if (!phrase) return null
 
   return (
     <div className="flex items-center gap-2">
@@ -347,7 +368,7 @@ function CompletionSummary({
           <PartyPopper size={22} strokeWidth={2.2} />
         </span>
         <div>
-          <h1 className="text-lg font-bold text-foreground">Daily goal complete!</h1>
+          <h2 className="text-lg font-bold text-foreground">Daily goal complete!</h2>
           <p className="text-sm text-muted-foreground">
             You finished everything today&apos;s plan asked for.
           </p>
@@ -392,7 +413,7 @@ function CompletionSummary({
         {dueLoading ? (
           <Skeleton className="h-44 w-full rounded-3xl" />
         ) : nextBatch > 0 ? (
-          <div className="rounded-3xl border border-violet-500/20 bg-violet-500/[0.04] p-5 dark:bg-violet-500/[0.07]">
+          <div className="rounded-3xl border border-primary/20 bg-primary/[0.04] p-5">
             <p className="text-sm font-bold text-foreground">Want to keep going?</p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               {dueCount.toLocaleString()} {dueCount === 1 ? "word is" : "words are"} still due for
@@ -400,7 +421,7 @@ function CompletionSummary({
             </p>
             <Link
               href="/vocab?review=session"
-              className="mt-4 flex h-12 w-full items-center justify-center rounded-xl bg-violet-600 text-sm font-bold text-white shadow-sm shadow-violet-600/20 transition-colors hover:bg-violet-500 active:scale-[0.985] dark:bg-violet-500 dark:hover:bg-violet-400"
+              className="mt-4 flex h-12 w-full items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 active:scale-[0.985]"
             >
               Review {nextBatch} more
             </Link>

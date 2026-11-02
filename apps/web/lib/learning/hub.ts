@@ -50,13 +50,11 @@ export function summarizeMissionProgress(mission: DailyMission): MissionProgress
 }
 
 /**
- * Where the hub sends a step. Vocabulary opens the review straight away
- * (`?review=session`, the same param the "Review N more" link uses) instead of
- * the long /vocab page; a scenario hands off to /practice, which creates the
+ * Where the hub sends a step: the step's own link (`missionItemHref`), except
+ * a scenario, which has none — it hands off to /practice, which creates the
  * conversation + session first.
  */
 export function hubStepHref(item: MissionItem, fallback: string | null): string {
-  if (item.type === "vocab_review") return "/vocab?review=session"
   if (item.type === "scenario") return "/practice"
   return fallback ?? "/practice"
 }

@@ -71,8 +71,7 @@ describe("summarizeMissionProgress", () => {
 })
 
 describe("hubStepHref", () => {
-  it("opens vocabulary review directly and hands scenarios to /practice", () => {
-    expect(hubStepHref(item({ type: "vocab_review" }), "/vocab")).toBe("/vocab?review=session")
+  it("hands scenarios to /practice", () => {
     expect(hubStepHref(item({ type: "scenario" }), null)).toBe("/practice")
   })
 

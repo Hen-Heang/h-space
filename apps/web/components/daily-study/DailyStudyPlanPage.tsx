@@ -199,23 +199,30 @@ export function DailyStudyPlanPage() {
 
       {study.error && <ErrorBanner>{study.error}</ErrorBanner>}
 
-      <section aria-label="Daily summary" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <SummaryCard icon={Target} label="Today’s topic" value={plan.topicLabel} />
-        <SummaryCard
-          icon={CalendarClock}
-          label="Current mode"
-          value={`${MODE_LABELS[plan.mode]} · ${MODE_TOTAL_MINUTES[plan.mode]} min`}
-        />
-        <SummaryCard
-          icon={RotateCcw}
-          label="Study streak"
-          value={`${streak.data?.streakDays ?? 0} days`}
-        />
-        <SummaryCard
-          icon={TimerReset}
-          label="This week"
-          value={`${weekly.data?.focusedMinutes ?? 0} focused min`}
-        />
+      {/* One compact row instead of four cards — the same four values, none
+          of which the hero above repeats. */}
+      <section
+        aria-label="Daily summary"
+        className="rounded-2xl border border-border bg-card px-4 py-3 shadow-sm"
+      >
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm lg:grid-cols-4">
+          <SummaryCard icon={Target} label="Today’s topic" value={plan.topicLabel} />
+          <SummaryCard
+            icon={CalendarClock}
+            label="Current mode"
+            value={`${MODE_LABELS[plan.mode]} · ${MODE_TOTAL_MINUTES[plan.mode]} min`}
+          />
+          <SummaryCard
+            icon={RotateCcw}
+            label="Study streak"
+            value={`${streak.data?.streakDays ?? 0} days`}
+          />
+          <SummaryCard
+            icon={TimerReset}
+            label="This week"
+            value={`${weekly.data?.focusedMinutes ?? 0} focused min`}
+          />
+        </dl>
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
@@ -432,10 +439,12 @@ function SummaryCard({
   value: string
 }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-border bg-card p-4 shadow-sm">
-      <Icon size={17} className="text-blue-600" />
-      <p className="mt-3 text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 break-words text-sm font-semibold leading-snug">{value}</p>
+    <div className="flex min-w-0 items-start gap-2">
+      <Icon aria-hidden="true" size={15} className="mt-0.5 shrink-0 text-muted-foreground" />
+      <div className="min-w-0">
+        <dt className="text-xs text-muted-foreground">{label}</dt>
+        <dd className="break-words font-semibold leading-snug">{value}</dd>
+      </div>
     </div>
   )
 }
@@ -626,7 +635,7 @@ function ActivityMaterial({
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-blue-600">{line.speaker}</p>
-                <p className="mt-1 break-keep font-medium [overflow-wrap:anywhere]">
+                <p lang="ko" className="mt-1 break-keep font-medium [overflow-wrap:anywhere]">
                   {line.korean}
                 </p>
                 {plan.romanizationVisible && (
@@ -659,10 +668,10 @@ function ActivityMaterial({
         plan.attempts.slice(-5).map((attempt) => (
           <div key={attempt.id} className="rounded-xl bg-background p-3">
             <p className="text-xs text-muted-foreground">
-              Original: {attempt.feedback.originalAnswer}
+              Original: <span lang="ko">{attempt.feedback.originalAnswer}</span>
             </p>
             <div className="mt-2 flex items-start justify-between gap-2">
-              <p className="break-keep text-sm font-medium [overflow-wrap:anywhere]">
+              <p lang="ko" className="break-keep text-sm font-medium [overflow-wrap:anywhere]">
                 {attempt.feedback.correctedAnswer}
               </p>
               <SpeakButton

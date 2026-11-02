@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useMemo, useCallback, useEffect } from "react"
+import { useState, useMemo, useCallback, useEffect, useRef, type ReactNode } from "react"
+import { Dialog as DialogPrimitive } from "radix-ui"
 import {
   ArrowLeft,
   ArrowLeftRight,
@@ -29,8 +30,59 @@ import { isCorrectTerm, shuffle } from "@/lib/vocab-review"
 import { loadBestStreak, submitBestStreak } from "@/lib/vocab-best-streak-store"
 import type { SentenceChallengeResponse, SentenceCheckResponse, VocabItem } from "@/lib/types"
 import { getCachedAudioUrl, SpeakButton } from "@/components/ui/SpeakButton"
-import { BorderBeam } from "@/components/ui/border-beam"
+import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+
+// Memory Lab's fullscreen screens (setup, quiz, results) as a real modal
+// dialog: focus is trapped inside and restored on close, Escape calls
+// `onClose`, the page behind is hidden from assistive tech, and each screen
+// has an accessible name. Focus lands on the dialog itself rather than its
+// first button, so Space/Enter still reach FlashCard's flip shortcut instead
+// of activating the back button.
+function LabOverlay({
+  title,
+  onClose,
+  children,
+}: {
+  title: string
+  onClose: () => void
+  children: ReactNode
+}) {
+  const contentRef = useRef<HTMLDivElement>(null)
+  return (
+    <DialogPrimitive.Root
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Content
+          ref={contentRef}
+          aria-describedby={undefined}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault()
+            contentRef.current?.focus()
+          }}
+          className="fixed inset-0 z-[60] flex flex-col bg-background outline-none"
+        >
+          <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>
+          {children}
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
+  )
+}
 
 function getChoices(correct: VocabItem, pool: VocabItem[]): VocabItem[] {
   const distractors = shuffle(pool.filter((w) => w.id !== correct.id)).slice(0, 3)
@@ -81,52 +133,54 @@ type ReviewSessionProps = {
   onAutoStartHandled?: () => void
 }
 
-// Duolingo-style grade buttons: bright fill + darker bottom edge ("3D" press).
-// label + the interval the card jumps to.
+// Grade buttons: solid fill from the --grade-* theme tokens (globals.css) with
+// a darker bottom edge for the "3D" press, the label, and the interval the
+// card jumps to.
 const GRADE_STYLES: Record<ReviewRating, { label: string; classes: string }> = {
-  AGAIN: {
-    label: "Again",
-    classes: "bg-[#ff4b4b] border-[#e63b3b] text-white",
-  },
-  HARD: {
-    label: "Hard",
-    classes: "bg-[#ff9600] border-[#e08400] text-white",
-  },
-  GOOD: {
-    label: "Good",
-    classes: "bg-[#58cc02] border-[#46a302] text-white",
-  },
-  EASY: {
-    label: "Easy",
-    classes: "bg-[#1cb0f6] border-[#1499e0] text-white",
-  },
+  AGAIN: { label: "Again", classes: "bg-grade-again" },
+  HARD: { label: "Hard", classes: "bg-grade-hard" },
+  GOOD: { label: "Good", classes: "bg-grade-good" },
+  EASY: { label: "Easy", classes: "bg-grade-easy" },
 }
 
 function GradeButtons({
   card,
   onGrade,
+  showKeys = false,
 }: {
   card: VocabItem
   onGrade: (rating: ReviewRating) => void
+  /** Only FlashCard listens for the 1-4 keys. */
+  showKeys?: boolean
 }) {
   return (
     <div className="grid grid-cols-4 gap-2.5">
-      {RATINGS.map((rating) => (
+      {RATINGS.map((rating, index) => (
         <button
           key={rating}
           type="button"
           onClick={() => onGrade(rating)}
+          aria-keyshortcuts={showKeys ? String(index + 1) : undefined}
           className={cn(
-            "flex h-16 min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl border-b-4 px-1 transition-all active:translate-y-[3px] active:border-b-0",
+            "relative flex h-16 min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl border-b-4 border-black/25 px-1 text-white transition-all active:translate-y-[3px] active:border-b-0",
             GRADE_STYLES[rating].classes,
           )}
         >
-          <span className="max-w-full truncate text-[11px] font-bold uppercase tracking-wider sm:text-xs">
+          <span className="max-w-full truncate text-xs font-bold uppercase tracking-wider">
             {GRADE_STYLES[rating].label}
           </span>
-          <span className="max-w-full truncate text-[11px] font-bold opacity-80 sm:text-[12px]">
+          <span className="max-w-full truncate text-xs font-semibold opacity-90">
             {formatInterval(previewIntervalDays(card, rating))}
           </span>
+          {/* Keyboard hint — FlashCard maps 1-4 to these, Anki-style. */}
+          {showKeys && (
+            <kbd
+              aria-hidden="true"
+              className="absolute right-1.5 top-1 hidden font-mono text-[10px] opacity-70 [@media(pointer:fine)]:block"
+            >
+              {index + 1}
+            </kbd>
+          )}
         </button>
       ))}
     </div>
@@ -220,7 +274,9 @@ function FlashCard({
                   ),
                 )}
               >
-                {reversed ? card.meaning : card.term}
+                <span lang={reversed ? undefined : "ko"}>
+                  {reversed ? card.meaning : card.term}
+                </span>
               </p>
               {!reversed && (
                 <Pronunciation text={card.pronunciation} className="mt-4 text-xl sm:text-3xl" />
@@ -248,12 +304,16 @@ function FlashCard({
                   ),
                 )}
               >
-                {reversed ? card.term : card.meaning}
+                <span lang={reversed ? "ko" : undefined}>
+                  {reversed ? card.term : card.meaning}
+                </span>
               </p>
               <Pronunciation text={card.pronunciation} className="mt-2 text-base sm:text-2xl" />
               {/* Always surface the other side too, so each card reinforces Korean + reading + meaning together. */}
               <p className="mt-2 break-keep text-lg font-bold text-muted-foreground/80 [overflow-wrap:anywhere] sm:text-2xl">
-                {reversed ? card.meaning : card.term}
+                <span lang={reversed ? undefined : "ko"}>
+                  {reversed ? card.meaning : card.term}
+                </span>
               </p>
 
               {card.example && (
@@ -304,7 +364,7 @@ function FlashCard({
             </div>
 
             {/* Grading Buttons (Duolingo-style, keys 1-4) */}
-            <GradeButtons card={card} onGrade={grade} />
+            <GradeButtons card={card} onGrade={grade} showKeys />
           </motion.div>
         )}
       </AnimatePresence>
@@ -411,7 +471,7 @@ function ChoiceCard({
             ),
           )}
         >
-          {card.term}
+          <span lang="ko">{card.term}</span>
         </p>
         <Pronunciation text={card.pronunciation} className="mt-3 text-lg sm:text-2xl" />
         <div className="mt-6">
@@ -642,7 +702,7 @@ function RecallCard({
                   {result === "correct" ? "Correct" : "Answer"}
                 </p>
                 <p className="mt-1 break-keep text-2xl font-bold tracking-tight text-foreground [overflow-wrap:anywhere]">
-                  {card.term}
+                  <span lang="ko">{card.term}</span>
                 </p>
                 {card.example && (
                   <p className="mt-2 text-sm font-bold leading-relaxed text-muted-foreground/70">
@@ -828,7 +888,7 @@ function ListeningCard({
                 ),
               )}
             >
-              {card.term}
+              <span lang="ko">{card.term}</span>
             </p>
             <Pronunciation text={card.pronunciation} className="mt-2 text-lg sm:text-2xl" />
             <p className="mt-3 break-keep text-xl font-bold text-muted-foreground [overflow-wrap:anywhere] sm:text-2xl">
@@ -949,7 +1009,7 @@ function SentenceCard({
             ),
           )}
         >
-          {card.term}
+          <span lang="ko">{card.term}</span>
         </p>
         {card.pronunciation && (
           <p className="mt-3 text-lg font-bold text-muted-foreground sm:text-2xl">
@@ -1167,7 +1227,12 @@ export function ReviewSession({
   // All-time best (persisted) and whether this session beat it.
   const [allTimeBest, setAllTimeBest] = useState(0)
   const [isNewRecord, setIsNewRecord] = useState(false)
+  // Screen-reader note for the last choice/recall answer ("Correct." /
+  // "Incorrect."), cleared when the card is graded.
+  const [resultNote, setResultNote] = useState("")
+  const [confirmLeave, setConfirmLeave] = useState(false)
   const registerResult = useCallback((correct: boolean) => {
+    setResultNote(correct ? "Correct." : "Incorrect.")
     setStreak((s) => {
       const next = correct ? s + 1 : 0
       setBestStreak((b) => (next > b ? next : b))
@@ -1319,6 +1384,7 @@ export function ReviewSession({
       // Optimistic: advance instantly; rateWithRetry persists + surfaces failures.
       void rateWithRetry(card.id, rating)
       setAttemptsCount((a) => a + 1)
+      setResultNote("")
 
       if (rating === "AGAIN") {
         setLapsedIds((prev) => new Set(prev).add(card.id))
@@ -1369,95 +1435,71 @@ export function ReviewSession({
     // narrowing the view — otherwise say so explicitly instead of showing two
     // unexplained different numbers on the same page.
     const hasMoreQueued = selectedCategories.size === 0 && dueCount > filteredDueToday.length
+    const batch = filteredDueToday.length
     return (
-      <div
+      <section
+        aria-labelledby="memory-lab-heading"
         className={cn(
-          "relative overflow-hidden rounded-3xl border bg-card shadow-sm dark:bg-slate-900/50",
-          isDueSession ? "border-emerald-500/25" : "border-border/70",
+          "app-surface p-5 sm:p-6",
+          isDueSession && "border-primary/30 bg-linear-to-br from-primary/[0.06] to-card",
         )}
       >
-        {isDueSession ? (
-          <BorderBeam size={72} duration={7} colorFrom="#10b981" colorTo="#3b82f6" />
-        ) : null}
-        <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-6">
-          {/* Identity */}
-          <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/20">
-              <BrainCircuit size={28} strokeWidth={2.5} />
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <div className="flex min-w-0 items-start gap-4">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <BrainCircuit aria-hidden="true" className="size-5" />
             </div>
             <div className="min-w-0">
-              <p className="app-kicker">Today&apos;s review</p>
-              <h2 className="mt-1 text-xl font-semibold tracking-tight text-foreground">
-                Memory Lab
+              <p className="app-kicker">Memory Lab</p>
+              <h2
+                id="memory-lab-heading"
+                className="mt-1 text-xl font-semibold tracking-tight text-foreground"
+              >
+                {loading
+                  ? "Loading your words…"
+                  : isDueSession
+                    ? `Review ${batch} ${batch === 1 ? "word" : "words"}`
+                    : filteredAllWords.length > 0
+                      ? "All caught up"
+                      : "No words yet"}
               </h2>
+              {/* Each count once: the batch is in the title; the backlog and
+                  collection size are here (dueCount is the uncapped backlog). */}
               <p className="mt-1 text-sm leading-5 text-muted-foreground">
-                {isDueSession
-                  ? hasMoreQueued
-                    ? `${filteredDueToday.length} of ${dueCount} due — next batch ready`
-                    : `${filteredDueToday.length} ${filteredDueToday.length === 1 ? "word" : "words"} due for review`
-                  : filteredAllWords.length > 0
-                    ? "All caught up — practice anytime"
-                    : "Add words to start your deck"}
+                {loading
+                  ? " "
+                  : isDueSession
+                    ? `${hasMoreQueued ? `${dueCount.toLocaleString()} due · ` : ""}${filteredAllWords.length.toLocaleString()} saved`
+                    : filteredAllWords.length > 0
+                      ? `Nothing due — practice any of your ${filteredAllWords.length.toLocaleString()} words`
+                      : "Add words to start your deck"}
               </p>
             </div>
           </div>
 
-          {/* Stats + launch */}
-          <div className="grid shrink-0 grid-cols-1 items-center gap-3 min-[420px]:grid-cols-[auto_minmax(0,1fr)]">
-            <div className="flex items-center gap-4 rounded-2xl border border-border bg-background/65 px-4 py-2.5">
-              <div className="text-center">
-                <p className="font-mono text-lg font-semibold leading-none text-emerald-600">
-                  {filteredDueToday.length}
-                </p>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  {hasMoreQueued ? "In batch" : "Due"}
-                </p>
-              </div>
-              <div className="h-7 w-px bg-border/60" />
-              <div className="text-center">
-                <p className="font-mono text-lg font-semibold leading-none text-foreground">
-                  {filteredAllWords.length}
-                </p>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Saved
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col items-stretch gap-1.5">
-              {/* One tap goes straight into flashcards — the setup screen
-                  (mode + category picker) is opt-in via "Customize" below,
-                  not a required stop on the way to reviewing. */}
-              <button
-                type="button"
-                disabled={loading || deckSize === 0}
-                onClick={() => {
-                  setIsOpen(true)
-                  startQuiz()
-                }}
-                className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-500 active:scale-[0.98] disabled:opacity-40 sm:px-6"
-              >
-                <Sparkles size={18} strokeWidth={2.5} />
-                {loading
-                  ? "Loading…"
-                  : deckSize === 0
-                    ? "No words yet"
-                    : isDueSession
-                      ? `Review ${filteredDueToday.length}`
-                      : "Practice"}
-              </button>
-              {deckSize > 0 && !loading && (
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(true)}
-                  className="text-center text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Customize session
-                </button>
-              )}
-            </div>
+          <div className="flex shrink-0 flex-col gap-2 min-[420px]:flex-row sm:flex-col lg:flex-row">
+            {/* One tap goes straight into flashcards — the setup screen
+                (mode + category picker) is opt-in via "Customize", not a
+                required stop on the way to reviewing. */}
+            <Button
+              size="lg"
+              disabled={loading || deckSize === 0}
+              onClick={() => {
+                setIsOpen(true)
+                startQuiz()
+              }}
+            >
+              <Sparkles aria-hidden="true" />
+              {isDueSession ? "Start review" : "Practice"}
+            </Button>
+            {deckSize > 0 && !loading && (
+              <Button size="lg" variant="outline" onClick={() => setIsOpen(true)}>
+                Customize
+              </Button>
+            )}
           </div>
         </div>
-      </div>
+      </section>
     )
   }
 
@@ -1467,15 +1509,16 @@ export function ReviewSession({
     const isDueSession = filteredDueToday.length > 0
     const hasMoreQueued = selectedCategories.size === 0 && dueCount > filteredDueToday.length
     return (
-      <div className="fixed inset-0 z-[60] flex flex-col bg-background">
+      <LabOverlay title="Memory Lab — set up a review" onClose={() => setIsOpen(false)}>
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-border/60 bg-accent/5 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:py-5">
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground/40 hover:bg-accent/50 hover:text-foreground transition-colors"
+            aria-label="Close Memory Lab"
+            className="flex size-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
           >
-            <ArrowLeft size={20} strokeWidth={2.5} />
+            <ArrowLeft aria-hidden="true" size={20} strokeWidth={2.5} />
           </button>
           <div className="flex-1 min-w-0">
             <p className="text-[16px] font-bold tracking-tight text-foreground">Memory Lab</p>
@@ -1566,10 +1609,18 @@ export function ReviewSession({
 
             {/* Mode selector */}
             <div className="space-y-2">
-              <p className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+              <p
+                id="memory-lab-mode-label"
+                className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground"
+              >
                 Study Mode
               </p>
-              <div className="flex gap-1 rounded-2xl bg-accent/10 p-1">
+              {/* Wraps to rows on phones so five labels don't truncate. */}
+              <div
+                role="group"
+                aria-labelledby="memory-lab-mode-label"
+                className="grid grid-cols-3 gap-1 rounded-2xl bg-accent/10 p-1 sm:flex"
+              >
                 {(
                   [
                     "flashcard",
@@ -1583,10 +1634,11 @@ export function ReviewSession({
                     key={m}
                     type="button"
                     onClick={() => setMode(m)}
+                    aria-pressed={mode === m}
                     className={cn(
-                      "flex min-w-0 flex-1 items-center justify-center gap-1 rounded-[0.9rem] px-1 py-3 text-[11px] font-bold uppercase tracking-wide transition-all sm:text-xs",
+                      "flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1 rounded-[0.9rem] px-1 py-3 text-xs font-bold uppercase tracking-wide transition-all",
                       mode === m
-                        ? "bg-card text-emerald-600 shadow-sm shadow-emerald-500/10 ring-1 ring-border"
+                        ? "bg-card text-primary shadow-sm ring-1 ring-border"
                         : "text-muted-foreground hover:text-foreground",
                     )}
                   >
@@ -1626,13 +1678,13 @@ export function ReviewSession({
 
         {/* Pinned Start button */}
         <div className="border-t border-border/60 px-4 py-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6">
-          <button
-            type="button"
+          <Button
+            size="lg"
             disabled={loading || deckSize === 0}
             onClick={startQuiz}
-            className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-emerald-600 text-base font-bold uppercase tracking-wide text-white shadow-xl shadow-emerald-600/30 transition-all hover:bg-emerald-500 hover:scale-[1.01] active:scale-95 disabled:opacity-40"
+            className="mx-auto flex h-14 w-full max-w-2xl text-base"
           >
-            <Sparkles size={20} strokeWidth={2.5} />
+            <Sparkles aria-hidden="true" />
             {loading
               ? "Loading..."
               : deckSize === 0
@@ -1640,9 +1692,9 @@ export function ReviewSession({
                 : isDueSession
                   ? `Review ${filteredDueToday.length} due`
                   : "Practice all words"}
-          </button>
+          </Button>
         </div>
-      </div>
+      </LabOverlay>
     )
   }
 
@@ -1652,20 +1704,22 @@ export function ReviewSession({
     const pct = total > 0 ? Math.round((knew / total) * 100) : 0
     const headline = pct >= 80 ? "Perfect Loop" : pct >= 50 ? "Solid Growth" : "Keep Building"
 
+    const finish = () => {
+      setPhase("idle")
+      setIsOpen(false)
+    }
     return (
-      <div className="fixed inset-0 z-[60] flex flex-col bg-background">
+      <LabOverlay title="Memory Lab — session results" onClose={finish}>
         {/* Stay immersive coming out of the quiz — back button mirrors the
             session header instead of dropping straight into the page shell. */}
         <div className="flex items-center border-b border-border/60 bg-accent/5 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:py-5">
           <button
             type="button"
-            onClick={() => {
-              setPhase("idle")
-              setIsOpen(false)
-            }}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground/40 hover:bg-accent/50 hover:text-foreground transition-colors"
+            onClick={finish}
+            aria-label="Close Memory Lab"
+            className="flex size-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
           >
-            <ArrowLeft size={20} strokeWidth={2.5} />
+            <ArrowLeft aria-hidden="true" size={20} strokeWidth={2.5} />
           </button>
           <span className="ml-3 text-[14px] font-bold uppercase tracking-wide text-foreground">
             Session Results
@@ -1736,13 +1790,16 @@ export function ReviewSession({
               </motion.div>
             )}
 
+            {/* With another batch waiting, reviewing it is the primary
+                action; otherwise finishing is. */}
             <div className="flex w-full max-w-sm flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
+              <Button
+                size="lg"
+                variant={filteredDueToday.length > 0 ? "default" : "outline"}
                 onClick={startQuiz}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-background py-4 text-xs font-bold uppercase tracking-wide text-foreground transition-all hover:bg-accent active:scale-95"
+                className="flex-1"
               >
-                <RotateCcw size={16} strokeWidth={3} />
+                <RotateCcw aria-hidden="true" />
                 {/* Grading a batch refetches the deck (useVocab invalidates once
                     dueWords empties), so by the time this screen renders
                     filteredDueToday is the NEXT batch, not the one just
@@ -1750,21 +1807,19 @@ export function ReviewSession({
                 {filteredDueToday.length > 0
                   ? `Review ${filteredDueToday.length} more`
                   : "Practice again"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setPhase("idle")
-                  setIsOpen(false)
-                }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-4 text-xs font-bold uppercase tracking-wide text-white shadow-xl shadow-emerald-600/20 transition-all hover:bg-emerald-500 active:scale-95"
+              </Button>
+              <Button
+                size="lg"
+                variant={filteredDueToday.length > 0 ? "outline" : "default"}
+                onClick={finish}
+                className="flex-1"
               >
-                Finish Lab
-              </button>
+                Finish
+              </Button>
             </div>
           </div>
         </div>
-      </div>
+      </LabOverlay>
     )
   }
 
@@ -1772,17 +1827,50 @@ export function ReviewSession({
   const card = queue[currentIndex]
   if (!card) return null
 
+  // Leaving mid-session asks first once anything's been graded. Every grade is
+  // already saved as it happens, so nothing is lost — the dialog only stops an
+  // accidental tap from ending the run.
+  const requestLeave = () => {
+    if (attemptsCount > 0) setConfirmLeave(true)
+    else setPhase("idle")
+  }
+
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-background">
+    <LabOverlay title="Memory Lab — review session" onClose={requestLeave}>
+      {/* Announces each answer result and the next card for screen readers. */}
+      <p className="sr-only" aria-live="polite">
+        {resultNote} Card {Math.min(attemptsCount + 1, total)} of {total}.
+      </p>
+      <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
+        <AlertDialogContent className="z-[70]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave this review?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {attemptsCount} of {total} reviewed. Your grades so far are already saved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep reviewing</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmLeave(false)
+                setPhase("idle")
+              }}
+            >
+              Leave
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Session Progress Header */}
       <div className="flex items-center justify-between border-b border-border/60 bg-accent/5 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:py-5">
         <button
           type="button"
-          onClick={() => setPhase("idle")}
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground/40 hover:bg-accent/50 hover:text-foreground transition-colors"
-          aria-label="Back to setup"
+          onClick={requestLeave}
+          className="flex size-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+          aria-label="Leave review"
         >
-          <ArrowLeft size={20} strokeWidth={2.5} />
+          <ArrowLeft aria-hidden="true" size={20} strokeWidth={2.5} />
         </button>
         <div className="flex items-center gap-3">
           <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
@@ -1820,8 +1908,9 @@ export function ReviewSession({
         {/* Live tally: remembered vs. relearning */}
         <div className="flex items-center gap-2.5 text-xs font-bold tabular-nums">
           <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 size={13} strokeWidth={3} />
+            <CheckCircle2 aria-hidden="true" size={13} strokeWidth={3} />
             {knewCount}
+            <span className="sr-only"> remembered</span>
           </span>
           <span
             className="flex items-center gap-1 text-amber-600 dark:text-amber-400"
@@ -1831,8 +1920,9 @@ export function ReviewSession({
                 : 'Relearning — words graded "Again" come back later in this session'
             }
           >
-            <RotateCcw size={13} strokeWidth={3} />
+            <RotateCcw aria-hidden="true" size={13} strokeWidth={3} />
             {lapsedIds.size}
+            <span className="sr-only"> relearning — they come back later in this session</span>
           </span>
         </div>
       </div>
@@ -1887,6 +1977,6 @@ export function ReviewSession({
           </AnimatePresence>
         </div>
       </div>
-    </div>
+    </LabOverlay>
   )
 }

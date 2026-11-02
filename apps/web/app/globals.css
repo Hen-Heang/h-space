@@ -64,6 +64,10 @@ html[data-theme-transition]::view-transition-new(root) {
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-grade-again: var(--grade-again);
+  --color-grade-hard: var(--grade-hard);
+  --color-grade-good: var(--grade-good);
+  --color-grade-easy: var(--grade-easy);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -144,6 +148,12 @@ html[data-theme-transition]::view-transition-new(root) {
   --chart-3: oklch(0.78 0.13 85);
   --chart-4: oklch(0.69 0.16 26);
   --chart-5: oklch(0.63 0.17 320);
+  /* SRS grade buttons (Again/Hard/Good/Easy). Solid fills behind white text,
+     each ≥4.5:1 against white, so the same values work in both themes. */
+  --grade-again: #dc2626;
+  --grade-hard: #b45309;
+  --grade-good: #047857;
+  --grade-easy: #0369a1;
   --radius: 0.875rem;
   --sidebar: #ffffff;
   --sidebar-foreground: #1f2847;
