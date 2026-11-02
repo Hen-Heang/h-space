@@ -161,7 +161,7 @@ export default function CreateGoalPage() {
 
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
         {/* Left: Quick launch + filters + custom link */}
-        <div className="space-y-5 lg:sticky lg:top-6">
+        <div className="space-y-5 lg:sticky lg:top-[calc(var(--shell-header-h,0px)+1.5rem)]">
           <Card>
             <CardHeader>
               <div className="mb-1 flex items-center gap-3">

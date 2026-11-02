@@ -473,7 +473,7 @@ function NewPhraseCardInner() {
           />
         </div>
 
-        <div className="sticky bottom-4 z-10 rounded-2xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur-xl dark:bg-slate-900/90">
+        <div className="sticky bottom-[calc(var(--shell-bottom-nav-h,0px)+1rem)] z-10 rounded-2xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur-xl dark:bg-slate-900/90">
           <Button type="submit" disabled={saving} className="h-12 w-full">
             {saving ? "Saving..." : isEdit ? "Save changes" : "Create card"}
           </Button>

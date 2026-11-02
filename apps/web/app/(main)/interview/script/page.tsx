@@ -710,7 +710,7 @@ export default function InterviewScriptPage() {
     // Break out of the centered content column to get a full Google-Docs canvas.
     <div className="-mx-3.5 -mt-5 sm:-mx-6 lg:-mx-8 lg:-mt-8">
       {/* ── Docs-style title bar ── */}
-      <div className="sticky top-0 z-30 border-b border-border/70 bg-background/90 px-3.5 py-2.5 backdrop-blur-xl sm:px-6 lg:px-8">
+      <div className="sticky top-[var(--shell-header-h,0px)] z-20 border-b border-border/70 bg-background/90 px-3.5 py-2.5 backdrop-blur-xl sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-[1180px] items-center gap-3">
           <Link
             href="/interview"
@@ -1082,7 +1082,7 @@ export default function InterviewScriptPage() {
               </div>
               {/* Document outline (Docs left panel) */}
               <aside className="hidden w-56 shrink-0 lg:block">
-                <div className="sticky top-20">
+                <div className="sticky top-[calc(var(--shell-header-h,0px)+5rem)]">
                   <div className="mb-3 flex items-center gap-2 px-2 text-muted-foreground">
                     <ListTree size={16} strokeWidth={2.5} />
                     <span className="text-xs font-bold uppercase tracking-[0.18em]">Outline</span>
