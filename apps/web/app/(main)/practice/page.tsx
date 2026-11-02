@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { CheckCircle2, ChevronLeft, ChevronRight, Flame, PartyPopper } from "lucide-react"
 import { motion } from "motion/react"
 
+import { WorkspaceTabs } from "@/components/layout/WorkspaceTabs"
 import { MissionItemIcon } from "@/components/practice/MissionItemIcon"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -42,6 +43,15 @@ import { containerVariants, itemVariants } from "@/lib/motion"
 // (missionsApi.refreshProgress, via useDailyMission) whenever the learner
 // comes back to it.
 export default function PracticePage() {
+  return (
+    <div className="space-y-5">
+      <WorkspaceTabs sectionId="learn" />
+      <PracticeSession />
+    </div>
+  )
+}
+
+function PracticeSession() {
   useSessionTimer("practice")
   const { mission, loading, error, refreshMission } = useDailyMission()
   const { streakDays } = useStreak()

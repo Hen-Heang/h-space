@@ -393,6 +393,29 @@ describe("workspace tabs (secondary navigation)", () => {
     // Recovery is reached from the Growth overview, not a tab.
     expect(getActiveTab(grow, "/growth/recovery")).toBeUndefined()
   })
+
+  it("gives Learning its everyday areas and lights the right one on sub-routes", () => {
+    const learn = workspaceTabs.learn!
+    expect(learn.map((i) => i.label)).toEqual([
+      "Learning Hub",
+      "Practice",
+      "Vocabulary",
+      "Phrasebook",
+      "Korean Coach",
+      "Listening",
+    ])
+    expect(getActiveTab(learn, "/learn")?.id).toBe("learn-hub")
+    expect(getActiveTab(learn, "/practice/today")?.id).toBe("learn-practice")
+    expect(getActiveTab(learn, "/vocab")?.id).toBe("learn-vocab")
+    // Tabs match without search params, so ?mode=reading|foundations keeps Phrasebook lit.
+    expect(getActiveTab(learn, "/phrasebook")?.id).toBe("learn-phrasebook")
+    expect(getActiveTab(learn, "/phrasebook/practice")?.id).toBe("learn-phrasebook")
+    expect(getActiveTab(learn, "/korean-coach/practice/abc")?.id).toBe("learn-korean-coach")
+    expect(getActiveTab(learn, "/listening")?.id).toBe("learn-listening")
+    // Library routes aren't tabs.
+    expect(getActiveTab(learn, "/history")).toBeUndefined()
+    expect(getActiveTab(learn, "/interview")).toBeUndefined()
+  })
 })
 
 describe("mobile bottom bar + More", () => {

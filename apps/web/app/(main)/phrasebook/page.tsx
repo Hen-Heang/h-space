@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
+import { WorkspaceTabs } from "@/components/layout/WorkspaceTabs"
 import { FoundationsHome } from "@/components/learn/FoundationsHome"
 import { PhrasebookHome } from "@/components/phrasebook/PhrasebookHome"
 import { StudyModeTabs, type StudyMode } from "@/components/phrasebook/StudyModeTabs"
@@ -12,9 +13,12 @@ const VALID_MODES: StudyMode[] = ["phrases", "reading", "foundations"]
 
 export default function PhrasebookPage() {
   return (
-    <Suspense fallback={null}>
-      <PhrasebookPageContent />
-    </Suspense>
+    <div className="space-y-6">
+      <WorkspaceTabs sectionId="learn" />
+      <Suspense fallback={null}>
+        <PhrasebookPageContent />
+      </Suspense>
+    </div>
   )
 }
 
