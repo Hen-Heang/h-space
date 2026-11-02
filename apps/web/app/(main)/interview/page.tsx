@@ -1,14 +1,11 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import Link from "next/link"
 import {
   AlertCircle,
   Award,
-  ChevronDown,
   Eye,
   EyeOff,
-  FileText,
   GraduationCap,
   Loader2,
   Mic,
@@ -19,17 +16,12 @@ import {
   Waves,
 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
-import dynamic from "next/dynamic"
 
-import { DrillEntryCards } from "@/components/interview/DrillEntryCards"
 import { EvaluationSummary } from "@/components/interview/EvaluationSummary"
+import { ExamPrepHome } from "@/components/interview/ExamPrepHome"
 import { ExamTimer } from "@/components/interview/ExamTimer"
-import { InterviewProgressCard } from "@/components/interview/InterviewProgressCard"
-import { ModePicker } from "@/components/interview/ModePicker"
 import { SpeakingTipsCard } from "@/components/interview/SpeakingTipsCard"
 import { StudyPack } from "@/components/interview/StudyPack"
-import { StudyPlanCard } from "@/components/interview/StudyPlanCard"
-import { LearnHeader } from "@/components/learn/LearnHeader"
 import { SpeakButton } from "@/components/ui/SpeakButton"
 import {
   AlertDialog,
@@ -45,7 +37,6 @@ import { Badge } from "@/components/ui/badge"
 import { BorderBeam } from "@/components/ui/border-beam"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Textarea } from "@/components/ui/textarea"
 import { useLeaveGuard } from "@/hooks/useLeaveGuard"
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition"
@@ -76,21 +67,11 @@ import {
   type ScorecardRecord,
 } from "@/lib/interview-history"
 import { registerSpeechAudio, stopSpeechAudio } from "@/lib/speech-audio"
-import { EXAM_DATE_LABEL } from "@/lib/study-plan"
 import { cn } from "@/lib/utils"
 
 type SessionEntry =
   | { id: string; kind: "examiner"; turn: ExaminerTurn }
   | { id: string; kind: "answer"; text: string }
-
-// recharts-backed; deferred so the page paints before the chart chunk loads.
-const ScoreTrend = dynamic(
-  () => import("@/components/interview/ScoreTrend").then((m) => m.ScoreTrend),
-  {
-    ssr: false,
-    loading: () => <div className="h-48 w-full animate-pulse rounded-3xl bg-muted/20" />,
-  },
-)
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -410,138 +391,23 @@ export default function InterviewPage() {
     setPhase("select")
   }
 
-  // ── Topic selection ──────────────────────────────────────────────
+  // ── Exam Prep home ───────────────────────────────────────────────
   if (phase === "select") {
     return (
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-        className="space-y-6 pb-12 sm:space-y-8"
-      >
-        <motion.div variants={itemVariants}>
-          <LearnHeader
-            description={`K-Specialist spoken Q&A · exam ${EXAM_DATE_LABEL} · intro + Q&A, judged on speaking. The AI examiner asks one question at a time and probes with follow-ups.`}
-          />
-        </motion.div>
-
-        {/* Preparation in one card: topic, mode, and Start — above the fold. */}
-        <motion.section
-          variants={itemVariants}
-          aria-labelledby="exam-topic-heading"
-          className="app-surface space-y-5 border-primary/30 p-5 sm:p-6"
-        >
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="rounded-md text-xs">
-                Your topic
-              </Badge>
-              <Badge variant="outline" className="rounded-md text-xs">
-                {topic.difficulty}
-              </Badge>
-            </div>
-            <h2
-              id="exam-topic-heading"
-              lang="ko"
-              className="mt-3 text-xl font-bold leading-snug text-foreground"
-            >
-              {topic.labelKo}
-            </h2>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              {topic.description}
-            </p>
-          </div>
-
-          {/* Practice vs Exam Simulation */}
-          <ModePicker value={mode} onChange={setMode} />
-
-          {error && <ErrorBanner message={error} />}
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button
-              size="lg"
-              onClick={startSession}
-              disabled={isExaminerThinking}
-              className="h-12 w-full sm:w-auto sm:px-8"
-            >
-              {isExaminerThinking ? (
-                <>
-                  <Loader2 aria-hidden="true" className="animate-spin" /> Starting…
-                </>
-              ) : (
-                <>
-                  <GraduationCap aria-hidden="true" />
-                  {mode === "exam" ? "Start exam simulation" : "Start interview"}
-                </>
-              )}
-            </Button>
-            <Button asChild size="lg" variant="outline" className="h-12 w-full sm:w-auto">
-              <Link href="/interview/script">
-                <FileText aria-hidden="true" /> Write my script
-              </Link>
-            </Button>
-          </div>
-        </motion.section>
-
-        {/* Daily drills — quick reps between full mocks */}
-        <motion.div variants={itemVariants}>
-          <DrillEntryCards />
-        </motion.div>
-
-        {/* Reference material, collapsed so it doesn't push Start down. */}
-        <motion.div variants={itemVariants}>
-          <Collapsible className="app-surface">
-            <CollapsibleTrigger className="group flex min-h-14 w-full items-center justify-between gap-3 px-5 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
-              <span>
-                <span className="block text-sm font-semibold text-foreground">
-                  Progress & study materials
-                </span>
-                <span className="block text-xs text-muted-foreground">
-                  Score trend, study plan, speaking tips, and the topic study pack
-                </span>
-              </span>
-              <ChevronDown
-                aria-hidden="true"
-                className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180"
-              />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-6 border-t border-border p-4 sm:p-5">
-              {historySync === "failed" && (
-                <div
-                  role="alert"
-                  className="flex flex-col gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <p className="flex items-start gap-2 text-sm text-foreground/90">
-                    <AlertCircle
-                      aria-hidden="true"
-                      className="mt-0.5 size-4 shrink-0 text-amber-600"
-                    />
-                    Couldn&apos;t load mock results saved to your account. Showing results from this
-                    device only.
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setHistorySync("loading")
-                      syncHistory()
-                    }}
-                    className="h-10"
-                  >
-                    <RotateCcw aria-hidden="true" /> Retry
-                  </Button>
-                </div>
-              )}
-              {/* Renders itself only after mount + when scorecards exist. */}
-              <ScoreTrend records={history} />
-              <InterviewProgressCard topicId={topic.id} />
-              <StudyPlanCard />
-              <SpeakingTipsCard />
-              {topic.prep && <StudyPack topic={topic} />}
-            </CollapsibleContent>
-          </Collapsible>
-        </motion.div>
-      </motion.div>
+      <ExamPrepHome
+        topic={topic}
+        mode={mode}
+        onModeChange={setMode}
+        onStartMock={startSession}
+        startingMock={isExaminerThinking}
+        mockError={error}
+        history={history}
+        historySyncFailed={historySync === "failed"}
+        onRetryHistory={() => {
+          setHistorySync("loading")
+          syncHistory()
+        }}
+      />
     )
   }
 

@@ -22,6 +22,7 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition"
 import { getApiErrorMessage, interviewApi } from "@/lib/api"
 import type { InterviewAttempt, SpeakingCheckResponse } from "@/lib/api/interview"
 import { dateKeyInTimeZone } from "@/lib/date-key"
+import { parseStoredQueueIds } from "@/lib/exam-prep-home"
 import {
   DRILL_SIZE,
   averageSpeakingScores,
@@ -39,6 +40,7 @@ import {
   selectFocusQueue,
   selectTodaysQueue,
   todayQueueStorageKey,
+  wasPracticedToday,
   type PracticeDifficulty,
   type QuestionBankItem,
   type QuestionProgress,
@@ -62,6 +64,8 @@ interface QuestionRun {
 }
 
 const LAST_SESSION_KEY = "kori.drill.speaking.last"
+// Set by the Exam Prep home's Today's practice card (TODAY_PRACTICE_HREF).
+const START_PARAM = "start"
 
 function toDrillQuestion(question: QuestionBankItem): DrillQuestion {
   return { id: question.id, ko: question.questionKo, en: question.questionEn ?? "" }
@@ -117,16 +121,45 @@ export default function SpeakingDrillPage() {
       setQuestions(bank)
       setProgress(savedProgress)
       setLatestAttempt(attempts.at(-1) ?? null)
+      return { bank, savedProgress }
     } catch (loadError) {
       setError(getApiErrorMessage(loadError, "Could not load your exam question bank."))
+      return null
     } finally {
       setLoading(false)
     }
   }, [])
 
+  // The Exam Prep home's "Start today's 5" links here with ?start=today: go
+  // straight into the drill once the bank loads. The param is removed first so
+  // Back or a reload lands on the dashboard instead of relaunching the drill.
+  const startTodayRef = useRef<typeof startToday | null>(null)
+  // Read once and kept in a ref: Strict Mode re-runs this effect after the
+  // param has already been stripped, and the request must survive that.
+  const autoStartRef = useRef<boolean | null>(null)
   useEffect(() => {
-    void loadDashboard()
+    let active = true
+    if (autoStartRef.current === null) {
+      const params = new URLSearchParams(window.location.search)
+      autoStartRef.current = params.get(START_PARAM) === "today"
+      if (autoStartRef.current) {
+        params.delete(START_PARAM)
+        const query = params.toString()
+        window.history.replaceState(
+          null,
+          "",
+          `${window.location.pathname}${query ? `?${query}` : ""}`,
+        )
+      }
+    }
+    void loadDashboard().then((data) => {
+      if (active && autoStartRef.current && data) {
+        autoStartRef.current = false
+        startTodayRef.current?.(data.bank, data.savedProgress, { resume: true })
+      }
+    })
     return () => {
+      active = false
       stopSpeechAudio()
     }
   }, [loadDashboard])
@@ -139,7 +172,7 @@ export default function SpeakingDrillPage() {
   const retryAttempt =
     currentRun && currentRun.attempts.length > 1 ? currentRun.attempts.at(-1) : undefined
 
-  function launchQueue(nextQueue: DrillQuestion[], nextMode: PracticeMode) {
+  function launchQueue(nextQueue: DrillQuestion[], nextMode: PracticeMode, startIndex = 0) {
     const unique = uniqueQueue(nextQueue).slice(0, DRILL_SIZE)
     if (unique.length === 0) {
       setError("No eligible questions are available for this practice mode.")
@@ -150,7 +183,7 @@ export default function SpeakingDrillPage() {
     setDetectedTranscript("")
     setAudioPlaying(false)
     setQueue(unique)
-    setIndex(0)
+    setIndex(Math.min(Math.max(0, startIndex), unique.length - 1))
     setRuns([])
     setRetryCycle(0)
     setIsRetrying(false)
@@ -160,16 +193,23 @@ export default function SpeakingDrillPage() {
     setPhase("drill")
   }
 
-  function startToday() {
-    const dateKey = dateKeyInTimeZone(new Date(), INTERVIEW_TIME_ZONE)
+  // `resume` (from the home's Continue) skips questions already practiced
+  // today; when all five are done it starts over from the first.
+  function startToday(
+    bank: QuestionBankItem[] = questions,
+    currentProgress: Record<string, QuestionProgress> = progress,
+    { resume = false }: { resume?: boolean } = {},
+  ) {
+    const now = new Date()
+    const dateKey = dateKeyInTimeZone(now, INTERVIEW_TIME_ZONE)
     const storageKey = todayQueueStorageKey(dateKey, difficulty)
     let storedIds: string[] = []
     try {
-      storedIds = JSON.parse(window.localStorage.getItem(storageKey) ?? "[]") as string[]
+      storedIds = parseStoredQueueIds(window.localStorage.getItem(storageKey))
     } catch {
       storedIds = []
     }
-    const selected = selectTodaysQueue(questions, progress, difficulty, DRILL_SIZE, storedIds)
+    const selected = selectTodaysQueue(bank, currentProgress, difficulty, DRILL_SIZE, storedIds)
     try {
       window.localStorage.setItem(
         storageKey,
@@ -178,8 +218,14 @@ export default function SpeakingDrillPage() {
     } catch {
       // The pure deterministic order still remains stable when storage is unavailable.
     }
-    launchQueue(selected.map(toDrillQuestion), "today")
+    const firstOpen = resume
+      ? selected.findIndex((question) => !wasPracticedToday(currentProgress[question.id], now))
+      : 0
+    launchQueue(selected.map(toDrillQuestion), "today", Math.max(0, firstOpen))
   }
+  useEffect(() => {
+    startTodayRef.current = startToday
+  })
 
   function startWeak() {
     const weakPool = questions.filter((question) => {
@@ -370,7 +416,7 @@ export default function SpeakingDrillPage() {
           loading={loading}
           error={error}
           onDifficultyChange={setDifficulty}
-          onPracticeToday={startToday}
+          onPracticeToday={() => startToday()}
           onAiRandom={startAiRandom}
           onReviewWeak={startWeak}
           onBrowse={() => setPhase("bank")}
