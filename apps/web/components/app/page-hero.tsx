@@ -19,6 +19,12 @@ type PageHeroProps = {
     onClick?: () => void
   }>
   className?: string
+  /**
+   * The title's heading level. The shell header already renders the page's
+   * h1, so pages that follow that rule pass "h2"; the default keeps existing
+   * callers unchanged.
+   */
+  headingLevel?: "h1" | "h2"
 }
 
 export function PageHero({
@@ -29,8 +35,10 @@ export function PageHero({
   actions,
   stats,
   className,
+  headingLevel = "h1",
 }: PageHeroProps) {
   const isCompact = variant === "compact"
+  const Heading = headingLevel
 
   return (
     <section
@@ -58,14 +66,14 @@ export function PageHero({
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary">
               {eyebrow}
             </p>
-            <h1
+            <Heading
               className={cn(
                 "font-semibold leading-tight tracking-[-0.025em] text-foreground",
                 isCompact ? "mt-2 text-2xl sm:text-[1.75rem]" : "mt-2.5 text-[1.75rem] sm:text-3xl",
               )}
             >
               {title}
-            </h1>
+            </Heading>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-[0.95rem]">
               {description}
             </p>

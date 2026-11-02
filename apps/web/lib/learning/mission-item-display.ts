@@ -59,8 +59,10 @@ export function missionItemCtaLabel(type: MissionItemType): string {
  */
 export function missionItemHref(item: MissionItem): string | null {
   switch (item.type) {
+    // Straight into the next review batch (ReviewSession's autoStart), not
+    // the long /vocab page with the launch card somewhere on it.
     case "vocab_review":
-      return "/vocab"
+      return "/vocab?review=session"
     case "daily_phrase":
       return "/vocab?tab=phrases"
     case "correction_review":

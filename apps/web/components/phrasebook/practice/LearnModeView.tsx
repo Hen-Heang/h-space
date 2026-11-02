@@ -12,11 +12,13 @@ import type { PhraseCardWithProgress } from "@/lib/types"
 import type { RomanizationMode } from "@/lib/korean-coach/schemas"
 
 interface LearnModeViewProps {
+  /** Called from the last card's Finish button, so Learn reaches the completion screen. */
+  onExhausted: () => void
   cards: PhraseCardWithProgress[]
   romanizationPreference: RomanizationMode
 }
 
-export function LearnModeView({ cards, romanizationPreference }: LearnModeViewProps) {
+export function LearnModeView({ cards, romanizationPreference, onExhausted }: LearnModeViewProps) {
   const [index, setIndex] = useState(0)
   const card = cards[index]
   if (!card) return null
@@ -39,7 +41,10 @@ export function LearnModeView({ cards, romanizationPreference }: LearnModeViewPr
           <PhraseRegisterBadge register={card.question.register} />
         </div>
         <div className="flex items-start justify-between gap-3">
-          <p className="break-keep text-2xl font-bold leading-snug text-foreground [overflow-wrap:anywhere] sm:text-3xl">
+          <p
+            lang="ko"
+            className="break-keep text-2xl font-bold leading-snug text-foreground [overflow-wrap:anywhere] sm:text-3xl"
+          >
             {card.question.korean}
           </p>
           <SpeakButton
@@ -71,7 +76,9 @@ export function LearnModeView({ cards, romanizationPreference }: LearnModeViewPr
             </p>
             {card.questionVariants.map((variant) => (
               <div key={variant} className="flex items-center gap-2">
-                <p className="text-sm font-medium text-foreground">{variant}</p>
+                <p lang="ko" className="text-sm font-medium text-foreground">
+                  {variant}
+                </p>
                 <SpeakButton
                   text={variant}
                   className="h-6 w-6 bg-transparent"
@@ -98,7 +105,10 @@ export function LearnModeView({ cards, romanizationPreference }: LearnModeViewPr
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="break-keep font-semibold text-foreground [overflow-wrap:anywhere]">
+                  <p
+                    lang="ko"
+                    className="break-keep font-semibold text-foreground [overflow-wrap:anywhere]"
+                  >
                     {answer.korean}
                   </p>
                   {romanizationPreference !== "never" && (
@@ -151,7 +161,10 @@ export function LearnModeView({ cards, romanizationPreference }: LearnModeViewPr
                   key={v.korean}
                   className="rounded-full bg-accent/10 px-2.5 py-1 text-xs font-medium text-foreground"
                 >
-                  <span className="font-bold">{v.korean}</span> — {v.english}
+                  <span lang="ko" className="font-bold">
+                    {v.korean}
+                  </span>{" "}
+                  — {v.english}
                 </span>
               ))}
             </div>
@@ -167,12 +180,15 @@ export function LearnModeView({ cards, romanizationPreference }: LearnModeViewPr
         >
           <ChevronLeft size={16} className="mr-1" /> Previous
         </Button>
-        <Button
-          disabled={index === cards.length - 1}
-          onClick={() => setIndex((i) => Math.min(cards.length - 1, i + 1))}
-        >
-          Next <ChevronRight size={16} className="ml-1" />
-        </Button>
+        {index === cards.length - 1 ? (
+          <Button onClick={onExhausted}>
+            Finish <ChevronRight aria-hidden="true" size={16} className="ml-1" />
+          </Button>
+        ) : (
+          <Button onClick={() => setIndex((i) => Math.min(cards.length - 1, i + 1))}>
+            Next <ChevronRight aria-hidden="true" size={16} className="ml-1" />
+          </Button>
+        )}
       </div>
     </div>
   )

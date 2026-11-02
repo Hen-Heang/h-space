@@ -581,6 +581,94 @@ Each phase is one PR, waits for your approval to start, and ends with `pnpm lint
 | **4 — Phrasebook, Reading, Foundations** | Single header, StatusBadge mapping, CourseProgress + Continue, lesson reader typography + LanguageAids + TTS on tap, Next lesson, Learn-mode completion, a11y fixes (nesting, labels, confirm dialogs), tab back/forward sync | L           | Continue resumes the right lesson/unit. Status words are the same in all three. No nested interactive elements (axe).                  |
 | **5 — Exam Prep, History, polish**       | Exam hub reorder, session action bar + leave guard, results breakdown with diff, script editor toolbar/mobile sections/labels/`lang`, History error state/diff/mobile streak strip. Final pass at all widths, both themes     | L           | Start above the fold. No silent session loss. History shows an error instead of a false empty state. Full responsive checklist passes. |
 
+### Delivery notes
+
+**Phase 1 (PR #46).** Learning tabs use the registry labels; see §3.2.
+
+**Phase 2: where it differs from the plan above.**
+
+- **R2/R3 shipped.**
+  - `missionItemHref("vocab_review")` is now `/vocab?review=session`, so the Hub's own special case was removed.
+  - The Phrases tab (`components/vocab/PhrasesTab.tsx`) shows today's phrase via `useDailyPhrase`. It mounts only while the tab is open, so `getToday` is no more eager than before. The `/daily-phrase` stub is unchanged, but nothing in `/vocab` links to it any more.
+- **V2: correction.** `/practice/today`'s summary grid did **not** duplicate the top section. Topic, mode, streak, and this week appear only there, so it was compacted into one row, not removed.
+  - On `/vocab`, the PageHero stats and the VocabStats card were removed. The batch and backlog are on the Memory Lab card, and mastered/average strength are in the library header.
+- **V1:** the plan's "Library · Decks · Courses" became **Library · Courses**. The library _is_ the deck browser, so a separate Decks view would repeat it.
+- **V5:** the plan's "Shortcuts" hint is per-button instead: key numbers on the grade buttons, flashcards only.
+- **V7 deferred to Phase 4.** `useRomanizationPreference` defaults to `on-request`, so honoring it in flashcards would hide romanization for everyone who never set the preference. Ship it together with `LanguageAids`, which also needs a visible reveal.
+- **The `StudySession` layout moved to Phase 3**, where recording needs the sticky action bar. `/practice` kept its stepper and Learning tabs, and got retry, progressbar semantics, an announced step counter, stable preview skeletons, and primary-token buttons.
+- **ReviewSession:**
+  - The three fullscreen screens are now a Radix Dialog (`LabOverlay`): focus trap and restore, Escape, an accessible name, and initial focus on the dialog so Space/Enter still flip the card.
+  - A leave confirmation appears once anything is graded.
+  - Answers are announced through `aria-live`.
+  - Grade buttons use the `--grade-*` tokens.
+  - Korean terms use `lang="ko"`.
+  - Component tests: `components/vocab/ReviewSession.test.tsx`.
+
+**Phase 3 was skipped at the owner's request.** Phase 4 shipped before it, so `StudySession` and `CorrectionDiff` still don't exist.
+
+**Phase 4: what shipped and where it differs.**
+
+- **Shared pieces:**
+  - `lib/learning/course.ts` (tested) maps Foundations, Reading, and Phrasebook progress onto New / In progress / Review due / Completed / Mastered, and picks what Continue opens.
+  - `components/learn/{StatusBadge,CourseProgress,LearnHeader,LanguageAids}.tsx`.
+  - `hooks/useBrowserStorage.ts`: storage read through `useSyncExternalStore`, the same pattern as `useSidebarState`.
+- **B8:** `/phrasebook` derives its mode from the URL on every render. Before, a link to plain `/phrasebook` while Reading was open changed the URL but kept showing Reading.
+- **B1:** each mode's PageHero became one `LearnHeader` line.
+  - Phrases: a review card is the primary action, and the counts appear once.
+  - The Phrasebook home's error state no longer renders empty sections.
+- **B2/B3:**
+  - Foundations has a per-track `CourseProgress` with Continue, lesson rows with status badges, and the track remembered per tab in sessionStorage. The URL is unchanged.
+  - Reading has `CourseProgress` with Continue and the same badges.
+  - Phrase cards show "Review due" instead of a separate red "Due" badge.
+- **Lesson reader:**
+  - `LanguageAids` with the old defaults (romanization and English on); "never" hides romanization.
+  - English hides example translations only. A card's meaning _is_ the lesson, so it stays visible.
+  - `SpeakButton` on each card and example (TTS only on tap). "Next lesson" is the primary action after a pass.
+  - `aria-live` feedback that names the right answer. The link-wrapped button is fixed.
+  - **Deviation:** the aids bar is _not_ sticky. The shell's sticky header sits at `top-0` with a safe-area-dependent height, so a sticky sub-bar would hide under it.
+- **Reading unit:**
+  - The "Show all translations" choice is remembered (English only — units have no romanization data).
+  - Delete uses an AlertDialog instead of `window.confirm`. Icon buttons have `aria-label`s.
+  - `lang="ko"`, reader-size type (17–18px, 38em measure), the tap-to-look-up hint visible on phones, and quiz results in `role="status"`.
+  - Reading Home's pin is now a sibling of the link.
+- **B4:** Learn mode ends on Finish. Practice-again remounts the mode views at card 1. Review grades use `--grade-*`.
+- **B7:** the collection card has one link (a stretched title) plus a sibling pin, and the pin icon shows the current state.
+- **The collection page has one primary action:** Review due, or Learn when nothing is due.
+- **V7 is still deferred:** vocabulary flashcards don't use `LanguageAids` yet. Phrasebook already honors the preference through `RevealText`.
+
+**Phase 5: what shipped and where it differs.**
+
+- **`CorrectionDiff`** shipped here, not in Phase 3.
+  - `lib/learning/text-diff.ts` (tested): a character-level LCS diff, plus a changed-ratio check.
+  - `components/learn/CorrectionDiff.tsx`: `<del>`/`<ins>` with screen-reader words. It renders nothing for identical text, >250k LCS cells, or >60% changed.
+  - Used in `CorrectionRetryPanel` (exam drills) and in expanded History rows. Korean Coach's `CoachFeedback` can adopt it in Phase 3.
+- **E1:** the Exam Prep setup is one card (topic, mode, Start, Write my script) directly under a one-line header. Drills follow. Score trend, progress, study plan, tips, and the study pack sit in one collapsed "Progress & study materials" section; the study pack no longer opens by default.
+- **E3/E4:**
+  - The live session has a compact session bar instead of a PageHero.
+  - "End session" asks first once anything is answered.
+  - `hooks/useLeaveGuard.ts` (tested) adds the browser's leave prompt on reload/close during a session with answers.
+  - No URL or query-param changes.
+  - **Not done:** the sticky bottom action bar for Record/Submit, which depends on Phase 3's `StudySession`.
+- **E5 (script editor):**
+  - `DocTextarea` gets an accessible name and `lang`. Placeholders reach readable contrast.
+  - The toolbar's icon-only buttons have `aria-label`s.
+  - Clear uses an AlertDialog instead of `window.confirm`.
+  - Below `lg`, a floating "Jump to section" select stands in for the hidden outline.
+  - **Not done:** consolidating the controls above the page into one toolbar.
+- **E6:** the speaking-drill summary adds a question-by-question list (corrected answer, first → retry score) from attempts already in state.
+- **Y1–Y4 (History):**
+  - A load failure shows an error + retry instead of "No corrections yet".
+  - The header says what's here and links to Korean Coach sessions and Exam Prep.
+  - Mobile shows the streak at the top.
+  - Rating filters are `aria-pressed` toggles; sort is a Select with clearer labels.
+  - Collapsed rows show the corrected sentence (2 lines). Expanded rows show the diff.
+  - `lang="ko"`, 12px minimum labels, and delete via AlertDialog.
+- **One-h1 rule:**
+  - `PageHero` gained an opt-in `headingLevel`. Exam Prep's drills and evaluation pass `"h2"`; other workspaces are unchanged.
+  - The remaining hand-written learning `h1`s (Question Bank, unit editor, phrase editor, speaking summary, exam dashboard) are now `h2`.
+  - Still `h1` via the default: `/listening` and `/scenarios` (Phase 3).
+- **Final responsive pass:** not done. No signed-in visual check at 375/430/768/1024/1440 in both themes has been run for any phase.
+
 ---
 
 ## 10. Acceptance criteria and testing checklist

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ArrowRight, Check, Info, RotateCcw, Volume2 } from "lucide-react"
 
+import { CorrectionDiff } from "@/components/learn/CorrectionDiff"
 import { SpeakButton } from "@/components/ui/SpeakButton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -112,6 +113,11 @@ export function CorrectionRetryPanel({
               className="shrink-0"
             />
           </div>
+          <CorrectionDiff
+            before={retryAnswer ?? firstAnswer}
+            after={activeResult.correctedAnswer}
+            className="mt-3"
+          />
         </section>
 
         <section aria-labelledby="natural-heading">
@@ -175,11 +181,7 @@ export function CorrectionRetryPanel({
         </div>
 
         <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-          <Button
-            type="button"
-            onClick={onRetry}
-            className="h-12 rounded-xl bg-blue-600 font-semibold text-white hover:bg-blue-700"
-          >
+          <Button type="button" size="lg" onClick={onRetry} className="h-12 rounded-xl">
             <RotateCcw className="mr-2 size-4" />
             Retry Answer
           </Button>

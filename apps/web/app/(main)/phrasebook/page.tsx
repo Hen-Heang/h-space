@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useEffect, useState } from "react"
+import { Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { WorkspaceTabs } from "@/components/layout/WorkspaceTabs"
@@ -26,26 +26,24 @@ function PhrasebookPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const queryMode = searchParams.get("mode")
-  const [mode, setMode] = useState<StudyMode>(
-    VALID_MODES.includes(queryMode as StudyMode) ? (queryMode as StudyMode) : "phrases",
-  )
+  // The URL is the single source of truth, read on every render — so a link
+  // into another mode (the Learning tab's plain /phrasebook, the Hub's
+  // Library), the /reading and /learn/foundations redirect stubs, refresh,
+  // and back/forward all show the mode the URL names. An unknown mode shows
+  // Phrases. Switching replaces the URL (no history entry), as before.
+  const mode: StudyMode = VALID_MODES.includes(queryMode as StudyMode)
+    ? (queryMode as StudyMode)
+    : "phrases"
 
-  // Keep the URL in sync with the active mode, so refreshing, sharing a
-  // link, or navigating in via /reading or /learn/foundations (see the
-  // redirect stubs there) all land on the right tab — same pattern as the
-  // AI Coach mode switcher on /chat.
-  useEffect(() => {
-    router.replace(mode === "phrases" ? "/phrasebook" : `/phrasebook?mode=${mode}`, {
+  function changeMode(next: StudyMode) {
+    router.replace(next === "phrases" ? "/phrasebook" : `/phrasebook?mode=${next}`, {
       scroll: false,
     })
-    // Intentionally mode-only: this reflects mode changes into the URL, it
-    // shouldn't re-run when router identity changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode])
+  }
 
   return (
     <div className="space-y-6">
-      <StudyModeTabs mode={mode} onChange={setMode} />
+      <StudyModeTabs mode={mode} onChange={changeMode} />
       {mode === "phrases" ? (
         <PhrasebookHome />
       ) : mode === "reading" ? (

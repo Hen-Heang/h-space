@@ -96,6 +96,7 @@ export function EvaluationSummary({
 
       <motion.div variants={itemVariants}>
         <PageHero
+          headingLevel="h2"
           eyebrow={`Mock Interview · ${mode.label} · Result`}
           title="Your Evaluation"
           description="An overall read on this session across the four official exam criteria — speaking, pronunciation, vocabulary, and confidence. Practice again to push each score up."

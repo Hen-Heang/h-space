@@ -185,6 +185,7 @@ export default function ListeningDrillPage() {
     return (
       <div className="space-y-6 pb-12 sm:space-y-8">
         <PageHero
+          headingLevel="h2"
           eyebrow="Exam Prep · 듣기 드릴"
           title="Listening Drill"
           description="Audio only — understand the interviewer before you ever see the text. Listen, answer out loud, then reveal the transcript with word notes and grammar."
@@ -241,6 +242,7 @@ export default function ListeningDrillPage() {
     return (
       <div className="space-y-5 pb-12 sm:space-y-6">
         <PageHero
+          headingLevel="h2"
           eyebrow={`Listening Drill · ${cfg.label} · Result`}
           title="Drill Complete"
           description="Replay anything you missed and read the transcripts aloud once — hearing it, then saying it, is what makes it stick."
@@ -302,6 +304,7 @@ export default function ListeningDrillPage() {
   return (
     <div className="space-y-5 pb-12 sm:space-y-6">
       <PageHero
+        headingLevel="h2"
         eyebrow={`Listening Drill · ${cfg.label}`}
         title={`Question ${index + 1} of ${items.length}`}
         description="Listen carefully, then answer out loud — or just reveal if you only want to train comprehension."

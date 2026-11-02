@@ -43,6 +43,9 @@ function PhrasebookPracticeInner() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [done, setDone] = useState(false)
+  // Bumped by "Practice again" so the mode views remount at card 1 — they
+  // keep their own position, which would otherwise still be past the end.
+  const [round, setRound] = useState(0)
 
   const exitHref = collectionId ? `/phrasebook/${collectionId}` : "/phrasebook"
 
@@ -118,9 +121,14 @@ function PhrasebookPracticeInner() {
       >
         <motion.div
           variants={itemVariants}
-          className="flex flex-col items-center gap-3 rounded-3xl border border-emerald-500/20 bg-emerald-500/5 p-10"
+          role="status"
+          className="flex flex-col items-center gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-10"
         >
-          <PartyPopper size={36} className="text-emerald-600" />
+          <PartyPopper
+            aria-hidden="true"
+            size={36}
+            className="text-emerald-700 dark:text-emerald-300"
+          />
           <h2 className="text-lg font-bold text-foreground">Session complete</h2>
           <p className="text-sm text-muted-foreground">
             You practiced {cards.length} {cards.length === 1 ? "card" : "cards"}.
@@ -129,7 +137,14 @@ function PhrasebookPracticeInner() {
             <Button variant="outline" onClick={() => router.push(exitHref)}>
               Back
             </Button>
-            <Button onClick={() => setDone(false)}>Practice again</Button>
+            <Button
+              onClick={() => {
+                setRound((r) => r + 1)
+                setDone(false)
+              }}
+            >
+              Practice again
+            </Button>
           </div>
         </motion.div>
       </motion.div>
@@ -140,17 +155,28 @@ function PhrasebookPracticeInner() {
     <div className="space-y-5 pb-12">
       <div className="flex items-center justify-between">
         <BackLink href={exitHref} label="Back" />
-        <h1 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
           {MODE_TITLE[mode]}
-        </h1>
+        </h2>
       </div>
 
       {mode === "learn" && (
-        <LearnModeView cards={cards} romanizationPreference={romanizationPreference} />
+        <LearnModeView
+          key={round}
+          cards={cards}
+          romanizationPreference={romanizationPreference}
+          onExhausted={() => setDone(true)}
+        />
       )}
-      {mode === "listen" && <ListeningModeView cards={cards} onExhausted={() => setDone(true)} />}
-      {mode === "speak" && <SpeakingModeView cards={cards} onExhausted={() => setDone(true)} />}
-      {mode === "review" && <ReviewModeView cards={cards} onExhausted={() => setDone(true)} />}
+      {mode === "listen" && (
+        <ListeningModeView key={round} cards={cards} onExhausted={() => setDone(true)} />
+      )}
+      {mode === "speak" && (
+        <SpeakingModeView key={round} cards={cards} onExhausted={() => setDone(true)} />
+      )}
+      {mode === "review" && (
+        <ReviewModeView key={round} cards={cards} onExhausted={() => setDone(true)} />
+      )}
     </div>
   )
 }

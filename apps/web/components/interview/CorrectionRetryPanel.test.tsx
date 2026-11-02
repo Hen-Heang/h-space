@@ -33,4 +33,34 @@ describe("CorrectionRetryPanel", () => {
     expect(html).toContain(PRONUNCIATION_DISCLAIMER)
     expect(html).toContain("Retry Answer")
   })
+
+  it("highlights what changed between the answer and its correction", () => {
+    const html = renderToStaticMarkup(
+      <CorrectionRetryPanel
+        questionId="q1"
+        firstAnswer="저는 학생를 좋아해요"
+        firstResult={{ ...result, correctedAnswer: "저는 학생을 좋아해요" }}
+        onRetry={() => undefined}
+        onNext={() => undefined}
+        isLast={false}
+      />,
+    )
+    expect(html).toContain("What changed")
+    expect(html).toContain("<del")
+    expect(html).toContain("<ins")
+  })
+
+  it("skips the highlight when the correction is a full rewrite", () => {
+    const html = renderToStaticMarkup(
+      <CorrectionRetryPanel
+        questionId="q1"
+        firstAnswer="네"
+        firstResult={{ ...result, correctedAnswer: "저는 회사원이에요" }}
+        onRetry={() => undefined}
+        onNext={() => undefined}
+        isLast={false}
+      />,
+    )
+    expect(html).not.toContain("What changed")
+  })
 })

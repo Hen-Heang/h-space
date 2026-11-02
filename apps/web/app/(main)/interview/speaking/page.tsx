@@ -32,6 +32,7 @@ import {
 } from "@/lib/interview-drills"
 import {
   INTERVIEW_TIME_ZONE,
+  averageScore,
   daysRemainingInSeoul,
   mostDifficultQuestions,
   recommendedDifficulty,
@@ -386,9 +387,9 @@ export default function SpeakingDrillPage() {
         <Card className="rounded-2xl border-blue-500/25 shadow-sm">
           <CardContent className="p-6 text-center sm:p-8">
             <CheckCircle2 className="mx-auto size-10 text-blue-600" />
-            <h1 className="mt-4 text-2xl font-bold text-foreground">
+            <h2 className="mt-4 text-2xl font-bold text-foreground">
               Today&apos;s practice is complete
-            </h1>
+            </h2>
             <p className="mt-2 text-sm text-muted-foreground">
               You completed {runs.length} questions and retried {retried}. Your stable-question
               progress has been updated.
@@ -413,16 +414,57 @@ export default function SpeakingDrillPage() {
               {PRONUNCIATION_DISCLAIMER}
             </p>
             <Button
+              size="lg"
               onClick={() => {
                 setPhase("dashboard")
                 void loadDashboard()
               }}
-              className="mt-6 h-12 w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700 sm:w-auto sm:px-8"
+              className="mt-6 h-12 w-full sm:w-auto sm:px-8"
             >
               Back to exam dashboard
             </Button>
           </CardContent>
         </Card>
+
+        {/* Per-question breakdown — the session's own attempts, already in
+            state; nothing new is fetched or stored. */}
+        {runs.length > 0 && (
+          <section aria-labelledby="drill-breakdown-heading" className="app-surface">
+            <h3
+              id="drill-breakdown-heading"
+              className="border-b border-border px-5 py-3 text-sm font-semibold text-foreground"
+            >
+              Question by question
+            </h3>
+            <ol className="divide-y divide-border">
+              {runs.map((run, index) => {
+                const first = run.attempts[0]
+                const last = run.attempts[run.attempts.length - 1]
+                const firstScore = first ? averageScore(first.result.scores) : null
+                const lastScore = last ? averageScore(last.result.scores) : null
+                return (
+                  <li key={`${run.question.id ?? run.question.ko}-${index}`} className="px-5 py-4">
+                    <p lang="ko" className="break-keep text-sm font-semibold text-foreground">
+                      {index + 1}. {run.question.ko}
+                    </p>
+                    {last && (
+                      <p lang="ko" className="mt-1 break-keep text-sm text-muted-foreground">
+                        {last.result.correctedAnswer}
+                      </p>
+                    )}
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      {firstScore === null
+                        ? "Not answered"
+                        : run.attempts.length > 1 && lastScore !== null
+                          ? `${firstScore.toFixed(1)} → ${lastScore.toFixed(1)} / 5 after retry`
+                          : `${firstScore.toFixed(1)} / 5`}
+                    </p>
+                  </li>
+                )
+              })}
+            </ol>
+          </section>
+        )}
       </div>
     )
   }

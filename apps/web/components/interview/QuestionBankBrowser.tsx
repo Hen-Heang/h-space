@@ -86,7 +86,7 @@ export function QuestionBankBrowser({
             <ArrowLeft className="mr-2 size-4" />
             Back to dashboard
           </Button>
-          <h1 className="mt-2 text-2xl font-bold text-foreground">Question Bank</h1>
+          <h2 className="mt-2 text-2xl font-bold text-foreground">Question Bank</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Browse all {questions.length} stable exam questions and start a focused drill.
           </p>

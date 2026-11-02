@@ -10,6 +10,7 @@ import { getApiErrorMessage } from "@/lib/api"
 import { computeVocabStats } from "@/lib/vocab-review"
 import type { VocabItem } from "@/lib/types"
 import { VocabCard } from "@/components/vocab/VocabCard"
+import { Button } from "@/components/ui/button"
 import { SpeakButton } from "@/components/ui/SpeakButton"
 import type { VocabViewMode } from "@/components/vocab/VocabDictionary"
 
@@ -99,7 +100,7 @@ function DeckAddForm({
           type="button"
           onClick={() => setOpen(false)}
           aria-label="Close add form"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground/40 transition-colors hover:bg-accent/50 hover:text-foreground"
+          className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors after:absolute after:-inset-2 after:content-[''] hover:bg-accent/50 hover:text-foreground"
         >
           <X size={14} strokeWidth={3} />
         </button>
@@ -140,9 +141,9 @@ function DeckAddForm({
         type="button"
         onClick={handleSave}
         disabled={!canSave}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white transition-all hover:bg-emerald-500 active:scale-[0.98] disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
       >
-        <Plus size={16} strokeWidth={3} />
+        <Plus aria-hidden="true" size={16} strokeWidth={3} />
         {saving ? "Saving…" : "Add word"}
       </button>
     </div>
@@ -296,14 +297,16 @@ export function VocabDeck({
           >
             {onReviewDeck && items.length > 0 && (
               <div className="border-t border-border/60 bg-accent/[0.03] p-3 sm:p-4">
-                <button
-                  type="button"
+                {/* Secondary to Memory Lab's main review at the top of the page. */}
+                <Button
+                  variant="outline"
+                  size="lg"
                   onClick={() => onReviewDeck(name)}
-                  className="flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl border-b-4 border-emerald-700 bg-emerald-600 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-500 active:translate-y-[3px] active:border-b-0"
+                  className="w-full"
                 >
-                  <BrainCircuit size={16} strokeWidth={2.5} />
+                  <BrainCircuit aria-hidden="true" />
                   {dueCount > 0 ? `Review ${dueCount} due` : `Practice this deck (${items.length})`}
-                </button>
+                </Button>
               </div>
             )}
 

@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { VocabDeck } from "@/components/vocab/VocabDeck"
-import { VocabStats } from "@/components/vocab/VocabStats"
 import {
+  computeVocabStats,
   filterVocab,
   matchesMastery,
   sortVocab,
@@ -34,7 +34,6 @@ type PosFilter = "all" | "verb" | "noun" | "adjective" | "adverb" | "other"
 type VocabDictionaryProps = {
   words: VocabItem[]
   loading: boolean
-  dueCount?: number
   // Driven by the page-level search bar at the top of /vocab — the dictionary
   // has no search input of its own.
   query: string
@@ -189,7 +188,6 @@ const SORT_ORDERS: { value: SortOrder; label: string }[] = [
 export function VocabDictionary({
   words,
   loading,
-  dueCount = 0,
   query,
   onUpdate,
   onDelete,
@@ -252,10 +250,13 @@ export function VocabDictionary({
     onClearSearch?.()
   }
 
+  // Collection health as one line in the library header (the mastery filter
+  // chips below carry the per-bucket counts). The due count lives on the
+  // Memory Lab card above, so it isn't repeated here.
+  const stats = useMemo(() => computeVocabStats(words), [words])
+
   return (
     <div id="vocab-dictionary" className="scroll-mt-20 space-y-5">
-      <VocabStats words={words} dueCount={dueCount} />
-
       {words.length > 0 && (
         <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm dark:bg-slate-900/50">
           <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border/60 px-4 py-3.5 sm:px-5">
@@ -264,8 +265,14 @@ export function VocabDictionary({
               <p className="mt-0.5 text-xs text-muted-foreground" aria-live="polite">
                 {isFiltering
                   ? `Showing ${filtered.length} of ${words.length} words`
-                  : `${words.length} words across ${decks.length} decks`}
+                  : `${words.length.toLocaleString()} words across ${decks.length} decks`}
               </p>
+              {!isFiltering && (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {stats.mastered.toLocaleString()} mastered · {stats.averageMastery}% average
+                  strength
+                </p>
+              )}
             </div>
             {isFiltering ? (
               <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>

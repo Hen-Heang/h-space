@@ -282,6 +282,7 @@ export default function RepeatDrillPage() {
     return (
       <div className="space-y-6 pb-12 sm:space-y-8">
         <PageHero
+          headingLevel="h2"
           eyebrow="Exam Prep · 따라 말하기"
           title="Repeat Drill"
           description="Duolingo-style listen &amp; repeat: hear a sentence, say it back, and see exactly which words you hit or missed. The fastest way to memorize your script out loud."
@@ -385,6 +386,7 @@ export default function RepeatDrillPage() {
     return (
       <div className="space-y-5 pb-12 sm:space-y-6">
         <PageHero
+          headingLevel="h2"
           eyebrow="Repeat Drill · Result"
           title="Drill Complete"
           description={
@@ -464,6 +466,7 @@ export default function RepeatDrillPage() {
   return (
     <div className="space-y-5 pb-12 sm:space-y-6">
       <PageHero
+        headingLevel="h2"
         eyebrow="Repeat Drill · In Progress"
         title={`Sentence ${index + 1} of ${items.length}`}
         description="Listen, then say the sentence back exactly. Missed words show in red — repeat until it feels automatic."

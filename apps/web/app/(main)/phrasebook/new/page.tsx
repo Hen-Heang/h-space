@@ -218,9 +218,9 @@ function NewPhraseCardInner() {
         )}
       </div>
 
-      <h1 className="text-xl font-bold text-foreground">
+      <h2 className="text-xl font-bold text-foreground">
         {isEdit ? "Edit Q&A card" : "New Q&A card"}
-      </h1>
+      </h2>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {errors.length > 0 && (
