@@ -2,17 +2,22 @@ import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 import { getInterviewTopic, getSeedQA } from "./interview"
+import { PERSONAL_EXAM_QA } from "./personal-exam-prep"
 import {
   selectTodaysQueue,
   versionsToDeactivate,
   type QuestionBankItem,
 } from "./interview-practice"
 
-// Two sections of the 제6회 final script (Notion MAIN SCRIPT), pinned so the
-// Korean seed and its English translation stay in step.
+// Two sections of the 제6회 final script (Notion FINAL INTERVIEW SCRIPT), pinned
+// so the Korean seed and its English translation stay in step.
 const TRANSPORT_KO =
-  "캄보디아에서는 출근하거나 밖에 갈 때 보통 오토바이나 차를 이용했어요. 하지만 한국에서는 매일 걸어서 출근해요. 멀리 갈 때는 버스나 지하철을 이용해요.\n\n처음에는 지하철 노선이 복잡해서 조금 어려웠어요. 하지만 지금은 혼자서도 잘 다닐 수 있어요."
-const EXERCISE_EN_MARKERS = ["volleyball", "Yeouido Park", "Han River"]
+  "캄보디아에서는 밖에 갈 때 보통 오토바이나 차를 이용했습니다. 하지만 한국에서는 걸어서 출근하고, 멀리 갈 때는 버스나 지하철을 이용합니다.\n\n저는 지하철 5호선을 자주 이용합니다. 처음에는 지하철 노선과 환승이 어려웠지만, 지금은 혼자서도 서울의 여러 곳에 갈 수 있습니다."
+const EXERCISE_EN_MARKERS = ["Yeouido Park", "Han River", "refreshed"]
+
+// A sentence ending in informal-polite -요 ("…해요.", "…이에요?"). The final
+// script and the model answers use formal -습니다 style throughout.
+const HAEYO_SENTENCE_END = /요[.?!]/
 
 const focusedSeedPath = new URL(
   "../supabase/seed/kori_interview_questions_cambodia_experience.sql",
@@ -88,6 +93,30 @@ describe("current exam script content (habits & hobbies)", () => {
     for (const marker of EXERCISE_EN_MARKERS) {
       expect(weather.scriptSeedEn?.exercise).toContain(marker)
     }
+  })
+
+  it("writes the script and model answers in formal -습니다 style", () => {
+    for (const [id, text] of Object.entries(weather.scriptSeed ?? {})) {
+      expect({ id, informal: HAEYO_SENTENCE_END.test(text) }).toEqual({ id, informal: false })
+    }
+    for (const question of weather.prep?.sampleQuestions ?? []) {
+      const answer = question.answerKo ?? ""
+      expect({ q: question.ko, informal: HAEYO_SENTENCE_END.test(answer) }).toEqual({
+        q: question.ko,
+        informal: false,
+      })
+    }
+    for (const item of PERSONAL_EXAM_QA) {
+      expect({ id: item.id, informal: HAEYO_SENTENCE_END.test(item.answer) }).toEqual({
+        id: item.id,
+        informal: false,
+      })
+    }
+  })
+
+  it("keeps the home station out of the public script", () => {
+    const allText = Object.values(weather.scriptSeed ?? {}).join(" ")
+    expect(allText).not.toContain("영등포")
   })
 
   it("retains every canonical section in both languages", () => {
@@ -181,5 +210,53 @@ describe("script-aligned weather question seed", () => {
         "exam-week",
       ),
     ).toEqual(["previous-active"])
+  })
+})
+
+describe("habits question bank migration", () => {
+  const migration = readFileSync(
+    new URL("../supabase/migrations/20261102130000_habits_question_bank.sql", import.meta.url),
+    "utf8",
+  )
+  const sqlText = (value: string) => `'${value.replace(/'/g, "''")}'`
+  // The questions that carry a model answer. The answerless universal
+  // follow-ups ("왜요?", …) are listening practice and stay out of the bank.
+  const modelQuestions = (getInterviewTopic("weather").prep?.sampleQuestions ?? []).filter(
+    (question) => (question.answerKo ?? "").trim() !== "",
+  )
+
+  it("ships every model question and its formal answer, in the code's order", () => {
+    expect(modelQuestions).toHaveLength(21)
+    let cursor = 0
+    for (const question of modelQuestions) {
+      const at = migration.indexOf(sqlText(question.ko), cursor)
+      expect({ question: question.ko, found: at >= 0 }).toEqual({
+        question: question.ko,
+        found: true,
+      })
+      expect(migration).toContain(sqlText(question.answerKo ?? ""))
+      expect(migration).toContain(sqlText(question.answerEn ?? ""))
+      cursor = at
+    }
+  })
+
+  it("uses unique habits slugs and only deactivates shared questions", () => {
+    const slugs = [...migration.matchAll(/'(habits-[a-z0-9-]+)', 'weather'/g)].map((m) => m[1])
+    expect(slugs).toHaveLength(21)
+    expect(new Set(slugs).size).toBe(21)
+    expect(migration).toMatch(/set active = false[\s\S]*created_by_user_id is null/)
+    expect(migration).not.toMatch(/delete from/i)
+    expect(migration).toContain("on conflict (slug) do update")
+  })
+
+  it("marks the TOP 5 questions must_practice", () => {
+    for (const questionKo of top5QuestionKo) {
+      const start = migration.indexOf(sqlText(questionKo))
+      const row = migration.slice(start, migration.indexOf("  )", start))
+      expect({ questionKo, mustPractice: row.includes("'must_practice'") }).toEqual({
+        questionKo,
+        mustPractice: true,
+      })
+    }
   })
 })
