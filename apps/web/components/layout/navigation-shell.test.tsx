@@ -349,7 +349,11 @@ describe("DesktopSidebar", () => {
     const nav = screen.getByRole("navigation", { name: "Primary" })
     const links = within(nav).getAllByRole("link")
     const expected = [...workspaceNavItems, ...toolNavItems]
-    expect(links.map((el) => el.textContent)).toEqual(expected.map((item) => item.label))
+    expect(links.map((el) => el.textContent)).toEqual(
+      expected.map((item) =>
+        item.href.startsWith("http") ? `${item.label} (opens in a new tab)` : item.label,
+      ),
+    )
     expect(links.map((el) => el.getAttribute("href"))).toEqual(expected.map((item) => item.href))
     expect(within(nav).getByRole("heading", { name: "Workspace" })).toBeTruthy()
     expect(within(nav).getByRole("heading", { name: "Tools" })).toBeTruthy()
@@ -379,7 +383,8 @@ describe("DesktopSidebar", () => {
   it("gives every collapsed icon an accessible name", () => {
     setup("/practice", true)
     for (const item of [...workspaceNavItems, ...toolNavItems]) {
-      expect(screen.getByRole("link", { name: item.label })).toBeTruthy()
+      const name = item.href.startsWith("http") ? `${item.label} (opens in a new tab)` : item.label
+      expect(screen.getByRole("link", { name })).toBeTruthy()
     }
     // Headings stay for screen readers even with no room to show them.
     expect(screen.getByRole("heading", { name: "Workspace" }).className).toContain("sr-only")

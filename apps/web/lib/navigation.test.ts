@@ -263,11 +263,12 @@ describe("section (workspace) selection", () => {
   })
 })
 
-describe("global sidebar: workspaces + tools only", () => {
-  it("lists the six workspaces in order", () => {
+describe("global sidebar: workspaces, Finance, and tools", () => {
+  it("lists the six workspaces and Finance shortcut in order", () => {
     expect(workspaceNavItems.map((i) => i.label)).toEqual([
       "Overview",
       "My Apps",
+      "Finance",
       "Planner",
       "Learning",
       "Notes",
@@ -276,6 +277,7 @@ describe("global sidebar: workspaces + tools only", () => {
     expect(workspaceNavItems.map((i) => i.href)).toEqual([
       "/home",
       "/apps",
+      "https://luyra.henheang.site/finance",
       "/goals",
       "/learn",
       "/notes",

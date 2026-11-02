@@ -797,7 +797,7 @@ export const workspaceNavItems: NavItem[] = [
   }),
   // Direct shortcut to the separately deployed Luyra app. NavRow opens
   // external destinations in a new tab, while My Apps keeps its own Finance tab.
-  { ...navItem("apps-luyra"), shortLabel: "Finance" },
+  { ...navItem("apps-luyra"), id: "nav-finance", shortLabel: "Finance" },
   workspaceEntry("plan", { shortLabel: "Plan", description: "Tasks, goals, and calendar" }),
   workspaceEntry("learn", {
     shortLabel: "Learn",
