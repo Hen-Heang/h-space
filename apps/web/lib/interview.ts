@@ -110,7 +110,7 @@ const HABITS_SCRIPT_OUTLINE: ScriptSection[] = [
     id: "opening",
     titleKo: "인사 및 주제 소개",
     titleEn: "Greeting & topic intro",
-    hint: "간단히 인사하고 오늘 이야기할 주제를 소개하세요. 예: 오늘은 한국에 온 후 새로 생긴 습관과 취미에 대해 말씀드릴게요.",
+    hint: "간단히 인사하고 오늘 이야기할 주제를 소개하세요. 예: 오늘은 한국에 온 후 새로 생긴 습관과 취미에 대해 말씀드리겠습니다.",
   },
   {
     id: "transport",
@@ -156,46 +156,48 @@ const HABITS_SCRIPT_OUTLINE: ScriptSection[] = [
   },
 ]
 
-// The candidate's final script (Notion: "K-Specialist 6th — Henry" MAIN
-// SCRIPT), transcribed into the outline sections above.
+// The candidate's final interview script (Notion: "K-Specialist 6th — Henry",
+// FINAL INTERVIEW SCRIPT), in formal -습니다 style, split into the outline
+// sections above. Notion's one weather + recycling sentence is split across
+// those two sections; the home station is left out on purpose (public repo).
 const HABITS_SCRIPT_SEED: Record<string, string> = {
   opening:
-    "안녕하세요.\n\n오늘은 한국에 온 후 새로 생긴 습관과 취미에 대해 말씀드릴게요.\n\n한국에 온 지 거의 1년이 되었어요. 그동안 제 생활이 많이 달라졌어요. 예전에는 하지 않았던 일들이 지금은 제 습관이 되었어요.",
+    "안녕하십니까. 히엉입니다.\n\n오늘은 한국에 온 후 새로 생긴 습관과 취미에 대해 말씀드리겠습니다.\n\n한국에 온 지 거의 1년이 되었습니다. 그동안 제 생활에 여러 가지 새로운 습관이 생겼습니다.",
   transport:
-    "캄보디아에서는 출근하거나 밖에 갈 때 보통 오토바이나 차를 이용했어요. 하지만 한국에서는 매일 걸어서 출근해요. 멀리 갈 때는 버스나 지하철을 이용해요.\n\n처음에는 지하철 노선이 복잡해서 조금 어려웠어요. 하지만 지금은 혼자서도 잘 다닐 수 있어요.",
+    "캄보디아에서는 밖에 갈 때 보통 오토바이나 차를 이용했습니다. 하지만 한국에서는 걸어서 출근하고, 멀리 갈 때는 버스나 지하철을 이용합니다.\n\n저는 지하철 5호선을 자주 이용합니다. 처음에는 지하철 노선과 환승이 어려웠지만, 지금은 혼자서도 서울의 여러 곳에 갈 수 있습니다.",
   "weather-check":
-    "그리고 밖에 나가기 전에 날씨를 꼭 확인해요. 비가 오는지, 눈이 오는지, 많이 추운지 확인해요. 그래서 우산이나 옷을 미리 준비해요.\n\n이것도 한국에 와서 생긴 새로운 습관이에요.",
+    "또 밖에 나가기 전에 날씨를 확인합니다.",
   "recycling-cooking":
-    "또 하나는 쓰레기 분리배출이에요. 캄보디아에서는 쓰레기를 많이 나누지 않았어요. 하지만 한국에서는 음식물 쓰레기와 재활용을 따로 버려야 해요.\n\n처음에는 조금 헷갈렸어요. 하지만 지금은 버리기 전에 꼭 확인해요. 이 습관 때문에 환경도 더 생각하게 되었어요.\n\n음식 습관도 조금 바뀌었어요. 예전에는 밖에서 사 먹거나 배달을 많이 했어요. 하지만 요즘은 가끔 집에서 직접 요리해요. 이제는 간단한 음식은 혼자서 만들 수 있어요.",
+    "그리고 쓰레기를 버릴 때는 분리배출도 신경 씁니다.\n\n한국에 처음 왔을 때는 한국 음식에 익숙하지 않아서 직접 요리를 시작했습니다. 지금은 김치찌개도 만들 수 있고, 한국 음식에도 많이 익숙해졌습니다.",
   exercise:
-    "그리고 한국에 온 후 새로운 취미도 생겼어요. 예전에는 배구와 축구를 좋아했어요. 요즘은 산책, 조깅, 자전거 타기를 좋아해요.\n\n퇴근 후나 주말에는 여의도공원에서 자주 걷거나 조깅을 해요. 특히 한강에서 자전거 타는 것을 정말 좋아해요. 자전거를 타면서 한강을 보면 기분이 정말 상쾌해요.\n\n운동을 하고 나면 조금 피곤하지만 기분은 좋아요.",
+    "두 번째는 운동입니다.\n\n한국에 온 후에는 산책, 조깅, 자전거 타기를 더 자주 하게 되었습니다. 퇴근 후나 주말에는 여의도공원에서 걷거나 조깅을 하고, 한강에서는 자전거를 탑니다.\n\n운동을 하고 나면 기분이 상쾌하고 스트레스도 줄어드는 것 같습니다.",
   "friends-travel":
-    "또 한국에 살면서 새로운 캄보디아 친구들도 만났어요. 쉬는 날에는 친구들과 새로운 곳에 가 보기도 해요. 수원, 대전, 부산 같은 곳에도 가 봤어요.\n\n친구들도 만나고 한국의 여러 곳도 볼 수 있어서 좋아요.",
+    "세 번째는 새로운 곳에 가 보는 것입니다.\n\n올해 설날에는 한국에 사는 캄보디아 친구들과 수원에 갔습니다. 수원 화성행궁을 구경하고, 캄보디아 식당에서 놈반쪽도 같이 먹었습니다.\n\n친구들과 명절을 보내면서 새로운 곳도 경험할 수 있어서 특히 기억에 남았습니다.",
   "korean-study":
-    "마지막으로, 한국어 공부도 제 습관이 되었어요. 회사와 일상생활에서 한국어가 필요해서 매일 조금씩 공부하고 있어요.\n\n처음에는 듣기와 말하기가 많이 어려웠어요. 하지만 지금은 예전보다 조금 더 잘 이해할 수 있어요.",
+    "마지막으로 한국어 공부도 중요한 습관이 되었습니다.\n\n회사와 일상생활에서 한국어가 필요해서 매일 조금씩 공부하고 있습니다. 특히 회사에서는 한국어 문서를 읽거나 동료들의 말을 이해해야 할 때가 있습니다.\n\n처음에는 듣기와 말하기가 많이 어려웠지만, 지금은 예전보다 조금 더 잘 이해할 수 있게 되었습니다.",
   closing:
-    "한국에 오기 전에는 이런 습관이 많지 않았어요. 하지만 한국에서 생활하면서 혼자 할 수 있는 일이 많아졌어요. 그리고 건강한 습관도 많이 생겼어요.\n\n이런 작은 변화들이 저에게 좋은 경험이 되었다고 생각해요. 앞으로도 좋은 습관을 계속 유지하고, 한국에서 새로운 경험도 많이 해 보고 싶어요.\n\n감사합니다.",
+    "이런 작은 변화들 덕분에 혼자 할 수 있는 일이 많아졌고, 한국 생활에도 더 잘 적응하게 되었습니다.\n\n앞으로도 좋은 습관을 계속 유지하고, 한국에서 새로운 경험을 더 많이 해 보고 싶습니다.\n\n감사합니다.",
 }
 
-// English translation of the script (from the candidate's English draft),
-// section by section, mirroring HABITS_SCRIPT_SEED's paragraphing.
+// English translation of the final script, section by section, mirroring
+// HABITS_SCRIPT_SEED's paragraphing.
 const HABITS_SCRIPT_SEED_EN: Record<string, string> = {
   opening:
-    "Hello.\n\nToday, I would like to talk about the new habits and hobbies I developed after coming to Korea.\n\nIt has been almost one year since I came to Korea. During this time, my daily life has changed a lot. Some things that I did not do before have now become my habits.",
+    "Hello. I am Hieng.\n\nToday, I would like to talk about the new habits and hobbies I developed after coming to Korea.\n\nIt has been almost one year since I came to Korea. During that time, I have developed several new habits.",
   transport:
-    "In Cambodia, I usually used a motorbike or a car when I went to work or went outside. But in Korea, I walk to work every day. When I need to go somewhere far away, I take the bus or subway.\n\nAt first, the subway lines were complicated, so it was a little difficult. But now I can get around well by myself.",
+    "In Cambodia, I usually used a motorbike or a car when I went out. But in Korea, I walk to work, and when I go somewhere far, I take the bus or subway.\n\nI often take subway Line 5. At first, the subway lines and transfers were difficult, but now I can go to many places in Seoul by myself.",
   "weather-check":
-    "I also always check the weather before I go outside. I check whether it will rain, snow, or be very cold. Then I prepare an umbrella or the right clothes in advance.\n\nThis is also a new habit I developed after coming to Korea.",
+    "I also check the weather before I go outside.",
   "recycling-cooking":
-    "Another one is separating trash. In Cambodia, I did not separate trash very much. But in Korea, food waste and recycling have to be thrown away separately.\n\nAt first, it was a little confusing. But now I always check before I throw something away. Because of this habit, I think more about the environment.\n\nMy eating habits also changed a little. Before, I often bought food outside or ordered delivery. But these days, I sometimes cook at home by myself. Now I can make simple food on my own.",
+    "And when I throw away trash, I pay attention to separating it.\n\nWhen I first came to Korea, I was not used to Korean food, so I started cooking for myself. Now I can even make kimchi stew, and I have become much more used to Korean food.",
   exercise:
-    "I also developed new hobbies after coming to Korea. Before, I liked volleyball and football. These days, I enjoy walking, jogging, and cycling.\n\nAfter work or on weekends, I often walk or jog at Yeouido Park. I especially love riding a bicycle along the Han River. When I look at the river while riding, I feel really refreshed.\n\nAfter exercising I feel a little tired, but I feel good.",
+    "The second is exercise.\n\nAfter coming to Korea, I started walking, jogging, and cycling more often. After work or on weekends, I walk or jog at Yeouido Park, and I ride a bicycle along the Han River.\n\nAfter exercising, I feel refreshed and my stress seems to go down.",
   "friends-travel":
-    "While living in Korea, I also met new Cambodian friends. On my days off, we sometimes visit new places together. I have been to places like Suwon, Daejeon, and Busan.\n\nIt is nice because I can meet friends and see many different places in Korea.",
+    "The third is visiting new places.\n\nThis Seollal, I went to Suwon with Cambodian friends who live in Korea. We looked around Hwaseong Haenggung and ate nom banh chok together at a Cambodian restaurant.\n\nIt was especially memorable because I could spend the holiday with friends and experience a new place.",
   "korean-study":
-    "Lastly, studying Korean has also become my habit. I need Korean at work and in daily life, so I study a little every day.\n\nAt first, listening and speaking were very difficult. But now I can understand a little better than before.",
+    "Lastly, studying Korean has also become an important habit.\n\nI need Korean at work and in daily life, so I study a little every day. At work especially, there are times when I need to read Korean documents or understand what my coworkers say.\n\nAt first, listening and speaking were very difficult, but now I can understand a little better than before.",
   closing:
-    "Before coming to Korea, I did not have many of these habits. But while living in Korea, I have become able to do many more things by myself. I have also developed many healthy habits.\n\nI think these small changes have been a good experience for me. I want to keep these good habits and have many new experiences in Korea in the future.\n\nThank you.",
+    "Thanks to these small changes, I can do many more things by myself, and I have adapted better to life in Korea.\n\nI want to keep these good habits and have many more new experiences in Korea.\n\nThank you.",
 }
 
 const HABITS_ANSWER_FRAMES: AnswerFrame[] = [
@@ -251,13 +253,14 @@ const HABITS_ANSWER_FRAMES: AnswerFrame[] = [
 
 // Expected questions with short model answers (Notion: "Henry Q&A — 새
 // 습관/취미 예상 질문" + TOP 5). Answer first, then one reason or example —
-// the 1–3 sentence shape the B-grade target asks for.
+// the 1–3 sentence shape the B-grade target asks for. Answers use formal
+// -습니다 style to match the final script; the questions keep the examiner's -요.
 const HABITS_MODEL_QUESTIONS: PracticeQuestion[] = [
   {
     ko: "왜 이 주제를 선택했어요?",
     en: "Why did you choose this topic?",
     answerKo:
-      "한국에 온 후 제 생활이 많이 달라졌기 때문이에요. 새로 생긴 습관과 취미가 많아서 이 주제를 선택했어요.",
+      "한국에 온 후 제 생활이 많이 달라졌기 때문입니다. 새로 생긴 습관과 취미가 많아서 이 주제를 선택했습니다.",
     answerEn:
       "Because my life changed a lot after coming to Korea. I chose this topic because I have many new habits and hobbies.",
     keywords: ["생활", "달라지다", "습관과 취미"],
@@ -265,7 +268,7 @@ const HABITS_MODEL_QUESTIONS: PracticeQuestion[] = [
   {
     ko: "한국에 온 후 새로 생긴 습관은 뭐예요?",
     en: "What new habits did you develop after coming to Korea?",
-    answerKo: "걸어서 출근하고, 날씨를 확인하고, 쓰레기를 나눠서 버리는 습관이 생겼어요.",
+    answerKo: "걸어서 출근하고, 날씨를 확인하고, 쓰레기를 분리배출하는 습관이 생겼습니다.",
     answerEn:
       "I got into the habits of walking to work, checking the weather, and separating my trash.",
     keywords: ["걸어서 출근", "날씨 확인", "분리배출"],
@@ -274,7 +277,7 @@ const HABITS_MODEL_QUESTIONS: PracticeQuestion[] = [
     ko: "캄보디아에 있을 때와 교통 습관이 어떻게 달라졌어요?",
     en: "How have your transportation habits changed since Cambodia?",
     answerKo:
-      "캄보디아에서는 오토바이나 차를 많이 이용했어요. 한국에서는 걸어서 출근하고, 멀리 갈 때는 버스나 지하철을 이용해요.",
+      "캄보디아에서는 오토바이나 차를 많이 이용했습니다. 한국에서는 걸어서 출근하고, 멀리 갈 때는 버스나 지하철을 이용합니다.",
     answerEn:
       "In Cambodia, I used a motorbike or a car a lot. In Korea, I walk to work, and when I go far, I take the bus or subway.",
     keywords: ["오토바이", "걸어서", "지하철"],
@@ -282,25 +285,25 @@ const HABITS_MODEL_QUESTIONS: PracticeQuestion[] = [
   {
     ko: "지하철을 처음 이용했을 때 어땠어요?",
     en: "What was it like when you first used the subway?",
-    answerKo: "처음에는 노선이 복잡해서 조금 어려웠어요. 하지만 지금은 혼자서도 잘 다닐 수 있어요.",
+    answerKo: "처음에는 노선과 환승이 어려웠습니다. 하지만 지금은 혼자서도 서울의 여러 곳에 갈 수 있습니다.",
     answerEn:
-      "At first, the lines were complicated, so it was a little hard. But now I can get around well by myself.",
-    keywords: ["노선", "복잡하다", "혼자서도"],
+      "At first, the lines and transfers were difficult. But now I can go to many places in Seoul by myself.",
+    keywords: ["노선", "환승", "혼자서도"],
   },
   {
     ko: "왜 밖에 나가기 전에 날씨를 확인해요?",
     en: "Why do you check the weather before going out?",
     answerKo:
-      "비가 오거나 많이 추울 수 있어서 확인해요. 그래서 우산이나 옷을 미리 준비할 수 있어요.",
+      "한국은 계절에 따라 날씨 변화가 크기 때문입니다. 그래서 우산이나 옷을 미리 준비합니다.",
     answerEn:
-      "Because it might rain or be very cold. So I can prepare an umbrella or clothes in advance.",
-    keywords: ["비", "추위", "미리 준비"],
+      "Because the weather in Korea changes a lot with the seasons. So I prepare an umbrella or clothes in advance.",
+    keywords: ["계절", "날씨 변화", "미리 준비"],
   },
   {
     ko: "쓰레기 버리는 습관은 어떻게 달라졌어요?",
     en: "How did your habit of throwing away trash change?",
     answerKo:
-      "예전에는 많이 나누지 않았어요. 지금은 음식물 쓰레기와 재활용을 따로 확인해서 버려요.",
+      "예전에는 많이 나누지 않았습니다. 지금은 음식물 쓰레기와 재활용을 확인해서 따로 버립니다.",
     answerEn:
       "Before, I didn't separate it much. Now I check food waste and recycling separately before throwing them away.",
     keywords: ["음식물 쓰레기", "재활용", "따로"],
@@ -308,50 +311,52 @@ const HABITS_MODEL_QUESTIONS: PracticeQuestion[] = [
   {
     ko: "한국에 와서 요리를 자주 해요?",
     en: "Do you cook often since coming to Korea?",
-    answerKo: "매일 하지는 않지만 가끔 직접 요리해요. 간단한 음식은 혼자 만들 수 있어요.",
-    answerEn: "Not every day, but I sometimes cook myself. I can make simple food on my own.",
-    keywords: ["가끔", "직접 요리", "간단한 음식"],
+    answerKo:
+      "네, 처음에는 한국 음식에 익숙하지 않아서 직접 요리를 시작했습니다. 지금은 김치찌개도 만들 수 있습니다.",
+    answerEn:
+      "Yes. At first I wasn't used to Korean food, so I started cooking for myself. Now I can even make kimchi stew.",
+    keywords: ["익숙하지 않다", "직접 요리", "김치찌개"],
   },
   {
     ko: "한국에 온 후 새로 생긴 취미는 뭐예요?",
     en: "What new hobbies did you pick up after coming to Korea?",
-    answerKo: "산책, 조깅, 자전거 타기를 좋아하게 되었어요. 가끔 수영도 해요.",
-    answerEn: "I came to enjoy walking, jogging, and cycling. Sometimes I also swim.",
+    answerKo: "산책, 조깅, 자전거 타기를 더 자주 하게 되었습니다. 가끔 수영도 합니다.",
+    answerEn: "I started walking, jogging, and cycling more often. Sometimes I also swim.",
     keywords: ["산책", "조깅", "자전거"],
   },
   {
     ko: "왜 산책을 자주 하게 되었어요?",
     en: "Why did you start walking often?",
-    answerKo: "건강에도 좋고, 스트레스도 줄일 수 있어서 시작했어요.",
+    answerKo: "건강에도 좋고, 스트레스도 줄일 수 있어서 시작했습니다.",
     answerEn: "I started because it's good for my health and it reduces stress.",
     keywords: ["건강", "스트레스", "시작하다"],
   },
   {
     ko: "어디에서 자주 운동해요?",
     en: "Where do you usually exercise?",
-    answerKo: "퇴근 후나 주말에 여의도공원에서 자주 걸어요. 한강에서는 자전거도 타요.",
+    answerKo: "퇴근 후나 주말에 여의도공원에서 걷거나 조깅을 합니다. 한강에서는 자전거를 탑니다.",
     answerEn:
-      "After work or on weekends, I often walk at Yeouido Park. I also ride a bicycle along the Han River.",
+      "After work or on weekends, I walk or jog at Yeouido Park. I ride a bicycle along the Han River.",
     keywords: ["여의도공원", "퇴근 후", "한강"],
   },
   {
     ko: "왜 한강에서 자전거 타는 것을 좋아해요?",
     en: "Why do you like riding a bicycle along the Han River?",
-    answerKo: "경치가 좋고 기분이 상쾌해요. 그래서 시간이 있으면 자전거를 타러 가요.",
+    answerKo: "경치가 좋고 기분이 상쾌하기 때문입니다. 그래서 시간이 있으면 자전거를 타러 갑니다.",
     answerEn: "The scenery is nice and I feel refreshed. So when I have time, I go cycling.",
     keywords: ["경치", "상쾌하다", "시간이 있으면"],
   },
   {
     ko: "운동을 하고 나면 기분이 어때요?",
     en: "How do you feel after exercising?",
-    answerKo: "조금 피곤하지만 기분은 좋아요. 스트레스도 줄어드는 것 같아요.",
-    answerEn: "I'm a little tired, but I feel good. It also seems to reduce my stress.",
-    keywords: ["피곤하다", "기분", "스트레스"],
+    answerKo: "기분이 상쾌하고 스트레스도 줄어드는 것 같습니다.",
+    answerEn: "I feel refreshed, and my stress seems to go down.",
+    keywords: ["상쾌하다", "스트레스", "줄어들다"],
   },
   {
     ko: "주말에는 보통 뭐 해요?",
     en: "What do you usually do on weekends?",
-    answerKo: "공원에 가거나 새로운 곳을 구경해요. 가끔 사진도 찍어요.",
+    answerKo: "공원에서 산책하거나 새로운 곳을 구경합니다. 가끔 사진도 찍습니다.",
     answerEn: "I go to the park or look around new places. Sometimes I also take photos.",
     keywords: ["공원", "새로운 곳", "사진"],
   },
@@ -359,7 +364,7 @@ const HABITS_MODEL_QUESTIONS: PracticeQuestion[] = [
     ko: "한국에서 새로운 친구를 만났어요?",
     en: "Have you made new friends in Korea?",
     answerKo:
-      "네, 한국에 사는 캄보디아 친구들을 새로 만났어요. 쉬는 날에는 같이 새로운 곳에 가기도 해요.",
+      "네, 한국에 사는 캄보디아 친구들을 새로 만났습니다. 쉬는 날에는 같이 새로운 곳에 가기도 합니다.",
     answerEn:
       "Yes, I met new Cambodian friends who live in Korea. On days off, we sometimes go to new places together.",
     keywords: ["캄보디아 친구", "쉬는 날", "새로운 곳"],
@@ -367,29 +372,33 @@ const HABITS_MODEL_QUESTIONS: PracticeQuestion[] = [
   {
     ko: "친구들과 어디에 가 봤어요?",
     en: "Where have you been with your friends?",
-    answerKo: "수원, 대전, 부산 같은 곳에 가 봤어요. 새로운 곳을 볼 수 있어서 좋았어요.",
-    answerEn: "I've been to places like Suwon, Daejeon, and Busan. It was nice to see new places.",
-    keywords: ["수원", "대전", "부산"],
+    answerKo:
+      "올해 설날에 친구들과 수원에 갔습니다. 화성행궁을 구경하고 캄보디아 식당에서 놈반쪽도 먹었습니다.",
+    answerEn:
+      "This Seollal, I went to Suwon with friends. We looked around Hwaseong Haenggung and ate nom banh chok at a Cambodian restaurant.",
+    keywords: ["설날", "수원", "화성행궁"],
   },
   {
     ko: "한국어 공부도 습관이 되었어요?",
     en: "Has studying Korean become a habit too?",
-    answerKo: "네, 회사와 일상생활에서 필요해서 매일 조금씩 공부하고 있어요.",
+    answerKo: "네, 회사와 일상생활에서 필요해서 매일 조금씩 공부하고 있습니다.",
     answerEn: "Yes, I need it at work and in daily life, so I study a little every day.",
     keywords: ["회사", "일상생활", "매일 조금씩"],
   },
   {
     ko: "한국어 공부는 어떻게 하고 있어요?",
     en: "How are you studying Korean?",
-    answerKo: "매일 조금씩 공부하고, 회사에서도 한국어를 많이 들으려고 해요.",
-    answerEn: "I study a little every day, and I also try to listen to a lot of Korean at work.",
-    keywords: ["매일 조금씩", "회사", "듣다"],
+    answerKo:
+      "매일 조금씩 공부하고, 회사에서는 한국어 문서를 읽거나 동료들의 말을 이해하려고 노력합니다.",
+    answerEn:
+      "I study a little every day, and at work I try to read Korean documents and understand my coworkers.",
+    keywords: ["매일 조금씩", "한국어 문서", "동료"],
   },
   {
     ko: "한국어에서 가장 어려운 것은 뭐예요?",
     en: "What is the hardest thing about Korean?",
     answerKo:
-      "저는 듣기와 말하기가 가장 어려워요. 하지만 지금은 예전보다 조금 더 이해할 수 있어요.",
+      "저는 듣기와 말하기가 가장 어렵습니다. 하지만 지금은 예전보다 조금 더 잘 이해할 수 있게 되었습니다.",
     answerEn:
       "Listening and speaking are the hardest for me. But now I can understand a little more than before.",
     keywords: ["듣기", "말하기", "예전보다"],
@@ -397,14 +406,14 @@ const HABITS_MODEL_QUESTIONS: PracticeQuestion[] = [
   {
     ko: "한국에 와서 가장 많이 달라진 점은 뭐예요?",
     en: "What has changed the most since you came to Korea?",
-    answerKo: "혼자 할 수 있는 일이 많아졌어요. 생활도 더 규칙적으로 하려고 해요.",
-    answerEn: "I can do many more things by myself. I also try to live a more regular life.",
-    keywords: ["혼자", "많아지다", "규칙적으로"],
+    answerKo: "혼자 할 수 있는 일이 많아졌습니다. 그리고 한국 생활에도 더 잘 적응하게 되었습니다.",
+    answerEn: "I can do many more things by myself, and I have adapted better to life in Korea.",
+    keywords: ["혼자", "많아지다", "적응하다"],
   },
   {
     ko: "이 습관 중에서 가장 좋은 습관은 뭐예요?",
     en: "Which of these habits is the best one?",
-    answerKo: "저는 운동하는 습관이 가장 좋아요. 건강에도 좋고 기분 전환도 돼요.",
+    answerKo: "운동하는 습관이 가장 좋다고 생각합니다. 건강에도 좋고 기분 전환도 됩니다.",
     answerEn:
       "I think exercising is the best habit. It's good for my health and refreshes my mood.",
     keywords: ["운동", "건강", "기분 전환"],
@@ -412,7 +421,7 @@ const HABITS_MODEL_QUESTIONS: PracticeQuestion[] = [
   {
     ko: "앞으로 계속 유지하고 싶은 습관은 뭐예요?",
     en: "Which habits do you want to keep in the future?",
-    answerKo: "운동과 한국어 공부를 계속하고 싶어요. 둘 다 제 생활에 도움이 돼요.",
+    answerKo: "운동과 한국어 공부를 계속하고 싶습니다. 둘 다 제 생활에 도움이 됩니다.",
     answerEn: "I want to keep exercising and studying Korean. Both help my life.",
     keywords: ["운동", "한국어 공부", "유지하다"],
   },
