@@ -1172,7 +1172,7 @@ export default function InterviewScriptPage() {
                         id={`sec-${section.id}`}
                         data-doc-section
                         className={cn(
-                          "scroll-mt-20 rounded-r-lg border-l-2 pl-4 transition-colors",
+                          "scroll-mt-[calc(var(--shell-header-h,0px)+3.5rem)] rounded-r-lg border-l-2 pl-4 transition-colors",
                           active ? "border-blue-500/60" : "border-transparent",
                         )}
                       >

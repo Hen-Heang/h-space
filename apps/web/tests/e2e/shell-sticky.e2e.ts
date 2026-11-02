@@ -177,6 +177,17 @@ for (const viewport of [
       const outline = page.locator("aside .sticky").first()
       const barBottom = (await titleBar.boundingBox())!
       expect(await top(outline)).toBeGreaterThanOrEqual(barBottom.y + barBottom.height)
+    } else {
+      const jumpMenu = page.getByLabel("Jump to section")
+      await jumpMenu.selectOption({ index: 3 })
+      const targetSection = page.locator("[data-doc-section]").nth(2)
+      await expect
+        .poll(async () => {
+          const target = await targetSection.boundingBox()
+          const stickyBar = await titleBar.boundingBox()
+          return target && stickyBar ? target.y - (stickyBar.y + stickyBar.height) : -Infinity
+        })
+        .toBeGreaterThanOrEqual(-1)
     }
   })
 }
