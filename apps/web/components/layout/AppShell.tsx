@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useEffect, useState } from "react"
+import { Suspense, useEffect, useState, type CSSProperties } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 
 import { QuickSwitcher } from "@/components/app/quick-switcher"
@@ -144,6 +144,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const showBottomNav = isMobile && !isChromeless && !isChatRoute && !isKeyboardOpen
   const showFloatingCoach = !isChromeless && !isChatRoute
 
+  // Heights of the shell chrome that overlaps scrolled content, for pages'
+  // sticky elements: `top-[var(--shell-header-h)]` stays below the sticky
+  // header, `bottom-[var(--shell-bottom-nav-h)]` above the fixed bottom nav.
+  // Mirrors the headers' own classes: DesktopHeader is h-14; MobileHeader is a
+  // size-11 row + pb-2 + 1px border + pt-[max(0.5rem,safe-area-top)].
+  // MobileBottomNav is a min-h-12 tab + py-1 + 1px border + safe-area-bottom.
+  const showDesktopHeader = !isMobile && !isChromeless
+  const shellOffsets = {
+    "--shell-header-h": showDesktopHeader
+      ? "3.5rem"
+      : showMobileHeader
+        ? "calc(3.25rem + 1px + max(0.5rem, env(safe-area-inset-top)))"
+        : "0px",
+    "--shell-bottom-nav-h": showBottomNav
+      ? "calc(3.5rem + 1px + env(safe-area-inset-bottom))"
+      : "0px",
+  } as CSSProperties
+
   return (
     <TooltipProvider delayDuration={200}>
       <MobileHeaderTitleProvider>
@@ -192,8 +210,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </NavSuspense>
           )}
 
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-            {!isMobile && !isChromeless && (
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col" style={shellOffsets}>
+            {showDesktopHeader && (
               <NavSuspense
                 fallback={<div aria-hidden className="h-[57px] border-b border-border" />}
               >
@@ -213,7 +231,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               id="main-content"
               tabIndex={-1}
               className={cn(
-                "min-h-0 flex-1 overflow-x-hidden outline-none",
+                // overflow-x-clip, not -hidden: "hidden" makes <main> a scroll
+                // container (overflow-y computes to auto) that never scrolls,
+                // so every position: sticky inside it silently did nothing.
+                // "clip" still stops sideways overflow. The calendar's
+                // overflow-y-hidden turns clip back into hidden, as before.
+                "min-h-0 flex-1 overflow-x-clip outline-none",
                 // The max() keeps content clear of the notch / rounded corners
                 // when a phone is turned sideways; the insets are 0 otherwise.
                 contentFullBleed

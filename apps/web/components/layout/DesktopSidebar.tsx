@@ -27,10 +27,10 @@ const GROUPS: { id: string; label: string; items: NavItem[] }[] = [
 ]
 
 /**
- * The global sidebar: six workspaces plus the AI Assistant and Settings —
- * `workspaceNavItems` / `toolNavItems` from `lib/navigation.ts`, nothing
- * else. A workspace's own pages (Planner's Tasks/Goals/Calendar, …) are its
- * local tabs, never extra rows here.
+ * The global sidebar shows six workspaces, a direct Finance link, the AI
+ * Assistant, and Settings from `workspaceNavItems` / `toolNavItems` in
+ * `lib/navigation.ts`. A workspace's own pages (Planner's Tasks/Goals/Calendar,
+ * …) are its local tabs, never extra rows here.
  *
  * Expanded it's a labelled 240px column with group headings; collapsed it's a
  * 68px icon column with tooltips, the headings kept for screen readers. The

@@ -1037,8 +1037,12 @@ export default function HistoryPage() {
 
         {/* ── Right column: Practice Calendar ── */}
         <div>
-          <motion.div variants={itemVariants}>
-            <Card className="overflow-hidden rounded-[1.8rem] border-border bg-card shadow-xl dark:bg-slate-900/40 lg:sticky lg:top-8 sm:rounded-[2.2rem] lg:rounded-3xl">
+          {/* Sticky on the wrapper: the Card alone fills it exactly, so it had no room to stick. */}
+          <motion.div
+            variants={itemVariants}
+            className="lg:sticky lg:top-[calc(var(--shell-header-h,0px)+2rem)]"
+          >
+            <Card className="overflow-hidden rounded-[1.8rem] border-border bg-card shadow-xl dark:bg-slate-900/40 sm:rounded-[2.2rem] lg:rounded-3xl">
               <CardHeader className="border-b border-border/60 bg-accent/5 px-5 py-4 sm:px-6 sm:py-5">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-500 shadow-sm ring-1 ring-violet-500/20">

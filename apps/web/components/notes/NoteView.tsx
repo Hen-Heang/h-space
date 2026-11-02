@@ -99,7 +99,7 @@ export function NoteView({ slug, note, html, onEdit, onTogglePin, onDelete }: No
         {/* Main content column */}
         <div className="min-w-0 max-w-4xl flex-1">
           {/* Top action bar */}
-          <div className="flex items-center justify-between gap-2 border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur-xl sm:px-8 md:sticky md:top-0 md:z-20">
+          <div className="flex items-center justify-between gap-2 border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur-xl sm:px-8 md:sticky md:top-[var(--shell-header-h,0px)] md:z-20">
             <Link
               href="/notes"
               className="flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -238,7 +238,7 @@ export function NoteView({ slug, note, html, onEdit, onTogglePin, onDelete }: No
         </div>
 
         {/* Desktop right TOC panel */}
-        <div className="sticky top-0 hidden h-dvh w-72 shrink-0 flex-col gap-5 overflow-y-auto border-l border-border/60 px-5 py-6 xl:flex">
+        <div className="sticky top-[var(--shell-header-h,0px)] hidden h-[calc(100dvh-var(--shell-header-h,0px))] w-72 shrink-0 flex-col gap-5 overflow-y-auto border-l border-border/60 px-5 py-6 xl:flex">
           <div className="overflow-hidden rounded-xl border border-border/60 bg-card/40">
             <TableOfContents html={html} />
           </div>
