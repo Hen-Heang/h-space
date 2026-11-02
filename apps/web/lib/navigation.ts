@@ -755,7 +755,7 @@ function section(id: NavSectionId): NavSection {
 // decides visibility itself:
 //
 //   1. `workspaceNavItems` + `toolNavItems` — the global sidebar / tablet rail:
-//      six workspaces plus the AI Assistant and Settings. Nothing else.
+//      six workspaces, a direct Finance link, the AI Assistant, and Settings.
 //   2. `workspaceTabs` — each workspace's local navigation, rendered inside the
 //      workspace by `WorkspaceTabs` (Planner: Tasks · Goals · Calendar · …).
 //   3. `mobileNavItems` — the four mobile bottom-bar tabs before "More".
@@ -795,6 +795,9 @@ export const workspaceNavItems: NavItem[] = [
     shortLabel: "Apps",
     description: "Projects and personal applications",
   }),
+  // Direct shortcut to the separately deployed Luyra app. NavRow opens
+  // external destinations in a new tab, while My Apps keeps its own Finance tab.
+  { ...navItem("apps-luyra"), shortLabel: "Finance" },
   workspaceEntry("plan", { shortLabel: "Plan", description: "Tasks, goals, and calendar" }),
   workspaceEntry("learn", {
     shortLabel: "Learn",
@@ -821,7 +824,9 @@ export const mobileNavItems: NavItem[] = ["nav-today", "nav-plan", "nav-learn", 
 
 /** Workspaces and tools the "More" sheet leads with — everything without a tab. */
 export const moreNavItems: NavItem[] = [
-  ...workspaceNavItems.filter((item) => !mobileNavItems.includes(item)),
+  ...workspaceNavItems.filter(
+    (item) => !mobileNavItems.includes(item) && !item.href.startsWith("http"),
+  ),
   ...toolNavItems,
 ]
 

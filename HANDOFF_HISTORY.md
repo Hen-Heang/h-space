@@ -1,3 +1,35 @@
+## 2026-11-02 - iPhone 15 Pro Max responsive review and Finance sidebar update
+
+# HANDOFF
+
+## Snapshot
+
+- **Updated:** 2026-11-02
+- **Branch:** `fix/shell-sticky-positioning`.
+- **In progress:** shell sticky-positioning edits are present in `AppShell`, History, Goals, Interview Script, Phrasebook, and NoteView, with `tests/e2e/shell-sticky.e2e.ts` and Playwright artifacts. Keep these edits intact.
+- **Navigation change:** added a standalone Finance link beside My Apps in the global desktop sidebar and tablet rail. It reuses the existing Luyra URL and opens in a new tab. Finance remains a tab within My Apps; the mobile More sheet lists it once under All Pages.
+- **Verification:** no tests or build run for the navigation change.
+
+## Current focus
+
+Review the sidebar Finance shortcut alongside the in-progress shell sticky-positioning work. H-Space only links to the separately deployed Luyra app; finance data and functionality remain in Luyra.
+
+
+## 2026-11-02 - PR cleanup before the Finance sidebar shortcut
+
+# HANDOFF
+
+## Snapshot
+
+- **Updated:** 2026-11-02
+- **Branch:** `main`, synchronized with `origin/main` at `b2b360e`.
+- **PR audit:** #60 passed checks, was merged, and its remote/local branch was deleted. #59 and #61 remained open because Prettier failed on `ListenRepeatPractice.tsx`, `interview.ts`, and `personal-exam-prep.ts`.
+- **Preserved work:** shell-sticky edits and Playwright artifacts were saved in `stash@{1}`; a subsequently written Playwright artifact was saved in `stash@{0}`.
+- **Tests:** none were run during the PR cleanup.
+
+## Current focus
+
+The user requested a Finance shortcut in the global sidebar. H-Space links to Luyra's separately deployed app; Luyra retains finance data and functionality.
 ## 2026-11-01 (b) - PR cleanup: main build fix, Spring Inbox, dashboard redesign, theme reveal merged
 
 # HANDOFF

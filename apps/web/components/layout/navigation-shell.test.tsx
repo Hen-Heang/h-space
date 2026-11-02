@@ -344,7 +344,7 @@ describe("DesktopSidebar", () => {
     return onToggle
   }
 
-  it("renders only the six workspaces and the tools, under two headings", () => {
+  it("renders the six workspaces, Finance shortcut, and tools under two headings", () => {
     setup("/practice", false)
     const nav = screen.getByRole("navigation", { name: "Primary" })
     const links = within(nav).getAllByRole("link")
