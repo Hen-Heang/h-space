@@ -11,13 +11,13 @@ import { type NavSearchParams } from "@/lib/navigation"
 
 import { getHeaderTrail } from "./header-trail"
 import { BreadcrumbTrail } from "./PageHeader"
-import { ProfileMenu } from "./ProfileMenu"
 
 /**
  * Sticky top bar for tablet + desktop: where you are (`Workspace › Page`, the
  * page name as the document's `h1`) on the left, global actions on the
- * right. No branding (the sidebar owns that) and no page description — a
- * workspace's own header carries any copy, so nothing is said twice.
+ * right. No branding or account menu (the sidebar / tablet rail own those)
+ * and no page description — a workspace's own header carries any copy, so
+ * nothing is said twice.
  */
 export function DesktopHeader({
   pathname,
@@ -57,7 +57,6 @@ export function DesktopHeader({
         </Button>
         <ThemeToggle className="size-9 rounded-md border-border bg-transparent shadow-none" />
         <NotificationBell className="size-9 rounded-md border-transparent bg-transparent shadow-none hover:bg-accent" />
-        <ProfileMenu collapsed side="bottom" align="end" className="size-9" />
       </div>
     </header>
   )
