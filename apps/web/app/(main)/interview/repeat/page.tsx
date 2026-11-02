@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Award,
   FileText,
+  Keyboard,
   Loader2,
   Mic,
   Quote,
@@ -18,10 +19,16 @@ import {
 import { motion } from "motion/react"
 
 import { PageHero } from "@/components/app/page-hero"
+import {
+  REPEAT_MATCH_DISCLAIMER,
+  ScoreHonestyNote,
+  TYPED_ATTEMPT_NOTE,
+} from "@/components/interview/ScoreHonestyNote"
 import { SpeakButton, getCachedAudioUrl } from "@/components/ui/SpeakButton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition"
 import { useLogActivity } from "@/hooks/useLogActivity"
 import { useScrollToTopOnChange } from "@/hooks/useScrollToTopOnChange"
@@ -30,6 +37,7 @@ import { interviewApi } from "@/lib/api"
 import { INTERVIEW_TOPICS } from "@/lib/interview"
 import {
   compareRepeat,
+  REPEAT_GRADE_LABELS,
   phrasesToRepeatSentences,
   scriptToRepeatSentences,
   type RepeatComparison,
@@ -96,15 +104,15 @@ async function autoSpeak(text: string): Promise<boolean> {
 const GRADE_STYLES = {
   perfect: {
     banner: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-    label: "Perfect! 완벽해요",
+    label: REPEAT_GRADE_LABELS.perfect,
   },
   good: {
     banner: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
-    label: "Close — check the missed words",
+    label: REPEAT_GRADE_LABELS.good,
   },
   retry: {
     banner: "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400",
-    label: "Listen once more and try again",
+    label: REPEAT_GRADE_LABELS.retry,
   },
 } as const
 
@@ -118,6 +126,11 @@ export default function RepeatDrillPage() {
   const [index, setIndex] = useState(0)
   const [result, setResult] = useState<RepeatComparison | null>(null)
   const [spoken, setSpoken] = useState("")
+  const [spokenWasTyped, setSpokenWasTyped] = useState(false)
+  // Typed fallback: always on without speech recognition, opt-in otherwise
+  // (e.g. the mic is blocked or the room is noisy).
+  const [typingRequested, setTypingRequested] = useState(false)
+  const [typedAnswer, setTypedAnswer] = useState("")
   const [progress, setProgress] = useState<Record<string, SentenceProgress>>({})
   // Lazy init reads localStorage on the first client render — same pattern as
   // the mock interview page's scorecard history.
@@ -138,24 +151,29 @@ export default function RepeatDrillPage() {
   // mid-sentence pauses and waiting-to-start nerves, then auto-grades
   // SILENCE_STOP_MS after your last recognized words — still hands-free,
   // without the browser's too-eager single-utterance cutoff.
+  // Grades one attempt against the current sentence. Reads refs so both the
+  // recognition callback and the typed fallback grade the right sentence.
+  function gradeAttempt(text: string, typed: boolean) {
+    const sentence = itemsRef.current[indexRef.current]
+    const said = text.trim()
+    if (!sentence || !said || !drillActiveRef.current) return
+    const comparison = compareRepeat(sentence.ko, said)
+    setSpoken(said)
+    setSpokenWasTyped(typed)
+    setResult(comparison)
+    setProgress((prev) => {
+      const existing = prev[sentence.id]
+      const best =
+        existing && existing.best.similarity >= comparison.similarity ? existing.best : comparison
+      return { ...prev, [sentence.id]: { tries: (existing?.tries ?? 0) + 1, best } }
+    })
+    void logActivity()
+  }
+
   const speech = useSpeechRecognition({
     lang: "ko-KR",
     continuous: true,
-    onResult: (transcript) => {
-      const sentence = itemsRef.current[indexRef.current]
-      const said = transcript.trim()
-      if (!sentence || !said || !drillActiveRef.current) return
-      const comparison = compareRepeat(sentence.ko, said)
-      setSpoken(said)
-      setResult(comparison)
-      setProgress((prev) => {
-        const existing = prev[sentence.id]
-        const best =
-          existing && existing.best.similarity >= comparison.similarity ? existing.best : comparison
-        return { ...prev, [sentence.id]: { tries: (existing?.tries ?? 0) + 1, best } }
-      })
-      void logActivity()
-    },
+    onResult: (transcript) => gradeAttempt(transcript, false),
   })
 
   useEffect(() => {
@@ -168,6 +186,12 @@ export default function RepeatDrillPage() {
   const topic = INTERVIEW_TOPICS[0]
   const sentence = items[index]
   const listening = speech.status === "listening"
+  const typing = typingRequested || !speech.supported
+  // Read by the async play-then-listen chain, which may resolve renders later.
+  const typingRef = useRef(typing)
+  useEffect(() => {
+    typingRef.current = typing
+  }, [typing])
 
   // Timers act through a ref so re-renders don't tie them to a stale stop().
   const speechRef = useRef(speech)
@@ -193,8 +217,22 @@ export default function RepeatDrillPage() {
 
   function playThenListen(text: string) {
     void autoSpeak(text).then((played) => {
-      if (played && drillActiveRef.current) speech.start()
+      // In typing mode the learner answers in the text box; never open the mic.
+      if (played && drillActiveRef.current && speech.supported && !typingRef.current) {
+        speech.start()
+      }
     })
+  }
+
+  function submitTyped() {
+    if (!typedAnswer.trim()) return
+    gradeAttempt(typedAnswer, true)
+    setTypedAnswer("")
+  }
+
+  function switchToTyping() {
+    if (listening) speech.reset()
+    setTypingRequested(true)
   }
 
   async function startDrill() {
@@ -236,6 +274,7 @@ export default function RepeatDrillPage() {
     if (!sentence) return
     setResult(null)
     setSpoken("")
+    setTypedAnswer("")
     speech.reset()
     playThenListen(sentence.ko)
   }
@@ -243,6 +282,7 @@ export default function RepeatDrillPage() {
   function nextSentence() {
     setResult(null)
     setSpoken("")
+    setTypedAnswer("")
     speech.reset()
     if (index + 1 >= items.length) {
       finishDrill()
@@ -288,10 +328,10 @@ export default function RepeatDrillPage() {
           description="Duolingo-style listen &amp; repeat: hear a sentence, say it back, and see exactly which words you hit or missed. The fastest way to memorize your script out loud."
           stats={[
             { label: "Format", value: "Listen & repeat" },
-            { label: "Graded", value: "Word by word" },
+            { label: "Checked", value: "Word match" },
             {
               label: "Last session",
-              value: lastSession ? `${lastSession.perfect}/${lastSession.total} perfect` : "—",
+              value: lastSession ? `${lastSession.perfect}/${lastSession.total} matched` : "—",
             },
           ]}
           actions={
@@ -349,8 +389,9 @@ export default function RepeatDrillPage() {
           <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
             <AlertCircle size={18} className="mt-0.5 shrink-0 text-amber-600" />
             <p className="text-sm font-medium leading-relaxed text-foreground/90">
-              This drill needs the browser&apos;s speech recognition — open it in Chrome (or Safari)
-              to speak your repeats.
+              Speech recognition isn&apos;t available in this browser, so you&apos;ll type each
+              sentence after hearing it. That checks recall, not speaking — open Chrome or Safari to
+              repeat out loud.
             </p>
           </div>
         )}
@@ -358,7 +399,6 @@ export default function RepeatDrillPage() {
         <div className="flex justify-center">
           <Button
             onClick={startDrill}
-            disabled={!speech.supported}
             className="h-14 w-full rounded-2xl bg-emerald-600 px-10 text-base font-bold text-white shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-50 sm:w-auto"
           >
             <Repeat2 size={20} className="mr-2" /> Start Repeat Drill
@@ -393,18 +433,22 @@ export default function RepeatDrillPage() {
             attempted.length === 0
               ? "No sentences answered this time — start again and say at least one out loud."
               : weak.length === 0
-                ? "Every sentence perfect — that script is getting into your voice, not just your eyes."
+                ? "Every sentence matched — that script is getting into your voice, not just your eyes."
                 : "Replay the sentences below and repeat each one once more — the missed words are marked."
           }
           stats={[
             { label: "Sentences", value: String(attempted.length) },
-            { label: "Perfect", value: String(perfect.length) },
+            { label: "Matched", value: String(perfect.length) },
             {
               label: "Avg match",
               value: lastSession ? `${lastSession.avgSimilarity}%` : "—",
             },
           ]}
         />
+
+        {attempted.length > 0 && (
+          <ScoreHonestyNote className="px-1">{REPEAT_MATCH_DISCLAIMER}</ScoreHonestyNote>
+        )}
 
         {weak.map((s) => {
           const best = progress[s.id].best
@@ -418,7 +462,7 @@ export default function RepeatDrillPage() {
                   {s.sourceLabel} · best match {best.similarity}%
                 </p>
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-lg font-bold leading-relaxed">
+                  <p lang="ko" className="break-keep text-lg font-bold leading-relaxed">
                     {best.marks.map((mark, i) => (
                       <span
                         key={i}
@@ -474,7 +518,7 @@ export default function RepeatDrillPage() {
           { label: "Sentence", value: `${index + 1}/${items.length}` },
           { label: "Tries here", value: String(progress[sentence?.id ?? ""]?.tries ?? 0) },
           {
-            label: "Perfect",
+            label: "Matched",
             value: String(Object.values(progress).filter((p) => p.best.grade === "perfect").length),
           },
         ]}
@@ -495,7 +539,10 @@ export default function RepeatDrillPage() {
           <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-600">
             {sentence?.sourceLabel}
           </p>
-          <p className="text-[1.4rem] font-bold leading-snug text-foreground sm:text-2xl">
+          <p
+            lang="ko"
+            className="break-keep text-[1.4rem] font-bold leading-snug text-foreground sm:text-2xl"
+          >
             {result
               ? result.marks.map((mark, i) => (
                   <span
@@ -545,16 +592,21 @@ export default function RepeatDrillPage() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-bold">{grade.label}</p>
                   <Badge className="rounded-lg border-none bg-background/60 px-2.5 py-1 text-[11px] font-bold tabular-nums text-foreground">
-                    {result.similarity}% match · {result.wordAccuracy}% words
+                    {result.wordAccuracy}% of words found · {result.similarity}% similar
                   </Badge>
                 </div>
               </motion.div>
               <div className="rounded-2xl border border-border bg-background p-4">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                  You said
+                  {spokenWasTyped ? "You typed" : "Recognized as"}
                 </p>
-                <p className="mt-1.5 font-medium text-foreground">{spoken}</p>
+                <p lang="ko" className="mt-1.5 break-keep font-medium text-foreground">
+                  {spoken}
+                </p>
               </div>
+              <ScoreHonestyNote>
+                {spokenWasTyped ? TYPED_ATTEMPT_NOTE : REPEAT_MATCH_DISCLAIMER}
+              </ScoreHonestyNote>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Button
                   onClick={retrySentence}
@@ -586,36 +638,100 @@ export default function RepeatDrillPage() {
             </>
           ) : (
             <>
-              <div className="flex flex-col items-center gap-3 py-4">
-                <button
-                  onClick={() => (listening ? speech.stop() : playThenListen(sentence?.ko ?? ""))}
-                  className={cn(
-                    "flex h-20 w-20 items-center justify-center rounded-full text-white shadow-lg transition-all active:scale-95",
-                    listening
-                      ? "animate-pulse bg-rose-600 shadow-rose-600/30"
-                      : "bg-emerald-600 shadow-emerald-600/30 hover:bg-emerald-700",
+              {typing ? (
+                <form
+                  className="space-y-3"
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    submitTyped()
+                  }}
+                >
+                  <label
+                    htmlFor="repeat-typed-answer"
+                    className="block text-sm font-bold text-foreground"
+                  >
+                    Type the sentence you heard
+                  </label>
+                  <Input
+                    id="repeat-typed-answer"
+                    lang="ko"
+                    autoComplete="off"
+                    value={typedAnswer}
+                    onChange={(event) => setTypedAnswer(event.target.value)}
+                    placeholder="들은 문장을 입력하세요"
+                    className="h-12 rounded-2xl text-base"
+                  />
+                  <ScoreHonestyNote>{TYPED_ATTEMPT_NOTE}</ScoreHonestyNote>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Button
+                      type="submit"
+                      disabled={!typedAnswer.trim()}
+                      className="h-12 w-full rounded-2xl bg-emerald-600 px-6 text-sm font-bold text-white hover:bg-emerald-700 sm:w-auto"
+                    >
+                      Check
+                    </Button>
+                    {speech.supported && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setTypingRequested(false)}
+                        className="h-12 w-full rounded-2xl px-6 text-sm font-bold sm:w-auto"
+                      >
+                        <Mic size={18} className="mr-2" /> Use the microphone
+                      </Button>
+                    )}
+                  </div>
+                </form>
+              ) : (
+                <div className="flex flex-col items-center gap-3 py-4">
+                  <button
+                    type="button"
+                    onClick={() => (listening ? speech.stop() : playThenListen(sentence?.ko ?? ""))}
+                    aria-label={
+                      listening ? "Stop and check my repeat" : "Play the sentence, then repeat it"
+                    }
+                    aria-pressed={listening}
+                    className={cn(
+                      "flex h-20 w-20 items-center justify-center rounded-full text-white shadow-lg transition-all active:scale-95",
+                      listening
+                        ? "animate-pulse bg-rose-600 shadow-rose-600/30"
+                        : "bg-emerald-600 shadow-emerald-600/30 hover:bg-emerald-700",
+                    )}
+                  >
+                    {listening ? <Square size={28} /> : <Mic size={28} />}
+                  </button>
+                  <p
+                    role="status"
+                    aria-live="polite"
+                    className="text-sm font-bold text-muted-foreground"
+                  >
+                    {listening
+                      ? "Repeat the sentence — pauses are okay, it grades a moment after you finish."
+                      : "Tap to hear it again and repeat"}
+                  </p>
+                  {speech.transcript && listening && (
+                    <p lang="ko" className="text-center font-medium text-foreground">
+                      {speech.transcript}
+                    </p>
                   )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={switchToTyping}
+                    className="h-11 rounded-xl text-sm font-semibold text-muted-foreground"
+                  >
+                    <Keyboard size={16} className="mr-2" /> Type it instead
+                  </Button>
+                </div>
+              )}
+              {speech.error && !typing && (
+                <div
+                  role="alert"
+                  className="flex items-start gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 p-4"
                 >
-                  {listening ? <Square size={28} /> : <Mic size={28} />}
-                </button>
-                <p
-                  role="status"
-                  aria-live="polite"
-                  className="text-sm font-bold text-muted-foreground"
-                >
-                  {listening
-                    ? "Repeat the sentence — pauses are okay, it grades a moment after you finish."
-                    : "Tap to hear it again and repeat"}
-                </p>
-                {speech.transcript && listening && (
-                  <p className="text-center font-medium text-foreground">{speech.transcript}</p>
-                )}
-              </div>
-              {speech.error && (
-                <div className="flex items-start gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 p-4">
                   <AlertCircle size={18} className="mt-0.5 shrink-0 text-destructive" />
                   <p className="text-sm font-bold leading-relaxed text-destructive">
-                    {speech.error}
+                    {speech.error} You can also type the sentence instead.
                   </p>
                 </div>
               )}

@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowRight, Check, Info, RotateCcw, Volume2 } from "lucide-react"
+import { ArrowRight, Check, RotateCcw, Volume2 } from "lucide-react"
 
+import { PRONUNCIATION_DISCLAIMER, ScoreHonestyNote } from "@/components/interview/ScoreHonestyNote"
 import { CorrectionDiff } from "@/components/learn/CorrectionDiff"
 import { SpeakButton } from "@/components/ui/SpeakButton"
 import { Badge } from "@/components/ui/badge"
@@ -11,8 +12,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import type { SpeakingCheckResponse } from "@/lib/api/interview"
 import { averageScore, scoreImprovement, shouldRecommendRetry } from "@/lib/interview-practice"
 
-export const PRONUNCIATION_DISCLAIMER =
-  "Estimated from the speech-recognition transcript \u2014 not direct audio pronunciation analysis."
+// Re-exported so existing imports keep working; the wording lives in ScoreHonestyNote.
+export { PRONUNCIATION_DISCLAIMER }
 
 interface CorrectionRetryPanelProps {
   questionId: string
@@ -169,10 +170,7 @@ export function CorrectionRetryPanel({
               </Badge>
             ) : null}
           </div>
-          <p className="mt-2 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
-            <Info className="mt-0.5 size-3.5 shrink-0" />
-            {PRONUNCIATION_DISCLAIMER}
-          </p>
+          <ScoreHonestyNote className="mt-2">{PRONUNCIATION_DISCLAIMER}</ScoreHonestyNote>
           {!retryResult && shouldRecommendRetry(firstScore) ? (
             <p className="mt-2 text-sm font-medium text-amber-800 dark:text-amber-300">
               Your average is below 3.5. Retry once before continuing if you can.
