@@ -212,3 +212,51 @@ describe("script-aligned weather question seed", () => {
     ).toEqual(["previous-active"])
   })
 })
+
+describe("habits question bank migration", () => {
+  const migration = readFileSync(
+    new URL("../supabase/migrations/20261102130000_habits_question_bank.sql", import.meta.url),
+    "utf8",
+  )
+  const sqlText = (value: string) => `'${value.replace(/'/g, "''")}'`
+  // The questions that carry a model answer. The answerless universal
+  // follow-ups ("왜요?", …) are listening practice and stay out of the bank.
+  const modelQuestions = (getInterviewTopic("weather").prep?.sampleQuestions ?? []).filter(
+    (question) => (question.answerKo ?? "").trim() !== "",
+  )
+
+  it("ships every model question and its formal answer, in the code's order", () => {
+    expect(modelQuestions).toHaveLength(21)
+    let cursor = 0
+    for (const question of modelQuestions) {
+      const at = migration.indexOf(sqlText(question.ko), cursor)
+      expect({ question: question.ko, found: at >= 0 }).toEqual({
+        question: question.ko,
+        found: true,
+      })
+      expect(migration).toContain(sqlText(question.answerKo ?? ""))
+      expect(migration).toContain(sqlText(question.answerEn ?? ""))
+      cursor = at
+    }
+  })
+
+  it("uses unique habits slugs and only deactivates shared questions", () => {
+    const slugs = [...migration.matchAll(/'(habits-[a-z0-9-]+)', 'weather'/g)].map((m) => m[1])
+    expect(slugs).toHaveLength(21)
+    expect(new Set(slugs).size).toBe(21)
+    expect(migration).toMatch(/set active = false[\s\S]*created_by_user_id is null/)
+    expect(migration).not.toMatch(/delete from/i)
+    expect(migration).toContain("on conflict (slug) do update")
+  })
+
+  it("marks the TOP 5 questions must_practice", () => {
+    for (const questionKo of top5QuestionKo) {
+      const start = migration.indexOf(sqlText(questionKo))
+      const row = migration.slice(start, migration.indexOf("  )", start))
+      expect({ questionKo, mustPractice: row.includes("'must_practice'") }).toEqual({
+        questionKo,
+        mustPractice: true,
+      })
+    }
+  })
+})
