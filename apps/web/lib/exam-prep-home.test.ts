@@ -7,6 +7,7 @@ import {
   parseStoredQueueIds,
   pickNewerScript,
   planTodayPractice,
+  scriptSectionsForDisplay,
   summarizeScript,
 } from "./exam-prep-home"
 import type { QuestionBankItem, QuestionProgress } from "./interview-practice"
@@ -199,5 +200,34 @@ describe("summarizeScript", () => {
       updatedAt: "2026-11-01T10:00:00Z",
     })
     expect(summary.untouched).toBe(true)
+  })
+})
+
+describe("scriptSectionsForDisplay", () => {
+  const topic = {
+    scriptOutline: [
+      { id: "intro", titleKo: "소개", titleEn: "Intro", hint: "" },
+      { id: "body", titleKo: "본론", titleEn: "Body", hint: "" },
+      { id: "end", titleKo: "마무리", titleEn: "End", hint: "" },
+    ],
+    scriptSeed: { intro: "초안 소개", body: "", end: "초안 마무리" },
+  }
+
+  it("uses saved text, the draft for blank sections, and skips empty ones", () => {
+    const sections = scriptSectionsForDisplay(topic, {
+      sections: { intro: "내가 쓴 소개", end: "  " },
+      updatedAt: null,
+    })
+    expect(sections).toEqual([
+      { id: "intro", title: "0. 소개", text: "내가 쓴 소개" },
+      { id: "end", title: "2. 마무리", text: "초안 마무리" },
+    ])
+  })
+
+  it("shows the whole draft when nothing is saved", () => {
+    expect(scriptSectionsForDisplay(topic, null).map((s) => s.text)).toEqual([
+      "초안 소개",
+      "초안 마무리",
+    ])
   })
 })

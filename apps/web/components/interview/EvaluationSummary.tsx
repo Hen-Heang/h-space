@@ -7,6 +7,7 @@ import { motion } from "motion/react"
 
 import { PageHero } from "@/components/app/page-hero"
 import { AnalyticsCard } from "@/components/interview/AnalyticsCard"
+import { ChatGptVoiceCard } from "@/components/interview/ChatGptVoiceCard"
 import {
   MOCK_SCORECARD_DISCLAIMER,
   ScoreHonestyNote,
@@ -16,7 +17,7 @@ import { BlurFade } from "@/components/ui/blur-fade"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Confetti, type ConfettiRef } from "@/components/ui/confetti"
-import type { InterviewAnalytics, InterviewEvaluation } from "@/lib/interview"
+import type { InterviewAnalytics, InterviewEvaluation, InterviewTopic } from "@/lib/interview"
 import type { InterviewModeConfig } from "@/lib/interview-modes"
 import type { ScorecardRecord } from "@/lib/interview-history"
 
@@ -75,6 +76,7 @@ export function EvaluationSummary({
   history,
   onPracticeAgain,
   onBackToTopics,
+  topic,
 }: {
   mode: InterviewModeConfig
   evaluation: InterviewEvaluation
@@ -82,6 +84,8 @@ export function EvaluationSummary({
   history: ScorecardRecord[]
   onPracticeAgain: () => void
   onBackToTopics: () => void
+  /** Offers free conversation practice in ChatGPT Voice after the scorecard. */
+  topic?: InterviewTopic
 }) {
   const { scores, summary, advice } = evaluation
   const overall =
@@ -224,6 +228,12 @@ export function EvaluationSummary({
               ))}
             </CardContent>
           </Card>
+        </motion.div>
+      )}
+
+      {topic && (
+        <motion.div variants={itemVariants}>
+          <ChatGptVoiceCard topic={topic} style={mode.id === "exam" ? "exam" : "practice"} />
         </motion.div>
       )}
 

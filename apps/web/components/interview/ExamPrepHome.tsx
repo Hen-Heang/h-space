@@ -4,6 +4,7 @@ import Link from "next/link"
 import dynamic from "next/dynamic"
 import { ChevronDown, Headphones, ListChecks, Repeat2 } from "lucide-react"
 
+import { ChatGptVoiceCard } from "@/components/interview/ChatGptVoiceCard"
 import { ExamHomeHeader } from "@/components/interview/ExamHomeHeader"
 import { ExamProgressCard } from "@/components/interview/ExamProgressCard"
 import { MockInterviewCard } from "@/components/interview/MockInterviewCard"
@@ -158,7 +159,7 @@ export function ExamPrepHome({
               More practice &amp; materials
             </span>
             <span className="block text-xs text-muted-foreground">
-              Question bank, listening practice, Q&A review, study plan, tips, study pack,
+              Question bank, listening, Q&A review, ChatGPT Voice, study plan, tips, study pack,
               vocabulary
             </span>
           </span>
@@ -190,6 +191,7 @@ export function ExamPrepHome({
               ))}
             </ul>
           </nav>
+          <ChatGptVoiceCard topic={topic} />
           {/* Real-story Q&A and question catcher (formerly on the Speaking dashboard). */}
           <PersonalExamReviewCard />
           <TopicVocabCard />

@@ -181,3 +181,27 @@ export function summarizeScript(
     untouched,
   }
 }
+
+export interface DisplayScriptSection {
+  id: string
+  /** "0. 인사 및 주제 소개" — memorization order, then the Korean title. */
+  title: string
+  text: string
+}
+
+/**
+ * The script in outline order as the learner would read it: saved text, or the
+ * drafted text for blank sections (like the editor). Empty sections are left out.
+ */
+export function scriptSectionsForDisplay(
+  topic: Pick<InterviewTopic, "scriptOutline" | "scriptSeed">,
+  snapshot: ScriptSnapshot | null,
+): DisplayScriptSection[] {
+  return (topic.scriptOutline ?? [])
+    .map((section, index) => {
+      const saved = snapshot?.sections[section.id] ?? ""
+      const text = saved.trim() ? saved : (topic.scriptSeed?.[section.id] ?? "")
+      return { id: section.id, title: `${index}. ${section.titleKo}`, text }
+    })
+    .filter((section) => section.text.trim())
+}

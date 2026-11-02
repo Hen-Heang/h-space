@@ -25,6 +25,7 @@ import {
 } from "@/components/interview/PracticeSourceSheet"
 import { PracticeSummary } from "@/components/interview/PracticeSummary"
 import { QuestionBankBrowser } from "@/components/interview/QuestionBankBrowser"
+import { StickyActionBar } from "@/components/interview/StickyActionBar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -609,7 +610,7 @@ export function AnswerPracticeSession({ preset }: { preset: AnswerPracticePreset
       variant={primary ? "default" : "outline"}
       onClick={() => void check()}
       disabled={!answer || checking || audioPlaying}
-      className="h-12 flex-1"
+      className="h-11 w-full sm:h-12 sm:w-auto sm:flex-1"
     >
       {checking ? (
         <>
@@ -629,7 +630,7 @@ export function AnswerPracticeSession({ preset }: { preset: AnswerPracticePreset
       variant={primary ? "default" : "outline"}
       onClick={compare}
       disabled={checking}
-      className="h-12 flex-1"
+      className="h-11 w-full sm:h-12 sm:w-auto sm:flex-1"
     >
       <Eye aria-hidden="true" /> {preset === "listening" ? "Reveal & compare" : "Just compare"}
     </Button>
@@ -762,8 +763,17 @@ export function AnswerPracticeSession({ preset }: { preset: AnswerPracticePreset
       )}
 
       {(answering || checking) && (
-        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 rounded-2xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur sm:bottom-4">
-          <div className="flex flex-col gap-2 sm:flex-row">
+        <>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={next}
+            disabled={checking}
+            className="h-11 w-full text-sm text-muted-foreground"
+          >
+            Skip this question
+          </Button>
+          <StickyActionBar label="Answer actions" pinned={answer.length > 0 || checking}>
             {cfg.primaryReview === "check" ? (
               <>
                 {checkButton(true)}
@@ -775,17 +785,8 @@ export function AnswerPracticeSession({ preset }: { preset: AnswerPracticePreset
                 {checkButton(false)}
               </>
             )}
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={next}
-            disabled={checking}
-            className="mt-1 h-10 w-full text-sm text-muted-foreground"
-          >
-            Skip this question
-          </Button>
-        </div>
+          </StickyActionBar>
+        </>
       )}
 
       {sheet}

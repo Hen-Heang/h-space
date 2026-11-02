@@ -1,26 +1,15 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import {
-  AlertCircle,
-  Award,
-  Eye,
-  EyeOff,
-  GraduationCap,
-  Loader2,
-  Mic,
-  PencilLine,
-  RotateCcw,
-  Send,
-  Sparkles,
-  Waves,
-} from "lucide-react"
-import { AnimatePresence, motion } from "motion/react"
+import { AlertCircle, Award, Languages, Loader2, RotateCcw, Send, Sparkles } from "lucide-react"
+import { motion } from "motion/react"
 
+import { AnswerInput } from "@/components/interview/AnswerInput"
 import { EvaluationSummary } from "@/components/interview/EvaluationSummary"
 import { ExamPrepHome } from "@/components/interview/ExamPrepHome"
 import { ExamTimer } from "@/components/interview/ExamTimer"
 import { SpeakingTipsCard } from "@/components/interview/SpeakingTipsCard"
+import { StickyActionBar } from "@/components/interview/StickyActionBar"
 import { StudyPack } from "@/components/interview/StudyPack"
 import { SpeakButton } from "@/components/ui/SpeakButton"
 import {
@@ -33,11 +22,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
-import { BorderBeam } from "@/components/ui/border-beam"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
+import { useAnswerMode } from "@/hooks/useAnswerMode"
 import { useLeaveGuard } from "@/hooks/useLeaveGuard"
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition"
 import { useLogActivity } from "@/hooks/useLogActivity"
@@ -67,21 +53,10 @@ import {
   type ScorecardRecord,
 } from "@/lib/interview-history"
 import { registerSpeechAudio, stopSpeechAudio } from "@/lib/speech-audio"
-import { cn } from "@/lib/utils"
 
 type SessionEntry =
   | { id: string; kind: "examiner"; turn: ExaminerTurn }
   | { id: string; kind: "answer"; text: string }
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.03 } },
-} as const
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 18 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" } },
-} as const
 
 // Auto-play the examiner question. iOS Safari may block playback that isn't a
 // direct tap — failures are swallowed and the candidate uses the speaker button.
@@ -125,7 +100,6 @@ export default function InterviewPage() {
   const [streamingText, setStreamingText] = useState("")
   const [isExaminerThinking, setIsExaminerThinking] = useState(false)
   const [questionCount, setQuestionCount] = useState(0)
-  const [isEditingAnswer, setIsEditingAnswer] = useState(false)
   const [showEnglish, setShowEnglish] = useState(false)
   const [error, setError] = useState("")
   const [isEvaluating, setIsEvaluating] = useState(false)
@@ -141,6 +115,12 @@ export default function InterviewPage() {
   // Continuous capture: the mic stays open across pauses (exam answers are
   // 2–3 sentences) until the candidate stops it or submits.
   const speech = useSpeechRecognition({ lang: "ko-KR", continuous: true })
+  const answerMode = useAnswerMode(speech)
+  // Read by the async speak-then-listen chain, which resolves renders later.
+  const canAutoListenRef = useRef(answerMode.canAutoListen)
+  useEffect(() => {
+    canAutoListenRef.current = answerMode.canAutoListen
+  }, [answerMode.canAutoListen])
   const conversationRef = useRef<string | null>(null)
   const sessionStartRef = useRef<number | null>(null)
   // Guards the hands-free auto-listen: question audio can still be playing
@@ -230,7 +210,7 @@ export default function InterviewPage() {
       // Hands-free loop: once the examiner finishes speaking, open the mic so
       // the candidate just answers — listen, speak, submit, repeat.
       void autoSpeak(turn.questionKo).then((played) => {
-        if (played && sessionActiveRef.current) speech.start()
+        if (played && sessionActiveRef.current && canAutoListenRef.current) speech.start()
       })
     } catch (err) {
       setError(getApiErrorMessage(err, "The examiner could not respond. Try again."))
@@ -274,7 +254,6 @@ export default function InterviewPage() {
 
     setEntries((prev) => [...prev, { id: crypto.randomUUID(), kind: "answer", text: answer }])
     speech.reset()
-    setIsEditingAnswer(false)
     void runExaminerTurn(buildAnswerMessage(answer, cfg))
   }
 
@@ -421,42 +400,35 @@ export default function InterviewPage() {
         history={history}
         onPracticeAgain={startSession}
         onBackToTopics={endSession}
+        topic={topic}
       />
     )
   }
 
   // ── Live session ─────────────────────────────────────────────────
-  const recording = speech.status === "listening"
   const answeredCount = entries.filter((entry) => entry.kind === "answer").length
+  const answer = speech.transcript.trim()
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="space-y-5 pb-12 sm:space-y-6"
-    >
+    <div className="mx-auto max-w-3xl space-y-4 pb-40 sm:pb-28">
       {/* Compact session bar — active practice, not a page hero. */}
-      <motion.div variants={itemVariants} className="space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="app-kicker">
-              Mock interview · {cfg.label} · Question {Math.max(questionCount, 1)}
-            </p>
-            <h2 className="mt-1 truncate text-lg font-semibold text-foreground">{topic.label}</h2>
-          </div>
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">Mock interview</span> · {cfg.label} ·
+            question {Math.max(questionCount, 1)}
+          </p>
           <div className="flex items-center gap-2">
             {endsAt !== null && <ExamTimer endsAt={endsAt} onExpire={finishInterview} />}
-            <Button variant="outline" onClick={requestEndSession}>
+            <Button variant="outline" size="sm" onClick={requestEndSession} className="h-10">
               <RotateCcw aria-hidden="true" /> End session
             </Button>
           </div>
         </div>
         <p className="text-sm text-muted-foreground">
           {cfg.showEnglish
-            ? "Listen to each question, then answer out loud in Korean. Reveal the English only if you need it."
+            ? "Listen to each question, then answer out loud in Korean. Show the English only if you need it."
             : "Exam conditions: Korean only, no feedback until the end. Listen, think, answer."}
-          {!speech.supported && " Voice capture isn't available here — type your answers."}
         </p>
         <AlertDialog open={confirmEnd} onOpenChange={setConfirmEnd}>
           <AlertDialogContent>
@@ -478,322 +450,141 @@ export default function InterviewPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </motion.div>
+      </div>
 
       {/* Current question */}
-      <motion.div variants={itemVariants}>
-        <Card className="rounded-[1.8rem] border-border bg-card shadow-xl dark:bg-slate-900/40 sm:rounded-[2.2rem]">
-          <CardHeader className="border-b border-border/80 px-5 pb-4 pt-5 sm:px-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600">
-                <GraduationCap size={20} strokeWidth={2.5} />
-              </div>
-              <div>
-                <CardTitle className="text-xl font-bold">Examiner</CardTitle>
-                <p className="text-xs font-medium text-muted-foreground">
-                  Question {Math.max(questionCount, 1)}
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-5 pt-5 sm:pt-6">
-            {/* Feedback on the previous answer (practice mode only) */}
-            {cfg.showFeedback && current?.feedback && (
-              <div className="flex items-start gap-3 rounded-2xl border border-sky-500/20 bg-sky-500/5 p-4">
-                <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600">
-                  <Sparkles size={14} strokeWidth={3} />
-                </div>
-                <p className="text-sm font-medium leading-relaxed text-foreground/90">
-                  {current.feedback}
-                </p>
-              </div>
-            )}
+      <section aria-label="Examiner's question" className="app-surface space-y-4 p-5 sm:p-6">
+        {/* Feedback on the previous answer (practice mode only) */}
+        {cfg.showFeedback && current?.feedback && (
+          <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <Sparkles aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
+            <p className="text-sm leading-relaxed text-foreground/90">{current.feedback}</p>
+          </div>
+        )}
 
-            {/* Question text */}
-            <div className="relative overflow-hidden rounded-[1.5rem] border border-border bg-accent/5 p-5 sm:rounded-3xl sm:p-6">
-              {isExaminerThinking && !streamingText ? (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Loader2 size={18} className="animate-spin" />
-                  <span className="text-sm font-bold">The examiner is thinking…</span>
-                </div>
-              ) : (
-                <>
-                  <p
-                    lang="ko"
-                    className="break-keep text-[1.5rem] font-bold leading-tight text-foreground sm:text-2xl lg:text-[1.7rem]"
-                  >
-                    {streamingText
-                      ? parseExaminerTurn(streamingText).questionKo
-                      : current?.questionKo}
-                  </p>
-
-                  {current && !streamingText && (
-                    <div className="mt-5 flex flex-wrap items-center gap-3">
-                      <div className="flex items-center gap-1.5 rounded-2xl border border-border bg-background p-1.5 shadow-sm">
-                        <div className="flex items-center gap-2 rounded-xl px-3 py-2 hover:bg-accent">
-                          <SpeakButton text={current.questionKo} className="p-0" />
-                          <span className="text-xs font-bold uppercase tracking-tighter text-muted-foreground">
-                            Normal
-                          </span>
-                        </div>
-                        {cfg.allowSlowReplay && (
-                          <>
-                            <div className="mx-1 h-4 w-px bg-border" />
-                            <div className="flex items-center gap-2 rounded-xl px-3 py-2 hover:bg-accent">
-                              <SpeakButton
-                                text={current.questionKo}
-                                className="p-0"
-                                playbackRate={0.75}
-                              />
-                              <span className="text-xs font-bold uppercase tracking-tighter text-muted-foreground">
-                                Slow
-                              </span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      {cfg.showEnglish && current.questionEn && (
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowEnglish((v) => !v)}
-                          className="h-11 rounded-2xl border-border bg-background px-4 font-bold hover:bg-accent"
-                        >
-                          {showEnglish ? (
-                            <>
-                              <EyeOff size={16} className="mr-2" /> Hide English
-                            </>
-                          ) : (
-                            <>
-                              <Eye size={16} className="mr-2" /> Show English
-                            </>
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  )}
-
-                  <AnimatePresence>
-                    {cfg.showEnglish && showEnglish && current?.questionEn && (
-                      <motion.p
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mt-4 text-sm font-medium italic leading-relaxed text-muted-foreground"
-                      >
-                        {current.questionEn}
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
-                </>
-              )}
-            </div>
-
-            {error && <ErrorBanner message={error} />}
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Answer area */}
-      <motion.div variants={itemVariants}>
-        <Card className="rounded-[1.8rem] border-border bg-card shadow-xl dark:bg-slate-900/40 sm:rounded-[2.2rem]">
-          <CardHeader className="border-b border-border/80 px-5 pb-4 pt-5 sm:px-6">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-600">
-                  <Waves size={20} strokeWidth={2.5} />
-                </div>
-                <div>
-                  <CardTitle className="text-xl font-bold">Your Answer</CardTitle>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Speak in Korean, then submit.
-                  </p>
-                </div>
-              </div>
-              <Badge
-                className={cn(
-                  "rounded-lg border-none px-3 py-1 text-[11px] font-bold uppercase tracking-wider",
-                  recording ? "animate-pulse bg-rose-500 text-white" : "bg-accent/20",
-                )}
-              >
-                {recording ? "Recording…" : speech.transcript ? "Captured" : "Ready"}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-5 pt-5 sm:pt-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <div className="relative w-full rounded-2xl sm:w-fit">
-                {recording ? (
-                  <BorderBeam
-                    size={64}
-                    duration={1.8}
-                    colorFrom="#fb7185"
-                    colorTo="#fbbf24"
-                    borderWidth={2}
-                  />
-                ) : null}
-                <Button
-                  onClick={() => (recording ? speech.stop() : speech.start())}
-                  disabled={isExaminerThinking}
-                  aria-pressed={recording}
-                  className={cn(
-                    "h-12 w-full rounded-2xl px-6 text-sm font-bold shadow-lg transition-all active:scale-95 disabled:opacity-50 sm:h-14 sm:w-auto sm:px-8 sm:text-base",
-                    recording
-                      ? "bg-rose-600 text-white shadow-rose-600/20 hover:bg-rose-700"
-                      : "bg-primary text-primary-foreground hover:bg-primary/90",
-                  )}
-                >
-                  {recording ? (
-                    <>
-                      <Waves size={20} className="mr-2 animate-pulse" /> Stop
-                    </>
-                  ) : (
-                    <>
-                      <Mic size={20} className="mr-2" /> Record Answer
-                    </>
-                  )}
-                </Button>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setIsEditingAnswer((v) => !v)}
-                disabled={recording || isExaminerThinking}
-                className="h-12 w-full rounded-2xl border-border bg-background px-6 font-bold hover:bg-accent active:scale-95 sm:h-14 sm:w-auto"
-              >
-                <PencilLine size={18} className="mr-2" />
-                {isEditingAnswer ? "Done" : "Manual Edit"}
-              </Button>
-            </div>
-
-            <p
-              role="status"
-              aria-live="polite"
-              className="text-xs font-medium text-muted-foreground"
-            >
-              {recording
-                ? "Listening now — pauses are okay. Tap Stop when your answer is complete."
-                : "The microphone opens after the examiner finishes speaking; you can also start it manually."}
+        <div aria-live="polite" aria-busy={isExaminerThinking}>
+          {isExaminerThinking && !streamingText ? (
+            <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Loader2 aria-hidden="true" className="size-4 animate-spin" /> The examiner is
+              thinking…
             </p>
-
-            {/* Transcript */}
-            <div className="rounded-[1.5rem] border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-5">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                Transcript
-              </p>
-              {isEditingAnswer || !speech.supported ? (
-                <Textarea
-                  value={speech.transcript}
-                  onChange={(e) => speech.setTranscript(e.target.value)}
-                  placeholder="Type your Korean answer if voice capture was weak…"
-                  className="mt-3 min-h-[110px] rounded-2xl border-border bg-accent/5 transition-colors focus:bg-background"
-                />
-              ) : speech.transcript ? (
-                <p
-                  lang="ko"
-                  className="mt-3 break-keep text-lg font-bold leading-relaxed text-foreground"
-                >
-                  {speech.transcript}
-                </p>
-              ) : (
-                <p className="mt-3 py-6 text-center text-sm font-medium italic text-muted-foreground">
-                  {recording
-                    ? "Listening… speak your answer in Korean."
-                    : "Your spoken answer will appear here."}
-                </p>
-              )}
-            </div>
-
-            {speech.error && <ErrorBanner message={speech.error} />}
-
-            <Button
-              onClick={submitAnswer}
-              disabled={!speech.transcript.trim() || isExaminerThinking}
-              className="h-12 w-full rounded-2xl bg-foreground px-6 text-sm font-bold text-background shadow-lg transition-all active:scale-95 disabled:opacity-40 sm:h-14"
+          ) : (
+            <p
+              lang="ko"
+              className="break-keep text-[1.4rem] font-semibold leading-snug text-foreground sm:text-2xl"
             >
-              <Send size={18} className="mr-2" /> Submit Answer & Next Question
-            </Button>
+              {streamingText ? parseExaminerTurn(streamingText).questionKo : current?.questionKo}
+            </p>
+          )}
+        </div>
 
-            {/* Wrap up the session and get a scorecard. Practice allows an early
-                finish; exam mode wants a real conversation first. */}
-            {answeredCount >= cfg.minAnswersBeforeFinish && (
+        {current && !streamingText && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex h-11 items-center gap-2 rounded-xl border border-border px-3 text-sm">
+              <SpeakButton text={current.questionKo} className="p-0" /> Normal
+            </span>
+            {cfg.allowSlowReplay && (
+              <span className="inline-flex h-11 items-center gap-2 rounded-xl border border-border px-3 text-sm">
+                <SpeakButton text={current.questionKo} className="p-0" playbackRate={0.75} /> Slow
+              </span>
+            )}
+            {cfg.showEnglish && current.questionEn && (
               <Button
-                variant="outline"
-                onClick={finishInterview}
-                disabled={isEvaluating || isExaminerThinking}
-                className="h-12 w-full rounded-2xl border-blue-500/40 bg-blue-500/5 px-6 text-sm font-bold text-blue-600 transition-all hover:bg-blue-500/10 active:scale-95 disabled:opacity-50 dark:text-blue-400 sm:h-14"
+                variant="ghost"
+                onClick={() => setShowEnglish((v) => !v)}
+                aria-expanded={showEnglish}
+                className="h-11"
               >
-                {isEvaluating ? (
-                  <>
-                    <Loader2 size={18} className="mr-2 animate-spin" /> Scoring your interview…
-                  </>
-                ) : (
-                  <>
-                    <Award size={18} className="mr-2" /> Finish & Get Evaluation
-                  </>
-                )}
+                <Languages aria-hidden="true" /> {showEnglish ? "Hide English" : "Show English"}
               </Button>
             )}
-          </CardContent>
-        </Card>
-      </motion.div>
+          </div>
+        )}
+        {cfg.showEnglish && showEnglish && current?.questionEn && !streamingText && (
+          <p className="text-sm leading-relaxed text-muted-foreground">{current.questionEn}</p>
+        )}
+      </section>
+
+      {error && <ErrorBanner message={error} />}
+
+      <section aria-label="Answer" className="app-surface p-4 sm:p-6">
+        <AnswerInput
+          speech={speech}
+          mode={answerMode}
+          disabled={isExaminerThinking || isEvaluating}
+          placeholder="Type your Korean answer…"
+        />
+      </section>
 
       {/* Quick references during the session — practice mode only. Exam mode is
           closed-book, like the real interview. */}
       {cfg.showStudyPackInSession && (
         <>
-          <motion.div variants={itemVariants}>
-            <SpeakingTipsCard />
-          </motion.div>
-          {topic.prep && (
-            <motion.div variants={itemVariants}>
-              <StudyPack topic={topic} />
-            </motion.div>
-          )}
+          <SpeakingTipsCard />
+          {topic.prep && <StudyPack topic={topic} />}
         </>
       )}
 
-      {/* Session history */}
+      {/* Session transcript, Korean only (English stays on demand above). */}
       {entries.length > 1 && (
-        <motion.div variants={itemVariants}>
-          <Card className="rounded-[1.8rem] border-border bg-card shadow-xl dark:bg-slate-900/40 sm:rounded-[2.2rem]">
-            <CardHeader className="border-b border-border/80 px-5 pb-4 pt-5 sm:px-6">
-              <CardTitle className="text-base font-bold">Session Transcript</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-5">
-              {entries.map((entry) =>
-                entry.kind === "examiner" ? (
-                  <div key={entry.id} className="rounded-2xl border border-border bg-accent/5 p-4">
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-blue-600">
-                      Examiner
-                    </p>
-                    <p lang="ko" className="mt-1.5 font-bold text-foreground">
-                      {entry.turn.questionKo}
-                    </p>
-                    {cfg.showEnglish && entry.turn.questionEn && (
-                      <p className="mt-1 text-sm italic text-muted-foreground">
-                        {entry.turn.questionEn}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div
-                    key={entry.id}
-                    className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4"
-                  >
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                      You
-                    </p>
-                    <p lang="ko" className="mt-1.5 font-medium text-foreground">
-                      {entry.text}
-                    </p>
-                  </div>
-                ),
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+        <section aria-labelledby="mock-transcript" className="app-surface p-5 sm:p-6">
+          <h3 id="mock-transcript" className="text-sm font-semibold text-foreground">
+            Session transcript
+          </h3>
+          <ol className="mt-3 space-y-2">
+            {entries.map((entry) => (
+              <li
+                key={entry.id}
+                className={
+                  entry.kind === "examiner"
+                    ? "rounded-xl border border-border bg-muted/20 p-3"
+                    : "rounded-xl border border-primary/20 bg-primary/5 p-3"
+                }
+              >
+                <p className="text-xs font-medium text-muted-foreground">
+                  {entry.kind === "examiner" ? "Examiner" : "You"}
+                </p>
+                <p lang="ko" className="mt-1 break-keep text-foreground">
+                  {entry.kind === "examiner" ? entry.turn.questionKo : entry.text}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
-    </motion.div>
+
+      {/* Main actions stay within thumb reach while reading the question above. */}
+      <StickyActionBar label="Answer actions" pinned={answer.length > 0}>
+        <Button
+          size="lg"
+          onClick={submitAnswer}
+          disabled={!answer || isExaminerThinking || isEvaluating}
+          className="h-11 w-full sm:h-12 sm:w-auto sm:flex-1"
+        >
+          <Send aria-hidden="true" /> Submit answer
+        </Button>
+        {/* Practice allows an early finish; exam mode wants a real conversation first. */}
+        {answeredCount >= cfg.minAnswersBeforeFinish && (
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={finishInterview}
+            disabled={isEvaluating || isExaminerThinking}
+            className="h-11 w-full sm:h-12 sm:w-auto sm:flex-1"
+          >
+            {isEvaluating ? (
+              <>
+                <Loader2 aria-hidden="true" className="animate-spin" /> Scoring your interview…
+              </>
+            ) : (
+              <>
+                <Award aria-hidden="true" /> Finish & get evaluation
+              </>
+            )}
+          </Button>
+        )}
+      </StickyActionBar>
+    </div>
   )
 }
 
