@@ -3,11 +3,11 @@
 ## Snapshot
 
 - **Updated:** 2026-11-02
-- **Branch:** `fix/shell-sticky-positioning`; PR #62 is open against `main`.
-- **Changes:** the app-shell sticky-positioning fix is committed in `3afb77e`. A Finance shortcut beside My Apps is ready to commit; it opens the separately deployed Luyra app in a new tab.
-- **iPhone 15 Pro Max review:** public landing, login, and registration screens rendered at 430 × 932 CSS pixels. All had zero horizontal overflow and no browser page errors. The landing page's 27 headings appeared while scrolling. Registration needs about 54 px of vertical scrolling.
-- **Limits:** signed-in screens could not be reviewed because no safe test-account session is configured. One automated portrait check timed out waiting for the login page's full load event; manual DOM-ready checks rendered it. Landscape passed. No unit tests or build were run.
+- **Branch:** `main`, synchronized with `origin/main`.
+- **Merged:** PR #62 (`Make position: sticky work inside the app shell`) at `8bdfb61`. It includes sticky-positioning fixes, the direct Finance sidebar link to Luyra, and section-jump spacing beneath the sticky script title. The remote and local feature branch were deleted.
+- **Verification:** PR CI passed tests, ESLint, Prettier, production build, and quality gate. `git diff --check` passed before push. The public landing, login, and registration pages rendered at 430 × 932 with no horizontal overflow or browser page errors. Signed-in screens were not reviewed because no safe test session is configured.
+- **Open PR:** #59 remains open; its latest reported Lint & Format check failed.
 
 ## Current focus
 
-Commit the Finance sidebar change, push it to PR #62, and merge after required checks pass. PR #59 remains open with a Prettier failure. H-Space continues to link to Luyra without accessing finance data.
+Review and fix the outstanding formatting issue on PR #59 before considering its merge. H-Space links to Luyra without accessing its finance data.
