@@ -141,4 +141,65 @@ describe("useSpeechRecognition", () => {
 
     expect(recognition.stop).toHaveBeenCalledTimes(1)
   })
+
+  describe("errorKind", () => {
+    function startCapture() {
+      const hook = renderHook(() => useSpeechRecognition({ lang: "ko-KR", continuous: true }))
+      const recognition = MockSpeechRecognition.instances[0]
+      act(() => {
+        hook.result.current.start()
+        recognition.emitStart()
+      })
+      return { ...hook, recognition }
+    }
+
+    it.each([
+      ["not-allowed", "permission", /permission is blocked/],
+      ["audio-capture", "no-mic", /No microphone was found/],
+      ["network", "network", /internet connection/],
+      ["something-new", "other", /Speech capture failed/],
+    ])("reports %s as %s with a readable message", (code, kind, message) => {
+      const { result, recognition } = startCapture()
+      act(() => recognition.onerror?.({ error: code }))
+      expect(result.current.errorKind).toBe(kind)
+      expect(result.current.error).toMatch(message)
+      expect(result.current.status).toBe("idle")
+    })
+
+    it("keeps waiting through silence in continuous mode instead of failing", () => {
+      const { result, recognition } = startCapture()
+      act(() => recognition.onerror?.({ error: "no-speech" }))
+      expect(result.current.errorKind).toBeNull()
+      expect(result.current.status).toBe("listening")
+    })
+
+    it("clears the kind on the next successful start", () => {
+      const { result, recognition } = startCapture()
+      act(() => recognition.onerror?.({ error: "not-allowed" }))
+      act(() => {
+        result.current.start()
+        recognition.emitStart()
+      })
+      expect(result.current.errorKind).toBeNull()
+      expect(result.current.error).toBe("")
+    })
+
+    it("leaves the kind empty for app-level messages", () => {
+      const { result, recognition } = startCapture()
+      act(() => recognition.onerror?.({ error: "audio-capture" }))
+      act(() => result.current.setError("Record or type a complete Korean answer."))
+      expect(result.current.errorKind).toBeNull()
+      expect(result.current.error).toBe("Record or type a complete Korean answer.")
+    })
+
+    it("reports unsupported when there is no recognition engine", () => {
+      Object.defineProperty(window, "SpeechRecognition", { configurable: true, value: undefined })
+      const { result } = renderHook(() => useSpeechRecognition())
+      expect(result.current.supported).toBe(false)
+      act(() => {
+        result.current.start()
+      })
+      expect(result.current.errorKind).toBe("unsupported")
+    })
+  })
 })

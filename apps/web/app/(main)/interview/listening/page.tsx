@@ -17,12 +17,13 @@ import {
 import { motion } from "motion/react"
 
 import { PageHero } from "@/components/app/page-hero"
-import { DrillAnswerBox } from "@/components/interview/DrillAnswerBox"
+import { AnswerInput } from "@/components/interview/AnswerInput"
 import { LevelPicker } from "@/components/interview/LevelPicker"
 import { ListeningRevealCard } from "@/components/interview/ListeningRevealCard"
 import { QuestionAudioBar } from "@/components/interview/QuestionAudioBar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { useAnswerMode } from "@/hooks/useAnswerMode"
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition"
 import { useLogActivity } from "@/hooks/useLogActivity"
 import { useScrollToTopOnChange } from "@/hooks/useScrollToTopOnChange"
@@ -80,6 +81,7 @@ export default function ListeningDrillPage() {
 
   // Continuous capture: the mic stays open across pauses until stopped.
   const speech = useSpeechRecognition({ lang: "ko-KR", continuous: true })
+  const answerMode = useAnswerMode(speech)
   const cfg = LISTENING_LEVELS[level]
   const question = items[index]
 
@@ -361,7 +363,10 @@ export default function ListeningDrillPage() {
             playsUsed={playsUsed}
             onPlayed={() => setPlaysUsed((n) => n + 1)}
             onPlaybackEnded={() => {
-              if (!revealed && speech.status !== "listening") speech.start()
+              // Hands-free only when voice is the chosen, working path.
+              if (!revealed && speech.status !== "listening" && answerMode.canAutoListen) {
+                speech.start()
+              }
             }}
             autoPlayOnMount
           />
@@ -393,8 +398,9 @@ export default function ListeningDrillPage() {
       ) : (
         <Card className="rounded-[1.8rem] border-border bg-card shadow-xl dark:bg-slate-900/40 sm:rounded-[2.2rem]">
           <CardContent className="space-y-5 p-5 sm:p-6">
-            <DrillAnswerBox
+            <AnswerInput
               speech={speech}
+              mode={answerMode}
               placeholder="Type what you'd answer — or what you heard…"
             />
             <div className="flex flex-col gap-3 sm:flex-row">
