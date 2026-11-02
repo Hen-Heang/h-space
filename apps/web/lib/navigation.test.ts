@@ -363,9 +363,23 @@ describe("workspace tabs (secondary navigation)", () => {
     ])
     expect(ids(workspaceTabs.apps)).toEqual(["apps-catalog", "apps-vault", "apps-luyra"])
     expect(navItem("apps-luyra")).toMatchObject({
-      href: "https://luyra.henheang.site/",
-      description: expect.stringContaining("finance"),
+      href: "https://luyra.henheang.site/finance",
+      label: "Finance",
     })
+  })
+
+  it("has exactly one Finance entry, findable as Luyra or finance", () => {
+    const finance = allNavItems.filter((i) => i.href.includes("luyra.henheang.site"))
+    expect(finance.map((i) => i.id)).toEqual(["apps-luyra"])
+    const terms = [finance[0].label, finance[0].description ?? "", ...(finance[0].keywords ?? [])]
+      .join(" ")
+      .toLowerCase()
+    for (const query of ["finance", "luyra", "money", "budget"]) {
+      expect(terms).toContain(query)
+    }
+    // Phones reach it through the More sheet's My Apps list.
+    const apps = browseSections.find((s) => s.id === "apps")!
+    expect(apps.items.map((i) => i.id)).toContain("apps-luyra")
   })
 
   it("only uses registered routes, each inside its own workspace", () => {
@@ -534,7 +548,7 @@ describe("workspace registry details", () => {
     expect(apps.items.map((i) => i.href)).toEqual([
       "/apps",
       "/vault",
-      "https://luyra.henheang.site/",
+      "https://luyra.henheang.site/finance",
     ])
     expect(getSectionForPath("/vault")?.id).toBe("apps")
     expect(getActiveNavItem("/vault")?.label).toBe("H-Vault")
