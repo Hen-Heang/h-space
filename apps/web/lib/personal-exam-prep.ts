@@ -95,7 +95,8 @@ export const PERSONAL_EXAM_QA: PersonalExamQA[] = [
     question: "왜 한강에서 자전거 타는 것을 좋아해요?",
     questionVariants: ["운동을 하고 나면 기분이 어때요?", "한강에 자주 가요?"],
     catchKeywords: ["왜", "한강", "자전거", "기분"],
-    answer: "경치가 좋고 기분이 상쾌하기 때문입니다. 운동을 하고 나면 스트레스도 줄어드는 것 같습니다.",
+    answer:
+      "경치가 좋고 기분이 상쾌하기 때문입니다. 운동을 하고 나면 스트레스도 줄어드는 것 같습니다.",
     answerKeywords: ["경치", "상쾌", "스트레스 감소"],
   },
   {
@@ -125,8 +126,7 @@ export const PERSONAL_EXAM_QA: PersonalExamQA[] = [
     question: "한국에 와서 가장 많이 달라진 점은 뭐예요?",
     questionVariants: ["이 습관 중에서 가장 좋은 습관은 뭐예요?", "한국 생활로 무엇을 배웠어요?"],
     catchKeywords: ["가장", "달라진 점", "좋은 습관", "배웠"],
-    answer:
-      "혼자 할 수 있는 일이 많아졌습니다. 그리고 한국 생활에도 더 잘 적응하게 되었습니다.",
+    answer: "혼자 할 수 있는 일이 많아졌습니다. 그리고 한국 생활에도 더 잘 적응하게 되었습니다.",
     answerKeywords: ["혼자 할 수 있는 일", "한국 생활 적응"],
   },
   {

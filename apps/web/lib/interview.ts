@@ -165,8 +165,7 @@ const HABITS_SCRIPT_SEED: Record<string, string> = {
     "안녕하십니까. 히엉입니다.\n\n오늘은 한국에 온 후 새로 생긴 습관과 취미에 대해 말씀드리겠습니다.\n\n한국에 온 지 거의 1년이 되었습니다. 그동안 제 생활에 여러 가지 새로운 습관이 생겼습니다.",
   transport:
     "캄보디아에서는 밖에 갈 때 보통 오토바이나 차를 이용했습니다. 하지만 한국에서는 걸어서 출근하고, 멀리 갈 때는 버스나 지하철을 이용합니다.\n\n저는 지하철 5호선을 자주 이용합니다. 처음에는 지하철 노선과 환승이 어려웠지만, 지금은 혼자서도 서울의 여러 곳에 갈 수 있습니다.",
-  "weather-check":
-    "또 밖에 나가기 전에 날씨를 확인합니다.",
+  "weather-check": "또 밖에 나가기 전에 날씨를 확인합니다.",
   "recycling-cooking":
     "그리고 쓰레기를 버릴 때는 분리배출도 신경 씁니다.\n\n한국에 처음 왔을 때는 한국 음식에 익숙하지 않아서 직접 요리를 시작했습니다. 지금은 김치찌개도 만들 수 있고, 한국 음식에도 많이 익숙해졌습니다.",
   exercise:
@@ -186,8 +185,7 @@ const HABITS_SCRIPT_SEED_EN: Record<string, string> = {
     "Hello. I am Hieng.\n\nToday, I would like to talk about the new habits and hobbies I developed after coming to Korea.\n\nIt has been almost one year since I came to Korea. During that time, I have developed several new habits.",
   transport:
     "In Cambodia, I usually used a motorbike or a car when I went out. But in Korea, I walk to work, and when I go somewhere far, I take the bus or subway.\n\nI often take subway Line 5. At first, the subway lines and transfers were difficult, but now I can go to many places in Seoul by myself.",
-  "weather-check":
-    "I also check the weather before I go outside.",
+  "weather-check": "I also check the weather before I go outside.",
   "recycling-cooking":
     "And when I throw away trash, I pay attention to separating it.\n\nWhen I first came to Korea, I was not used to Korean food, so I started cooking for myself. Now I can even make kimchi stew, and I have become much more used to Korean food.",
   exercise:
@@ -285,7 +283,8 @@ const HABITS_MODEL_QUESTIONS: PracticeQuestion[] = [
   {
     ko: "지하철을 처음 이용했을 때 어땠어요?",
     en: "What was it like when you first used the subway?",
-    answerKo: "처음에는 노선과 환승이 어려웠습니다. 하지만 지금은 혼자서도 서울의 여러 곳에 갈 수 있습니다.",
+    answerKo:
+      "처음에는 노선과 환승이 어려웠습니다. 하지만 지금은 혼자서도 서울의 여러 곳에 갈 수 있습니다.",
     answerEn:
       "At first, the lines and transfers were difficult. But now I can go to many places in Seoul by myself.",
     keywords: ["노선", "환승", "혼자서도"],
