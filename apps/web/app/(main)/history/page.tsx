@@ -17,14 +17,33 @@ import {
   Copy,
   Check,
   Flame,
-  SortDesc,
   Filter,
+  RotateCw,
 } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 
-import { PageHero } from "@/components/app/page-hero"
+import { CorrectionDiff } from "@/components/learn/CorrectionDiff"
+import { LearnHeader } from "@/components/learn/LearnHeader"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { ErrorBanner } from "@/components/ui/error-banner"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SpeakButton } from "@/components/ui/SpeakButton"
 import { correctionApi, progressApi } from "@/lib/api"
@@ -174,7 +193,7 @@ function GrammarTracker({
     <div className="space-y-3">
       {activeTag && (
         <div className="flex items-center justify-between rounded-xl bg-blue-500/8 px-3 py-2">
-          <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400">
+          <p className="text-xs font-bold text-blue-600 dark:text-blue-400">
             Filtering by: <span className="italic">{activeTag}</span>
           </p>
           <button
@@ -238,7 +257,7 @@ function GrammarTracker({
           </motion.button>
         )
       })}
-      <p className="px-2 text-[11px] font-bold text-muted-foreground">
+      <p className="px-2 text-xs font-bold text-muted-foreground">
         Tap a pattern to filter corrections
       </p>
     </div>
@@ -304,7 +323,7 @@ function PracticeCalendar({
         {weekdays.map((d) => (
           <div
             key={d}
-            className="py-1 text-center text-[11px] font-bold uppercase tracking-wide text-muted-foreground"
+            className="py-1 text-center text-xs font-bold uppercase tracking-wide text-muted-foreground"
           >
             {d}
           </div>
@@ -354,10 +373,10 @@ const RATING_FILTERS: { key: RatingFilter; label: string }[] = [
 ]
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: "newest", label: "Newest" },
-  { key: "oldest", label: "Oldest" },
-  { key: "best", label: "Best" },
-  { key: "worst", label: "Worst" },
+  { key: "newest", label: "Newest first" },
+  { key: "oldest", label: "Oldest first" },
+  { key: "best", label: "Highest rated" },
+  { key: "worst", label: "Lowest rated" },
 ]
 
 function FilterBar({
@@ -393,60 +412,69 @@ function FilterBar({
           value={search}
           onChange={(e) => onSearch(e.target.value)}
           placeholder="Search corrections…"
-          className="w-full rounded-xl border border-border bg-card py-2.5 pl-9 pr-9 text-sm font-medium placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+          aria-label="Search corrections"
+          className="w-full rounded-xl border border-border bg-card py-2.5 pl-9 pr-11 text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
         />
         {search && (
           <button
             type="button"
             onClick={() => onSearch("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-muted-foreground/40 hover:text-foreground"
+            aria-label="Clear search"
+            className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
           >
-            <X size={14} strokeWidth={2.5} />
+            <X aria-hidden="true" size={14} strokeWidth={2.5} />
           </button>
         )}
       </div>
 
-      {/* Chips row */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
-        <Filter size={13} className="shrink-0 text-muted-foreground/60" strokeWidth={2.5} />
-        {RATING_FILTERS.map((f) => (
-          <button
-            key={f.key}
-            type="button"
-            onClick={() => onRatingFilter(f.key)}
-            className={cn(
-              "shrink-0 rounded-full px-3 py-1 text-[12px] font-bold transition-colors",
-              ratingFilter === f.key
-                ? "bg-blue-500 text-white shadow-sm"
-                : "bg-accent/50 text-muted-foreground hover:bg-accent",
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
+      {/* Filter chips (toggle buttons) and sort (a select) — two different
+          controls, so they no longer look identical. */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div
+          role="group"
+          aria-label="Filter by rating"
+          className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none"
+        >
+          <Filter
+            aria-hidden="true"
+            size={13}
+            className="shrink-0 text-muted-foreground"
+            strokeWidth={2.5}
+          />
+          {RATING_FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              aria-pressed={ratingFilter === f.key}
+              onClick={() => onRatingFilter(f.key)}
+              className={cn(
+                "min-h-9 shrink-0 rounded-full px-3 text-xs font-semibold transition-colors",
+                ratingFilter === f.key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
 
-        <div className="mx-1 h-4 w-px shrink-0 bg-border" />
-
-        <SortDesc size={13} className="shrink-0 text-muted-foreground/60" strokeWidth={2.5} />
-        {SORT_OPTIONS.map((s) => (
-          <button
-            key={s.key}
-            type="button"
-            onClick={() => onSort(s.key)}
-            className={cn(
-              "shrink-0 rounded-full px-3 py-1 text-[12px] font-bold transition-colors",
-              sortKey === s.key
-                ? "bg-violet-500 text-white shadow-sm"
-                : "bg-accent/50 text-muted-foreground hover:bg-accent",
-            )}
-          >
-            {s.label}
-          </button>
-        ))}
+        <Select value={sortKey} onValueChange={(value) => onSort(value as SortKey)}>
+          <SelectTrigger aria-label="Sort corrections" className="h-9 w-auto min-w-36 rounded-lg">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SORT_OPTIONS.map((s) => (
+              <SelectItem key={s.key} value={s.key}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {(search || ratingFilter !== "all") && (
-        <p className="text-[11px] font-bold text-muted-foreground">
+        <p aria-live="polite" className="text-xs font-medium text-muted-foreground">
           Showing {totalVisible} of {totalAll} corrections
         </p>
       )}
@@ -479,18 +507,40 @@ export default function HistoryPage() {
   const [activeTag, setActiveTag] = useState<string | null>(null)
   const [visibleCount, setVisibleCount] = useState(LOAD_PAGE)
 
+  // A failed load is shown as an error with a retry — not as "No corrections
+  // yet", which would tell the learner their history is gone.
+  const [loadError, setLoadError] = useState(false)
+  const [loadAttempt, setLoadAttempt] = useState(0)
+  const [deleteTarget, setDeleteTarget] = useState<CorrectionEntry | null>(null)
+
   // Fetch corrections (load 100 upfront, paginate client-side)
   useEffect(() => {
+    let cancelled = false
     correctionApi
       .history(100)
-      .then((data) =>
+      .then((data) => {
+        if (cancelled) return
+        setLoadError(false)
         setCorrections(
           Array.isArray(data) ? data.map((c) => ({ ...c, explanation: c.explanation ?? "" })) : [],
-        ),
-      )
-      .catch(() => setCorrections([]))
-      .finally(() => setLoadingCorrections(false))
-  }, [])
+        )
+      })
+      .catch(() => {
+        if (!cancelled) setLoadError(true)
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingCorrections(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [loadAttempt])
+
+  function retryLoad() {
+    setLoadingCorrections(true)
+    setLoadError(false)
+    setLoadAttempt((n) => n + 1)
+  }
 
   // Fetch streak
   useEffect(() => {
@@ -542,7 +592,7 @@ export default function HistoryPage() {
   }, [])
 
   async function handleDelete(id: string) {
-    if (!window.confirm("Delete this correction? This can't be undone.")) return
+    setDeleteTarget(null)
     setDeletingId(id)
     try {
       await correctionApi.remove(id)
@@ -610,26 +660,72 @@ export default function HistoryPage() {
       }}
       className="space-y-6 pb-12 sm:space-y-8 sm:pb-16"
     >
-      <motion.div variants={itemVariants}>
-        <PageHero
-          eyebrow="Progress Lab"
-          title="Your Study History"
-          description="Track past corrections, spot recurring grammar patterns, and keep your streak alive."
+      <motion.div variants={itemVariants} className="space-y-3">
+        {/* Says exactly what's here: corrections from the AI Coach and manual
+            checks. Voice-coach sessions and mock interviews keep their own
+            history, linked below. */}
+        <LearnHeader
+          description="Every correction from the AI Coach and manual checks — recurring grammar patterns, your practice streak, and each past fix."
           actions={
-            <Button asChild variant="outline" size="sm" className="gap-1.5 rounded-lg">
+            <Button asChild variant="outline" size="sm">
               <Link href="/timeline">
                 Day-by-day timeline
                 <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </Button>
           }
-          stats={[
-            { label: "Corrections", value: String(corrections.length) },
-            { label: "Patterns Found", value: String(grammarPatterns.length) },
-            { label: "Day Streak", value: streak > 0 ? `${streak} 🔥` : String(activeDays.size) },
-          ]}
         />
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+          {!loadingCorrections && !loadError && (
+            <span>
+              {corrections.length} corrections · {grammarPatterns.length} recurring patterns
+            </span>
+          )}
+          {/* The full calendar sits below the list on phones; the streak is
+              shown up here so it isn't buried. */}
+          {streak > 0 && (
+            <span className="inline-flex items-center gap-1 text-foreground lg:hidden">
+              <Flame aria-hidden="true" size={14} className="text-orange-500" /> {streak}-day streak
+            </span>
+          )}
+          <span>
+            Also:{" "}
+            <Link href="/korean-coach/history" className="underline underline-offset-2">
+              Korean Coach sessions
+            </Link>{" "}
+            ·{" "}
+            <Link href="/interview" className="underline underline-offset-2">
+              Exam Prep
+            </Link>
+          </span>
+        </p>
       </motion.div>
+
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this correction?</AlertDialogTitle>
+            <AlertDialogDescription>
+              It will be removed from your history and recurring patterns. This can&apos;t be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteTarget && void handleDelete(deleteTarget.id)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6">
         {/* ── Left column ── */}
@@ -644,7 +740,7 @@ export default function HistoryPage() {
                   </div>
                   <div>
                     <h2 className="text-lg font-bold">Recurring Mistakes</h2>
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                       Grammar patterns · tap to filter
                     </p>
                   </div>
@@ -677,7 +773,7 @@ export default function HistoryPage() {
           {/* Correction History */}
           <motion.div variants={itemVariants}>
             <div className="space-y-4">
-              <h3 className="px-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              <h3 className="px-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 Correction History
               </h3>
 
@@ -711,6 +807,13 @@ export default function HistoryPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              ) : loadError ? (
+                <div className="space-y-3">
+                  <ErrorBanner>Couldn&apos;t load your correction history.</ErrorBanner>
+                  <Button variant="outline" onClick={retryLoad}>
+                    <RotateCw aria-hidden="true" /> Try again
+                  </Button>
                 </div>
               ) : corrections.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 rounded-[1.5rem] border border-border bg-card px-4 py-10 text-center sm:rounded-3xl sm:py-12">
@@ -759,34 +862,37 @@ export default function HistoryPage() {
                               onClick={() => setExpandedId(isExpanded ? null : entry.id)}
                             >
                               <div className="flex items-center gap-2">
-                                <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                                <p className="text-xs font-medium text-muted-foreground">
                                   {formatDate(entry.createdAt)}
                                 </p>
                                 <StarRating rating={entry.rating} />
                               </div>
-                              <p className="line-clamp-1 text-sm font-bold text-muted-foreground">
-                                {entry.originalText}
-                              </p>
-                              <p className="line-clamp-1 text-sm font-bold text-foreground">
+                              {/* Collapsed: the corrected sentence only, up to
+                                  two lines — expand to see what changed. */}
+                              <p
+                                lang="ko"
+                                className="line-clamp-2 break-keep text-sm font-semibold text-foreground"
+                              >
                                 {entry.correctedText}
                               </p>
                             </button>
                             <div className="mt-1 flex shrink-0 items-center gap-1">
                               <button
                                 type="button"
-                                onClick={() => void handleDelete(entry.id)}
+                                onClick={() => setDeleteTarget(entry)}
                                 disabled={deletingId === entry.id}
                                 aria-label="Delete correction"
-                                className="rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-40"
+                                className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-600 disabled:opacity-40"
                               >
-                                <Trash2 size={15} strokeWidth={2.5} />
+                                <Trash2 aria-hidden="true" size={15} strokeWidth={2.5} />
                               </button>
                               <button
                                 type="button"
-                                aria-label={isExpanded ? "Collapse" : "Expand"}
+                                aria-label={isExpanded ? "Hide details" : "Show details"}
+                                aria-expanded={isExpanded}
                                 onClick={() => setExpandedId(isExpanded ? null : entry.id)}
                                 className={cn(
-                                  "rounded-lg p-1.5 text-muted-foreground/40 transition-transform duration-200",
+                                  "flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-transform duration-200",
                                   isExpanded ? "rotate-90" : "rotate-0",
                                 )}
                               >
@@ -809,29 +915,37 @@ export default function HistoryPage() {
                                   {/* Rating */}
                                   {entry.rating != null && (
                                     <div className="flex items-center gap-2">
-                                      <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground">
-                                        Sentence Quality
+                                      <p className="text-xs font-medium text-muted-foreground">
+                                        Sentence quality
                                       </p>
                                       <StarRating rating={entry.rating} />
                                     </div>
                                   )}
 
+                                  <CorrectionDiff
+                                    before={entry.originalText}
+                                    after={entry.correctedText}
+                                  />
+
                                   {/* Original vs Corrected */}
                                   <div className="grid gap-3 sm:grid-cols-2">
                                     <div className="rounded-2xl bg-red-500/5 p-4">
                                       <div className="mb-2 flex items-center justify-between">
-                                        <p className="text-[9px] font-bold uppercase tracking-wide text-red-500/60">
+                                        <p className="text-xs font-medium text-red-700 dark:text-red-300">
                                           Original
                                         </p>
                                         <CopyButton text={entry.originalText} />
                                       </div>
-                                      <p className="text-sm font-medium leading-relaxed text-foreground/70">
+                                      <p
+                                        lang="ko"
+                                        className="break-keep text-base leading-relaxed text-foreground/80"
+                                      >
                                         {entry.originalText}
                                       </p>
                                     </div>
                                     <div className="rounded-2xl bg-blue-500/5 p-4">
                                       <div className="mb-2 flex items-center justify-between">
-                                        <p className="text-[9px] font-bold uppercase tracking-wide text-blue-600/60">
+                                        <p className="text-xs font-medium text-blue-700 dark:text-blue-300">
                                           Corrected
                                         </p>
                                         <div className="flex items-center gap-1">
@@ -842,7 +956,10 @@ export default function HistoryPage() {
                                           />
                                         </div>
                                       </div>
-                                      <p className="text-sm font-bold leading-relaxed text-foreground">
+                                      <p
+                                        lang="ko"
+                                        className="break-keep text-base font-semibold leading-relaxed text-foreground"
+                                      >
                                         {entry.correctedText}
                                       </p>
                                     </div>
@@ -929,7 +1046,7 @@ export default function HistoryPage() {
                   </div>
                   <div>
                     <h2 className="text-base font-bold">Practice Calendar</h2>
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                       Days you practiced
                     </p>
                   </div>

@@ -22,6 +22,16 @@ import {
   Trash2,
 } from "lucide-react"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { SpeakButton } from "@/components/ui/SpeakButton"
 import { Button } from "@/components/ui/button"
@@ -145,10 +155,16 @@ function DocTextarea({
   value,
   onChange,
   placeholder,
+  label,
+  lang,
 }: {
   value: string
   onChange: (text: string) => void
   placeholder: string
+  /** Accessible name — the placeholder disappears once there's text. */
+  label: string
+  /** "ko" for Korean fields: correct screen-reader voice and CJK line breaking. */
+  lang?: string
 }) {
   const ref = useRef<HTMLTextAreaElement>(null)
 
@@ -165,8 +181,10 @@ function DocTextarea({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
+      aria-label={label}
+      lang={lang}
       rows={1}
-      className="w-full resize-none border-0 bg-transparent p-0 text-[15px] leading-[1.9] text-slate-800 outline-none placeholder:text-slate-300 focus:ring-0 dark:text-slate-200 dark:placeholder:text-slate-600"
+      className="w-full resize-none border-0 bg-transparent p-0 text-[15px] leading-[1.9] text-slate-800 outline-none placeholder:text-slate-500 focus:ring-0 dark:text-slate-200 dark:placeholder:text-slate-400"
     />
   )
 }
@@ -177,6 +195,7 @@ export default function InterviewScriptPage() {
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [synced, setSynced] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
   const [activeSection, setActiveSection] = useState<string>("")
   const [customSections, setCustomSections] = useState<CustomSection[]>(loadInitialCustom)
   const [mode, setMode] = useState<"script" | "qa" | "read">("script")
@@ -588,13 +607,9 @@ export default function InterviewScriptPage() {
     scheduleSync(next)
   }
 
+  // Confirmed through an AlertDialog (rendered beside the toolbar).
   function clearAll() {
-    if (
-      !window.confirm(
-        "Clear the whole script and Q&A? Sections will reset to your original drafted script the next time the page loads.",
-      )
-    )
-      return
+    setConfirmClear(false)
     setValues({})
     persistCustom([])
     persistQA([])
@@ -716,6 +731,7 @@ export default function InterviewScriptPage() {
               size="sm"
               variant="outline"
               onClick={copyAll}
+              aria-label={copied ? "Script copied" : "Copy script"}
               disabled={!exportDocument}
               className="h-8 rounded-lg font-bold disabled:opacity-40"
             >
@@ -734,6 +750,7 @@ export default function InterviewScriptPage() {
               size="sm"
               variant="outline"
               onClick={downloadTxt}
+              aria-label="Download script as text"
               disabled={!exportDocument}
               className="h-8 rounded-lg font-bold disabled:opacity-40"
             >
@@ -743,18 +760,38 @@ export default function InterviewScriptPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={clearAll}
+              onClick={() => setConfirmClear(true)}
+              aria-label="Clear script"
               disabled={!exportDocument}
               className="h-8 rounded-lg border-destructive/30 font-bold text-destructive hover:bg-destructive/5 disabled:opacity-40"
             >
-              <Trash2 size={15} />
+              <Trash2 aria-hidden="true" size={15} />
             </Button>
+            <AlertDialog open={confirmClear} onOpenChange={setConfirmClear}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear the whole script and Q&amp;A?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Sections reset to your original drafted script the next time the page loads.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep my script</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={clearAll}
+                  >
+                    Clear
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </div>
 
       {/* ── Canvas: outline rail + paper ── */}
-      <div className="min-h-[calc(100dvh-3.25rem)] bg-[#f9fbfd] px-2 py-6 dark:bg-black/40 sm:px-6 sm:py-10">
+      <div className="min-h-[calc(100dvh-3.25rem)] bg-[#f9fbfd] px-2 py-6 max-lg:pb-32 dark:bg-black/40 sm:px-6 sm:py-10">
         <div className="mx-auto max-w-[1180px]">
           {/* Script | Q&A tabs */}
           <div className="mb-6 flex flex-wrap items-center justify-center gap-3">
@@ -997,6 +1034,29 @@ export default function InterviewScriptPage() {
 
           {mode === "script" ? (
             <div className="flex justify-center gap-6 xl:gap-8">
+              {/* Below lg the outline rail is hidden — a section jump menu
+                  stands in for it so long scripts stay navigable on phones. */}
+              <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 flex justify-center px-4 lg:hidden">
+                <label className="sr-only" htmlFor="script-section-jump">
+                  Jump to section
+                </label>
+                <select
+                  id="script-section-jump"
+                  value={activeSection}
+                  onChange={(event) => scrollToSection(event.target.value)}
+                  className="h-11 w-full max-w-sm rounded-full border border-border bg-background/95 px-4 text-sm font-medium text-foreground shadow-lg backdrop-blur"
+                >
+                  {!activeSection && <option value="">Jump to section…</option>}
+                  {allSections.map((section, index) => (
+                    <option key={section.id} value={section.id}>
+                      {index + 1}.{" "}
+                      {section.custom
+                        ? section.titleKo.trim() || "Untitled section"
+                        : section.titleEn}
+                    </option>
+                  ))}
+                </select>
+              </div>
               {/* Document outline (Docs left panel) */}
               <aside className="hidden w-56 shrink-0 lg:block">
                 <div className="sticky top-20">
@@ -1066,9 +1126,9 @@ export default function InterviewScriptPage() {
               <article className="w-full max-w-[816px] rounded-sm bg-white px-6 py-10 shadow-[0_1px_3px_rgba(60,64,67,0.15),0_4px_24px_rgba(60,64,67,0.1)] ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/10 sm:px-14 sm:py-16 lg:px-[96px]">
                 {/* Document title */}
                 <header className="border-b border-border/60 pb-6">
-                  <h1 className="text-[1.7rem] font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+                  <h2 className="text-[1.7rem] font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
                     {topic.labelKo}
-                  </h1>
+                  </h2>
                   <p className="mt-2 text-sm font-medium text-muted-foreground">
                     {topic.label} · Interview script · Submit by {SCRIPT_DUE_LABEL}
                   </p>
@@ -1168,6 +1228,8 @@ export default function InterviewScriptPage() {
                             value={view[section.id] ?? ""}
                             onChange={(text) => updateSection(section.id, text)}
                             placeholder="여기에 한국어로 작성하세요…"
+                            lang="ko"
+                            label={`${section.custom ? section.titleKo.trim() || "Custom section" : section.titleEn} — Korean`}
                           />
                         </div>
                         {/* Editable English translation, defaulted from the topic's
@@ -1185,6 +1247,7 @@ export default function InterviewScriptPage() {
                                 }
                                 onChange={(text) => updateSection(`en-${section.id}`, text)}
                                 placeholder="Write the English translation here…"
+                                label={`${section.titleEn} — English translation`}
                               />
                             </div>
                           </div>
@@ -1210,9 +1273,9 @@ export default function InterviewScriptPage() {
               <header className="border-b border-border/60 pb-6">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h1 className="text-[1.7rem] font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+                    <h2 className="text-[1.7rem] font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
                       {topic.labelKo}
-                    </h1>
+                    </h2>
                     <p className="mt-2 text-sm font-medium text-muted-foreground">
                       Your full script as one text — read it aloud, no titles, no English.
                     </p>
@@ -1234,7 +1297,10 @@ export default function InterviewScriptPage() {
                 <div className="mt-8 space-y-7">
                   {readSections.map((section) => (
                     <div key={section.id} className="group flex items-start gap-2">
-                      <p className="min-w-0 flex-1 whitespace-pre-wrap text-[17px] leading-[2.05] text-slate-800 dark:text-slate-200">
+                      <p
+                        lang="ko"
+                        className="min-w-0 flex-1 whitespace-pre-wrap break-keep text-[17px] leading-[2.05] text-slate-800 dark:text-slate-200"
+                      >
                         {section.text}
                       </p>
                       <SpeakButton
@@ -1254,9 +1320,9 @@ export default function InterviewScriptPage() {
           ) : (
             <article className="mx-auto w-full max-w-[816px] rounded-sm bg-white px-6 py-10 shadow-[0_1px_3px_rgba(60,64,67,0.15),0_4px_24px_rgba(60,64,67,0.1)] ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/10 sm:px-14 sm:py-16 lg:px-[96px]">
               <header className="border-b border-border/60 pb-6">
-                <h1 className="text-[1.7rem] font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+                <h2 className="text-[1.7rem] font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
                   예상 질문 &amp; 답변 (Q&amp;A)
-                </h1>
+                </h2>
                 <p className="mt-2 text-sm font-medium text-muted-foreground">
                   Practice the Korean answer first, then use the English meaning only to confirm
                   what you are saying.
@@ -1322,6 +1388,8 @@ export default function InterviewScriptPage() {
                           value={answer}
                           onChange={(text) => updateSection(item.id, text)}
                           placeholder="여기에 답변을 작성하세요…"
+                          lang="ko"
+                          label="Your answer — Korean"
                         />
                         {showEnglish && answerEnglish && !isCustom && (
                           <div className="mt-3 border-t border-border/60 pt-3">

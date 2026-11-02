@@ -5,6 +5,7 @@ import Link from "next/link"
 import {
   AlertCircle,
   Award,
+  ChevronDown,
   Eye,
   EyeOff,
   FileText,
@@ -20,7 +21,6 @@ import {
 import { AnimatePresence, motion } from "motion/react"
 import dynamic from "next/dynamic"
 
-import { PageHero } from "@/components/app/page-hero"
 import { DrillEntryCards } from "@/components/interview/DrillEntryCards"
 import { EvaluationSummary } from "@/components/interview/EvaluationSummary"
 import { ExamTimer } from "@/components/interview/ExamTimer"
@@ -29,12 +29,25 @@ import { ModePicker } from "@/components/interview/ModePicker"
 import { SpeakingTipsCard } from "@/components/interview/SpeakingTipsCard"
 import { StudyPack } from "@/components/interview/StudyPack"
 import { StudyPlanCard } from "@/components/interview/StudyPlanCard"
+import { LearnHeader } from "@/components/learn/LearnHeader"
 import { SpeakButton } from "@/components/ui/SpeakButton"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { BorderBeam } from "@/components/ui/border-beam"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Textarea } from "@/components/ui/textarea"
+import { useLeaveGuard } from "@/hooks/useLeaveGuard"
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition"
 import { useLogActivity } from "@/hooks/useLogActivity"
 import { useScrollToTopOnChange } from "@/hooks/useScrollToTopOnChange"
@@ -179,6 +192,18 @@ export default function InterviewPage() {
     },
     [],
   )
+
+  // A live session exists only in this page's state: a reload or tab close
+  // would end it silently, so ask first once something has been answered.
+  const hasAnswers = entries.some((entry) => entry.kind === "answer")
+  useLeaveGuard(phase === "session" && hasAnswers)
+  const [confirmEnd, setConfirmEnd] = useState(false)
+  // Ending the session drops its transcript, so confirm once there's
+  // something to lose.
+  function requestEndSession() {
+    if (hasAnswers) setConfirmEnd(true)
+    else endSession()
+  }
 
   // Streams one examiner turn, then parses it into question + feedback and
   // speaks the Korean question aloud.
@@ -384,107 +409,100 @@ export default function InterviewPage() {
         className="space-y-6 pb-12 sm:space-y-8"
       >
         <motion.div variants={itemVariants}>
-          <PageHero
-            eyebrow="Exam Prep · 면접 연습"
-            title="Mock Interview"
-            description="Practice the K-Specialist spoken Q&A. The AI examiner asks one question at a time and keeps probing with follow-ups — train in Practice mode, then prove it under real exam conditions."
-            stats={[
-              { label: "Exam", value: EXAM_DATE_LABEL },
-              { label: "Format", value: "Intro + Q&A" },
-              { label: "Judged on", value: "Speaking" },
-            ]}
+          <LearnHeader
+            description={`K-Specialist spoken Q&A · exam ${EXAM_DATE_LABEL} · intro + Q&A, judged on speaking. The AI examiner asks one question at a time and probes with follow-ups.`}
           />
         </motion.div>
 
-        <motion.div variants={itemVariants}>
-          <Card className="rounded-[1.8rem] border-blue-500/40 bg-blue-500/5 shadow-xl dark:bg-slate-900/40 sm:rounded-[2.2rem]">
-            <CardContent className="p-5 sm:p-6">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className="rounded-lg border-none bg-blue-500/10 px-2 py-0.5 text-[11px] text-blue-600 dark:text-blue-400">
-                  Your topic
-                </Badge>
-                <Badge variant="outline" className="rounded-lg px-2 py-0.5 text-[11px]">
-                  {topic.difficulty}
-                </Badge>
-              </div>
-              <p className="mt-4 text-lg font-bold leading-snug text-blue-600 dark:text-blue-400 sm:text-xl">
-                {topic.labelKo}
-              </p>
-              <p className="mt-2 text-sm font-medium leading-relaxed text-muted-foreground">
-                {topic.description}
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+        {/* Preparation in one card: topic, mode, and Start — above the fold. */}
+        <motion.section
+          variants={itemVariants}
+          aria-labelledby="exam-topic-heading"
+          className="app-surface space-y-5 border-primary/30 p-5 sm:p-6"
+        >
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="rounded-md text-xs">
+                Your topic
+              </Badge>
+              <Badge variant="outline" className="rounded-md text-xs">
+                {topic.difficulty}
+              </Badge>
+            </div>
+            <h2
+              id="exam-topic-heading"
+              lang="ko"
+              className="mt-3 text-xl font-bold leading-snug text-foreground"
+            >
+              {topic.labelKo}
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              {topic.description}
+            </p>
+          </div>
 
-        {/* Practice vs Exam Simulation */}
-        <motion.div variants={itemVariants}>
+          {/* Practice vs Exam Simulation */}
           <ModePicker value={mode} onChange={setMode} />
-        </motion.div>
+
+          {error && <ErrorBanner message={error} />}
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button
+              size="lg"
+              onClick={startSession}
+              disabled={isExaminerThinking}
+              className="h-12 w-full sm:w-auto sm:px-8"
+            >
+              {isExaminerThinking ? (
+                <>
+                  <Loader2 aria-hidden="true" className="animate-spin" /> Starting…
+                </>
+              ) : (
+                <>
+                  <GraduationCap aria-hidden="true" />
+                  {mode === "exam" ? "Start exam simulation" : "Start interview"}
+                </>
+              )}
+            </Button>
+            <Button asChild size="lg" variant="outline" className="h-12 w-full sm:w-auto">
+              <Link href="/interview/script">
+                <FileText aria-hidden="true" /> Write my script
+              </Link>
+            </Button>
+          </div>
+        </motion.section>
 
         {/* Daily drills — quick reps between full mocks */}
         <motion.div variants={itemVariants}>
           <DrillEntryCards />
         </motion.div>
 
-        {/* Renders itself only after mount + when scorecards exist, so it's safe
-            to leave ungated here (no SSR/CSR conditional mismatch). */}
-        <ScoreTrend records={history} />
-
+        {/* Reference material, collapsed so it doesn't push Start down. */}
         <motion.div variants={itemVariants}>
-          <InterviewProgressCard topicId={topic.id} />
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <StudyPlanCard />
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <SpeakingTipsCard />
-        </motion.div>
-
-        {topic.prep && (
-          <motion.div variants={itemVariants}>
-            <StudyPack topic={topic} defaultOpen />
-          </motion.div>
-        )}
-
-        {error && <ErrorBanner message={error} />}
-
-        <motion.div
-          variants={itemVariants}
-          className="flex flex-col gap-3 sm:flex-row sm:justify-center"
-        >
-          <Button
-            onClick={startSession}
-            disabled={isExaminerThinking}
-            className={cn(
-              "h-14 w-full rounded-2xl px-10 text-base font-bold text-white shadow-lg transition-all active:scale-95 disabled:opacity-60 sm:w-auto",
-              mode === "exam"
-                ? "bg-rose-600 shadow-rose-600/20 hover:bg-rose-700"
-                : "bg-blue-600 shadow-blue-600/20 hover:bg-blue-700",
-            )}
-          >
-            {isExaminerThinking ? (
-              <>
-                <Loader2 size={20} className="mr-2 animate-spin" /> Starting…
-              </>
-            ) : (
-              <>
-                <GraduationCap size={20} className="mr-2" />
-                {mode === "exam" ? "Start Exam Simulation" : "Start Interview"}
-              </>
-            )}
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            className="h-14 w-full rounded-2xl border-border bg-background px-8 text-base font-bold hover:bg-accent active:scale-95 sm:w-auto"
-          >
-            <Link href="/interview/script">
-              <FileText size={20} className="mr-2" /> Write my script
-            </Link>
-          </Button>
+          <Collapsible className="app-surface">
+            <CollapsibleTrigger className="group flex min-h-14 w-full items-center justify-between gap-3 px-5 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+              <span>
+                <span className="block text-sm font-semibold text-foreground">
+                  Progress & study materials
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  Score trend, study plan, speaking tips, and the topic study pack
+                </span>
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180"
+              />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-6 border-t border-border p-4 sm:p-5">
+              {/* Renders itself only after mount + when scorecards exist. */}
+              <ScoreTrend records={history} />
+              <InterviewProgressCard topicId={topic.id} />
+              <StudyPlanCard />
+              <SpeakingTipsCard />
+              {topic.prep && <StudyPack topic={topic} />}
+            </CollapsibleContent>
+          </Collapsible>
         </motion.div>
       </motion.div>
     )
@@ -515,33 +533,48 @@ export default function InterviewPage() {
       variants={containerVariants}
       className="space-y-5 pb-12 sm:space-y-6"
     >
-      <motion.div variants={itemVariants}>
-        <PageHero
-          eyebrow={`Mock Interview · ${cfg.label} · In Progress`}
-          title={topic.label}
-          description={
-            cfg.showEnglish
-              ? "Listen to each question, then tap the mic and answer out loud in Korean. Reveal the English only if you need it — train your listening first."
-              : "Real exam conditions: Korean only, no feedback until the end. Listen, think, answer — the examiner keeps going until time runs out."
-          }
-          stats={[
-            { label: "Question", value: String(Math.max(questionCount, 1)) },
-            { label: "Mode", value: cfg.label },
-            { label: "Input", value: speech.supported ? "Voice" : "Manual" },
-          ]}
-          actions={
-            <div className="flex items-center gap-2">
-              {endsAt !== null && <ExamTimer endsAt={endsAt} onExpire={finishInterview} />}
-              <Button
-                variant="outline"
+      {/* Compact session bar — active practice, not a page hero. */}
+      <motion.div variants={itemVariants} className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="app-kicker">
+              Mock interview · {cfg.label} · Question {Math.max(questionCount, 1)}
+            </p>
+            <h2 className="mt-1 truncate text-lg font-semibold text-foreground">{topic.label}</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            {endsAt !== null && <ExamTimer endsAt={endsAt} onExpire={finishInterview} />}
+            <Button variant="outline" onClick={requestEndSession}>
+              <RotateCcw aria-hidden="true" /> End session
+            </Button>
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {cfg.showEnglish
+            ? "Listen to each question, then answer out loud in Korean. Reveal the English only if you need it."
+            : "Exam conditions: Korean only, no feedback until the end. Listen, think, answer."}
+          {!speech.supported && " Voice capture isn't available here — type your answers."}
+        </p>
+        <AlertDialog open={confirmEnd} onOpenChange={setConfirmEnd}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>End this session?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your {answeredCount} {answeredCount === 1 ? "answer" : "answers"} so far won&apos;t
+                be scored or saved.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep going</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 onClick={endSession}
-                className="h-10 rounded-xl border-border bg-background px-4 font-bold hover:bg-accent"
               >
-                <RotateCcw size={16} className="mr-2" /> End session
-              </Button>
-            </div>
-          }
-        />
+                End session
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </motion.div>
 
       {/* Current question */}
@@ -582,7 +615,10 @@ export default function InterviewPage() {
                 </div>
               ) : (
                 <>
-                  <p className="text-[1.5rem] font-bold leading-tight text-foreground sm:text-2xl lg:text-[1.7rem]">
+                  <p
+                    lang="ko"
+                    className="break-keep text-[1.5rem] font-bold leading-tight text-foreground sm:text-2xl lg:text-[1.7rem]"
+                  >
                     {streamingText
                       ? parseExaminerTurn(streamingText).questionKo
                       : current?.questionKo}
@@ -701,7 +737,7 @@ export default function InterviewPage() {
                     "h-12 w-full rounded-2xl px-6 text-sm font-bold shadow-lg transition-all active:scale-95 disabled:opacity-50 sm:h-14 sm:w-auto sm:px-8 sm:text-base",
                     recording
                       ? "bg-rose-600 text-white shadow-rose-600/20 hover:bg-rose-700"
-                      : "bg-blue-600 text-white shadow-blue-600/20 hover:bg-blue-700",
+                      : "bg-primary text-primary-foreground hover:bg-primary/90",
                   )}
                 >
                   {recording ? (
@@ -749,7 +785,10 @@ export default function InterviewPage() {
                   className="mt-3 min-h-[110px] rounded-2xl border-border bg-accent/5 transition-colors focus:bg-background"
                 />
               ) : speech.transcript ? (
-                <p className="mt-3 text-lg font-bold leading-relaxed text-foreground">
+                <p
+                  lang="ko"
+                  className="mt-3 break-keep text-lg font-bold leading-relaxed text-foreground"
+                >
                   {speech.transcript}
                 </p>
               ) : (
@@ -824,7 +863,9 @@ export default function InterviewPage() {
                     <p className="text-[11px] font-bold uppercase tracking-wide text-blue-600">
                       Examiner
                     </p>
-                    <p className="mt-1.5 font-bold text-foreground">{entry.turn.questionKo}</p>
+                    <p lang="ko" className="mt-1.5 font-bold text-foreground">
+                      {entry.turn.questionKo}
+                    </p>
                     {cfg.showEnglish && entry.turn.questionEn && (
                       <p className="mt-1 text-sm italic text-muted-foreground">
                         {entry.turn.questionEn}
@@ -839,7 +880,9 @@ export default function InterviewPage() {
                     <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                       You
                     </p>
-                    <p className="mt-1.5 font-medium text-foreground">{entry.text}</p>
+                    <p lang="ko" className="mt-1.5 font-medium text-foreground">
+                      {entry.text}
+                    </p>
                   </div>
                 ),
               )}

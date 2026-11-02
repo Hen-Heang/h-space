@@ -636,6 +636,39 @@ Each phase is one PR, waits for your approval to start, and ends with `pnpm lint
 - **The collection page has one primary action:** Review due, or Learn when nothing is due.
 - **V7 is still deferred:** vocabulary flashcards don't use `LanguageAids` yet. Phrasebook already honors the preference through `RevealText`.
 
+**Phase 5: what shipped and where it differs.**
+
+- **`CorrectionDiff`** shipped here, not in Phase 3.
+  - `lib/learning/text-diff.ts` (tested): a character-level LCS diff, plus a changed-ratio check.
+  - `components/learn/CorrectionDiff.tsx`: `<del>`/`<ins>` with screen-reader words. It renders nothing for identical text, >250k LCS cells, or >60% changed.
+  - Used in `CorrectionRetryPanel` (exam drills) and in expanded History rows. Korean Coach's `CoachFeedback` can adopt it in Phase 3.
+- **E1:** the Exam Prep setup is one card (topic, mode, Start, Write my script) directly under a one-line header. Drills follow. Score trend, progress, study plan, tips, and the study pack sit in one collapsed "Progress & study materials" section; the study pack no longer opens by default.
+- **E3/E4:**
+  - The live session has a compact session bar instead of a PageHero.
+  - "End session" asks first once anything is answered.
+  - `hooks/useLeaveGuard.ts` (tested) adds the browser's leave prompt on reload/close during a session with answers.
+  - No URL or query-param changes.
+  - **Not done:** the sticky bottom action bar for Record/Submit, which depends on Phase 3's `StudySession`.
+- **E5 (script editor):**
+  - `DocTextarea` gets an accessible name and `lang`. Placeholders reach readable contrast.
+  - The toolbar's icon-only buttons have `aria-label`s.
+  - Clear uses an AlertDialog instead of `window.confirm`.
+  - Below `lg`, a floating "Jump to section" select stands in for the hidden outline.
+  - **Not done:** consolidating the controls above the page into one toolbar.
+- **E6:** the speaking-drill summary adds a question-by-question list (corrected answer, first → retry score) from attempts already in state.
+- **Y1–Y4 (History):**
+  - A load failure shows an error + retry instead of "No corrections yet".
+  - The header says what's here and links to Korean Coach sessions and Exam Prep.
+  - Mobile shows the streak at the top.
+  - Rating filters are `aria-pressed` toggles; sort is a Select with clearer labels.
+  - Collapsed rows show the corrected sentence (2 lines). Expanded rows show the diff.
+  - `lang="ko"`, 12px minimum labels, and delete via AlertDialog.
+- **One-h1 rule:**
+  - `PageHero` gained an opt-in `headingLevel`. Exam Prep's drills and evaluation pass `"h2"`; other workspaces are unchanged.
+  - The remaining hand-written learning `h1`s (Question Bank, unit editor, phrase editor, speaking summary, exam dashboard) are now `h2`.
+  - Still `h1` via the default: `/listening` and `/scenarios` (Phase 3).
+- **Final responsive pass:** not done. No signed-in visual check at 375/430/768/1024/1440 in both themes has been run for any phase.
+
 ---
 
 ## 10. Acceptance criteria and testing checklist

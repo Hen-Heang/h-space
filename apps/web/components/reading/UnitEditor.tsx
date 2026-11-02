@@ -219,9 +219,9 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
         </Link>
 
         <div className="rounded-3xl border border-border bg-card p-6 shadow-xl dark:bg-slate-900/40 sm:p-8">
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          <h2 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
             {isEdit ? "Edit unit" : "Create a new unit"}
-          </h1>
+          </h2>
           <p className="mt-2 max-w-2xl text-sm font-medium leading-relaxed text-muted-foreground">
             Paste any Korean text you want to study — an article, a podcast transcript, a work
             message — then add vocabulary and quiz questions to make it reviewable.
