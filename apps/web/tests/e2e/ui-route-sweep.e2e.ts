@@ -2,9 +2,10 @@ import { expect, test, type Page } from "@playwright/test"
 
 // UI route sweep — opt-in (`UI_SWEEP=1`). Loads every signed-in route family
 // with a synthetic session and synthetic Supabase rows, then:
-//   1. fails on horizontal overflow (an element wider than the viewport that
-//      isn't inside its own sideways scroller), and
-//   2. reports text rendered below 12px,
+//   1. fails on horizontal overflow: the page scrolls sideways, or an element
+//      runs past the screen edge without a sideways scroller or a clipping
+//      box inside the screen to hold it, and
+//   2. reports text rendered below the 13px floor (docs/design-system.md),
 //   3. saves a screenshot per route × viewport into
 //      test-results/ui-sweep/<UI_SWEEP_LABEL ?? "current">/.
 // Nothing leaves the machine: every request to a non-local host is aborted
@@ -256,11 +257,23 @@ test.describe("UI route sweep", () => {
 
         const report = await page.evaluate(() => {
           const vw = window.innerWidth
-          const scrollsSideways = (el: Element | null): boolean => {
-            for (let n = el?.parentElement; n && n !== document.body; n = n.parentElement) {
+          // Is an element that runs past the screen edge held by an ancestor?
+          // A sideways scroller holds it on purpose. A clipping box (hidden or
+          // clip) holds it only when the box ends inside the screen on that
+          // side: then the content is truncated by design (an ellipsis title).
+          // A clip *at* the screen edge — <main>'s overflow-x-clip, the
+          // calendar's h-dvh overflow-hidden shell — just cuts content off, so
+          // it must not excuse the overflow.
+          const heldSideways = (el: Element, r: DOMRect): boolean => {
+            for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
               const ox = getComputedStyle(n).overflowX
-              if (ox === "auto" || ox === "scroll" || (ox === "hidden" && n.tagName !== "MAIN"))
-                return true
+              if (ox === "auto" || ox === "scroll") return true
+              if (ox === "hidden" || ox === "clip") {
+                const box = n.getBoundingClientRect()
+                const rightHeld = r.right <= vw + 1 || box.right < vw - 1
+                const leftHeld = r.left >= -1 || box.left > 1
+                if (rightHeld && leftHeld) return true
+              }
             }
             return false
           }
@@ -271,22 +284,26 @@ test.describe("UI route sweep", () => {
           }
           const overflow: string[] = []
           const tiny: string[] = []
+          const root = document.documentElement
+          const pageScroll = root.scrollWidth - root.clientWidth
+          if (pageScroll > 1) overflow.push(`page scrolls sideways by ${pageScroll}px`)
           for (const el of Array.from(document.querySelectorAll("body *"))) {
             const r = el.getBoundingClientRect()
             if (r.width === 0 || r.height === 0) continue
             const s = getComputedStyle(el)
             if (s.visibility === "hidden" || s.position === "fixed") continue
-            if ((r.right > vw + 1 || r.left < -1) && !scrollsSideways(el)) {
+            if ((r.right > vw + 1 || r.left < -1) && !heldSideways(el, r)) {
               overflow.push(`${Math.round(r.left)}→${Math.round(r.right)} ${describe(el)}`)
             }
             const ownText = Array.from(el.childNodes).some(
               (c) => c.nodeType === 3 && (c.textContent ?? "").trim().length > 1,
             )
-            if (ownText && parseFloat(s.fontSize) < 12) {
+            // 13px is the `text-xs` floor; anything smaller is a hard-coded size.
+            if (ownText && parseFloat(s.fontSize) < 13) {
               tiny.push(`${s.fontSize} ${describe(el)}`)
             }
           }
-          return { overflow: overflow.slice(0, 6), tiny: tiny.slice(0, 8) }
+          return { overflow: overflow.slice(0, 7), tiny: tiny.slice(0, 8) }
         })
 
         if (report.overflow.length) {

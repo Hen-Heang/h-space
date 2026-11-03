@@ -5,11 +5,11 @@ Date: 2026-11-03 · Branch: `ui/redesign-foundation` · Scope: `apps/web` only
 
 ## How this audit was done (coverage, honestly)
 
-| Method                                                                            | What it covers                                                                                                                                                                                         | Limits                                                                                                                                                                                                                                                                                                                                                                            |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Source audit** of every `page.tsx` under `app/` and the components each renders | All 106 route files, plus shared `components/ui`, `components/layout`, `components/app`                                                                                                                | Static reading. Some findings are judgement calls.                                                                                                                                                                                                                                                                                                                                |
-| **Rendered sweep** (`tests/e2e/ui-route-sweep.e2e.ts`)                            | 48 signed-in feature routes × 7 widths (320/375/390/430/768/1024/1440), light theme. Fails on horizontal overflow, logs sub-12px text, saves full-page screenshots to `test-results/ui-sweep/<label>/` | **Synthetic session and data only.** Auth is a fake local token, Supabase REST is fulfilled locally (two goals, five tasks, everything else empty), and every off-machine request is aborted. Screens therefore show mostly **empty states**. No real account or live database was used. Populated states beyond goals/tasks, dialogs and drawers were reviewed from source only. |
-| Public pages                                                                      | `/`, `/login`, `/register` were last rendered on 2026-11-02 (HANDOFF)                                                                                                                                  | Not re-rendered in this pass                                                                                                                                                                                                                                                                                                                                                      |
+| Method                                                                            | What it covers                                                                                                                                                                                                                              | Limits                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Source audit** of every `page.tsx` under `app/` and the components each renders | All 106 route files, plus shared `components/ui`, `components/layout`, `components/app`                                                                                                                                                     | Static reading. Some findings are judgement calls.                                                                                                                                                                                                                                                                                                                                |
+| **Rendered sweep** (`tests/e2e/ui-route-sweep.e2e.ts`)                            | 48 signed-in feature routes × 7 widths (320/375/390/430/768/1024/1440), light theme. Fails on horizontal overflow, logs text under the 13px floor (12px in the runs below), saves full-page screenshots to `test-results/ui-sweep/<label>/` | **Synthetic session and data only.** Auth is a fake local token, Supabase REST is fulfilled locally (two goals, five tasks, everything else empty), and every off-machine request is aborted. Screens therefore show mostly **empty states**. No real account or live database was used. Populated states beyond goals/tasks, dialogs and drawers were reviewed from source only. |
+| Public pages                                                                      | `/`, `/login`, `/register` were last rendered on 2026-11-02 (HANDOFF)                                                                                                                                                                       | Not re-rendered in this pass                                                                                                                                                                                                                                                                                                                                                      |
 
 Not visually reviewed: chromeless OAuth screens (`/oauth/consent`,
 `/integrations/google-calendar/callback`), the immersive pause overlay,
@@ -67,10 +67,10 @@ chromeless. **Seen**: S = source audited, ✓ = also rendered in the sweep.
 
 ### Overview
 
-| Route        | Type | Seen | Worst  | Phase | Key issues                                                                                                                                                                                                                                                                     |
-| ------------ | ---- | ---- | ------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `/home`      | F    | S ✓  | **P0** | 3     | **Horizontal overflow at 320px**: the Today's tasks card renders 669px wide. Two heroes (greeting + dark `HomeHero` banner that repeats My Apps); vanity metrics; rainbow tiles; bordered rows inside bordered cards; a `role=button` row nests a toggle button; 11px eyebrows |
-| `/dashboard` | R    | S    | —      | —     | → `/goals/overview`; its old dashboard components are unused                                                                                                                                                                                                                   |
+| Route        | Type | Seen | Worst | Phase | Key issues                                                                                                                                                                                                                                                                                 |
+| ------------ | ---- | ---- | ----- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/home`      | F    | S ✓  | P1    | 3     | ~~Horizontal overflow at 320px~~ (Today's tasks card 669px wide) — **fixed in Phase 1**. Two heroes (greeting + dark `HomeHero` banner that repeats My Apps); vanity metrics; rainbow tiles; bordered rows inside bordered cards; a `role=button` row nests a toggle button; 11px eyebrows |
+| `/dashboard` | R    | S    | —     | —     | → `/goals/overview`; its old dashboard components are unused                                                                                                                                                                                                                               |
 
 ### Planner
 
@@ -205,7 +205,7 @@ owner's approval.
 
 **Phase 3 — Home, Goals, Tasks** (next PR)
 
-- `/home` P0 overflow. Drop `HomeHero` and the static metrics, use one tone,
+- `/home` (overflow already fixed in Phase 1). Drop `HomeHero` and the static metrics, use one tone,
   and flatten the card rows. Show today's tasks first.
 - `GoalList`: two-line mobile row, one `⋯` menu, a primary progress bar, and
   no grid toggle.
@@ -254,7 +254,7 @@ owner's approval.
 | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Light, 48 routes × 7 widths (336 screenshots, `after/`)    | 40 pass, 8 overflow. **`/home` and `/goals/overview` now pass at every width.** The 8 are the known baseline offenders (`/chat`, `/goals`, `/vault`, `/notes/new`, `/review/*` ×3) plus `/ask-hengo` |
 | Dark, 48 routes × 390/1440 (96 screenshots, `after-dark/`) | 46 pass. `/chat` and `/ask-hengo` overflow at 390px, same as light                                                                                                                                   |
-| `/goals/calendar`                                          | Passes at all 7 widths (not measured in the baseline)                                                                                                                                                |
+| `/goals/calendar`                                          | ~~Passes at all 7 widths~~ — **not a real pass**: the check skipped every element under the calendar shell's `overflow-hidden`. See the correction below                                             |
 | `tests/e2e/shell-sticky.e2e.ts`                            | 11 / 11 pass: sticky header and bottom-nav offsets still match the changed chrome                                                                                                                    |
 
 `/ask-hengo` is a redirect to `/chat?mode=memory`. Its baseline screenshot was
@@ -265,3 +265,18 @@ waits for `networkidle` so redirects settle first.
 Remaining overflows are all in page-level components scheduled for Phases
 3–5. The shell's 11px labels are gone. Remaining sub-12px text is page-level
 (`text-[10px]`/`[11px]` in feature components), tracked per route above.
+
+**Correction — sweep check tightened** (2026-11-03, after the runs above):
+
+- The old overflow check excused any element with an `overflow: hidden`
+  ancestor other than `<main>`. On `/goals/calendar` the whole shell is
+  `h-[100dvh] overflow-hidden` (`AppShell`), so nothing there was measured.
+  A clipping box now excuses an element only when the box ends inside the
+  screen (intentional truncation). The sweep also fails when the page itself
+  scrolls sideways.
+- Re-run at 320/1440px: **`/goals/calendar` overflows at 320px**. The
+  all-day task chips run to 374px and are cut off at the screen edge, with no
+  ellipsis or right border (P0, Phase 3). It passes at 1440px.
+- The small-text report now flags anything under the 13px floor, not 12px.
+- The runs above weren't repeated with the new check. The Phase 6 full re-run
+  replaces them.
