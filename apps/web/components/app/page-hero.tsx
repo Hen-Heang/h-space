@@ -21,8 +21,8 @@ type PageHeroProps = {
   className?: string
   /**
    * The title's heading level. The shell header already renders the page's
-   * h1, so pages that follow that rule pass "h2"; the default keeps existing
-   * callers unchanged.
+   * only h1, so this is "h2" by default; "h1" is for a page rendered outside
+   * the app shell.
    */
   headingLevel?: "h1" | "h2"
 }
@@ -35,27 +35,16 @@ export function PageHero({
   actions,
   stats,
   className,
-  headingLevel = "h1",
+  headingLevel = "h2",
 }: PageHeroProps) {
   const isCompact = variant === "compact"
   const Heading = headingLevel
 
+  // A flat intro block (docs/design-system.md): no box, glow or hairline —
+  // the shell header is the page's title, this is the section that opens it.
   return (
-    <section
-      className={cn(
-        "relative overflow-hidden rounded-lg border border-border/70 bg-card/90 shadow-sm shadow-slate-950/5 dark:bg-slate-900/70",
-        isCompact ? "p-4 sm:p-5" : "p-5 sm:p-6",
-        className,
-      )}
-    >
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
-        {!isCompact && (
-          <div className="absolute -left-20 -top-24 h-56 w-56 rounded-full bg-primary/6 blur-[72px]" />
-        )}
-        <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-primary/25 to-transparent" />
-      </div>
-
-      <div className="relative z-10">
+    <section className={cn("relative", className)}>
+      <div>
         <div
           className={cn(
             "flex flex-col lg:flex-row lg:items-start lg:justify-between",
@@ -63,18 +52,16 @@ export function PageHero({
           )}
         >
           <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary">
-              {eyebrow}
-            </p>
+            <p className="text-sm font-medium text-muted-foreground">{eyebrow}</p>
             <Heading
               className={cn(
-                "font-semibold leading-tight tracking-[-0.025em] text-foreground",
-                isCompact ? "mt-2 text-2xl sm:text-[1.75rem]" : "mt-2.5 text-[1.75rem] sm:text-3xl",
+                "font-semibold leading-tight tracking-tight text-foreground",
+                isCompact ? "mt-1 text-xl sm:text-2xl" : "mt-1 text-2xl",
               )}
             >
               {title}
             </Heading>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-[0.95rem]">
+            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
               {description}
             </p>
           </div>
@@ -92,9 +79,8 @@ export function PageHero({
               {stats.map((stat) => {
                 const tappable = Boolean(stat.href || stat.onClick)
                 const tileClass = cn(
-                  "min-h-11 min-w-0 rounded-md border border-border/60 bg-background/55 px-3 py-2.5 text-left dark:bg-white/[0.035] sm:min-w-28",
-                  tappable &&
-                    "transition-[border-color,background-color,transform] hover:border-primary/30 hover:bg-primary/5 active:scale-[0.98]",
+                  "min-h-11 min-w-0 rounded-md bg-muted/60 px-3 py-2.5 text-left sm:min-w-28",
+                  tappable && "transition-colors hover:bg-accent",
                 )
                 const inner = (
                   <>

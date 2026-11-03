@@ -184,6 +184,12 @@ describe("MoreSheet", () => {
     expect(screen.queryByRole("dialog")).toBeNull()
   })
 
+  it("holds the phone's theme switch (moved out of the mobile header)", () => {
+    setup(true)
+    const dialog = screen.getByRole("dialog")
+    expect(within(dialog).getByRole("button", { name: "Toggle theme" })).toBeTruthy()
+  })
+
   it("leads with Notes, Growth, AI Assistant and Settings", () => {
     setup(true)
     const lead = screen.getByRole("navigation", { name: "More destinations" })
@@ -261,6 +267,8 @@ describe("MobileHeader", () => {
     expect(screen.getByRole("button", { name: /notifications/i })).toBeTruthy()
     expect(screen.queryByRole("button", { name: "Go back" })).toBeNull()
     expect(screen.queryByRole("link", { name: /profile/i })).toBeNull()
+    // Content over chrome: the theme switch lives in the More sheet.
+    expect(screen.queryByRole("button", { name: "Toggle theme" })).toBeNull()
   })
 
   it("gives Settings its own icon on the root-page bar", () => {

@@ -176,7 +176,7 @@ export function NavIconRow({
           >
             <Icon size={18} strokeWidth={2} aria-hidden className="shrink-0" />
             {showLabel && (
-              <span className="max-w-full truncate px-1 text-[11px] leading-none">
+              <span className="max-w-full truncate px-1 text-xs leading-none">
                 {item.shortLabel ?? name}
               </span>
             )}
@@ -202,7 +202,7 @@ export function NavIconRow({
             {showLabel && (
               <span
                 className={cn(
-                  "max-w-full truncate px-1 text-[11px] leading-none",
+                  "max-w-full truncate px-1 text-xs leading-none",
                   active && "font-semibold",
                 )}
               >

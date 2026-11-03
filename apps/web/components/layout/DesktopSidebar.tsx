@@ -124,7 +124,7 @@ export function DesktopSidebar({
               ) : (
                 <h2
                   id={headingId}
-                  className="px-2.5 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
+                  className="px-2.5 pb-1.5 text-xs font-medium text-muted-foreground"
                 >
                   {group.label}
                 </h2>

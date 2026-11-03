@@ -51,12 +51,14 @@ export default function GoalsOverviewPage() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
+      {/* Explicit minmax(0, …) tracks: the implicit auto track grows to the
+          widest single-line task title and pushed the card off phone screens. */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
         <GoalTasksSnapshot />
         <UpcomingDeadlines />
       </div>
 
-      <div className="grid gap-4 sm:gap-5 lg:grid-cols-[1.4fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <GoalsOverview />
         <RoadmapTeaser />
       </div>

@@ -32,11 +32,18 @@ export function WorkspaceTabs({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 border-b border-border sm:flex-row sm:items-end sm:justify-between",
+        // Phones: the divider belongs to the tab row (an inset shadow the
+        // active tab's border paints over), and the action wraps below it
+        // with no line of its own. From sm the row is one line and the
+        // divider spans it.
+        "flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:border-b sm:border-border",
         className,
       )}
     >
-      <nav aria-label="Workspace sections" className="no-scrollbar -mb-px min-w-0 overflow-x-auto">
+      <nav
+        aria-label="Workspace sections"
+        className="no-scrollbar min-w-0 overflow-x-auto shadow-[inset_0_-1px_0_var(--border)] sm:-mb-px sm:shadow-none"
+      >
         <ul className="flex min-w-max gap-1">
           {tabs.map((tab) => {
             const current = tab.id === active?.id
@@ -72,7 +79,9 @@ export function WorkspaceTabs({
           })}
         </ul>
       </nav>
-      {actions && <div className="flex shrink-0 items-center gap-2 pb-2">{actions}</div>}
+      {actions && (
+        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:pb-2">{actions}</div>
+      )}
     </div>
   )
 }
