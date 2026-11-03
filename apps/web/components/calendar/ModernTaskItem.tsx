@@ -69,8 +69,10 @@ export const ModernTaskItem = memo(function ModernTaskItem({
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={handleToggle}
+          // The 20px box stays; the after: layer grows the tap target to 44px
+          // (apps/web/AGENTS.md: enlarge hit areas, not visuals).
           className={cn(
-            "relative shrink-0 flex h-5 w-5 items-center justify-center rounded-lg border transition-colors",
+            "relative shrink-0 flex h-5 w-5 items-center justify-center rounded-lg border transition-colors after:absolute after:-inset-3 after:content-['']",
             task.completed ? "border-primary bg-primary shadow-sm" : "border-border bg-background",
           )}
           aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
@@ -131,32 +133,34 @@ export const ModernTaskItem = memo(function ModernTaskItem({
 
       {!task.completed && !isExternal && (
         <div className="flex items-center gap-1 shrink-0">
+          {/* icon-sm: 32px with a pointer, 44px on touch (Button's coarse-
+              pointer sizing) — the old h-6 override pinned these to 24px. */}
           {onEdit && (
             <Button
               variant="ghost"
-              size="icon"
-              className="h-6 w-6 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10"
+              size="icon-sm"
+              className="text-muted-foreground hover:bg-accent hover:text-foreground"
               onClick={(e) => {
                 e.stopPropagation()
                 onEdit(task)
               }}
               aria-label="Edit task"
             >
-              <Pencil className="h-3 w-3" />
+              <Pencil className="h-4 w-4" />
             </Button>
           )}
           {onDelete && (
             <Button
               variant="ghost"
-              size="icon"
-              className="h-6 w-6 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              size="icon-sm"
+              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
                 onDelete(task.id)
               }}
               aria-label="Delete task"
             >
-              <Trash2 className="h-3 w-3" />
+              <Trash2 className="h-4 w-4" />
             </Button>
           )}
         </div>

@@ -10,6 +10,8 @@ import { useGoogleCalendarIntegration } from "@/hooks/useGoogleCalendarIntegrati
 import type { ExternalCalendarEvent } from "@/lib/external-calendar"
 import { selectUpcomingEvents, upcomingEventsWindow } from "@/lib/home-dashboard"
 
+import { DASHBOARD_ROW, DASHBOARD_ROWS, DashboardCard, DashboardNote } from "./dashboard-card"
+
 function formatWhen(event: ExternalCalendarEvent, now: Date): string {
   const start = new Date(event.start)
   const isToday = start.toDateString() === now.toDateString()
@@ -37,61 +39,47 @@ export function UpcomingEventsCard() {
   const upcoming = selectUpcomingEvents(events, now)
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 shadow-sm dark:bg-slate-900/40 sm:p-5">
-      <div className="flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <CalendarDays size={14} strokeWidth={2.5} className="text-sky-500" />
-          Upcoming
-        </h3>
-        <Link
-          href="/goals/calendar"
-          className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
-        >
-          Calendar
-        </Link>
-      </div>
-
+    <DashboardCard
+      title="Upcoming"
+      icon={CalendarDays}
+      action={{ href: "/goals/calendar", label: "Calendar" }}
+    >
       {statusLoading || (connected && isLoading) ? (
-        <div className="mt-4 space-y-2">
-          <Skeleton className="h-10 w-full rounded-lg" />
-          <Skeleton className="h-10 w-full rounded-lg" />
+        <div className="space-y-2 py-1">
+          <Skeleton className="h-11 w-full rounded-md" />
+          <Skeleton className="h-11 w-full rounded-md" />
         </div>
       ) : !connected ? (
-        <p className="mt-3 rounded-lg border border-border bg-accent/5 px-3 py-3 text-sm text-muted-foreground">
+        <DashboardNote>
           <Link href="/settings/integrations" className="font-medium text-primary hover:underline">
             Connect Google Calendar
           </Link>{" "}
           to see your events here.
-        </p>
+        </DashboardNote>
       ) : error ? (
-        <p className="mt-3 rounded-lg border border-border bg-accent/5 px-3 py-3 text-sm text-muted-foreground">
+        <DashboardNote>
           Calendar events couldn&apos;t be refreshed.{" "}
           <Link href="/settings/integrations" className="font-medium text-primary hover:underline">
             Check connection
           </Link>
-        </p>
+        </DashboardNote>
       ) : upcoming.length === 0 ? (
-        <p className="mt-3 rounded-lg border border-border bg-accent/5 px-3 py-3 text-sm text-muted-foreground">
-          Nothing scheduled for today or tomorrow.
-        </p>
+        <DashboardNote>Nothing scheduled for today or tomorrow.</DashboardNote>
       ) : (
-        <ul className="mt-3 space-y-2">
+        <ul className={DASHBOARD_ROWS}>
           {upcoming.map((event) => (
-            <li
-              key={event.id}
-              className="flex min-h-11 items-center gap-3 rounded-lg border border-border bg-background/40 px-3 py-2"
-            >
-              <span className="h-8 w-1 shrink-0 rounded-full bg-sky-500" aria-hidden="true" />
+            <li key={event.id} className={DASHBOARD_ROW}>
+              <span className="h-8 w-1 shrink-0 rounded-full bg-primary/40" aria-hidden="true" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">
+                <p className="line-clamp-2 break-words text-base text-foreground">
                   {event.title || "(No title)"}
                 </p>
-                <p className="text-xs text-muted-foreground">{formatWhen(event, now)}</p>
+                <p className="text-sm text-muted-foreground">{formatWhen(event, now)}</p>
               </div>
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </DashboardCard>
   )
 }

@@ -358,12 +358,17 @@ export function AllTasksView({
       )}
 
       {/* Sticky Add Task on mobile — the primary action must never be scrolled
-          off the bottom of a long list. */}
+          off the bottom of a long list. It sits above the shell's bottom nav
+          (--shell-bottom-nav-h, which already includes the home-indicator
+          inset); it used to be bottom-0 at z-30, i.e. under the z-40 nav.
+          Bottom padding: with the nav showing, the nav already clears the
+          home indicator, so the calc goes negative and 0.75rem wins; when the
+          keyboard hides the nav the variable is 0px and the inset applies. */}
       {isMobile && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+        <div className="fixed inset-x-0 bottom-[var(--shell-bottom-nav-h,0px)] z-30 border-t border-border bg-background/95 px-4 pt-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)-var(--shell-bottom-nav-h,0px)))] backdrop-blur">
           <Button
             onClick={onAddTask}
-            className="h-12 w-full gap-2 rounded-xl text-sm font-semibold"
+            className="h-12 w-full gap-2 rounded-lg text-sm font-semibold"
           >
             <Plus className="h-4 w-4" /> Add task
           </Button>

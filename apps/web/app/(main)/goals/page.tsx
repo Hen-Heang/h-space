@@ -91,49 +91,54 @@ export default function GoalsPage() {
       <GoalsHubHeader description="Plan goals, track deadlines, and manage what you're working toward." />
 
       <div className="min-w-0 space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex w-fit gap-1 rounded-lg bg-foreground/5 p-1">
-            {(["all", "active", "completed"] as const).map((tab) => {
-              const count =
-                tab === "all"
-                  ? allGoals.length
-                  : tab === "active"
-                    ? activeGoals.length
-                    : completedGoals.length
-              const isSelected = goalFilter === tab
-              return (
-                <button
-                  key={tab}
-                  onClick={() => {
-                    setGoalFilter(tab)
-                    setCurrentPage(1)
-                  }}
+        {/* Filter. Full width on phones, each option sized by its label
+            (flex-auto) so "Completed" fits at 320px — the old w-fit row
+            overflowed there; its natural width from sm. */}
+        <div
+          role="group"
+          aria-label="Filter goals"
+          className="flex w-full gap-1 rounded-lg bg-muted p-1 sm:w-fit"
+        >
+          {(["all", "active", "completed"] as const).map((tab) => {
+            const count =
+              tab === "all"
+                ? allGoals.length
+                : tab === "active"
+                  ? activeGoals.length
+                  : completedGoals.length
+            const isSelected = goalFilter === tab
+            return (
+              <button
+                key={tab}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => {
+                  setGoalFilter(tab)
+                  setCurrentPage(1)
+                }}
+                className={cn(
+                  "flex min-h-11 min-w-0 flex-auto items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm capitalize outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring sm:flex-none sm:px-4",
+                  isSelected
+                    ? "bg-background font-semibold text-foreground"
+                    : "font-medium text-muted-foreground hover:bg-background/50 hover:text-foreground",
+                )}
+              >
+                <span className="truncate">{tab}</span>
+                <span
                   className={cn(
-                    "flex min-h-11 items-center gap-2 rounded-lg px-4 py-2 text-sm capitalize transition-colors",
-                    isSelected
-                      ? "bg-background font-semibold text-foreground shadow-sm"
-                      : "font-medium text-muted-foreground hover:text-foreground hover:bg-background/40",
+                    "rounded px-1.5 text-xs font-medium tabular-nums",
+                    isSelected ? "bg-primary/10 text-primary" : "text-muted-foreground",
                   )}
                 >
-                  {tab}
-                  <span
-                    className={cn(
-                      "rounded-md px-2 py-0.5 text-xs font-medium tabular-nums",
-                      isSelected
-                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                        : "bg-foreground/5 text-muted-foreground",
-                    )}
-                  >
-                    {count}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-          <GoalSorter sortOption={sortOption} onSortChange={updateSort} />
+                  {count}
+                </span>
+              </button>
+            )
+          })}
         </div>
 
         <GoalList
+          toolbar={<GoalSorter sortOption={sortOption} onSortChange={updateSort} />}
           goals={displayGoals}
           isLoading={isLoading}
           isDeleting={isDeleting}
@@ -157,7 +162,7 @@ export default function GoalsPage() {
             >
               <ChevronLeft size={18} />
             </Button>
-            <span className="min-w-[5rem] text-center text-xs font-medium text-muted-foreground/70 tabular-nums">
+            <span className="min-w-[5rem] text-center text-sm font-medium text-muted-foreground tabular-nums">
               {currentPage} / {filteredTotalPages}
             </span>
             <Button

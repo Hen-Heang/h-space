@@ -2,13 +2,15 @@
 
 import Link from "next/link"
 import { AnimatePresence, motion } from "motion/react"
-import { AlertTriangle, CheckCircle2, Circle, Flame, TreeDeciduous } from "lucide-react"
+import { CheckCircle2, Circle, Flame, TreeDeciduous } from "lucide-react"
 
-import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/components/habits/categoryMeta"
+import { CATEGORY_ICONS } from "@/components/habits/categoryMeta"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toCheckinDate, useHabitCheckins, useHabits } from "@/hooks/useHabits"
 import type { Habit } from "@/lib/types"
 import { cn } from "@/lib/utils"
+
+import { DASHBOARD_ROW, DASHBOARD_ROWS, DashboardCard, DashboardNote } from "./dashboard-card"
 
 const VISIBLE_LIMIT = 4
 
@@ -22,30 +24,34 @@ function HabitCheckinRow({ habit }: { habit: Habit }) {
   const Icon = CATEGORY_ICONS[habit.category]
 
   return (
-    <motion.div
+    <motion.li
       layout
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className={cn(
-        "flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 transition-colors",
-        doneToday ? "border-emerald-500/20 bg-emerald-500/5" : "border-border bg-background/40",
-      )}
+      className={DASHBOARD_ROW}
     >
-      <div
+      {/* Neutral category icon — one accent colour per screen, not one per habit. */}
+      <Icon
+        size={18}
+        strokeWidth={2}
+        aria-hidden="true"
+        className="shrink-0 text-muted-foreground"
+      />
+      <span
         className={cn(
-          "flex size-8 shrink-0 items-center justify-center rounded-lg",
-          CATEGORY_COLORS[habit.category],
+          "line-clamp-2 min-w-0 flex-1 break-words text-base text-foreground",
+          doneToday && "text-muted-foreground line-through decoration-muted-foreground/50",
         )}
       >
-        <Icon size={16} strokeWidth={2} />
-      </div>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
         {habit.label}
       </span>
       {!loading && currentStreak > 0 && (
-        <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-muted-foreground">
-          <Flame size={12} className="text-orange-500" />
+        <span
+          className="flex shrink-0 items-center gap-1 text-sm tabular-nums text-muted-foreground"
+          aria-label={`${currentStreak}-day streak`}
+        >
+          <Flame size={14} aria-hidden="true" />
           {currentStreak}
         </span>
       )}
@@ -59,7 +65,7 @@ function HabitCheckinRow({ habit }: { habit: Habit }) {
         }
         onClick={() => void toggleCheckin(today)}
         disabled={loading}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md disabled:opacity-50"
+        className="-my-1 flex size-11 shrink-0 items-center justify-center rounded-md outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
       >
         <AnimatePresence mode="wait" initial={false}>
           {doneToday ? (
@@ -70,7 +76,7 @@ function HabitCheckinRow({ habit }: { habit: Habit }) {
               exit={{ scale: 0.5, opacity: 0 }}
               transition={{ type: "spring", stiffness: 500, damping: 25 }}
             >
-              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              <CheckCircle2 className="size-5 text-success" aria-hidden="true" />
             </motion.span>
           ) : (
             <motion.span
@@ -80,12 +86,12 @@ function HabitCheckinRow({ habit }: { habit: Habit }) {
               exit={{ scale: 0.5, opacity: 0 }}
               transition={{ type: "spring", stiffness: 500, damping: 25 }}
             >
-              <Circle className="h-5 w-5 text-muted-foreground/60" />
+              <Circle className="size-5 text-muted-foreground" aria-hidden="true" />
             </motion.span>
           )}
         </AnimatePresence>
       </motion.button>
-    </motion.div>
+    </motion.li>
   )
 }
 
@@ -101,49 +107,39 @@ export function TodayHabitCheckins() {
   const remaining = Math.max(0, activeHabits.length - VISIBLE_LIMIT)
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 shadow-sm dark:bg-slate-900/40 sm:p-5">
-      <div className="flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <TreeDeciduous size={14} strokeWidth={2.5} className="text-emerald-500" />
-          Today&apos;s habits
-        </h3>
-        <Link
-          href="/growth/habits"
-          className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
-        >
-          View all
-        </Link>
-      </div>
-
+    <DashboardCard
+      title="Today's habits"
+      icon={TreeDeciduous}
+      action={{ href: "/growth/habits", label: "View all" }}
+    >
       {loading ? (
-        <div className="mt-4 space-y-2">
-          <Skeleton className="h-11 w-full rounded-lg" />
-          <Skeleton className="h-11 w-full rounded-lg" />
+        <div className="space-y-2 py-1">
+          <Skeleton className="h-11 w-full rounded-md" />
+          <Skeleton className="h-11 w-full rounded-md" />
         </div>
       ) : error ? (
-        <div className="mt-3 flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-3 text-sm text-destructive">
-          <AlertTriangle size={16} className="shrink-0" />
-          Could&apos;t load your habits.
-        </div>
+        <DashboardNote tone="error">Couldn&apos;t load your habits.</DashboardNote>
       ) : activeHabits.length === 0 ? (
-        <div className="mt-3 rounded-lg border border-border bg-accent/5 px-3 py-3 text-sm text-muted-foreground">
+        <DashboardNote>
           No active habits yet.{" "}
           <Link href="/growth/habits" className="font-medium text-primary hover:underline">
             Add one
           </Link>
-        </div>
+        </DashboardNote>
       ) : (
-        <div className="mt-3 space-y-2">
-          {visible.map((habit) => (
-            <HabitCheckinRow key={habit.id} habit={habit} />
-          ))}
+        <>
+          <ul className={DASHBOARD_ROWS}>
+            {visible.map((habit) => (
+              <HabitCheckinRow key={habit.id} habit={habit} />
+            ))}
+          </ul>
           {remaining > 0 && (
-            <p className="px-1 text-xs font-medium text-muted-foreground">
+            <p className="pt-2 text-sm text-muted-foreground">
               +{remaining} more habit{remaining === 1 ? "" : "s"} in Growth
             </p>
           )}
-        </div>
+        </>
       )}
-    </div>
+    </DashboardCard>
   )
 }
