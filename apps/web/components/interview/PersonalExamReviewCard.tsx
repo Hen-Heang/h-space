@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { SpeakButton } from "@/components/ui/SpeakButton"
 import { useSavedScript } from "@/hooks/useExamPrepHome"
+import { scriptSectionsForDisplay } from "@/lib/exam-prep-home"
 import { INTERVIEW_TOPICS } from "@/lib/interview"
 import { PERSONAL_EXAM_QA } from "@/lib/personal-exam-prep"
 
@@ -28,13 +29,7 @@ export function PersonalExamReviewCard() {
   const [mode, setMode] = useState<"script" | "qa">("qa")
   const topic = INTERVIEW_TOPICS[0]
   const saved = useSavedScript(topic.id)
-  const scriptSections = (topic.scriptOutline ?? [])
-    .map((section, index) => {
-      const savedText = saved.snapshot?.sections[section.id] ?? ""
-      const text = savedText.trim() ? savedText : (topic.scriptSeed?.[section.id] ?? "")
-      return { id: section.id, title: `${index}. ${section.titleKo}`, text }
-    })
-    .filter((section) => section.text.trim())
+  const scriptSections = scriptSectionsForDisplay(topic, saved.snapshot)
   const [openQuestion, setOpenQuestion] = useState<string | null>(PERSONAL_EXAM_QA[0]?.id ?? null)
 
   return (

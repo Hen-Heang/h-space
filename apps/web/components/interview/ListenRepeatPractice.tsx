@@ -557,10 +557,15 @@ export function ListenRepeatPractice({
               {spokenWasTyped ? TYPED_ATTEMPT_NOTE : REPEAT_MATCH_DISCLAIMER}
             </ScoreHonestyNote>
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button size="lg" variant="outline" onClick={retrySentence} className="h-12 flex-1">
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={retrySentence}
+                className="h-12 w-full sm:w-auto sm:flex-1"
+              >
                 <RotateCcw aria-hidden="true" /> Try again
               </Button>
-              <Button size="lg" onClick={nextSentence} className="h-12 flex-1">
+              <Button size="lg" onClick={nextSentence} className="h-12 w-full sm:w-auto sm:flex-1">
                 {index + 1 >= items.length ? "See summary" : "Next sentence"}{" "}
                 <ArrowRight aria-hidden="true" />
               </Button>

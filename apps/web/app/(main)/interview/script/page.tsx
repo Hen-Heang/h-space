@@ -715,7 +715,7 @@ export default function InterviewScriptPage() {
           <Link
             href="/interview"
             aria-label="Back to interview"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <ArrowLeft size={18} />
           </Link>
@@ -752,7 +752,7 @@ export default function InterviewScriptPage() {
                   variant="outline"
                   size="icon"
                   aria-label="Script actions"
-                  className="size-10 rounded-lg"
+                  className="size-11 rounded-lg"
                 >
                   <MoreHorizontal aria-hidden="true" size={18} />
                 </Button>
@@ -808,7 +808,7 @@ export default function InterviewScriptPage() {
                 onClick={() => setMode("script")}
                 aria-pressed={mode === "script"}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
+                  "flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
                   mode === "script"
                     ? "bg-blue-600 text-white shadow"
                     : "text-muted-foreground/70 hover:text-foreground",
@@ -821,7 +821,7 @@ export default function InterviewScriptPage() {
                 onClick={() => setMode("qa")}
                 aria-pressed={mode === "qa"}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
+                  "flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
                   mode === "qa"
                     ? "bg-blue-600 text-white shadow"
                     : "text-muted-foreground/70 hover:text-foreground",
@@ -834,7 +834,7 @@ export default function InterviewScriptPage() {
                 onClick={() => setMode("read")}
                 aria-pressed={mode === "read"}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
+                  "flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
                   mode === "read"
                     ? "bg-blue-600 text-white shadow"
                     : "text-muted-foreground/70 hover:text-foreground",
@@ -847,7 +847,7 @@ export default function InterviewScriptPage() {
                 onClick={() => setMode("repeat")}
                 aria-pressed={mode === "repeat"}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
+                  "flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
                   mode === "repeat"
                     ? "bg-blue-600 text-white shadow"
                     : "text-muted-foreground/70 hover:text-foreground",
@@ -868,7 +868,7 @@ export default function InterviewScriptPage() {
                     : "Show or hide the English translation under each section"
                 }
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-2xl border border-border/70 px-4 py-2.5 text-[12px] font-bold uppercase tracking-wide shadow-sm transition-all",
+                  "inline-flex min-h-11 items-center gap-1.5 rounded-2xl border border-border/70 px-4 py-2.5 text-[12px] font-bold uppercase tracking-wide shadow-sm transition-all",
                   showEnglish
                     ? "bg-emerald-600 text-white"
                     : "bg-background text-muted-foreground/70 hover:text-foreground dark:bg-slate-900",
