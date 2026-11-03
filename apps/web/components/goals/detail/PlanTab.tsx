@@ -17,7 +17,6 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { useIsMobile } from "@/hooks/useMobile"
 import { useGoalTaskActions } from "@/hooks/useGoalTaskActions"
 import { KeyResultsCard } from "@/components/goals/KeyResultsCard"
 import { getApiErrorMessage, planPhasesApi } from "@/lib/api"
@@ -86,7 +85,6 @@ export function PlanTab({
   onTasksChanged,
   onAddTask,
 }: PlanTabProps) {
-  const isMobile = useIsMobile()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingPhase, setEditingPhase] = useState<GoalPlanPhase | null>(null)
   const [movingId, setMovingId] = useState<string | null>(null)
@@ -217,7 +215,7 @@ export function PlanTab({
                   {phase ? (
                     <>
                       {index >= 0 && (
-                        <span className="text-[11px] font-semibold tabular-nums text-muted-foreground">
+                        <span className="text-xs font-semibold tabular-nums text-muted-foreground">
                           {String(index + 1).padStart(2, "0")}
                         </span>
                       )}
@@ -226,7 +224,7 @@ export function PlanTab({
                       </h3>
                       <span
                         className={cn(
-                          "rounded-full px-2 py-0.5 text-[10px] font-medium",
+                          "rounded-full px-2 py-0.5 text-xs font-medium",
                           phaseStatusStyle[phase.status],
                         )}
                       >
@@ -244,7 +242,7 @@ export function PlanTab({
                   </p>
                 )}
 
-                <p className="mt-1.5 text-[11px] font-medium text-muted-foreground">
+                <p className="mt-1.5 text-xs font-medium text-muted-foreground">
                   {phase &&
                     `${
                       phase.start_date || phase.end_date
@@ -306,14 +304,14 @@ export function PlanTab({
               {group.keyResultGroups.map((krGroup) => (
                 <div key={krGroup.keyResult?.id ?? "unlinked"} className="space-y-1.5">
                   {group.keyResultGroups.length > 1 || krGroup.keyResult ? (
-                    <p className="flex items-center gap-1.5 px-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <p className="flex items-center gap-1.5 px-0.5 text-xs font-medium text-muted-foreground">
                       <Target size={11} className="shrink-0" />
                       <span className="min-w-0 truncate">
                         {krGroup.keyResult?.title ?? "No key result"}
                       </span>
                     </p>
                   ) : null}
-                  <ul className={isMobile ? "space-y-1.5" : "space-y-1"}>
+                  <ul className="divide-y divide-border">
                     {krGroup.tasks.map((task) => (
                       <GoalTaskRow key={task.id} variant="card" {...rowProps(task, phase)} />
                     ))}
@@ -444,19 +442,16 @@ function MilestoneConversionCard({
               Preview only — nothing is saved until you confirm, and your original checkpoint list
               is kept untouched either way.
             </p>
-            <ul className="space-y-1.5">
+            <ul className="divide-y divide-border">
               {drafts.map((d, i) => (
-                <li
-                  key={`${d.title}-${i}`}
-                  className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/60 px-2.5 py-2 text-xs"
-                >
+                <li key={`${d.title}-${i}`} className="flex items-center gap-2 py-2 text-sm">
                   <span className="tabular-nums text-muted-foreground">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="min-w-0 flex-1 truncate font-medium text-foreground">
                     {d.title}
                   </span>
-                  <span className="shrink-0 text-[11px] text-muted-foreground">
+                  <span className="shrink-0 text-xs text-muted-foreground">
                     {d.start_date ?? "—"} → {d.end_date ?? "—"}
                   </span>
                 </li>

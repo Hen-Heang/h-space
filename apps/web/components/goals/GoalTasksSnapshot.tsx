@@ -1,9 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { CheckCircle2, Circle, ClipboardList } from "lucide-react"
 
+import {
+  DASHBOARD_ROW,
+  DASHBOARD_ROWS,
+  DashboardCard,
+  DashboardNote,
+} from "@/components/home/dashboard-card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useTodaysTasks } from "@/hooks/useTodaysTasks"
 import { cn } from "@/lib/utils"
@@ -17,87 +22,72 @@ const LIMIT = 5
  * slice (goal_id set, capped, no composer/filter/mark-all chrome), not a
  * second copy of the full Today's Tasks experience — that stays the Tasks
  * tab's job alone (see components/goals/TodaysTasks.tsx).
+ *
+ * Each row is two sibling controls — the completion toggle and a link to the
+ * task — never a button nested inside a clickable row.
  */
 export function GoalTasksSnapshot() {
-  const router = useRouter()
-  const { tasks, loading, goalTitleById, handleToggleTaskCompletion } = useTodaysTasks()
+  const { tasks, loading, error, goalTitleById, handleToggleTaskCompletion } = useTodaysTasks()
 
   const goalTasks = tasks.filter((t) => t.goal_id).slice(0, LIMIT)
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 shadow-sm dark:bg-slate-900/40 sm:p-5">
-      <div className="flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <ClipboardList size={14} strokeWidth={2.5} />
-          Goal tasks today
-        </h3>
-        <Link
-          href="/goals/tasks"
-          className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
-        >
-          View all
-        </Link>
-      </div>
-
+    <DashboardCard
+      title="Goal tasks today"
+      icon={ClipboardList}
+      action={{ href: "/goals/tasks", label: "View all" }}
+    >
       {loading ? (
-        <div className="mt-4 space-y-2">
-          <Skeleton className="h-12 w-full rounded-lg" />
-          <Skeleton className="h-12 w-full rounded-lg" />
+        <div className="space-y-2 py-1">
+          <Skeleton className="h-11 w-full rounded-md" />
+          <Skeleton className="h-11 w-full rounded-md" />
         </div>
+      ) : error ? (
+        <DashboardNote tone="error">Couldn&apos;t load today&apos;s goal tasks.</DashboardNote>
       ) : goalTasks.length === 0 ? (
-        <p className="mt-3 rounded-lg border border-border bg-accent/5 px-3 py-3 text-sm text-muted-foreground">
-          No goal tasks due today.
-        </p>
+        <DashboardNote>No goal tasks due today.</DashboardNote>
       ) : (
-        <div className="mt-3 space-y-2">
-          {goalTasks.map((task) => (
-            <div
-              key={task.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => router.push(`/goals/${task.goal_id}?task=${task.id}`)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") router.push(`/goals/${task.goal_id}?task=${task.id}`)
-              }}
-              className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-border bg-background/40 px-3 py-2 transition-colors hover:bg-accent/40"
-            >
-              <button
-                type="button"
-                aria-label={task.completed ? "Mark task incomplete" : "Mark task complete"}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  void handleToggleTaskCompletion(task.id, task.completed)
-                }}
-                className={cn(
-                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-[background-color,color,transform] hover:bg-accent active:scale-95",
-                  task.completed
-                    ? "text-emerald-500"
-                    : "text-muted-foreground/60 hover:text-primary",
-                )}
-              >
-                {task.completed ? (
-                  <CheckCircle2 className="h-5 w-5" />
-                ) : (
-                  <Circle className="h-5 w-5" />
-                )}
-              </button>
-              <span
-                className={cn(
-                  "min-w-0 flex-1 truncate text-sm font-medium",
-                  task.completed && "text-muted-foreground line-through",
-                )}
-              >
-                {task.title || task.description}
-              </span>
-              {task.goal_id && (
-                <span className="max-w-[100px] shrink-0 truncate rounded-md bg-foreground/[0.03] px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  {goalTitleById[task.goal_id]}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
+        <ul className={DASHBOARD_ROWS}>
+          {goalTasks.map((task) => {
+            const title = task.title || task.description
+            const goalTitle = task.goal_id ? goalTitleById[task.goal_id] : undefined
+            return (
+              <li key={task.id} className={DASHBOARD_ROW}>
+                <button
+                  type="button"
+                  aria-label={
+                    task.completed ? `Mark "${title}" incomplete` : `Mark "${title}" complete`
+                  }
+                  onClick={() => void handleToggleTaskCompletion(task.id, task.completed)}
+                  className="-my-1 flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-primary focus-visible:ring-2 focus-visible:ring-ring active:scale-95"
+                >
+                  {task.completed ? (
+                    <CheckCircle2 className="size-5 text-success" aria-hidden="true" />
+                  ) : (
+                    <Circle className="size-5" aria-hidden="true" />
+                  )}
+                </button>
+                <Link
+                  href={`/goals/${task.goal_id}?task=${task.id}`}
+                  className="flex min-h-11 min-w-0 flex-1 flex-col justify-center rounded-md px-1 outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span
+                    className={cn(
+                      "line-clamp-2 break-words text-base text-foreground",
+                      task.completed && "text-muted-foreground line-through",
+                    )}
+                  >
+                    {title}
+                  </span>
+                  {goalTitle && (
+                    <span className="truncate text-xs text-muted-foreground">{goalTitle}</span>
+                  )}
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
       )}
-    </div>
+    </DashboardCard>
   )
 }

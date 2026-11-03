@@ -199,6 +199,8 @@ export const useGoals = () => {
     allGoals,
     sortedGoals,
     isLoading: isPending,
+    /** The goals query failed (a toast also fires once); lets a card show an inline error. */
+    isError: error != null,
     isDeleting,
     goalToDelete,
     showDeleteDialog,

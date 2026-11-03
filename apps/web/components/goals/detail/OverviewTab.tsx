@@ -98,7 +98,7 @@ export function OverviewTab({
             <p className="text-base font-semibold leading-snug text-foreground">
               {nextAction.task.title || nextAction.task.description || "Untitled task"}
             </p>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-medium text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <Clock size={12} />
                 {nextAction.effortMinutes > 0
@@ -165,7 +165,7 @@ export function OverviewTab({
           </h2>
           <span
             className={cn(
-              "rounded-full px-2 py-0.5 text-[11px] font-medium",
+              "rounded-full px-2 py-0.5 text-xs font-medium",
               week.status === "over_capacity"
                 ? "bg-orange-500/10 text-orange-700 dark:text-orange-400"
                 : week.status === "nearly_full"
@@ -314,7 +314,7 @@ export function OverviewTab({
                 <span className="min-w-0 flex-1 truncate font-medium text-foreground">
                   {t.title || t.description}
                 </span>
-                <span className="shrink-0 text-[11px] font-medium tabular-nums text-muted-foreground">
+                <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
                   {getTaskDateKey(t.updated_at) ?? ""}
                 </span>
               </li>
@@ -329,7 +329,7 @@ export function OverviewTab({
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[11px] font-medium text-muted-foreground">{label}</dt>
+      <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
       <dd className="text-base font-semibold tabular-nums text-foreground">{value}</dd>
     </div>
   )
@@ -338,9 +338,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 function Detail({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
-      <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </dt>
+      <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
       <dd
         className={cn(
           "mt-0.5 text-sm leading-relaxed",

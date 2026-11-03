@@ -118,11 +118,11 @@ export function ProgressTab({
             merged PR, a recording.
           </p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="divide-y divide-border">
             {evidence.slice(0, 10).map((e) => (
-              <li key={e.id} className="rounded-lg border border-border/60 px-3 py-2">
+              <li key={e.id} className="py-2.5">
                 <p className="truncate text-sm font-medium text-foreground">{e.title}</p>
-                <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">
+                <p className="mt-0.5 text-xs font-medium text-muted-foreground">
                   {e.evidence_type} · {e.created_at.slice(0, 10)}
                   {e.numeric_value != null && ` · ${e.numeric_value}`}
                 </p>
@@ -139,9 +139,9 @@ export function ProgressTab({
             happened.
           </p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="divide-y divide-border">
             {reviews.slice(0, 5).map((r) => (
-              <li key={r.id} className="rounded-lg border border-border/60 px-3 py-2">
+              <li key={r.id} className="py-2.5">
                 <p className="text-xs font-semibold text-foreground">
                   {r.review_period_start.slice(0, 10)} → {r.review_period_end.slice(0, 10)}
                 </p>

@@ -2,22 +2,19 @@
 
 import { useMemo } from "react"
 import Link from "next/link"
-import { motion } from "motion/react"
-import { ClipboardList, Target } from "lucide-react"
+import { Target } from "lucide-react"
 
-import { Button as UIButton } from "@/components/ui/button"
+import {
+  DASHBOARD_ROW,
+  DASHBOARD_ROWS,
+  DashboardCard,
+  DashboardNote,
+} from "@/components/home/dashboard-card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DeadlineStatusBadge } from "@/components/goals/DeadlineStatusBadge"
 import { useGoals } from "@/hooks/useGoals"
 import { calculateGoalDeadlineInfo, type Goal } from "@/lib/goals"
 import { cn } from "@/lib/utils"
-
-const progressGradient = (progress: number) =>
-  progress >= 75
-    ? "linear-gradient(90deg, #10b981, #059669)"
-    : progress >= 40
-      ? "linear-gradient(90deg, #3b82f6, #2563eb)"
-      : "linear-gradient(90deg, #f59e0b, #ef4444)"
 
 const taskProgress = (goal: Goal) =>
   goal.taskCounts && goal.taskCounts.total > 0
@@ -26,8 +23,10 @@ const taskProgress = (goal: Goal) =>
 
 // Compact, dashboard-sized view of the user's active goals. Reuses the shared
 // useGoals query (cache-shared with /goals), shows the top few by sort order.
+// Rows follow the Goals list: neutral icon tile, two-line title, one-colour
+// progress bar (low progress isn't an error), deadline and task count.
 export function GoalsOverview({ className, limit = 3 }: { className?: string; limit?: number }) {
-  const { sortedGoals, isLoading } = useGoals()
+  const { sortedGoals, isLoading, isError } = useGoals()
 
   const activeGoals = useMemo(
     () => sortedGoals.filter((g) => g.status !== "completed" && g.status !== "archived"),
@@ -36,98 +35,79 @@ export function GoalsOverview({ className, limit = 3 }: { className?: string; li
   const visible = activeGoals.slice(0, limit)
 
   return (
-    <div
-      className={cn(
-        "flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-900/40 lg:p-8",
-        className,
-      )}
+    <DashboardCard
+      title="Your goals"
+      icon={Target}
+      action={{ href: "/goals", label: "View all" }}
+      className={className}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-            <Target size={20} strokeWidth={2} />
-          </div>
-          <div>
-            <h3 className="text-base font-semibold tracking-tight text-foreground">Your goals</h3>
-            <p className="text-xs font-medium text-muted-foreground">{activeGoals.length} active</p>
-          </div>
+      {isLoading ? (
+        <div className="space-y-2 py-1">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-md" />
+          ))}
         </div>
-        <UIButton
-          asChild
-          variant="ghost"
-          size="sm"
-          className="rounded-xl font-medium text-muted-foreground"
-        >
-          <Link href="/goals">View all</Link>
-        </UIButton>
-      </div>
-
-      <div className="mt-6 flex-1 space-y-3">
-        {isLoading ? (
-          <div className="space-y-3">
-            {[0, 1, 2].map((i) => (
-              <Skeleton key={i} className="h-20 w-full rounded-2xl" />
-            ))}
-          </div>
-        ) : visible.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-              <Target size={28} strokeWidth={1.75} />
-            </div>
-            <h3 className="text-base font-semibold tracking-tight">No active goals</h3>
-            <p className="mb-6 mt-1 max-w-[200px] text-xs font-medium text-muted-foreground">
-              Set a goal and track your progress in one place.
-            </p>
-            <UIButton asChild size="sm" className="rounded-xl font-medium">
-              <Link href="/goals/create">Create a goal</Link>
-            </UIButton>
-          </div>
-        ) : (
-          visible.map((goal) => {
+      ) : isError ? (
+        <DashboardNote tone="error">Couldn&apos;t load your goals.</DashboardNote>
+      ) : visible.length === 0 ? (
+        <DashboardNote>
+          No active goals.{" "}
+          <Link href="/goals/create" className="font-medium text-primary hover:underline">
+            Create a goal
+          </Link>
+        </DashboardNote>
+      ) : (
+        <ul className={DASHBOARD_ROWS}>
+          {visible.map((goal) => {
             const deadlineInfo = calculateGoalDeadlineInfo(goal)
             const progress = taskProgress(goal)
             const icon = goal.metadata?.icon
             return (
-              <Link
-                key={goal.id}
-                href={`/goals/${goal.id}`}
-                className="group flex items-center gap-4 rounded-2xl border border-border bg-background/40 p-4 transition-all hover:bg-accent/50 lg:p-5"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-2xl font-semibold text-primary">
-                  {icon || (goal.title ? goal.title.charAt(0).toUpperCase() : "G")}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-base font-semibold text-foreground transition-colors group-hover:text-primary">
-                      {goal.title}
-                    </p>
-                    <span className="shrink-0 text-xs font-semibold tabular-nums text-primary">
-                      {progress}%
+              <li key={goal.id}>
+                <Link
+                  href={`/goals/${goal.id}`}
+                  className={cn(
+                    DASHBOARD_ROW,
+                    "items-start gap-3 py-3 hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring",
+                  )}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-base font-semibold text-foreground"
+                  >
+                    {icon || (goal.title ? goal.title.charAt(0).toUpperCase() : "G")}
+                  </span>
+                  <span className="min-w-0 flex-1 space-y-1.5">
+                    <span className="flex items-start justify-between gap-3">
+                      <span className="line-clamp-2 min-w-0 break-words text-base font-medium text-foreground">
+                        {goal.title}
+                      </span>
+                      <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                        {progress}%
+                      </span>
                     </span>
-                  </div>
-                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-foreground/5">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progress}%` }}
-                      transition={{ duration: 1, ease: "easeOut" }}
-                      className="h-full rounded-full bg-primary"
-                      style={{ background: progressGradient(progress) }}
-                    />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <DeadlineStatusBadge deadlineInfo={deadlineInfo} size="sm" />
-                    <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                      <ClipboardList className="h-3 w-3" />
-                      {goal.taskCounts?.completed}/{goal.taskCounts?.total}
+                    <span className="block h-1.5 overflow-hidden rounded-full bg-muted">
+                      <span
+                        className="block h-full rounded-full bg-primary transition-[width] duration-500"
+                        style={{ width: `${progress}%` }}
+                      />
                     </span>
-                  </div>
-                </div>
-              </Link>
+                    <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      <DeadlineStatusBadge deadlineInfo={deadlineInfo} size="sm" />
+                      {goal.taskCounts && goal.taskCounts.total > 0 && (
+                        <span className="tabular-nums">
+                          {goal.taskCounts.completed}/{goal.taskCounts.total} tasks
+                        </span>
+                      )}
+                    </span>
+                  </span>
+                </Link>
+              </li>
             )
-          })
-        )}
-      </div>
-    </div>
+          })}
+        </ul>
+      )}
+    </DashboardCard>
   )
 }
 

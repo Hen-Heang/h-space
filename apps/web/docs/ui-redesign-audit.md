@@ -331,8 +331,36 @@ Done on `ui/redesign-phase3-planner`:
 - **Template create page** — the back button has an accessible name; the
   template name is an `h2`.
 
-Not yet done (Phase 3b): `/goals/overview`'s unrelated `RoadmapTeaser` and
-card mix; goal-detail tabs (pill nav → `WorkspaceTabs` style), `GoalTaskRow`
-metadata density, nested cards in the detail tabs and the 9-column task
-table; Inbox card density; the month view's hover-only day "add" button;
-nested interactive template cards on `/goals/create`.
+### Phase 3b status
+
+Done on `ui/redesign-phase3b` (2026-11-04):
+
+- **`/goals/overview`** — every card is a `DashboardCard` with divided rows
+  and an inline error state. The goal-task toggle is a sibling of its link
+  (no button inside a `role="button"` row), and progress bars use one colour.
+  The amber deadline banner is gone: the Overdue stat and the deadlines list
+  already say it. The dev-roadmap card moved to the Learning hub's Library
+  (`RoadmapLibraryItem`); `RoadmapTeaser` is deleted.
+- **Goal detail** — the section nav uses the `WorkspaceTabs` underline
+  style. The task table has 6 columns from 1024px (title, status, schedule,
+  effort), and phase, key result and impact join from 1280px; one shared
+  `taskTableColumns` keeps the header and rows aligned. `GoalTaskRow` on
+  phones and in Plan is a divider row with one metadata line (status ·
+  schedule · evidence); phase, key result, impact and effort are in the
+  details sheet. Bordered rows inside cards in Plan, Progress and Schedule
+  are divider rows, and their 10–11px text is 13px. `KeyResultsCard` is one
+  surface with divided rows.
+- **Calendar month view** — the per-day "add" button is visible (and 36px)
+  on touch, where hover never revealed it.
+- **`/goals/create`** — template cards and "Custom goal" are real links with
+  no button inside; the arrow is decoration and always visible.
+- **Inbox** — divider rows on one surface, one metadata line instead of
+  three badges, and Convert + reminder + one `⋯` menu (pin, archive, delete
+  with confirm). Errors offer "Try again".
+- **Tokens** — `--destructive-foreground` is defined, so delete-confirm
+  buttons have readable text in both themes.
+
+Sweep (worktree dev server, synthetic data): `/goals/overview`, `/inbox`,
+`/goals/create`, `/goals/calendar` and the five goal-detail routes pass at
+320/390/768/1024/1440. Remaining sub-13px text there: the `⌘K` hint, the
+"Anytime" badge and phone calendar weekday labels.

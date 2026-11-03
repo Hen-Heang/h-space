@@ -14,31 +14,39 @@ export interface GoalNavItem {
 
 /**
  * The goal's five routes. Real links, not tab triggers — so the back button,
- * middle-click and a pasted URL all behave.
+ * middle-click and a pasted URL all behave. Styled like `WorkspaceTabs`
+ * (underline on the current tab, one divider under the row, sideways scroll
+ * on narrow screens) so the app has one tab language, not a second pill bar.
  */
 export function GoalDetailNav({ items }: { items: GoalNavItem[] }) {
   const pathname = usePathname()
 
   return (
-    <nav aria-label="Goal sections" className="no-scrollbar -mx-1 overflow-x-auto px-1">
-      <ul className="inline-flex min-w-full gap-1 rounded-lg bg-foreground/5 p-1">
+    <nav
+      aria-label="Goal sections"
+      className="no-scrollbar min-w-0 overflow-x-auto shadow-[inset_0_-1px_0_var(--border)]"
+    >
+      <ul className="flex min-w-max gap-1">
         {items.map((item) => {
           const active = pathname === item.href
           return (
-            <li key={item.href} className="flex-1">
+            <li key={item.href}>
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-semibold transition-colors",
+                  "relative flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-t-md border-b-2 px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                   active
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "border-primary text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
                 {item.label}
                 {item.count != null && item.count > 0 && (
-                  <span className="tabular-nums opacity-70">{item.count}</span>
+                  <span className="tabular-nums text-muted-foreground">
+                    {item.count}
+                    <span className="sr-only"> open</span>
+                  </span>
                 )}
               </Link>
             </li>

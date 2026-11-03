@@ -46,6 +46,7 @@ html[data-theme-transition]::view-transition-new(root) {
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-accent-foreground: var(--accent-foreground);
@@ -146,6 +147,11 @@ html[data-theme-transition]::view-transition-new(root) {
   --accent: #f1f3f9;
   --accent-foreground: #1f2847;
   --destructive: oklch(0.577 0.245 27.325);
+  /* Text on a solid destructive fill (delete-confirm buttons). It was used
+     by several dialogs but never defined, so tailwind-merge dropped the
+     button's white text for a class that set nothing. White on red-600 is
+     ≈4.8:1. */
+  --destructive-foreground: #ffffff;
   --success: oklch(0.62 0.14 160);
   --success-foreground: oklch(0.985 0 0);
   --border: #e8ebf3;
@@ -189,6 +195,9 @@ html[data-theme-transition]::view-transition-new(root) {
   --accent: #1e293b;
   --accent-foreground: #f1f5f9;
   --destructive: oklch(0.704 0.191 22.216);
+  /* Dark ink, like --primary-foreground here: white on this lighter red is
+     only ≈2.8:1. */
+  --destructive-foreground: #0f172a;
   --success: oklch(0.72 0.15 162);
   --success-foreground: oklch(0.18 0.02 250);
   --border: oklch(1 0 0 / 9%);

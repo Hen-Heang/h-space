@@ -1,13 +1,14 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Plus } from "lucide-react"
+import { Inbox, Plus } from "lucide-react"
 import { motion } from "motion/react"
 
 import { GoalsHubNav } from "@/components/goals/hub/GoalsHubNav"
 import { InboxFilters } from "@/components/inbox/InboxFilters"
 import { InboxItemCard } from "@/components/inbox/InboxItemCard"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useInbox } from "@/hooks/useInbox"
 import { useSessionTimer } from "@/hooks/useSessionTimer"
@@ -28,7 +29,7 @@ export default function InboxPage() {
     query: "",
   })
 
-  const { items, loading, error } = useInbox({
+  const { items, loading, error, refetch } = useInbox({
     status: filters.status,
     itemType: filters.type,
   })
@@ -70,32 +71,45 @@ export default function InboxPage() {
         <InboxFilters value={filters} onChange={setFilters} availableTags={availableTags} />
       </motion.div>
 
-      <motion.div variants={itemVariants} className="space-y-3">
+      {/* One surface, divider rows — not a stack of bordered cards. */}
+      <motion.div variants={itemVariants}>
         {loading ? (
-          <div className="space-y-3">
+          <div className="app-surface divide-y divide-border px-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-lg border border-border bg-card p-4">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="mt-3 h-4 w-full" />
+              <div key={i} className="py-3">
+                <Skeleton className="h-4 w-full" />
                 <Skeleton className="mt-2 h-4 w-3/4" />
+                <Skeleton className="mt-3 h-3 w-32" />
               </div>
             ))}
           </div>
         ) : error ? (
-          <div className="rounded-lg border border-border bg-card px-5 py-10 text-center">
-            <p className="text-sm font-semibold text-muted-foreground">{error}</p>
+          <div
+            role="alert"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+          >
+            <span>{error}</span>
+            <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
+              Try again
+            </Button>
           </div>
         ) : visible.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border bg-card/50 px-5 py-12 text-center">
-            <p className="text-sm font-semibold text-foreground">Nothing here yet</p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              {items.length === 0
-                ? "Use Quick capture (⌘K → Quick capture, or the button above) to jot down your first thought."
-                : "Nothing matches these filters."}
-            </p>
-          </div>
+          <EmptyState
+            surface
+            icon={Inbox}
+            title={items.length === 0 ? "Nothing captured yet" : "Nothing matches these filters"}
+            description={
+              items.length === 0
+                ? "Use Quick capture (⌘K, or the button above) to jot down your first thought."
+                : undefined
+            }
+          />
         ) : (
-          visible.map((item) => <InboxItemCard key={item.id} item={item} />)
+          <ul className="app-surface divide-y divide-border px-4">
+            {visible.map((item) => (
+              <InboxItemCard key={item.id} item={item} />
+            ))}
+          </ul>
         )}
       </motion.div>
     </motion.div>

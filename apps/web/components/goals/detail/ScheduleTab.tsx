@@ -174,7 +174,7 @@ export function ScheduleTab({
           </h3>
           <span
             className={cn(
-              "rounded-full px-2 py-0.5 text-[11px] font-medium",
+              "rounded-full px-2 py-0.5 text-xs font-medium",
               week.status === "over_capacity"
                 ? "bg-orange-500/10 text-orange-700 dark:text-orange-400"
                 : week.status === "nearly_full"
@@ -202,7 +202,7 @@ export function ScheduleTab({
 
         <div className="mt-3 flex items-end gap-2">
           <div className="flex-1 space-y-1.5">
-            <Label htmlFor="weekly-capacity" className="text-[11px]">
+            <Label htmlFor="weekly-capacity" className="text-xs">
               Minutes per week
             </Label>
             <Input
@@ -234,7 +234,7 @@ export function ScheduleTab({
             <AlertTriangle size={13} /> {conflicts.length} overlapping session
             {conflicts.length === 1 ? "" : "s"}
           </h3>
-          <ul className="mt-2 space-y-1 text-[11px] font-medium text-muted-foreground">
+          <ul className="mt-2 space-y-1 text-xs font-medium text-muted-foreground">
             {conflicts.slice(0, 4).map((c, i) => (
               <li key={i} className="truncate">
                 {c.date}: “{c.a.title}” ↔ “{c.b.title}”
@@ -250,22 +250,19 @@ export function ScheduleTab({
           Unscheduled backlog
           <span className="ml-2 tabular-nums text-foreground">{backlog.length}</span>
         </h3>
-        <ul className="mt-2.5 space-y-1.5">
+        <ul className="mt-2.5 divide-y divide-border">
           {backlog.length === 0 && (
             <li className="text-xs font-medium text-muted-foreground">
               Everything open has a time slot.
             </li>
           )}
           {backlog.slice(0, 8).map((t) => (
-            <li
-              key={t.id}
-              className="truncate rounded-lg border border-border/60 px-2.5 py-2 text-sm font-medium text-foreground"
-            >
+            <li key={t.id} className="truncate py-2 text-sm font-medium text-foreground">
               {t.title || t.description || "Untitled task"}
             </li>
           ))}
           {backlog.length > 8 && (
-            <li className="text-[11px] font-medium text-muted-foreground">
+            <li className="text-xs font-medium text-muted-foreground">
               +{backlog.length - 8} more
             </li>
           )}
@@ -288,18 +285,18 @@ export function ScheduleTab({
           </Button>
         </div>
 
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-3 divide-y divide-border">
           {rules.length === 0 && !rulesLoading && (
             <li className="text-xs font-medium text-muted-foreground">
               No routines yet. A routine turns “three times a week” into real sessions on demand.
             </li>
           )}
           {rules.map((rule) => (
-            <li key={rule.id} className="rounded-lg border border-border/60 p-2.5">
+            <li key={rule.id} className="py-2.5">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">{rule.title}</p>
-                  <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">
+                  <p className="mt-0.5 text-xs font-medium text-muted-foreground">
                     {describeRecurrence(rule)}
                     {rule.start_time && ` · ${rule.start_time.slice(0, 5)}`}
                     {rule.duration_minutes && ` · ${rule.duration_minutes}m`}

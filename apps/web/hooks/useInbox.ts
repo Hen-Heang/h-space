@@ -13,7 +13,7 @@ export const inboxItemQueryKey = (id: string) => ["inbox-item", id] as const
 /** Bounded list, refined further client-side by lib/inbox.ts's filterInboxItems. */
 export function useInbox(params: InboxListParams = {}) {
   const userId = getUserId()
-  const { data, isPending, isError } = useQuery({
+  const { data, isPending, isError, refetch } = useQuery({
     queryKey: inboxQueryKey(userId, params),
     queryFn: () => inboxApi.list(params),
     enabled: userId != null,
@@ -22,7 +22,9 @@ export function useInbox(params: InboxListParams = {}) {
   return {
     items: (data ?? []) as InboxItem[],
     loading: isPending,
-    error: isError ? "Failed to load your inbox." : "",
+    error: isError ? "Couldn't load your inbox." : "",
+    /** Retry after an error. */
+    refetch,
   }
 }
 

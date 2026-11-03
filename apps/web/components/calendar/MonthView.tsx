@@ -121,7 +121,10 @@ export function MonthView({
                       onQuickAdd(date)
                     }}
                     aria-label={`Add task on ${format(date, "MMMM d")}`}
-                    className="absolute right-0.5 top-0.5 hidden h-5 w-5 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 group-hover:opacity-100 sm:flex"
+                    // Revealed on hover for a mouse; always shown (and larger)
+                    // on touch, where there is no hover to reveal it. Phones
+                    // (< sm) add through the selected day instead.
+                    className="absolute right-0.5 top-0.5 hidden h-5 w-5 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 group-hover:opacity-100 sm:flex [@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-9 [@media(pointer:coarse)]:opacity-100"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>
