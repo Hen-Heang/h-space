@@ -6,17 +6,10 @@ import { ArrowUpRight, Star } from "lucide-react"
 
 import { projectIcons } from "@/components/home/MyAppsSection"
 import { filterApps, parseAppFavorites, readAppFavoritesRaw } from "@/lib/apps-catalog"
-import { hSpaceProjects, type HSpaceProject } from "@/lib/projects"
-import { cn } from "@/lib/utils"
+import { hSpaceProjects } from "@/lib/projects"
 
 // Favorites only change on /apps, never while Overview is on screen.
 const subscribeNoop = () => () => {}
-
-const ICON_TONES: Partial<Record<HSpaceProject["id"], string>> = {
-  "hengo-learning": "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  "h-vault": "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  luyra: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-}
 
 /**
  * Overview's My Apps grid (Figma "My Apps" cards): the in-app destinations
@@ -39,35 +32,36 @@ export function QuickAccess() {
   )
 
   return (
-    <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
       {links.map(({ project, href }) => {
         const Icon = projectIcons[project.id]
         const external = !href.startsWith("/")
+        // A visual catalogue, so a grid of surfaces — but flat: no shadow, no
+        // hover lift, one neutral icon tile instead of a colour per app.
         const className =
-          "group flex h-full flex-col rounded-2xl border border-border bg-card p-4 shadow-sm shadow-slate-950/[0.03] outline-none transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring"
+          "app-surface group flex h-full min-w-0 flex-col p-4 outline-none transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring"
         const body = (
           <>
-            <div className="flex items-start justify-between gap-3">
-              <span
-                className={cn(
-                  "flex size-10 shrink-0 items-center justify-center rounded-xl",
-                  ICON_TONES[project.id] ?? "bg-primary/10 text-primary",
-                )}
-              >
-                <Icon size={19} strokeWidth={2} aria-hidden="true" />
+            <div className="flex items-center gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+                <Icon size={18} strokeWidth={2} aria-hidden="true" />
               </span>
-              <span className="truncate rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
-                {project.area}
+              <span className="min-w-0">
+                <span className="flex items-center gap-1.5 text-base font-semibold text-foreground">
+                  {favorites.has(project.id) && (
+                    <Star
+                      size={14}
+                      className="shrink-0 fill-amber-400 text-amber-400"
+                      aria-label="Favorite"
+                    />
+                  )}
+                  <span className="truncate">{project.name}</span>
+                </span>
+                <span className="block truncate text-xs text-muted-foreground">{project.area}</span>
               </span>
             </div>
-            <p className="mt-4 flex items-center gap-1.5 text-base font-bold text-foreground">
-              {favorites.has(project.id) && (
-                <Star size={13} className="fill-amber-400 text-amber-400" aria-label="Favorite" />
-              )}
-              {project.name}
-            </p>
-            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{project.description}</p>
-            <span className="mt-4 flex items-center gap-1 border-t border-border pt-3 text-xs font-semibold text-primary">
+            <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{project.description}</p>
+            <span className="mt-auto flex items-center gap-1 pt-3 text-sm font-medium text-primary">
               Open app
               <ArrowUpRight
                 size={13}

@@ -2,7 +2,9 @@ import { GOAL_HEALTH_LABELS, getHealthStatusStyling, type GoalHealthStatus } fro
 import { cn } from "@/lib/utils"
 
 // Health status is always shown as a dot + text label together — never
-// color alone (accessibility requirement: don't rely only on color).
+// color alone (accessibility requirement: don't rely only on color). The dot
+// carries the color; the label stays neutral and readable (13px+), with no
+// pill chrome, so a row with a health status doesn't read as a row of badges.
 export function HealthBadge({
   status,
   reason,
@@ -16,16 +18,12 @@ export function HealthBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border font-medium",
-        styling.badgeColor,
-        size === "sm" ? "px-2.5 py-0.5 text-[10px]" : "px-3 py-1 text-xs",
+        "inline-flex shrink-0 items-center gap-1.5 font-medium text-muted-foreground",
+        size === "sm" ? "text-xs" : "text-sm",
       )}
       title={reason ?? undefined}
     >
-      <span
-        className={cn("h-1.5 w-1.5 shrink-0 rounded-full", styling.dotColor)}
-        aria-hidden="true"
-      />
+      <span className={cn("size-2 shrink-0 rounded-full", styling.dotColor)} aria-hidden="true" />
       {GOAL_HEALTH_LABELS[status]}
     </span>
   )

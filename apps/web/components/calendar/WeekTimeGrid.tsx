@@ -85,7 +85,7 @@ export function WeekTimeGrid({
       {/* Sticky day-header row */}
       <div className="flex border-b border-border/60 bg-card/60 backdrop-blur-md">
         <div
-          className="flex w-14 shrink-0 items-end justify-end pb-2 pr-1.5 text-[9px] font-medium text-muted-foreground sm:w-16"
+          className="flex w-14 shrink-0 items-end justify-end pb-2 pr-1.5 text-xs font-medium text-muted-foreground sm:w-16"
           title="Times use your local time zone"
         >
           {timeZoneLabel}
@@ -167,7 +167,7 @@ export function WeekTimeGrid({
                 style={{ height: hourHeight }}
               >
                 {hour > 0 && (
-                  <span className="absolute -top-2 right-1.5 text-[11px] font-medium text-muted-foreground sm:text-xs">
+                  <span className="absolute -top-2 right-1.5 text-xs font-medium text-muted-foreground">
                     {formatHourLabel(hour)}
                   </span>
                 )}
@@ -209,14 +209,15 @@ function AllDayStrip({ days, getTasksForDate, onTaskClick, colWidth }: AllDayStr
   return (
     <div className="flex border-b border-border/60 bg-muted/30">
       <div className="flex w-14 shrink-0 items-center justify-end pr-1.5 sm:w-16">
-        <span className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
-          All-day
-        </span>
+        <span className="text-xs font-medium text-muted-foreground">All-day</span>
       </div>
       {days.map((day, i) => (
+        // min-w-0: a flex item's minimum width is its content by default, so
+        // one long (nowrap, truncated) chip title widened its column past
+        // the screen at 320px instead of truncating inside it.
         <div
           key={day.toISOString()}
-          className="flex-1 space-y-1 border-l border-border/40 p-1"
+          className="min-w-0 flex-1 space-y-1 border-l border-border/40 p-1"
           style={{ width: colWidth }}
         >
           {perDay[i].map((task) => {

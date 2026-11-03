@@ -249,7 +249,10 @@ test.describe("UI route sweep", () => {
           // Redirect stubs (/ask-hengo → /chat) must settle first, or the
           // baseline measures a half-rendered "Rendering…" frame.
           await page.waitForLoadState("networkidle", { timeout: 30_000 }).catch(() => {})
-          await expect(page.locator("main")).toBeVisible({ timeout: 90_000 })
+          // The shell's own <main>, by id: a page that renders a second
+          // <main> (practice/today does — a known P1) must not stop the
+          // measurement with a strict-mode locator error.
+          await expect(page.locator("main#main-content")).toBeVisible({ timeout: 90_000 })
           await page.waitForTimeout(1200)
         } else {
           await page.waitForTimeout(500)

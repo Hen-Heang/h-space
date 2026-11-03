@@ -376,8 +376,13 @@ export default function TemplateFormPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/goals/create")}>
-            <ArrowLeft className="h-5 w-5" />
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Back to templates"
+            onClick={() => router.push("/goals/create")}
+          >
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Button>
           <div className="flex items-center gap-3">
             <div
@@ -387,8 +392,9 @@ export default function TemplateFormPage() {
               {template.icon}
             </div>
             <div className="min-w-0">
-              <h1 className="truncate font-semibold tracking-tight">{template.name}</h1>
-              <p className="text-[11px] font-medium text-primary/70">{template.category}</p>
+              {/* h2: the shell header owns the page's only h1. */}
+              <h2 className="truncate text-base font-semibold tracking-tight">{template.name}</h2>
+              <p className="text-xs font-medium text-muted-foreground">{template.category}</p>
             </div>
           </div>
         </div>

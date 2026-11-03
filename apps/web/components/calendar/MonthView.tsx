@@ -79,7 +79,7 @@ export function MonthView({
             <div
               key={day}
               className={cn(
-                "py-3 text-[11px] font-bold uppercase tracking-wide",
+                "py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground",
                 i === 0 || i === 6 ? "text-muted-foreground" : "text-muted-foreground",
               )}
             >
@@ -135,7 +135,8 @@ export function MonthView({
                     aria-label={isCurrentMonth ? format(date, "MMMM d") : undefined}
                     aria-pressed={isCurrentMonth ? isSelected : undefined}
                     className={cn(
-                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 sm:h-7 sm:w-7 sm:text-xs",
+                      // 24px circle, ~40px tap area via the after: layer.
+                      "relative flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-all after:absolute after:-inset-2 after:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 sm:h-7 sm:w-7",
                       today && !isSelected && "bg-primary text-primary-foreground shadow",
                       isSelected && "scale-110 bg-primary/90 text-primary-foreground shadow",
                       !today &&
@@ -188,7 +189,9 @@ export function MonthView({
                             }}
                             aria-label={task.title || task.description}
                             className={cn(
-                              "mx-0.5 flex items-center gap-1 truncate rounded-md border border-l-2 px-2 py-1 text-left text-[10px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70",
+                              // Dense-visualisation exception (docs/design-system.md):
+                              // 11px only in a ~41px phone month cell, 13px from sm.
+                              "mx-0.5 flex items-center gap-1 truncate rounded-md border border-l-2 px-2 py-1 text-left text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 sm:text-xs",
                               task.completed
                                 ? "text-muted-foreground line-through opacity-60"
                                 : "text-foreground hover:brightness-95 dark:hover:brightness-110",
@@ -209,7 +212,7 @@ export function MonthView({
                         )
                       })}
                       {dayTasks.length > maxVisibleTasks && (
-                        <div className="text-center text-[9px] font-medium text-muted-foreground">
+                        <div className="text-center text-[11px] font-medium text-muted-foreground sm:text-xs">
                           +{dayTasks.length - maxVisibleTasks} more
                         </div>
                       )}

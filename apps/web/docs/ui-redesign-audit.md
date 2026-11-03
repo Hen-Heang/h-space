@@ -280,3 +280,59 @@ Remaining overflows are all in page-level components scheduled for Phases
 - The small-text report now flags anything under the 13px floor, not 12px.
 - The runs above weren't repeated with the new check. The Phase 6 full re-run
   replaces them.
+
+**Correction — the Phase 1 + 2 after-sweep ran on stale CSS.** The local dev
+server had missed the `globals.css` change, so those runs rendered `text-xs`
+at 12px and had no `.app-surface-muted`. The code was right (the production
+build emits `--text-xs: .8125rem`); the 13px floor just wasn't what got
+measured. The Phase 3 run below used a restarted server and replaces them.
+
+**After Phase 3** (2026-11-03, branch `ui/redesign-phase3-planner`, fresh dev
+server, tightened check):
+
+| Run                                       | Result                                                                                                                                                                                              |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Light, 48 routes × 7 widths (`after-p3/`) | 41 pass. Overflow on `/vault`, `/chat`, `/ask-hengo`, `/notes/new`, `/review/*` ×3 — the baseline offenders, unchanged, scheduled for Phases 4–5. **No new overflow from the 13px floor anywhere.** |
+| `/goals`, `/goals/tasks`, `/home`         | Pass at all 7 widths. `/goals` no longer overflows at 320px                                                                                                                                         |
+| `/goals/calendar`, `/goals/[id]/schedule` | Pass at all 7 widths after the all-day column fix (re-run after the full sweep, which had measured the calendar before the fix landed)                                                              |
+| `/learn/today`                            | Passes. It redirects to `/practice/today`, which renders a second `<main>` (P1, Phase 5); the sweep now waits on the shell's `main#main-content` instead of failing on the duplicate                |
+| Dark, 48 routes × 390/1440                | 45 pass + `/learn/today` (re-run). `/chat` and `/ask-hengo` overflow at 390px, same as light                                                                                                        |
+| `tests/e2e/shell-sticky.e2e.ts`           | 11 / 11 pass                                                                                                                                                                                        |
+
+### Phase 3 status
+
+Done on `ui/redesign-phase3-planner`:
+
+- **Home** — the day's work leads (Today: tasks + Upcoming; Progress: goals,
+  habits, continue/learning), then My Apps, the snapshot as a quiet strip and
+  the "Your daily space" strip — both kept, moved below the work at the
+  owner's choice. Every card uses one `DashboardCard` frame (one border, a
+  neutral icon, divided rows, sentence-style empty/error states). Fixed: a
+  `role="button"` row nesting a toggle button (now a button beside a link),
+  per-card rainbow icons, the 11px eyebrows, the "Could't" typo.
+- **`HealthBadge`** — a dot plus a 13px label, no 10px pill (5 screens).
+- **Goals list** — the filter fits 320px; the list/grid toggle shares the sort
+  row (owner's choice); rows are a real stretched link with a two-line title,
+  status · deadline · tasks on one wrapping line (deadline now visible on
+  phones), a single-colour progress bar and one `⋯` menu on phones (the star
+  joins the menu below `sm`). No more buttons nested in a `role="link"` div.
+- **Tasks tab (`TodaysTasks`)** — Edit/Delete were hover-only 28px buttons
+  (invisible on touch): now one always-visible `⋯` menu. Rows are links;
+  16px inputs (no iOS zoom); details and colour behind "More options"; the
+  colour swatches wrap (they clipped at 320px); an error state; no second
+  title block or collapse toggle; no nested scroll area.
+- **Goal detail** — the title is an `h2` (the shell owns the `h1`) and wraps;
+  the mobile sticky "Add task" bar sits above the bottom nav instead of under
+  it.
+- **Calendar** — all-day columns no longer widen past the screen
+  (`min-w-0`); 9–11px labels are 13px (month-cell chips stay 11px on phones
+  only — the documented dense exception); `ModernTaskItem` Edit/Delete are
+  44px on touch; day numbers and checkboxes get larger tap areas.
+- **Template create page** — the back button has an accessible name; the
+  template name is an `h2`.
+
+Not yet done (Phase 3b): `/goals/overview`'s unrelated `RoadmapTeaser` and
+card mix; goal-detail tabs (pill nav → `WorkspaceTabs` style), `GoalTaskRow`
+metadata density, nested cards in the detail tabs and the 9-column task
+table; Inbox card density; the month view's hover-only day "add" button;
+nested interactive template cards on `/goals/create`.

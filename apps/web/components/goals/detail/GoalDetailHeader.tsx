@@ -96,9 +96,12 @@ export function GoalDetailHeader({
         </div>
 
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-semibold leading-tight tracking-tight text-foreground sm:text-xl">
+          {/* h2, not h1: the shell header renders the page's only h1. The
+              goal title wraps (two lines) instead of truncating to a few
+              words on phones. */}
+          <h2 className="line-clamp-2 break-words text-lg font-semibold leading-tight tracking-tight text-foreground sm:text-xl">
             {goal.title}
-          </h1>
+          </h2>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {health && <HealthBadge status={health.status} reason={health.reason} />}
             {deadlineInfo && <DeadlineStatusBadge deadlineInfo={deadlineInfo} size="sm" />}
