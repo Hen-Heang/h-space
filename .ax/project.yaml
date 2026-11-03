@@ -14,9 +14,10 @@ context:
   domain: .ax/context/domain.md
   database: .ax/context/database.md
 commands:
-  build: npm run build
-  lint: npm run lint
-  test: npm test
+  # pnpm workspace (packageManager pnpm@10) — npm would ignore pnpm-lock.yaml.
+  build: pnpm build
+  lint: pnpm lint
+  test: pnpm test
 tools:
   codebase:
     enabled: true

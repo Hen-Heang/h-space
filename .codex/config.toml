@@ -1,3 +1,30 @@
+# Project-level Codex config for h-space. Loaded on top of ~/.codex/config.toml
+# because E:\Fullstack\h-space is a trusted project.
+# Rules for agents live in AGENTS.md (+ apps/web/AGENTS.md); command denials in
+# .codex/rules/.
+
+# Edit files only inside this repo; ask before anything outside the sandbox
+# (network for `pnpm install`, writes elsewhere, etc.).
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+# Root AGENTS.md + apps/web/AGENTS.md are ~36 KB together, over the 32 KiB
+# default — without this, work inside apps/web would see truncated rules.
+project_doc_max_bytes = 65536
+
+[sandbox_workspace_write]
+# Off by default: lint, tests and build don't need the network once
+# node_modules is installed. Codex will ask when something does.
+network_access = false
+
+[shell_environment_policy]
+# Don't hand secrets from the parent shell (OPENAI_API_KEY,
+# SUPABASE_SERVICE_ROLE_KEY, GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY, Vercel and
+# GitHub tokens...) to commands Codex runs. CI-style placeholders are enough
+# for tests (see .github/workflows/web.yml).
+inherit = "all"
+exclude = ["*SECRET*", "*PASSWORD*", "*TOKEN*", "*_KEY", "*API_KEY*", "*SERVICE_ROLE*", "DATABASE_URL", "VERCEL_*", "GH_*", "GITHUB_*"]
+
 # Project-scoped Notion MCP connection for Hengo.
 # OAuth credentials are stored by Codex outside this repository.
 [mcp_servers.notion]

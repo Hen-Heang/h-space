@@ -4,19 +4,89 @@
     "allow": [
       "Bash(git status:*)",
       "Bash(git diff:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm format:web:check)"
     ],
     "deny": [
-      "Bash(git push --force*)",
-      "Bash(git reset --hard*)",
-      "Bash(git checkout -- *)",
       "Read(**/.env)",
       "Read(**/.env.*)",
+      "Read(**/*.env)",
       "Read(**/*.pem)",
       "Read(**/*.key)",
+      "Read(**/*.p12)",
+      "Read(**/*.pfx)",
       "Read(**/*.jks)",
       "Read(**/.ssh/**)",
-      "Read(**/secrets/**)"
+      "Read(**/secrets/**)",
+      "Read(**/credentials*)",
+      "Read(**/.vercel/**)",
+      "Edit(**/.env)",
+      "Edit(**/.env.local)",
+      "Write(**/.env)",
+      "Write(**/.env.local)",
+      "Bash(cat *.env*)",
+      "Bash(cat */.env*)",
+      "Bash(type *.env*)",
+      "Bash(less *.env*)",
+      "Bash(more *.env*)",
+      "Bash(head *.env*)",
+      "Bash(tail *.env*)",
+      "Bash(grep * .env*)",
+      "Bash(grep * */.env*)",
+      "Bash(printenv:*)",
+      "Bash(env)",
+      "Bash(git reset:*)",
+      "Bash(git clean:*)",
+      "Bash(git checkout -- *)",
+      "Bash(git checkout .)",
+      "Bash(git restore:*)",
+      "Bash(git rebase:*)",
+      "Bash(git branch -D:*)",
+      "Bash(git commit --amend:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f)",
+      "Bash(git push * -f *)",
+      "Bash(git filter-branch:*)",
+      "Bash(git add -A:*)",
+      "Bash(git add .)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh workflow run:*)",
+      "Bash(rm -rf:*)",
+      "Bash(rm -fr:*)",
+      "Bash(supabase db push:*)",
+      "Bash(supabase db reset:*)",
+      "Bash(supabase migration repair:*)",
+      "Bash(npx supabase db push:*)",
+      "Bash(npx supabase db reset:*)",
+      "Bash(pnpm dlx supabase db push:*)",
+      "Bash(psql:*)",
+      "Bash(vercel --prod:*)",
+      "Bash(vercel deploy --prod:*)",
+      "Bash(vercel promote:*)",
+      "Bash(vercel env pull:*)",
+      "Bash(vercel env add:*)",
+      "Bash(vercel env rm:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-git.js\"" }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-secrets.js\"" }
+        ]
+      }
     ]
   }
 }
