@@ -1,0 +1,44 @@
+# Codex command policy for h-space — the Codex counterpart of the deny list in
+# .claude/settings.json. Rules match a command's leading tokens.
+# decision: "forbidden" = never run, "prompt" = ask the user first.
+# Why these exist: AGENTS.md "Secrets and the live database" and "Git".
+
+# --- Destructive git: never ---
+prefix_rule(pattern=["git", "reset", "--hard"], decision="forbidden")
+prefix_rule(pattern=["git", "clean"], decision="forbidden")
+prefix_rule(pattern=["git", "push", ["--force", "-f", "--force-with-lease"]], decision="forbidden")
+prefix_rule(pattern=["git", "filter-branch"], decision="forbidden")
+prefix_rule(pattern=["git", "checkout", ["--", "."]], decision="forbidden")
+prefix_rule(pattern=["git", "restore"], decision="forbidden")
+prefix_rule(pattern=["git", "branch", "-D"], decision="forbidden")
+prefix_rule(pattern=["git", "commit", "--amend"], decision="forbidden")
+prefix_rule(pattern=["git", "rebase"], decision="forbidden")
+prefix_rule(pattern=["git", "add", ["-A", "."]], decision="forbidden")
+
+# --- Publishing: only when the user explicitly asked ---
+prefix_rule(pattern=["git", "commit"], decision="prompt")
+prefix_rule(pattern=["git", "push"], decision="prompt")
+prefix_rule(pattern=["gh", "pr", "create"], decision="prompt")
+prefix_rule(pattern=["gh", "pr", "merge"], decision="forbidden")
+prefix_rule(pattern=["gh", "workflow", "run"], decision="forbidden")
+
+# --- Live Supabase database (shared with Orbit): never from an agent ---
+prefix_rule(pattern=["supabase", "db", ["push", "reset"]], decision="forbidden")
+prefix_rule(pattern=["supabase", "migration", "repair"], decision="forbidden")
+prefix_rule(pattern=[["npx", "pnpm"], "supabase", "db", ["push", "reset"]], decision="forbidden")
+prefix_rule(pattern=["pnpm", "dlx", "supabase", "db", ["push", "reset"]], decision="forbidden")
+prefix_rule(pattern=["psql"], decision="forbidden")
+
+# --- Production deploys and Vercel env: never from an agent ---
+prefix_rule(pattern=["vercel", ["--prod", "promote"]], decision="forbidden")
+prefix_rule(pattern=["vercel", "deploy", "--prod"], decision="forbidden")
+prefix_rule(pattern=["vercel", "env"], decision="forbidden")
+
+# --- Secrets: never print env files or the environment ---
+prefix_rule(pattern=[["cat", "type", "Get-Content", "more", "less", "head", "tail"], [".env", ".env.local", "apps/web/.env.local", "apps\\web\\.env.local", "apps/luyra/.env.local", "apps\\luyra\\.env.local"]], decision="forbidden")
+prefix_rule(pattern=["printenv"], decision="forbidden")
+prefix_rule(pattern=["env"], decision="forbidden")
+
+# --- Bulk deletion ---
+prefix_rule(pattern=["rm", ["-rf", "-fr"]], decision="forbidden")
+prefix_rule(pattern=["Remove-Item", "-Recurse"], decision="prompt")
