@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, Search, Settings } from "lucide-react"
 
 import { NotificationBell } from "@/components/notifications/NotificationBell"
-import { ThemeToggle } from "@/components/theme-toggle"
 import {
   allNavItems,
   getActiveNavItem,
@@ -83,14 +82,12 @@ export function MobileHeader({
         <Settings size={20} />
       </Link>
 
-      {/* Theme and notifications stay off detail pages: five 44px targets
-          don't fit beside a back button and a title on a 390px screen, and
-          both are one tap away on any root page. */}
+      {/* Notifications stay off detail pages: four 44px targets don't fit
+          beside a back button and a title on a 390px screen, and the bell is
+          one tap away on any root page. The theme switch lives in the More
+          sheet, not here — content over chrome on a phone. */}
       {!detail && (
-        <>
-          <ThemeToggle className="size-11 rounded-lg border-transparent bg-transparent shadow-none" />
-          <NotificationBell className="size-11 rounded-lg border-transparent bg-transparent shadow-none hover:bg-accent" />
-        </>
+        <NotificationBell className="size-11 rounded-lg border-transparent bg-transparent shadow-none hover:bg-accent" />
       )}
     </header>
   )

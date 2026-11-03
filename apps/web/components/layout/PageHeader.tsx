@@ -35,9 +35,10 @@ export function PageHeader({
     <div className={cn("flex flex-wrap items-end justify-between gap-3 pb-4", className)}>
       <div className="min-w-0">
         {breadcrumb && breadcrumb.length > 0 && <BreadcrumbTrail items={breadcrumb} />}
-        <h1 className="mt-1 truncate text-xl font-semibold tracking-tight text-foreground">
+        {/* h2: the shell header owns the page's only h1. */}
+        <h2 className="mt-1 truncate text-xl font-semibold tracking-tight text-foreground">
           {title}
-        </h1>
+        </h2>
         {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}

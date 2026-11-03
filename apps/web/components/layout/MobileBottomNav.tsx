@@ -20,7 +20,8 @@ function TabLabel({ active, children }: { active: boolean; children: React.React
   return (
     <span
       className={cn(
-        "w-full truncate px-0.5 text-center text-[11px] leading-none",
+        // text-xs is the 13px floor (globals.css); five tabs still fit at 320px.
+        "w-full truncate px-0.5 text-center text-xs leading-none",
         active ? "font-semibold" : "font-medium",
       )}
     >

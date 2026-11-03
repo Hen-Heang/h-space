@@ -117,24 +117,27 @@ export default function HomePage() {
         <QuickAccess />
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section aria-label="Today's focus" className="lg:col-span-2">
+      {/* grid-cols-1 (minmax(0, 1fr)), not the implicit auto track: an auto
+          track grows to its widest unbreakable content, so one long
+          single-line task title pushed the whole card off a phone screen. */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <section aria-label="Today's focus" className="min-w-0 lg:col-span-2">
           <TodayTasksCard />
         </section>
-        <section aria-label="Upcoming">
+        <section aria-label="Upcoming" className="min-w-0">
           <UpcomingEventsCard />
         </section>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <section
           aria-label="Progress"
-          className="grid gap-6 md:grid-cols-2 md:items-start lg:col-span-2"
+          className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 md:items-start lg:col-span-2"
         >
           <ActiveGoalsCard />
           <TodayHabitCheckins />
         </section>
-        <section aria-label="Continue" className="space-y-6">
+        <section aria-label="Continue" className="min-w-0 space-y-6">
           {/* ContinueCard renders nothing until there's history. */}
           <ContinueCard />
           <LearningWidget

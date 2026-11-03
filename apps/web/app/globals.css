@@ -94,6 +94,14 @@ html[data-theme-transition]::view-transition-new(root) {
 }
 
 @theme {
+  /* Type scale floor (docs/design-system.md). `text-xs` is the metadata /
+     label size and the smallest size the app uses for anything meaningful:
+     13px instead of Tailwind's 12px, so captions, badges and timestamps stay
+     readable at arm's length. The rest of the ramp is Tailwind's default
+     (sm 14 · base 16 · lg 18 · xl 20 · 2xl 24), scaled by the root size. */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.125rem;
+
   --animate-shimmer: shimmer 1.8s ease-in-out infinite;
 
   @keyframes shimmer {
@@ -336,9 +344,16 @@ html[data-theme-transition]::view-transition-new(root) {
     scrollbar-width: none;
   }
 
-  /* The standard card surface: one border, no shadow. */
+  /* The standard card surface: one border, no shadow. Use it to group content
+     only when grouping helps — a page section needs no surface at all
+     (`PageSection`), and a list is rows with dividers (`RowList`). */
   .app-surface {
     @apply rounded-lg border border-border bg-card;
+  }
+
+  /* A quieter grouping surface: tinted background, no border. */
+  .app-surface-muted {
+    @apply rounded-lg bg-muted/60;
   }
 
   .app-kicker {

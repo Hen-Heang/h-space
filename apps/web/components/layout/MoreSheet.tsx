@@ -3,6 +3,7 @@
 import { ChevronRight } from "lucide-react"
 
 import { NavRow } from "@/components/layout/NavItem"
+import { ThemeToggle } from "@/components/theme-toggle"
 import {
   Sheet,
   SheetContent,
@@ -46,8 +47,11 @@ export function MoreSheet({
         side="bottom"
         className="max-h-[85dvh] gap-0 rounded-t-xl pb-[max(1rem,env(safe-area-inset-bottom))]"
       >
-        <SheetHeader className="pb-1">
+        {/* pr-14 keeps the theme switch clear of the sheet's close button. */}
+        <SheetHeader className="flex-row items-center justify-between gap-3 pb-1 pr-14">
           <SheetTitle>More</SheetTitle>
+          {/* The phone's theme switch (moved out of MobileHeader). */}
+          <ThemeToggle className="size-11 rounded-lg border-transparent bg-transparent shadow-none" />
           <SheetDescription className="sr-only">
             Workspaces without a tab, tools, and every H-Space page.
           </SheetDescription>

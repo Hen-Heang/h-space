@@ -27,7 +27,9 @@ export function HomeHero() {
       </p>
       <h3
         id="home-hero-title"
-        className="mt-4 max-w-xl text-2xl font-bold tracking-tight sm:text-[28px]"
+        // Explicit: globals.css gives every heading text-foreground, which
+        // beats the inherited text-white and left this title dark-on-navy.
+        className="mt-4 max-w-xl text-2xl font-bold tracking-tight text-white sm:text-[28px]"
       >
         Everything you need, in one place.
       </h3>
