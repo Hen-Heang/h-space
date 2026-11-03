@@ -19,8 +19,8 @@ migrations, deployments, or database work merely because they are described here
 
 ## Useful surfaces
 
-- Rules: [base](rules/base-rule.md), [security](rules/security.md), and [verification](rules/verification.md).
-- Rules: [base](rules/base-rule.md), [security](rules/security.md), [verification](rules/verification.md), and [UI](rules/ui.md).
+- Rules: [base](rules/base-rule.md), [security](rules/security.md), [vault](rules/vault.md), [verification](rules/verification.md), and [UI](rules/ui.md).
+- Guardrails: [settings.json](settings.json) denies secret reads, destructive git, live-database and production-deploy commands; [hooks/](hooks/) block commits/pushes on `main` and writes that look like real secrets or put a secret behind `NEXT_PUBLIC_`. Don't work around them — fix the cause or ask.
 - Procedures: [develop](skills/develop/SKILL.md), [plan](skills/dev-plan/SKILL.md), [review](skills/code-review/SKILL.md), and [UI review](skills/ui-review/SKILL.md).
 - Roles: [planner](agents/planner.md), [developer](agents/developer.md), [frontend](agents/frontend.md), [reviewer](agents/reviewer.md), and [qa](agents/qa.md).
 - Project metadata: [config/project.yaml](config/project.yaml).
