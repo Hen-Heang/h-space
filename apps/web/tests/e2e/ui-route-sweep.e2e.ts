@@ -237,6 +237,7 @@ const ROUTES = [
   "/finance",
   "/finance/transactions",
   "/finance/budgets",
+  "/finance/savings",
   "/finance/analytics",
 ]
 

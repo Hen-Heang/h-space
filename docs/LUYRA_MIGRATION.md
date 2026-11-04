@@ -106,9 +106,13 @@ moved; H-Space already owns those.
      rules and budgets now reject a category or payment method that isn't
      the caller's (`services/finance-ownership.ts`); Luyra only checked this
      for bulk recategorize.
-4. **Remaining screens, one feature per PR** — savings, subscriptions,
-   review, settings (categories, payment methods, preferences, reports),
-   export, Money Coach. Each with a denial test.
+4. **Remaining screens, one feature per PR** — each with a denial test.
+   - Savings — ✅ code (2026-11-04, branch `feat/finance-savings`):
+     `/finance/savings`, goals create/edit/delete and contributions
+     (`/api/finance/savings`, `/[id]`, `/[id]/contributions`). Luyra's
+     service already checked goal ownership; route tests cover it.
+   - To do: subscriptions, review, settings (categories, payment methods,
+     preferences, reports), export, Money Coach.
 5. **Background flows** — the other crons (alerts, reports, spikes), Telegram webhook, Web Push (subscriptions are
    origin-bound: re-subscribe on H-Space), Resend email links. Switch each off
    in Luyra in the same change that switches it on here.

@@ -189,15 +189,28 @@ export function financeFixture(url: URL): unknown {
         spendByCategory: Object.fromEntries(categories.map((c) => [c.categoryId, c.amountKrw])),
         performance,
       }
+    case "savings":
+      return [
+        { id: "00000000-0000-4000-8000-0000000000a1", name: "Emergency fund", icon: "💰", color: "#047857", targetUsd: 5000, currentUsd: 3250, deadline: null, note: null, purpose: "emergency_fund", createdAt: `${month}-01T00:00:00.000Z`, updatedAt: `${month}-01T00:00:00.000Z` },
+        { id: "00000000-0000-4000-8000-0000000000a2", name: "A very long trip name to Jeju Island next spring", icon: "✈️", color: "#2a78d6", targetUsd: 1800, currentUsd: 420.5, deadline: `${Number(month.slice(0, 4)) + 1}-04-01`, note: "Flights and two nights", purpose: "sinking_fund", createdAt: `${month}-01T00:00:00.000Z`, updatedAt: `${month}-01T00:00:00.000Z` },
+        { id: "00000000-0000-4000-8000-0000000000a3", name: "New laptop", icon: "💻", color: "#eb6834", targetUsd: 1200, currentUsd: 1200, deadline: null, note: null, purpose: "goal", createdAt: `${month}-01T00:00:00.000Z`, updatedAt: `${month}-01T00:00:00.000Z` },
+      ]
     case "templates":
     case "recurring":
-    case "savings":
       return []
     case "preferences":
       return preferences
     case "exchange-rate":
       return { rate: 1367.1, fetchedAt: `${month}-01T00:00:00.000Z`, cached: true, fallback: false }
     default:
+      // /savings/<id>/contributions
+      if (/^savings\/[^/]+\/contributions$/.test(path)) {
+        const goalId = path.split("/")[1]!
+        return [
+          { id: "00000000-0000-4000-8000-0000000000c1", goalId, amountUsd: 250, contributionMonth: month, createdAt: `${month}-02T00:00:00.000Z` },
+          { id: "00000000-0000-4000-8000-0000000000c2", goalId, amountUsd: 170.5, contributionMonth: month, createdAt: `${month}-01T00:00:00.000Z` },
+        ]
+      }
       return undefined
   }
 }
