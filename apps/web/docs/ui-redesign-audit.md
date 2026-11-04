@@ -264,6 +264,40 @@ text: the `⌘K` hint only.
 - Remove hero h1s on Korean Coach, recovery, review and practice/today.
 - Notes reader: 16px body, single gutter.
 
+_Status — 5a, the P0 fixes (2026-11-04, branch `ui/redesign-phase5a`):_
+
+- **Overflow at 320/390px fixed** (baseline: 5 of 12 routes failed; after:
+  12/12 pass at 320/390/768/1024/1440):
+  - `/chat` — the mode switcher's wrapper had no `min-w-0`, so five 44px
+    modes pushed the history button off the screen (to 399px at 390). The
+    switcher now scrolls inside the space between back and history.
+  - `/interview/script` — the four-mode bar (≈386px) scrolls inside its own
+    box; its 12px uppercase labels are 13px sentence case, primary not blue.
+  - `/review/*` — `ReviewTabs` is the underline tab style instead of a boxed
+    blue segmented control whose `flex-1` links couldn't shrink.
+  - `/notes/new` — the slug input gets `min-w-0` (an input's intrinsic
+    width stopped `flex-1` from shrinking it).
+  - Recovery `LogFlow` — the five intensity buttons are a 5-column grid of
+    squares, not five fixed 56px buttons (328px).
+- **Touch and zoom** — chat composer input is 16px (no iOS zoom); send,
+  stop and voice are 44px on touch and primary-coloured; message-action icons
+  keep their 24px look with a 44px `after:` hit area; the edit composer's
+  buttons are 44px on touch. `/history` search is 16px on phones;
+  `CheckinCalendar` month buttons are 44px on touch.
+- **Names and state** — `/history` month buttons are labelled; the roadmap
+  topic toggle is a `role="checkbox"` with `aria-checked` and its topic as
+  its name (40px hit area), and its edit/delete buttons are labelled.
+- **`RecoveryOverview`** — the "N due" badge sits beside the icon instead of
+  overlapping the count; 10–11px text is 13px. Copy unchanged.
+- The sweep now also covers `/roadmap`, `/interview/script` and
+  `/growth/recovery/log`.
+
+Left for 5b: the remaining hero `h1`s, one tab level on `/vocab` and
+`/phrasebook`, the Notes reader gutter, chat's two header rows and the
+remaining blue in chat (user bubbles, the start button). At 320px chat's
+five modes scroll — "Review" and "My Data" sit off to the right until swiped;
+5b's single header row should make them fit.
+
 **Phase 6 — consistency pass**
 
 - Re-run the sweep at all widths, light and dark.

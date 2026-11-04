@@ -394,9 +394,9 @@ const MicButton: FC = () => {
       title={title}
       aria-label={title}
       className={cn(
-        "size-9 shrink-0 rounded-full transition-colors",
+        "size-9 shrink-0 rounded-full transition-colors [@media(pointer:coarse)]:size-11",
         voice.phase === "connecting"
-          ? "animate-pulse bg-blue-600 text-white"
+          ? "animate-pulse bg-primary text-primary-foreground"
           : "text-muted-foreground/60 hover:bg-accent hover:text-foreground",
       )}
     >

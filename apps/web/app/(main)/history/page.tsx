@@ -137,7 +137,7 @@ function CopyButton({ text }: { text: string }) {
       type="button"
       onClick={handleCopy}
       aria-label="Copy text"
-      className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground/40 transition-colors hover:bg-accent hover:text-foreground"
+      className="relative flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors after:absolute after:-inset-2 after:content-[''] hover:bg-accent hover:text-foreground"
     >
       <AnimatePresence mode="wait" initial={false}>
         {copied ? (
@@ -303,7 +303,13 @@ function PracticeCalendar({
 
       {/* Month navigation */}
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="icon" onClick={onPrev} className="h-9 w-9 rounded-xl">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onPrev}
+          aria-label="Previous month"
+          className="h-9 w-9 rounded-xl [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
+        >
           <ChevronLeft size={18} strokeWidth={2.5} />
         </Button>
         <span className="text-sm font-bold text-foreground">{monthName}</span>
@@ -311,8 +317,9 @@ function PracticeCalendar({
           variant="ghost"
           size="icon"
           onClick={onNext}
+          aria-label="Next month"
           disabled={isCurrentMonth}
-          className="h-9 w-9 rounded-xl"
+          className="h-9 w-9 rounded-xl [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
         >
           <ChevronRight size={18} strokeWidth={2.5} />
         </Button>
@@ -413,7 +420,7 @@ function FilterBar({
           onChange={(e) => onSearch(e.target.value)}
           placeholder="Search corrections…"
           aria-label="Search corrections"
-          className="w-full rounded-xl border border-border bg-card py-2.5 pl-9 pr-11 text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
+          className="w-full rounded-xl border border-border bg-card py-2.5 pl-9 pr-11 text-base font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40 sm:text-sm"
         />
         {search && (
           <button

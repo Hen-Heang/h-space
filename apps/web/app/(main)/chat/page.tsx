@@ -293,8 +293,11 @@ function ChatPageContent() {
           </Button>
         )}
 
-        <div className="flex flex-1 items-center justify-center">
-          <div className="flex items-center gap-0.5 rounded-lg border border-border/70 bg-muted/35 p-1 shadow-sm">
+        {/* min-w-0 + its own sideways scroll: five 44px modes are wider than
+            the space between the back and history buttons on a phone, and
+            used to push the history button off the screen. */}
+        <div className="no-scrollbar flex min-w-0 flex-1 items-center overflow-x-auto">
+          <div className="mx-auto flex min-w-max items-center gap-0.5 rounded-lg border border-border bg-muted/35 p-1">
             {MODES.map(({ id, label, icon: Icon }) => {
               const active = mode === id
               return (
@@ -309,14 +312,14 @@ function ChatPageContent() {
                   className={cn(
                     "relative min-h-11 min-w-11 items-center gap-1.5 overflow-hidden rounded-lg border-0 px-2.5 text-xs font-semibold shadow-none transition-colors active:scale-95 sm:px-3.5",
                     active
-                      ? "bg-transparent text-white hover:bg-transparent hover:text-white"
+                      ? "bg-transparent text-primary-foreground hover:bg-transparent hover:text-primary-foreground"
                       : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
                   )}
                 >
                   {active && (
                     <motion.span
                       layoutId="ai-mode-pill"
-                      className="absolute inset-0 z-0 rounded-lg bg-blue-600 shadow-sm"
+                      className="absolute inset-0 z-0 rounded-lg bg-primary"
                       transition={{ type: "spring", stiffness: 400, damping: 32 }}
                     />
                   )}

@@ -234,7 +234,7 @@ const Composer: FC = () => {
         >
           <ComposerPrimitive.Input
             placeholder="Write or speak in Korean…"
-            className="aui-composer-input caret-primary placeholder:text-muted-foreground/45 max-h-40 min-h-11 w-full resize-none bg-transparent px-3 py-1.5 text-[15px] font-medium outline-none sm:text-base"
+            className="aui-composer-input caret-primary placeholder:text-muted-foreground/45 max-h-40 min-h-11 w-full resize-none bg-transparent px-3 py-1.5 text-base font-medium outline-none"
             rows={1}
             enterKeyHint="send"
             aria-label="Chat message"
@@ -266,7 +266,7 @@ const ComposerAction: FC = () => {
               type="button"
               variant="default"
               size="icon"
-              className="aui-composer-send size-9 rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500"
+              className="aui-composer-send size-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 [@media(pointer:coarse)]:size-11"
               aria-label="Send message"
             >
               <ArrowUpIcon className="aui-composer-send-icon size-4.5" />
@@ -279,7 +279,7 @@ const ComposerAction: FC = () => {
               type="button"
               variant="default"
               size="icon"
-              className="aui-composer-cancel size-9 rounded-full bg-blue-600 text-white hover:bg-blue-500"
+              className="aui-composer-cancel size-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 [@media(pointer:coarse)]:size-11"
               aria-label="Stop generating"
             >
               <SquareIcon className="aui-composer-cancel-icon size-3.5 fill-current" />
@@ -586,12 +586,16 @@ const EditComposer: FC = () => {
         />
         <div className="aui-edit-composer-footer mx-2.5 mb-2.5 flex items-center gap-1.5 self-end">
           <ComposerPrimitive.Cancel asChild>
-            <Button variant="ghost" size="sm" className="h-8 rounded-full px-3.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 rounded-full px-3.5 [@media(pointer:coarse)]:h-11"
+            >
               Cancel
             </Button>
           </ComposerPrimitive.Cancel>
           <ComposerPrimitive.Send asChild>
-            <Button size="sm" className="h-8 rounded-full px-3.5">
+            <Button size="sm" className="h-8 rounded-full px-3.5 [@media(pointer:coarse)]:h-11">
               Update
             </Button>
           </ComposerPrimitive.Send>

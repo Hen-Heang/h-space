@@ -49,7 +49,7 @@ export function CheckinCalendar({
         <button
           type="button"
           onClick={() => setMonth((m) => subMonths(m, 1))}
-          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [@media(pointer:coarse)]:size-11"
           aria-label="Previous month"
         >
           <ChevronLeft size={16} strokeWidth={2} />
@@ -59,7 +59,7 @@ export function CheckinCalendar({
           type="button"
           onClick={() => setMonth((m) => addMonths(m, 1))}
           disabled={isAfter(startOfMonth(addMonths(month, 1)), today)}
-          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30 [@media(pointer:coarse)]:size-11"
           aria-label="Next month"
         >
           <ChevronRight size={16} strokeWidth={2} />
@@ -68,7 +68,7 @@ export function CheckinCalendar({
 
       <div className="grid grid-cols-7 gap-1.5 text-center">
         {WEEKDAY_LABELS.map((label, i) => (
-          <span key={i} className="text-[11px] font-semibold text-muted-foreground">
+          <span key={i} className="text-xs font-semibold text-muted-foreground">
             {label}
           </span>
         ))}
