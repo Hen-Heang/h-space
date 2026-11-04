@@ -117,10 +117,7 @@ export function Calendar({
   // desktop→mobile resize that left `view` on "week" falls back to "day".
   const effectiveView: CalendarView = isMobile && view === "week" ? "day" : view
 
-  const getTasksForDate = useCallback(
-    (date: Date) => filterTasksByDate(tasks, date),
-    [tasks],
-  )
+  const getTasksForDate = useCallback((date: Date) => filterTasksByDate(tasks, date), [tasks])
 
   const currentDateTasks = useMemo(
     () => getTasksForDate(selectedDate),
