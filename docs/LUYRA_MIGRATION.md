@@ -128,9 +128,19 @@ moved; H-Space already owns those.
      reports are marked per month/channel in the database, so a report is
      never sent twice. **Turn Luyra's Vercel Cron Jobs off when this
      deploys**, or each alert arrives twice (one from the archive).
-   - To do: Telegram linking + webhook (re-point the bot's webhook to
-     H-Space), Web Push (subscriptions belong to Luyra's site: re-subscribe
-     on H-Space) and the push budget-alert job.
+   - Telegram — server ✅ (branch `feat/finance-telegram-push`). Luyra and
+     H-Space share **one bot** (owner, 2026-11-04), and H-Space already owns
+     linking (Settings → Reminders → `kori_telegram_links`). So finance
+     doesn't port Luyra's link/webhook: `GET/POST/DELETE
+     /api/finance/telegram/link` reports status, copies the chat from the
+     caller's own H-Space link (read with their RLS client, never a service
+     key) into Neon `telegram_accounts` for the scheduled jobs, or stops
+     finance messages. Chat ids never reach the browser. The bot's webhook
+     stays wherever H-Space's linking flow needs it.
+   - To do: the Finance → Settings section for that link (UI).
+   - Not planned for now (owner, 2026-11-04): finance Web Push / push
+     budget alerts — Telegram and email cover the same alerts, and a second
+     push subscription can't coexist with H-Space's own in one browser.
 6. **Cutover** — `luyra.henheang.site` redirects to H-Space `/finance`; My Apps
    card becomes an internal link. The old `luyra` Neon project stays as the
    read-only archive (no Luyra `DATABASE_URL` change).

@@ -114,6 +114,31 @@ export async function linkChat(
   `
 }
 
+/**
+ * H-Space: bind a chat to this finance user, copied from the user's H-Space
+ * Telegram link (one bot serves both). A chat can belong to one user only
+ * (unique index on chat_id), so any other binding is cleared in the same
+ * transaction. Creates the row if the user never linked in Luyra.
+ */
+export async function setChatForUser(userId: string, chatId: string): Promise<void> {
+  await sql.transaction([
+    sql`
+      update telegram_accounts set chat_id = null, updated_at = now()
+      where chat_id = ${chatId} and user_id <> ${userId}
+    `,
+    sql`
+      insert into telegram_accounts (user_id, chat_id, linked_at)
+      values (${userId}, ${chatId}, now())
+      on conflict (user_id) do update set
+        chat_id = excluded.chat_id,
+        linked_at = now(),
+        link_code = null,
+        link_code_expires_at = null,
+        updated_at = now()
+    `,
+  ])
+}
+
 export async function unlinkAccount(userId: string): Promise<void> {
   await sql`
     update telegram_accounts set
