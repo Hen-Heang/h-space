@@ -1,6 +1,7 @@
 import "server-only"
 import { requireUser } from "@/lib/server/ai"
 import { parseFinanceAccountLinks, resolveLuyraUserId } from "@/lib/server/finance/account-link"
+import { normalizeFinanceDatabaseUrl } from "@/lib/server/finance/database-url"
 import { isFinanceDatabaseConfigured } from "@/lib/server/finance/db"
 import { AppError, Errors } from "@/lib/server/finance/errors"
 
@@ -12,7 +13,13 @@ export function financeConfigProblems(
   env: Record<string, string | undefined> = process.env,
 ): string[] {
   const problems: string[] = []
-  if (!env.FINANCE_DATABASE_URL) problems.push("FINANCE_DATABASE_URL is not set")
+  if (!env.FINANCE_DATABASE_URL?.trim()) {
+    problems.push("FINANCE_DATABASE_URL is not set")
+  } else if (!normalizeFinanceDatabaseUrl(env.FINANCE_DATABASE_URL)) {
+    problems.push(
+      "FINANCE_DATABASE_URL is malformed (expected a postgresql:// connection string, no 'psql' prefix)",
+    )
+  }
   if (!env.FINANCE_ACCOUNT_LINKS?.trim()) {
     problems.push("FINANCE_ACCOUNT_LINKS is not set")
   } else if (!parseFinanceAccountLinks(env.FINANCE_ACCOUNT_LINKS)) {
