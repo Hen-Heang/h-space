@@ -214,9 +214,7 @@ export default function TemplateFormPage() {
               className={cn(error && "border-destructive/50 bg-destructive/5")}
             />
             {field.helperText && !error && (
-              <p className="ml-1 text-xs font-medium text-muted-foreground">
-                {field.helperText}
-              </p>
+              <p className="ml-1 text-xs font-medium text-muted-foreground">{field.helperText}</p>
             )}
             {errorEl}
           </div>
@@ -234,9 +232,7 @@ export default function TemplateFormPage() {
               className={cn("min-h-[120px]", error && "border-destructive/50 bg-destructive/5")}
             />
             {field.helperText && !error && (
-              <p className="ml-1 text-xs font-medium text-muted-foreground">
-                {field.helperText}
-              </p>
+              <p className="ml-1 text-xs font-medium text-muted-foreground">{field.helperText}</p>
             )}
             {errorEl}
           </div>

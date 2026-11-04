@@ -33,9 +33,7 @@ export default function AppError({
       <p className="mt-8 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground/60">
         Error
       </p>
-      <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-        Something went wrong
-      </h1>
+      <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Something went wrong</h1>
       <p className="mt-3 max-w-sm text-sm font-medium text-muted-foreground">
         An unexpected error occurred. You can try again or head back home.
       </p>

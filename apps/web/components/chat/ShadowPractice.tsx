@@ -168,9 +168,7 @@ export function ShadowPractice({ sentences, onClose }: ShadowPracticeProps) {
                     </p>
                   </div>
                   <div>
-                    <p className="text-base font-bold text-foreground">
-                      {comparison.similarity}%
-                    </p>
+                    <p className="text-base font-bold text-foreground">{comparison.similarity}%</p>
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       text match
                     </p>

@@ -219,9 +219,7 @@ function Row({
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <div className="min-w-0">
         <p className="text-sm font-medium text-foreground">{title}</p>
-        <p className="text-xs font-medium leading-relaxed text-muted-foreground">
-          {description}
-        </p>
+        <p className="text-xs font-medium leading-relaxed text-muted-foreground">{description}</p>
       </div>
       <div className="shrink-0">{children}</div>
     </div>

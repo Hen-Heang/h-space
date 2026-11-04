@@ -302,9 +302,7 @@ export function MessageAnalyzer() {
                       </div>
                       <div>
                         <p className="text-xs font-medium text-muted-foreground">Tone</p>
-                        <p className="mt-1 text-xs font-bold text-foreground/80">
-                          {result.tone}
-                        </p>
+                        <p className="mt-1 text-xs font-bold text-foreground/80">{result.tone}</p>
                       </div>
                     </CardContent>
                   </Card>

@@ -379,9 +379,7 @@ export const RealtimeVoicePanel = memo(function RealtimeVoicePanel({
               )}
               <p className="text-xs font-bold text-blue-100">{copy.label}</p>
             </div>
-            <p className="mt-1 text-xs font-medium text-slate-400 sm:text-xs">
-              {copy.detail}
-            </p>
+            <p className="mt-1 text-xs font-medium text-slate-400 sm:text-xs">{copy.detail}</p>
           </div>
 
           {(phase === "speaking" || phase === "listening") && (
@@ -487,10 +485,7 @@ export const RealtimeVoicePanel = memo(function RealtimeVoicePanel({
               </p>
               <div className="max-h-28 space-y-2 overflow-y-auto pr-1">
                 {turns.slice(-4).map((turn) => (
-                  <div
-                    key={turn.id}
-                    className="flex gap-2 text-xs leading-relaxed sm:text-xs"
-                  >
+                  <div key={turn.id} className="flex gap-2 text-xs leading-relaxed sm:text-xs">
                     <span
                       className={cn(
                         "w-10 shrink-0 font-bold",

@@ -42,9 +42,7 @@ function OptionGroup<T extends string>({
 }) {
   return (
     <div className="space-y-2">
-      <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </h4>
+      <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</h4>
       <div className="grid grid-cols-2 gap-2">
         {options.map((option) => {
           const active = option.value === value

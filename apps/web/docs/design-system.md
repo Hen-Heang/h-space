@@ -70,16 +70,16 @@ The shared weight scale is 400, 500, 600 and 700 (`font-normal`, `font-medium`,
 `leading-body` (1.55) for interface copy and `leading-learning` (1.7) for long
 learning content. Korean and Khmer text does not inherit negative tracking.
 
-| Role                                      | Classes                                                               | ≈ px    |
-| ----------------------------------------- | --------------------------------------------------------------------- | ------- |
-| Page title (shell `h1`)                   | `text-page-title font-semibold`                                       | 17      |
-| Display heading (rare: empty state, hero) | `text-2xl font-semibold tracking-tight`                               | 24      |
-| Section heading (`h2`)                    | `text-section-heading font-semibold` (`PageSection`)                  | 18      |
-| Row / card title                          | `text-card-heading font-medium`                                       | 16      |
-| Body                                      | `text-body`                                                           | 16      |
-| Secondary / description                   | `text-secondary text-muted-foreground`                                | 14      |
-| Metadata, labels, badges, timestamps      | `text-caption text-muted-foreground`                                  | **13**  |
-| Buttons, inputs                           | `text-button-label`; inputs `text-body` (no iOS zoom)                 | 14 / 16 |
+| Role                                      | Classes                                               | ≈ px    |
+| ----------------------------------------- | ----------------------------------------------------- | ------- |
+| Page title (shell `h1`)                   | `text-page-title font-semibold`                       | 17      |
+| Display heading (rare: empty state, hero) | `text-2xl font-semibold tracking-tight`               | 24      |
+| Section heading (`h2`)                    | `text-section-heading font-semibold` (`PageSection`)  | 18      |
+| Row / card title                          | `text-card-heading font-medium`                       | 16      |
+| Body                                      | `text-body`                                           | 16      |
+| Secondary / description                   | `text-secondary text-muted-foreground`                | 14      |
+| Metadata, labels, badges, timestamps      | `text-caption text-muted-foreground`                  | **13**  |
+| Buttons, inputs                           | `text-button-label`; inputs `text-body` (no iOS zoom) | 14 / 16 |
 
 - `text-xs` is redefined to **13px** (`--text-xs` in `globals.css`). It is the
   floor for readable interface text; use it instead of smaller arbitrary sizes

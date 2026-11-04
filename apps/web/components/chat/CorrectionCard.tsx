@@ -115,9 +115,7 @@ export function CorrectionCard({
           </div>
         )}
 
-        {explanation && (
-          <p className="text-xs leading-5 text-muted-foreground">{explanation}</p>
-        )}
+        {explanation && <p className="text-xs leading-5 text-muted-foreground">{explanation}</p>}
       </div>
 
       <div className="flex flex-wrap gap-2 px-4 pb-3.5">
