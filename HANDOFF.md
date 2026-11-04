@@ -3,24 +3,47 @@
 ## Snapshot
 
 - **Updated:** 2026-11-04
-- **Shipped:** UI/UX redesign Phases 1–3 (PRs #64, #65) are on `main`.
-- **In review:** **Phase 3b** (Planner leftovers), branch `ui/redesign-phase3b`, worked in the git worktree `E:\Fullstack\h-space-phase3b`. Status and details are in `apps/web/docs/ui-redesign-audit.md` → "Phase 3b status".
-  - `/goals/overview`: every card uses `DashboardCard`, has inline error states (`useGoals` exposes `isError`), and the duplicate deadline banner is gone. The roadmap entry moved to the Learning hub's Library (`RoadmapLibraryItem`, `lib/roadmap-progress.ts`); `RoadmapTeaser` is deleted.
-  - Goal detail: underline tabs like `WorkspaceTabs`. The task table has 6 columns below 1280px, and phase, key result and impact appear from `xl`. Phone and Plan rows are divider rows with one metadata line. There are no bordered rows inside cards in Plan, Progress or Schedule, and their text uses the 13px floor. `KeyResultsCard` is flattened.
-  - Month view: the "add" button is visible on touch. `/goals/create`: template and custom cards are real links with nothing interactive inside.
-  - Inbox: divider rows on one surface, one metadata line, Convert + reminder + `⋯` (pin, archive, delete). The error state has "Try again" (`useInbox` exposes `refetch`).
-  - `--destructive-foreground` is defined, so delete-confirm buttons get readable text in both themes.
-- **Verification (Phase 3b):**
-  - Type-check passes and lint is clean on the changed files.
-  - Unit tests: 1647/1648. The failure is `lib/goals.test.ts` "Due today": the test builds "today" from the UTC date, so it fails between 00:00 and 09:00 KST. This is pre-existing and doesn't affect CI (UTC).
-  - Sweep: 9 changed routes × 320/390/768/1024/1440 with no overflow. It ran against a worktree dev server with dummy local env.
-  - **Not verified:** real-account data, the Inbox delete-confirm opened from the new menu, and touch tablets on a real device.
-- **Open PRs:** #59 (Exam Prep voice polish) and the Phase 3b PR.
+- **Shipped:** UI/UX redesign **Phases 1–4** of six are on `main`.
+  - #64: foundation and app shell.
+  - #65: Home and the Planner.
+  - #66: Phase 3b, the Planner leftovers.
+  - #67: Phase 4, My Apps, Settings and the H-Vault layout.
+  - Also on `main`: #59, Exam Prep voice polish.
+  - Production comes from Vercel's normal `main` build; no agent deploy. The production build for `1bba2d7` was **not confirmed** from the agent side (deployment status lookup is denied), so check the Vercel dashboard.
+- **Phase 3b** (#66):
+  - `/goals/overview` uses `DashboardCard` with inline errors (`useGoals().isError`). The roadmap entry moved to the Learning Library (`RoadmapLibraryItem`, `lib/roadmap-progress.ts`).
+  - Goal-detail tabs use the underline style. The task table has 6 columns below 1280px. Rows on phones and in Plan are divider rows.
+  - Inbox has divider rows, a `⋯` menu and a retry on errors (`useInbox().refetch`).
+  - `--destructive-foreground` is defined.
+  - `lib/goals.test.ts` now builds "today" in local time, so it no longer fails before 09:00 KST.
+- **Phase 4** (#67):
+  - My Apps targets are 44px on touch.
+  - Settings groups are flat surfaces with real `h2`s, and one "Preferences & security" `RowList` of links. The two rows that opened Korean Coach preferences are merged into one.
+  - Settings subpages demote their title to `h2`. Reminders are divider rows.
+  - **H-Vault layout only:** the hero, shadows and nested boxes are gone, and `/vault` no longer overflows at 320px. Radix `Select.Value` drops `className`, so truncate from the trigger with `[&>[data-slot=select-value]]:truncate`. No change to `lib/vault-*`, `hooks/useVault`, `lib/api/vault` or `lib/csp.ts`.
+- **Verification:**
+  - Full unit suite: 1655/1655 on the Phase 4 branch.
+  - Sweeps of every changed route at 320–1440px with no overflow.
+  - Synthetic session and data only; the vault was in demo mode with fictional accounts.
+  - **Not verified:** real-account states, the unlocked live vault and its dialogs, the MFA flow end to end, and touch tablets on a real device.
+- **Docs:** status for each phase is in `apps/web/docs/ui-redesign-audit.md` ("Phase 3b status", and under the Phase 4 plan). The rules are in `apps/web/docs/design-system.md`.
+- **Gotchas:**
+  - `next dev` can miss a `globals.css` change; restart it before trusting screenshots.
+  - On Windows, stopping a background `npx next dev` can leave the Next server process running on its port. Kill it by PID before starting another, or a sweep silently measures the old code.
+  - This machine runs low on memory with two dev servers plus Playwright; a dev server can crash with "memory allocation … failed".
+- **Open PRs:** this HANDOFF update.
 
 ## Current focus
 
-1. The owner reviews and merges the Phase 3b PR.
-2. Then **Phase 4**: My Apps, Vault (layout only, no crypto/session/CSP changes) and Settings.
-3. Small follow-up: make `lib/goals.test.ts` build "today" in local time.
+1. The owner checks Phases 1–4 on production, especially what the sweep couldn't cover: real goals and tasks, deleting an Inbox item from the `⋯` menu, the roadmap row in Learning → Library, the merged Settings row, and the vault both unlocked and at phone width.
+2. Then **Phase 5**: Learning, AI, Notes and Growth.
+   - The chat composer needs a 16px input and 44px controls.
+   - Fix the `/chat` mode-switcher overflow, `/interview/script`, `/history` labels, `LogFlow`, the `RecoveryOverview` badge and `CheckinCalendar` targets.
+   - One tab level per page (`/vocab`, `/phrasebook`).
+   - Remove the hero `h1`s on Korean Coach, Recovery, Review and practice/today.
+   - Plan in the audit's "Phase 5" section.
+3. **Phase 6:** a consistency pass, dark mode, a keyboard pass, and deleting dead components.
 
-The sweep command is in `apps/web/docs/design-system.md` §8. A worktree has no `.env.local`, so run its dev server with dummy local values for `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `NEXT_PUBLIC_AUTH_API_URL`; the sweep mocks everything. Use `UI_SWEEP_ROUTES=goals/overview,inbox` without a leading slash.
+## Running the sweep
+
+The command is in `apps/web/docs/design-system.md` §8. Use `UI_SWEEP_ROUTES=goals/overview,inbox` without a leading slash. A git worktree has no `.env.local`, so run its dev server with dummy local values for `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `NEXT_PUBLIC_AUTH_API_URL`; the sweep mocks everything else.

@@ -1,3 +1,30 @@
+## 2026-11-04 - UI redesign Phase 3b in review (PR #66)
+
+# HANDOFF
+
+## Snapshot
+
+- **Updated:** 2026-11-04
+- **Shipped:** UI/UX redesign Phases 1–3 (PRs #64, #65) are on `main`.
+- **In review:** **Phase 3b** (Planner leftovers), branch `ui/redesign-phase3b`, worked in the git worktree `E:\Fullstack\h-space-phase3b`. Status and details are in `apps/web/docs/ui-redesign-audit.md` → "Phase 3b status".
+  - `/goals/overview`: every card uses `DashboardCard`, has inline error states (`useGoals` exposes `isError`), and the duplicate deadline banner is gone. The roadmap entry moved to the Learning hub's Library (`RoadmapLibraryItem`, `lib/roadmap-progress.ts`); `RoadmapTeaser` is deleted.
+  - Goal detail: underline tabs like `WorkspaceTabs`. The task table has 6 columns below 1280px, and phase, key result and impact appear from `xl`. Phone and Plan rows are divider rows with one metadata line. There are no bordered rows inside cards in Plan, Progress or Schedule, and their text uses the 13px floor. `KeyResultsCard` is flattened.
+  - Month view: the "add" button is visible on touch. `/goals/create`: template and custom cards are real links with nothing interactive inside.
+  - Inbox: divider rows on one surface, one metadata line, Convert + reminder + `⋯` (pin, archive, delete). The error state has "Try again" (`useInbox` exposes `refetch`).
+  - `--destructive-foreground` is defined, so delete-confirm buttons get readable text in both themes.
+- **Verification (Phase 3b):**
+  - Type-check passes and lint is clean on the changed files.
+  - Unit tests: 1647/1648. The failure was `lib/goals.test.ts` "Due today" (UTC "today", fails 00:00–09:00 KST).
+  - Sweep: 9 changed routes × 320/390/768/1024/1440 with no overflow, against a worktree dev server with dummy local env.
+  - **Not verified:** real-account data, the Inbox delete-confirm opened from the new menu, and touch tablets on a real device.
+- **Open PRs:** #59 (Exam Prep voice polish) and the Phase 3b PR.
+
+## Current focus
+
+1. The owner reviews and merges the Phase 3b PR.
+2. Then **Phase 4**: My Apps, Vault (layout only) and Settings.
+3. Small follow-up: make `lib/goals.test.ts` build "today" in local time.
+
 ## 2026-11-03 - UI redesign Phases 1–3 shipped (PRs #64, #65)
 
 # HANDOFF
