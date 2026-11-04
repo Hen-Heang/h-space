@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
+import { financeFixture } from "./finance-fixtures"
 
 test.use({ screenshot: "off", trace: "off" })
 
@@ -170,6 +171,21 @@ async function installMocks(page: Page, signedIn = true) {
   await page.route("**/api/integrations/**", (route) =>
     route.fulfill({ status: 404, contentType: "application/json", body: "{}" }),
   )
+  // Finance (ported from Luyra): synthetic responses in Luyra's { data } envelope.
+  await page.route("**/api/finance/**", (route) => {
+    const data = financeFixture(new URL(route.request().url()))
+    return data === undefined
+      ? route.fulfill({
+          status: 404,
+          contentType: "application/json",
+          body: JSON.stringify({ error: { code: "NOT_FOUND", message: "Not mocked" } }),
+        })
+      : route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ data }),
+        })
+  })
 }
 
 // Real signed-in feature routes (redirect stubs like /focus/*, /mistakes and
@@ -261,6 +277,11 @@ const ROUTES = [
   "/settings/security",
   "/settings/reminders",
   "/account",
+  "/finance",
+  "/finance/transactions",
+  "/finance/budgets",
+  "/finance/savings",
+  "/finance/analytics",
 ]
 
 const WIDTHS = [320, 375, 390, 430, 768, 1024, 1440]

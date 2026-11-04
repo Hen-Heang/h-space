@@ -1,5 +1,10 @@
 # H-Space and Luyra integration
 
+> **Superseded direction (2026-11-04):** the owner decided to move Luyra's
+> finance product into `apps/web`. The plan and progress are in
+> [LUYRA_MIGRATION.md](LUYRA_MIGRATION.md). This page still describes how
+> things run **today**, and stays accurate until that cutover is accepted.
+
 ## Application boundaries
 
 ```text
