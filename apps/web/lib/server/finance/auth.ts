@@ -1,4 +1,5 @@
 import "server-only"
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { requireUser } from "@/lib/server/ai"
 import { parseFinanceAccountLinks, resolveLuyraUserId } from "@/lib/server/finance/account-link"
 import { normalizeFinanceDatabaseUrl } from "@/lib/server/finance/database-url"
@@ -52,6 +53,24 @@ export function financeConfigProblems(
  * exists in Neon, and H-Space must not mint finance accounts.
  */
 export async function requireFinanceUserId(req: Request): Promise<string> {
+  return (await requireFinanceSession(req)).financeUserId
+}
+
+export interface FinanceSession {
+  /** The linked Luyra user id — scope every Neon query by this. */
+  financeUserId: string
+  /** The verified H-Space user id (the bridged Supabase JWT's subject). */
+  hspaceUserId: string
+  /**
+   * Per-request Supabase client carrying the caller's JWT, so RLS applies.
+   * For reading the caller's own H-Space rows (e.g. their Telegram link);
+   * never a service-role client.
+   */
+  db: SupabaseClient
+}
+
+/** requireFinanceUserId plus the caller's H-Space id and RLS-scoped client. */
+export async function requireFinanceSession(req: Request): Promise<FinanceSession> {
   const authed = await requireUser(req)
   if (authed instanceof Response) {
     if (authed.status === 503) {
@@ -76,7 +95,7 @@ export async function requireFinanceUserId(req: Request): Promise<string> {
     )
     throw new AppError("FINANCE_NOT_LINKED", "No finance account is linked to this user", 403)
   }
-  return financeUserId
+  return { financeUserId, hspaceUserId: authed.user.id, db: authed.db }
 }
 
 /**
