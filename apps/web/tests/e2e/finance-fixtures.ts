@@ -356,6 +356,75 @@ export function financeFixture(url: URL): unknown {
           updatedAt: `${month}-01T00:00:00.000Z`,
         },
       ]
+    case "subscriptions":
+      return [
+        {
+          key: "streaming",
+          name: "Video streaming",
+          categoryName: "Entertainment and weekend outings",
+          categoryIcon: null,
+          categoryColor: "#e87ba4",
+          latestAmountKrw: 17000,
+          averageAmountKrw: 17000,
+          occurrenceCount: 6,
+          lastPaymentDate: `${month}-03`,
+          frequency: "monthly",
+          estimatedYearlyCostKrw: 204000,
+          status: "keep",
+        },
+        {
+          key: "cloud storage",
+          name: "Cloud storage with a very long merchant name that should truncate",
+          categoryName: "Books",
+          categoryIcon: null,
+          categoryColor: "#008300",
+          latestAmountKrw: 3300,
+          averageAmountKrw: 3300,
+          occurrenceCount: 4,
+          lastPaymentDate: `${month}-07`,
+          frequency: "monthly",
+          estimatedYearlyCostKrw: 39600,
+          status: "review",
+        },
+        {
+          key: "domain",
+          name: "Domain renewal",
+          categoryName: null,
+          categoryIcon: null,
+          categoryColor: null,
+          latestAmountKrw: 21000,
+          averageAmountKrw: 21000,
+          occurrenceCount: 2,
+          lastPaymentDate: `${month}-01`,
+          frequency: "yearly",
+          estimatedYearlyCostKrw: 21000,
+          status: "plan_to_cancel",
+        },
+      ]
+    case "merchant-names":
+      return {
+        merges: [
+          {
+            name: "Corner cafe",
+            variants: [
+              { key: "corner cafe", sample: "Corner cafe" },
+              { key: "corner cafe 2", sample: "CORNER CAFE #2" },
+            ],
+          },
+        ],
+        suggestions: [
+          {
+            id: "s1",
+            suggestedName: "Transit card",
+            members: [
+              { key: "transit card", sample: "Transit card top-up", count: 3, totalKrw: 150000 },
+              { key: "transit top up", sample: "TRANSIT TOP UP", count: 2, totalKrw: 80000 },
+            ],
+            occurrenceCount: 5,
+            totalKrw: 230000,
+          },
+        ],
+      }
     case "templates":
     case "recurring":
       return []
