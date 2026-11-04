@@ -49,6 +49,10 @@ html[data-theme-transition]::view-transition-new(root) {
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  /* Finance (ported from Luyra): --warning and --finance-chart are defined
+     only inside `.luyra` (app/(main)/finance/luyra-theme.css). */
+  --color-warning: var(--warning);
+  --color-finance-chart: var(--finance-chart);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -102,6 +106,9 @@ html[data-theme-transition]::view-transition-new(root) {
      (sm 14 · base 16 · lg 18 · xl 20 · 2xl 24), scaled by the root size. */
   --text-xs: 0.8125rem;
   --text-xs--line-height: 1.125rem;
+
+  /* Narrow-phone step (390px), used by the Finance screens ported from Luyra. */
+  --breakpoint-xs: 24.375rem;
 
   --animate-shimmer: shimmer 1.8s ease-in-out infinite;
 

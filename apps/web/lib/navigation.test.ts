@@ -277,7 +277,7 @@ describe("global sidebar: workspaces, Finance, and tools", () => {
     expect(workspaceNavItems.map((i) => i.href)).toEqual([
       "/home",
       "/apps",
-      "https://luyra.henheang.site/finance",
+      "/finance",
       "/goals",
       "/learn",
       "/notes",
@@ -365,13 +365,13 @@ describe("workspace tabs (secondary navigation)", () => {
     ])
     expect(ids(workspaceTabs.apps)).toEqual(["apps-catalog", "apps-vault", "apps-luyra"])
     expect(navItem("apps-luyra")).toMatchObject({
-      href: "https://luyra.henheang.site/finance",
+      href: "/finance",
       label: "Finance",
     })
   })
 
   it("has exactly one Finance entry, findable as Luyra or finance", () => {
-    const finance = allNavItems.filter((i) => i.href.includes("luyra.henheang.site"))
+    const finance = allNavItems.filter((i) => i.href === "/finance" || i.href.startsWith("/finance/"))
     expect(finance.map((i) => i.id)).toEqual(["apps-luyra"])
     const terms = [finance[0].label, finance[0].description ?? "", ...(finance[0].keywords ?? [])]
       .join(" ")
@@ -446,6 +446,7 @@ describe("mobile bottom bar + More", () => {
 
   it("leads the More sheet with every workspace and tool that has no tab", () => {
     expect(moreNavItems.map((i) => i.label)).toEqual([
+      "Finance",
       "Notes",
       "Growth",
       "AI Assistant",
@@ -454,7 +455,7 @@ describe("mobile bottom bar + More", () => {
   })
 
   it("lights exactly one tab on tab-owned routes and More nowhere there", () => {
-    for (const route of ["/home", "/goals/calendar", "/inbox", "/vocab", "/history", "/vault"]) {
+    for (const route of ["/home", "/goals/calendar", "/inbox", "/vocab", "/history", "/vault", "/finance/transactions"]) {
       const lit = mobileNavItems.filter((item) => isNavigationItemActive({ pathname: route, item }))
       expect(lit, route).toHaveLength(1)
       expect(isMoreRoute(route)).toBe(false)
@@ -550,7 +551,7 @@ describe("workspace registry details", () => {
     expect(apps.items.map((i) => i.href)).toEqual([
       "/apps",
       "/vault",
-      "https://luyra.henheang.site/finance",
+      "/finance",
     ])
     expect(getSectionForPath("/vault")?.id).toBe("apps")
     expect(getActiveNavItem("/vault")?.label).toBe("H-Vault")

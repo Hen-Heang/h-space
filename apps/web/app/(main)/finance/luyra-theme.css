@@ -1,0 +1,79 @@
+/* Luyra's look for the Finance area, ported from Luyra's app/globals.css.
+ *
+ * Scoped to `.luyra` — the finance layout wrapper plus the portaled sheets,
+ * dialogs and menus in components/finance/base/* — so the rest of H-Space
+ * keeps its own tokens. Dark mode follows H-Space's `.dark` class
+ * (next-themes) instead of Luyra's `data-theme` attribute.
+ */
+
+.luyra {
+  --background: #fafafa;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #a1a1aa;
+  --destructive: #dc2626;
+  --destructive-foreground: #fafafa;
+  --success: #047857;
+  --warning: #b45309;
+  --finance-chart: #2563eb;
+  --radius: 0.625rem;
+  /* Fixed-order categorical palette for multi-series charts — validated for
+     adjacent-pair colorblind safety, never reassigned by rank or filter. */
+  --chart-series-1: #2a78d6;
+  --chart-series-2: #eb6834;
+  --chart-series-3: #1baf7a;
+  --chart-series-4: #eda100;
+  --chart-series-5: #e87ba4;
+  --chart-series-6: #008300;
+
+  color: var(--foreground);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.dark .luyra {
+  --background: #0a0a0b;
+  --foreground: #fafafa;
+  --card: #131316;
+  --card-foreground: #fafafa;
+  --popover: #131316;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #18181b;
+  --secondary: #1f1f23;
+  --secondary-foreground: #fafafa;
+  --muted: #1f1f23;
+  --muted-foreground: #a1a1aa;
+  --accent: #1f1f23;
+  --accent-foreground: #fafafa;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #52525b;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --finance-chart: #60a5fa;
+  --chart-series-1: #3987e5;
+  --chart-series-2: #d95926;
+  --chart-series-3: #199e70;
+  --chart-series-4: #c98500;
+  --chart-series-5: #d55181;
+  --chart-series-6: #008300;
+}
+
+.luyra,
+.luyra * {
+  border-color: var(--border);
+}

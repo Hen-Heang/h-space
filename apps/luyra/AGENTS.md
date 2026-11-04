@@ -10,6 +10,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## H-Space monorepo
 
+> **Moving into `apps/web` (owner decision 2026-11-04).** Finance is being
+> ported to H-Space's `/finance`, one slice at a time, against this app's
+> existing Neon database. See `../../docs/LUYRA_MIGRATION.md`. Until the
+> cutover is accepted this app stays deployed and unchanged as the rollback,
+> so don't edit it as part of the move — port code into `apps/web` instead.
+
 - This application remains independently deployable from `apps/luyra` and
   keeps its npm lockfile. Do not add it to the root pnpm workspace or combine
   dependency locks without a separate compatibility review.

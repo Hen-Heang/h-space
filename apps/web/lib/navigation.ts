@@ -39,7 +39,6 @@ import {
   Zap,
 } from "lucide-react"
 
-import { LUYRA_FINANCE_URL } from "@/lib/projects"
 
 // Single source of truth for the whole nav surface — desktop sidebar, tablet
 // rail, mobile bottom bar, the "More" sheet, and the Quick Switcher all render
@@ -660,16 +659,18 @@ export const navSections: NavSection[] = [
       appsItem,
       vaultItem,
       {
-        // The one Finance entry point. Luyra deploys separately, so this opens
-        // it in a new tab. The id stays "apps-luyra" (stored nav state).
+        // The one Finance entry point: Luyra's finance screens, now inside
+        // H-Space at /finance (docs/LUYRA_MIGRATION.md). Covers /finance/* so
+        // every finance page keeps it lit. The id stays "apps-luyra" (stored
+        // nav state). Screens not ported yet (savings, review, settings, …)
+        // still live in Luyra itself (LUYRA_FINANCE_URL in lib/projects.ts).
         id: "apps-luyra",
-        href: LUYRA_FINANCE_URL,
+        href: "/finance",
         label: "Finance",
         icon: WalletCards,
         color: "text-emerald-500",
         description: "Luyra: income, expenses, budgets, savings, and reports",
         keywords: ["luyra", "finance", "money", "budget", "transactions", "savings"],
-        match: { pathname: "/__external_luyra__" },
       },
     ],
   },
