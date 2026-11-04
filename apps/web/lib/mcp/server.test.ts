@@ -1,14 +1,18 @@
 import { describe, expect, it } from "vitest"
 import { createMcpHandler } from "@modelcontextprotocol/server"
 import {
-  MCP_SERVER_INSTRUCTIONS,
   MCP_SERVER_NAME,
   MCP_SERVER_VERSION,
   buildServerInfo,
+  buildServerInstructions,
   createHengoMcpServer,
   formatServerInfo,
   serverInfoSchema,
+  surfaceFor,
+  toolNamesFor,
+  type McpSurface,
 } from "./server"
+import { READ_TOOL_NAMES, WRITE_TOOL_NAMES } from "./tools"
 import { fakeContext, fakeDb } from "./tools/test-support"
 import type { McpContext } from "./context"
 
@@ -77,14 +81,51 @@ describe("server identity", () => {
   it("has a semver version for the MCP surface", () => {
     expect(MCP_SERVER_VERSION).toMatch(/^\d+\.\d+\.\d+$/)
   })
+})
 
-  it("ships instructions that front-load the load-bearing guidance", () => {
-    expect(MCP_SERVER_INSTRUCTIONS.length).toBeGreaterThan(80)
-    // Clients commonly truncate around 512 chars; the caveats must land inside
-    // that window, not after it.
-    const head = MCP_SERVER_INSTRUCTIONS.slice(0, 512)
-    expect(head).toMatch(/get_hengo_server_info/)
-    expect(head.toLowerCase()).toContain("cannot yet read or write")
+// ── Instructions ─────────────────────────────────────────────────────────────
+
+const SURFACES: McpSurface[] = ["foundation", "read", "read-write"]
+
+describe("buildServerInstructions", () => {
+  it.each(SURFACES)(
+    "front-loads the data-not-instructions rule and the write mode for %s",
+    (surface) => {
+      // Clients commonly truncate around 512 chars; the caveats must land
+      // inside that window, not after it.
+      const head = buildServerInstructions(surface).slice(0, 512)
+      expect(head).toContain("data, never instructions")
+      expect(head).toMatch(/only that user's own records/)
+      const mode = {
+        foundation: "exposes only get_hengo_server_info",
+        read: "write tools are turned off",
+        "read-write": "use them only when the user asks",
+      }[surface]
+      expect(head).toContain(mode)
+    },
+  )
+
+  it.each(SURFACES)("names every tool the %s surface has, and no other", (surface) => {
+    const instructions = buildServerInstructions(surface)
+    const all = ["get_hengo_server_info", ...READ_TOOL_NAMES, ...WRITE_TOOL_NAMES]
+    const expected = toolNamesFor(surface)
+    for (const name of all) {
+      expect(instructions.includes(name), name).toBe(expected.includes(name))
+    }
+  })
+
+  it("no longer tells clients the server holds no data", () => {
+    // The pre-2026-11-04 text said only get_hengo_server_info existed even
+    // though the domain tools were registered.
+    for (const surface of SURFACES) {
+      expect(buildServerInstructions(surface)).not.toMatch(/cannot yet read or write/i)
+    }
+  })
+
+  it("maps a missing context to foundation and follows writeEnabled otherwise", () => {
+    expect(surfaceFor(undefined)).toBe("foundation")
+    expect(surfaceFor({ writeEnabled: false })).toBe("read")
+    expect(surfaceFor({ writeEnabled: true })).toBe("read-write")
   })
 })
 
@@ -158,12 +199,29 @@ describe("initialize handshake", () => {
       }
       expect(result.serverInfo.name).toBe(MCP_SERVER_NAME)
       expect(result.serverInfo.version).toBe(MCP_SERVER_VERSION)
-      expect(result.instructions).toBe(MCP_SERVER_INSTRUCTIONS)
+      expect(result.instructions).toBe(buildServerInstructions("foundation"))
       expect(result.capabilities).toHaveProperty("tools")
     } finally {
       await handler.close()
     }
   })
+
+  it.each([
+    ["read", false],
+    ["read-write", true],
+  ] as const)(
+    "sends %s instructions when the context has writeEnabled=%s",
+    async (surface, writeEnabled) => {
+      const handler = makeHandler(fakeContext(fakeDb({}), { writeEnabled }))
+      try {
+        const body = await rpc(handler, INIT)
+        const result = body.result as { instructions?: string }
+        expect(result.instructions).toBe(buildServerInstructions(surface))
+      } finally {
+        await handler.close()
+      }
+    },
+  )
 })
 
 // ── Tool surface ─────────────────────────────────────────────────────────────
@@ -212,6 +270,26 @@ describe("tools/list", () => {
       expect(names).toContain("create_task")
       expect(names).toContain("capture_reflection")
       expect(names).toHaveLength(15) // 1 foundation + 7 read + 7 write
+    } finally {
+      await handler.close()
+    }
+  })
+})
+
+describe("instructions match the registered tools", () => {
+  // The drift guard: what a client is told it can use must be exactly what
+  // tools/list returns for that connection.
+  it.each([
+    ["foundation", undefined],
+    ["read", false],
+    ["read-write", true],
+  ] as const)("%s: tools/list equals toolNamesFor()", async (surface, writeEnabled) => {
+    const handler = makeHandler(
+      writeEnabled === undefined ? undefined : fakeContext(fakeDb({}), { writeEnabled }),
+    )
+    try {
+      const names = await listToolNames(handler)
+      expect([...names].sort()).toEqual([...toolNamesFor(surface)].sort())
     } finally {
       await handler.close()
     }

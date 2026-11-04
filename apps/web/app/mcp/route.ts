@@ -6,10 +6,14 @@
 // challenge pointing at the protected-resource metadata.
 //
 // The route owns wiring only; verification lives in lib/mcp/auth.ts and the
-// composition in lib/mcp/handler.ts.
+// composition in lib/mcp/handler.ts. Domain tools (seven read, seven
+// write behind MCP_WRITE_ENABLED) query Supabase through the caller's own
+// RLS-scoped client and are audited to kori_mcp_audit
+// (docs/chatgpt-mcp-integration.md §6–§11).
 //
-// Still to come (docs/chatgpt-mcp-integration.md): domain tools (§7, §8) and
-// their audit logging (§13). No Supabase query is issued by any tool yet.
+// Known gap (2026-11-04): tokens come from Supabase's OAuth server, but
+// sign-in moved to h-space-api, so no current user can complete the
+// /oauth/consent flow — docs/SECOND_BRAIN_ARCHITECTURE.md §4.1 (repo root).
 import { tryLoadMcpAuthConfig, type McpAuthConfig } from "@/lib/mcp/config"
 import { SupabaseMcpTokenVerifier } from "@/lib/mcp/auth"
 import { createAuthenticatedMcpHandler, type AuthenticatedMcpHandler } from "@/lib/mcp/handler"
