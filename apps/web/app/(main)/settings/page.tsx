@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   Mail,
+  Monitor,
   CheckCircle2,
   LogOut,
   ChevronRight,
@@ -16,7 +18,6 @@ import {
   Send,
   AlarmClock,
   Target,
-  Type,
   UserPlus,
 } from "lucide-react"
 import { motion } from "motion/react"
@@ -24,6 +25,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { InteractiveRow, RowList } from "@/components/ui/row-list"
 import { Switch } from "@/components/ui/switch"
 import { Skeleton } from "@/components/ui/skeleton"
 import { authApi, userApi } from "@/lib/api"
@@ -37,51 +39,45 @@ import { TEXT_DEBOUNCE_MS, useFieldAutosave } from "@/hooks/useFieldAutosave"
 import { isCalendarIntegrationsEnabled } from "@/lib/feature-flags"
 import { cn } from "@/lib/utils"
 
+// One bordered surface per group (docs/design-system.md): no shadow, rows
+// separated by dividers, never a box inside the box.
 function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div
-      className={cn(
-        "overflow-hidden rounded-lg border border-border bg-card shadow-sm dark:bg-slate-900/40",
-        className,
-      )}
-    >
-      {children}
-    </div>
-  )
+  return <div className={cn("app-surface overflow-hidden", className)}>{children}</div>
 }
 
 function SectionRow({ children, last }: { children: React.ReactNode; last?: boolean }) {
   return (
-    <div className={cn("px-4 py-4 sm:px-5", !last && "border-b border-border/60")}>{children}</div>
+    <div className={cn("px-4 py-4 sm:px-5", !last && "border-b border-border")}>{children}</div>
   )
 }
 
+/** A group's heading — a real `h2` (the shell owns the `h1`), neutral icon. */
 function SectionHeader({
   icon: Icon,
   title,
   description,
-  color = "text-blue-500",
 }: {
   icon: React.ElementType
   title: string
   description?: string
-  color?: string
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <div
-        className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/5",
-          color,
-        )}
-      >
-        <Icon size={15} strokeWidth={2} />
-      </div>
-      <div>
-        <p className="text-sm font-semibold text-foreground">{title}</p>
+    <div className="flex items-start gap-3">
+      <Icon size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-muted-foreground" />
+      <div className="min-w-0">
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
       </div>
     </div>
+  )
+}
+
+/** A neutral leading icon for a row inside a group. */
+function RowIcon({ icon: Icon }: { icon: React.ElementType }) {
+  return (
+    <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+      <Icon size={16} aria-hidden="true" />
+    </span>
   )
 }
 
@@ -309,6 +305,7 @@ export default function SettingsPage() {
       {/* Profile identity + editable name/email */}
       <motion.div variants={itemVariants}>
         <SectionCard>
+          <h2 className="sr-only">Profile</h2>
           <SectionRow>
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -317,6 +314,7 @@ export default function SettingsPage() {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingAvatar}
                   title="Change profile photo"
+                  aria-label="Change profile photo"
                   className="group relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-linear-to-br from-blue-500 to-indigo-600 text-lg font-semibold text-white shadow-sm"
                 >
                   {avatarUrl ? (
@@ -397,107 +395,53 @@ export default function SettingsPage() {
         </SectionCard>
       </motion.div>
 
-      {/* Learning goal lives in Korean Coach preferences — the single source
-          of truth (kori_korean_coach_preferences.main_goal) that both the
-          tutoring prompt and Coach's scenario recommendation read. This page
-          used to carry a second, competing list writing a different column;
-          it's a link now so there is only ever one control. */}
-      <motion.div variants={itemVariants}>
-        <SectionCard>
-          <button
-            type="button"
-            onClick={() => router.push("/korean-coach/preferences")}
-            className="group flex w-full items-center justify-between px-5 py-4 text-left transition-all hover:bg-accent/5 active:scale-[0.98] sm:px-6"
-          >
-            <SectionHeader
-              icon={Target}
-              title="Learning goal"
-              description="Shapes the scenarios and phrasing the AI practices with you"
-              color="text-violet-500"
-            />
-            <ChevronRight
-              size={14}
-              strokeWidth={2}
-              className="shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5"
-            />
-          </button>
-        </SectionCard>
-      </motion.div>
+      {/* Pages reached from Settings: one group of real links (back button,
+          middle-click and "open in new tab" work), instead of a separate
+          card per link.
 
-      {/* Romanization lives in Korean Coach preferences — the single source of
-          truth (kori_korean_coach_preferences.romanization_mode) that Korean
-          Coach and Phrasebook both read. Linked rather than duplicated here so
-          there is only ever one control for it. */}
-      <motion.div variants={itemVariants}>
-        <SectionCard>
-          <button
-            type="button"
-            onClick={() => router.push("/korean-coach/preferences")}
-            className="group flex w-full items-center justify-between px-5 py-4 text-left transition-all hover:bg-accent/5 active:scale-[0.98] sm:px-6"
-          >
-            <SectionHeader
-              icon={Type}
-              title="Romanization & Korean Coach"
-              description="Romanization, speech speed, and correction strictness"
-              color="text-teal-500"
-            />
-            <ChevronRight
-              size={14}
-              strokeWidth={2}
-              className="shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5"
-            />
-          </button>
-        </SectionCard>
-      </motion.div>
+          Learning goal and romanization both live in Korean Coach
+          preferences — the single source of truth
+          (kori_korean_coach_preferences.main_goal / romanization_mode) that
+          the tutoring prompt, Coach's scenario recommendation and Phrasebook
+          read. Linked rather than duplicated here so there is only ever one
+          control for each; one row, since both used to open the same page.
 
-      <motion.div variants={itemVariants}>
-        <SectionCard>
-          <button
-            type="button"
-            onClick={() => router.push("/settings/security")}
-            className="group flex w-full items-center justify-between px-5 py-4 text-left transition-all hover:bg-accent/5 active:scale-[0.98] sm:px-6"
-          >
-            <SectionHeader
-              icon={ShieldCheck}
-              title="Two-step verification"
-              description="Protect sign-in with an authenticator app and backup codes"
-              color="text-emerald-500"
+          Integrations stay hidden until Plan is navigable (see
+          lib/feature-flags.ts); only the entry point and the page body are
+          gated. */}
+      <motion.section variants={itemVariants} aria-labelledby="settings-more-heading">
+        <h2
+          id="settings-more-heading"
+          className="mb-3 px-1 text-base font-semibold text-foreground"
+        >
+          Preferences & security
+        </h2>
+        <RowList surface>
+          <InteractiveRow
+            href="/korean-coach/preferences"
+            leading={<RowIcon icon={Target} />}
+            title="Learning goal & Korean Coach"
+            description="Your learning goal, romanization, speech speed and correction strictness"
+            trailing={<ChevronRight size={16} aria-hidden="true" />}
+          />
+          <InteractiveRow
+            href="/settings/security"
+            leading={<RowIcon icon={ShieldCheck} />}
+            title="Two-step verification"
+            description="Protect sign-in with an authenticator app and backup codes"
+            trailing={<ChevronRight size={16} aria-hidden="true" />}
+          />
+          {isCalendarIntegrationsEnabled() && (
+            <InteractiveRow
+              href="/settings/integrations"
+              leading={<RowIcon icon={CalendarDays} />}
+              title="Integrations"
+              description="Connect Google Calendar and other services"
+              trailing={<ChevronRight size={16} aria-hidden="true" />}
             />
-            <ChevronRight
-              size={14}
-              strokeWidth={2}
-              className="shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5"
-            />
-          </button>
-        </SectionCard>
-      </motion.div>
-
-      {/* Integrations — hidden until Plan is navigable (see
-          lib/feature-flags.ts). The code and the privacy copy stay put; only
-          the entry point and the page body are gated. */}
-      {isCalendarIntegrationsEnabled() && (
-        <motion.div variants={itemVariants}>
-          <SectionCard>
-            <button
-              type="button"
-              onClick={() => router.push("/settings/integrations")}
-              className="group flex w-full items-center justify-between px-5 py-4 text-left transition-all hover:bg-accent/5 active:scale-[0.98] sm:px-6"
-            >
-              <SectionHeader
-                icon={CalendarDays}
-                title="Integrations"
-                description="Connect Google Calendar and other services"
-                color="text-blue-500"
-              />
-              <ChevronRight
-                size={14}
-                strokeWidth={2}
-                className="shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5"
-              />
-            </button>
-          </SectionCard>
-        </motion.div>
-      )}
+          )}
+        </RowList>
+      </motion.section>
 
       {/* Background + Work */}
       <motion.div variants={itemVariants}>
@@ -507,7 +451,6 @@ export default function SettingsPage() {
               icon={Globe}
               title="Background & Work"
               description="Your native language sets what glosses are written in; your role sets what the AI's examples are about"
-              color="text-sky-500"
             />
           </SectionRow>
           <SectionRow last>
@@ -531,7 +474,7 @@ export default function SettingsPage() {
                     setNativeLanguage(e.target.value)
                     saveProfileField("nativeLanguage", { nativeLanguage: e.target.value })
                   }}
-                  className="h-11 w-full rounded-lg border border-border bg-accent/5 px-3 text-sm font-semibold text-foreground outline-none transition-colors focus:bg-background focus:ring-2 focus:ring-blue-500/20 dark:bg-white/5"
+                  className="h-11 w-full rounded-lg border border-border bg-accent/5 px-3 text-sm font-semibold text-foreground outline-none transition-colors focus:bg-background focus-visible:ring-2 focus-visible:ring-ring dark:bg-white/5"
                 >
                   <option value="">Select language</option>
                   {[
@@ -562,7 +505,7 @@ export default function SettingsPage() {
                     setOccupation(e.target.value)
                     saveProfileField("occupation", { occupation: e.target.value })
                   }}
-                  className="h-11 w-full rounded-lg border border-border bg-accent/5 px-3 text-sm font-semibold text-foreground outline-none transition-colors focus:bg-background focus:ring-2 focus:ring-blue-500/20 dark:bg-white/5"
+                  className="h-11 w-full rounded-lg border border-border bg-accent/5 px-3 text-sm font-semibold text-foreground outline-none transition-colors focus:bg-background focus-visible:ring-2 focus-visible:ring-ring dark:bg-white/5"
                 >
                   <option value="">Select role</option>
                   {[
@@ -590,21 +533,24 @@ export default function SettingsPage() {
       <motion.div variants={itemVariants}>
         <SectionCard>
           <SectionRow>
-            <SectionHeader icon={Bell} title="Notifications" color="text-violet-500" />
+            <SectionHeader icon={Bell} title="Notifications" />
           </SectionRow>
 
           {/* Browser push */}
           <SectionRow>
             <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">Browser</p>
-                <p className="text-xs text-muted-foreground">
-                  {push.supported
-                    ? push.webState === "denied"
-                      ? "Blocked in browser settings."
-                      : "Alerts when Hengo isn't open."
-                    : "Not supported in this browser."}
-                </p>
+              <div className="flex min-w-0 items-center gap-3">
+                <RowIcon icon={Monitor} />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Browser</p>
+                  <p className="text-xs text-muted-foreground">
+                    {push.supported
+                      ? push.webState === "denied"
+                        ? "Blocked in browser settings."
+                        : "Alerts when Hengo isn't open."
+                      : "Not supported in this browser."}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 {push.webEnabled && (
@@ -626,9 +572,7 @@ export default function SettingsPage() {
           <SectionRow>
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-500">
-                  <Send size={14} strokeWidth={2} />
-                </div>
+                <RowIcon icon={Send} />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground">Telegram</p>
                   <p className="text-xs text-muted-foreground">
@@ -667,9 +611,7 @@ export default function SettingsPage() {
           <SectionRow>
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-                  <AlarmClock size={14} strokeWidth={2} />
-                </div>
+                <RowIcon icon={AlarmClock} />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground">Daily reminders</p>
                   <p className="text-xs text-muted-foreground">Review nudge + streak saver</p>
@@ -683,7 +625,7 @@ export default function SettingsPage() {
               />
             </div>
             {studyRemindersEnabled && (
-              <div className="mt-3 flex items-center justify-between gap-4 rounded-lg bg-accent/5 px-4 py-3 dark:bg-white/5">
+              <div className="mt-3 flex items-center justify-between gap-4 sm:pl-12">
                 <label htmlFor="study-hour" className="text-sm font-medium text-muted-foreground">
                   Remind me at
                 </label>
@@ -694,7 +636,7 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     saveStudyReminders(studyRemindersEnabled, Number(e.target.value))
                   }
-                  className="h-11 rounded-lg border border-border bg-background px-3 text-sm font-semibold text-foreground outline-none transition-colors focus:ring-2 focus:ring-emerald-500/20"
+                  className="h-11 rounded-lg border border-border bg-background px-3 text-sm font-semibold text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {Array.from({ length: 24 }, (_, h) => (
                     <option key={h} value={h}>
@@ -716,9 +658,7 @@ export default function SettingsPage() {
           <SectionRow>
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-500">
-                  <CalendarDays size={14} strokeWidth={2} />
-                </div>
+                <RowIcon icon={CalendarDays} />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground">Holiday alerts</p>
                   <p className="text-xs text-muted-foreground">
@@ -736,10 +676,9 @@ export default function SettingsPage() {
           </SectionRow>
 
           <SectionRow last>
-            <button
-              type="button"
-              onClick={() => router.push("/settings/reminders")}
-              className="flex min-h-11 w-full items-center justify-between gap-4 text-left"
+            <Link
+              href="/settings/reminders"
+              className="-mx-2 flex min-h-11 items-center justify-between gap-4 rounded-md px-2 outline-none transition-colors hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring"
             >
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">Custom reminders</p>
@@ -748,7 +687,7 @@ export default function SettingsPage() {
                 </p>
               </div>
               <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
-            </button>
+            </Link>
           </SectionRow>
         </SectionCard>
       </motion.div>
@@ -762,7 +701,6 @@ export default function SettingsPage() {
                 icon={UserPlus}
                 title="Invites"
                 description="Sign-up is invite-only. Invite someone to create an H-Space account."
-                color="text-emerald-500"
               />
             </SectionRow>
             <SectionRow last>

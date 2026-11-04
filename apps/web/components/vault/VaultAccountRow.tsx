@@ -76,7 +76,7 @@ export function VaultAccountRow({
         </div>
       </div>
 
-      <div className="flex min-w-0 items-center gap-1 rounded-lg bg-muted/45 py-1 pr-1 pl-3 lg:w-56 xl:w-72">
+      <div className="flex min-w-0 items-center gap-1 lg:w-56 xl:w-72">
         <span className="sr-only">Login: </span>
         <span
           className={cn(

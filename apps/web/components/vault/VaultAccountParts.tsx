@@ -111,7 +111,7 @@ export function StatusBadge({ status }: { status: VaultStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+        "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold",
         STATUS_TONES[status],
       )}
     >
@@ -123,7 +123,7 @@ export function StatusBadge({ status }: { status: VaultStatus }) {
 export function CategoryChip({ category, label }: { category: string; label: string }) {
   const { icon: Icon } = categoryStyle(category)
   return (
-    <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-muted/70 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+    <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-muted/70 px-2 py-0.5 text-xs font-medium text-muted-foreground">
       <Icon className="size-3 shrink-0" aria-hidden="true" />
       <span className="truncate">{label}</span>
     </span>

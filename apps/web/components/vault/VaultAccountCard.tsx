@@ -54,7 +54,7 @@ export function VaultAccountCard({
   return (
     <article
       aria-label={title}
-      className="group flex h-full min-w-0 flex-col rounded-2xl border border-border bg-card p-4 shadow-sm shadow-slate-950/5 transition-colors hover:border-primary/35 hover:bg-muted/10 dark:bg-slate-900/40"
+      className="group flex h-full min-w-0 flex-col rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/35"
     >
       <div className="flex items-start gap-3">
         <ServiceAvatar
@@ -100,11 +100,11 @@ export function VaultAccountCard({
         </Button>
       </div>
 
-      <div className="mt-4 flex min-h-11 items-center gap-1 rounded-xl bg-muted/50 py-1 pr-1 pl-3">
+      <div className="mt-3 flex min-h-11 items-center gap-1">
         <span className="sr-only">Login: </span>
         {account.loginIdentifier ? (
           <>
-            <span className="min-w-0 flex-1 truncate font-mono text-[0.8rem] text-foreground">
+            <span className="min-w-0 flex-1 truncate font-mono text-sm text-foreground">
               {account.loginIdentifier}
             </span>
             <Button
@@ -117,14 +117,14 @@ export function VaultAccountCard({
             </Button>
           </>
         ) : (
-          <span className="flex-1 text-[0.8rem] text-muted-foreground italic">
+          <span className="flex-1 text-sm text-muted-foreground italic">
             No username or email saved
           </span>
         )}
       </div>
 
       {account.passwordCiphertext && (
-        <div className="mt-2 flex min-h-10 items-center justify-between gap-2 rounded-xl border border-dashed border-border/80 px-3 py-1.5">
+        <div className="flex min-h-10 items-center justify-between gap-2">
           <span className="flex items-center gap-2 text-xs text-muted-foreground">
             <KeyRound className="size-3.5 shrink-0" aria-hidden="true" />
             Password saved

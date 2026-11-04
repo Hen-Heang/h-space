@@ -95,7 +95,10 @@ export function VaultToolbar({
 
         <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-3">
           <Select value={filters.category} onValueChange={(category) => onChange({ category })}>
-            <SelectTrigger aria-label="Filter by category" className="col-span-2 sm:col-span-1">
+            <SelectTrigger
+              aria-label="Filter by category"
+              className="col-span-2 min-w-0 sm:col-span-1 [&>[data-slot=select-value]]:truncate"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -112,7 +115,10 @@ export function VaultToolbar({
             value={filters.status}
             onValueChange={(status) => onChange({ status: status as VaultStatus | "all" })}
           >
-            <SelectTrigger aria-label="Filter by status">
+            <SelectTrigger
+              aria-label="Filter by status"
+              className="min-w-0 [&>[data-slot=select-value]]:truncate"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -129,7 +135,10 @@ export function VaultToolbar({
             value={filters.sort}
             onValueChange={(sort) => onChange({ sort: sort as VaultSort })}
           >
-            <SelectTrigger aria-label="Sort accounts">
+            <SelectTrigger
+              aria-label="Sort accounts"
+              className="min-w-0 [&>[data-slot=select-value]]:truncate"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

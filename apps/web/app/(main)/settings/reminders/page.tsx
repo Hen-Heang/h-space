@@ -39,7 +39,7 @@ export default function RemindersSettingsPage() {
         <BackLink href="/settings" label="Settings" desktopOnly />
         <div className="mt-2 flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-foreground">Reminders</h1>
+            <h2 className="text-lg font-semibold text-foreground">Reminders</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Everything you&apos;ve set a reminder for — tasks, habits, notes, inbox items,
               journal, and activities.
@@ -99,32 +99,32 @@ export default function RemindersSettingsPage() {
 
           {active.length > 0 && (
             <motion.div variants={itemVariants} className="space-y-3">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Active
-              </h2>
-              {active.map((r) => (
-                <ReminderRow key={r.id} reminder={r} />
-              ))}
+              <h3 className="text-base font-semibold text-foreground">Active</h3>
+              <div className="app-surface divide-y divide-border px-4">
+                {active.map((r) => (
+                  <ReminderRow key={r.id} reminder={r} />
+                ))}
+              </div>
             </motion.div>
           )}
           {paused.length > 0 && (
             <motion.div variants={itemVariants} className="space-y-3">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Paused
-              </h2>
-              {paused.map((r) => (
-                <ReminderRow key={r.id} reminder={r} />
-              ))}
+              <h3 className="text-base font-semibold text-foreground">Paused</h3>
+              <div className="app-surface divide-y divide-border px-4">
+                {paused.map((r) => (
+                  <ReminderRow key={r.id} reminder={r} />
+                ))}
+              </div>
             </motion.div>
           )}
           {finished.length > 0 && (
             <motion.div variants={itemVariants} className="space-y-3">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Completed / cancelled
-              </h2>
-              {finished.map((r) => (
-                <ReminderRow key={r.id} reminder={r} />
-              ))}
+              <h3 className="text-base font-semibold text-foreground">Completed / cancelled</h3>
+              <div className="app-surface divide-y divide-border px-4">
+                {finished.map((r) => (
+                  <ReminderRow key={r.id} reminder={r} />
+                ))}
+              </div>
             </motion.div>
           )}
         </>
