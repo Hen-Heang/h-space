@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 
 // Local navigation for the Finance area while it moves in from Luyra
@@ -14,6 +13,7 @@ const FINANCE_LINKS = [
   { href: "/finance/budgets", label: "Budgets" },
   { href: "/finance/savings", label: "Savings" },
   { href: "/finance/subscriptions", label: "Subscriptions" },
+  { href: "/finance/review", label: "Review" },
   { href: "/finance/analytics", label: "Analytics" },
 ] as const
 
@@ -24,18 +24,10 @@ function isActive(pathname: string, href: string): boolean {
 
 export function FinanceNav() {
   const pathname = usePathname() ?? ""
-  const navRef = useRef<HTMLElement>(null)
-
-  // On phones the tab row scrolls sideways; keep the current tab in view so
-  // a later tab (e.g. Analytics) isn't selected but hidden off-screen.
-  useEffect(() => {
-    const active = navRef.current?.querySelector<HTMLElement>('[aria-current="page"]')
-    active?.scrollIntoView({ block: "nearest", inline: "nearest" })
-  }, [pathname])
 
   return (
-    <nav ref={navRef} aria-label="Finance" className="-mx-1 overflow-x-auto px-1">
-      <ul className="flex min-w-max gap-1 rounded-xl border border-border bg-card p-1">
+    <nav aria-label="Finance sections" className="-mx-1 px-1 sm:overflow-x-auto">
+      <ul className="grid grid-cols-2 gap-1 rounded-xl border border-border bg-card p-1 min-[400px]:grid-cols-3 sm:flex sm:min-w-max">
         {FINANCE_LINKS.map((link) => {
           const active = isActive(pathname, link.href)
           return (
@@ -44,7 +36,7 @@ export function FinanceNav() {
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-11 items-center rounded-lg px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring md:min-h-9",
+                  "flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-lg px-2 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring sm:min-h-9 sm:w-auto sm:px-3 sm:text-sm",
                   active
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",

@@ -7,6 +7,7 @@ import type {
   FinanceOverviewSummary,
   FinancePreferences,
   MonthTotals,
+  ReviewSummary,
   Transaction,
 } from "../../types/finance"
 
@@ -237,6 +238,62 @@ function analytics(month: string, previousMonth: string): AnalyticsSummary {
   }
 }
 
+function review(month: string): ReviewSummary {
+  const [y, m] = month.split("-").map(Number) as [number, number]
+  const planMonth = monthOf(new Date(y, m, 1))
+  return {
+    month,
+    totals: totals(3600000, 1757500, 9),
+    previousTotals: totals(3200000, 1910000, 11),
+    categoryComparison: categories.map((c, i) => ({
+      categoryId: c.categoryId,
+      categoryName: c.categoryName,
+      currentKrw: c.amountKrw,
+      previousKrw: c.amountKrw + (i % 2 === 0 ? 40000 : -25000),
+      deltaKrw: i % 2 === 0 ? -40000 : 25000,
+    })),
+    budgetPerformance: performance,
+    subscriptionsMonthlyKrw: 22050,
+    savingsProgress: {
+      totalSavedUsd: 4870.5,
+      totalTargetUsd: 8000,
+      overallPct: 61,
+      goalsCount: 3,
+      goalsReachedCount: 1,
+    },
+    observations: [
+      { id: "o1", tone: "positive", text: "You spent less than last month." },
+      { id: "o2", tone: "warning", text: "Food & dining went over its budget." },
+      { id: "o3", tone: "neutral", text: "Three subscriptions renew next month." },
+    ],
+    nextMonthPlan: {
+      planMonth,
+      monthsAnalyzed: [month],
+      recommendations: performance.map((p) => ({
+        categoryId: p.categoryId,
+        categoryName: p.categoryName,
+        categoryIcon: null,
+        categoryColor: p.categoryColor,
+        spendingClass: "essential",
+        currentBudgetKrw: p.budgetKrw,
+        averageKrw: p.spentKrw,
+        medianKrw: p.spentKrw,
+        recommendedBudgetKrw: Math.round(p.spentKrw / 10000) * 10000,
+        reason: p.overBudget ? "raise_unrealistic" : "hold_steady",
+        rationale: p.overBudget
+          ? "You've spent more than this budget for a while, so it's raised to something you can keep."
+          : "Spending is steady and within budget.",
+      })),
+      totalRecommendedKrw: 870000,
+      otherSpendingKrw: 904000,
+      averageIncomeKrw: 3400000,
+      projectedSavingsRatePct: 48,
+      targetSavingsRatePct: 20,
+      additionalTrimNeededKrw: 0,
+    },
+  }
+}
+
 const preferences: FinancePreferences = {
   monthlySpendingLimitKrw: 2000000,
   targetSavingsRate: 20,
@@ -425,6 +482,8 @@ export function financeFixture(url: URL): unknown {
           },
         ],
       }
+    case "review":
+      return review(month)
     case "templates":
     case "recurring":
       return []
