@@ -82,7 +82,8 @@ describe("current exam topic script outline", () => {
     const outline = getInterviewTopic("weather").scriptOutline
     expect(outline).toBeDefined()
     expect(outline!.length).toBeGreaterThanOrEqual(5)
-    expect(outline![0].id).toBe("opening")
+    expect(outline![0].id).toBe("self-intro")
+    expect(outline![1].id).toBe("opening")
   })
 
   it("seeds every outline section in Korean and English", () => {
@@ -104,7 +105,7 @@ describe("buildScriptDocument", () => {
       "weather-check": "   ", // whitespace-only is skipped
     })
     expect(doc).toContain(weather.labelKo)
-    expect(doc).toContain("인사 및 주제 소개")
+    expect(doc).toContain("주제 소개")
     expect(doc).toContain("안녕하세요. 저는 헨입니다.")
     expect(doc).toContain("한국에서는 매일 걸어서 출근해요.")
     expect(doc).not.toContain("날씨 확인 습관")
