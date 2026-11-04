@@ -31,6 +31,24 @@ describe("financeConfigProblems", () => {
     ])
   })
 
+  it("accepts a quoted or psql-wrapped database URL", () => {
+    for (const url of [`"${FAKE_DB_URL}"`, `psql '${FAKE_DB_URL}'`]) {
+      expect(
+        financeConfigProblems({ FINANCE_DATABASE_URL: url, FINANCE_ACCOUNT_LINKS: `${H}=${L}` }),
+      ).toEqual([])
+    }
+  })
+
+  it("calls out a database URL that isn't a Postgres URL, without echoing it", () => {
+    const problems = financeConfigProblems({
+      FINANCE_DATABASE_URL: `https://${SENTINEL_HOST}/db`,
+      FINANCE_ACCOUNT_LINKS: `${H}=${L}`,
+    })
+    expect(problems).toHaveLength(1)
+    expect(problems[0]).toMatch(/FINANCE_DATABASE_URL is malformed/)
+    expect(problems[0]).not.toContain(SENTINEL_HOST)
+  })
+
   it("calls out a malformed link without echoing its value", () => {
     const problems = financeConfigProblems({
       FINANCE_DATABASE_URL: FAKE_DB_URL,

@@ -1,5 +1,6 @@
 import "server-only"
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless"
+import { normalizeFinanceDatabaseUrl } from "@/lib/server/finance/database-url"
 
 // Server-only client for Luyra's existing Neon database, which stays the
 // source of truth for finance data (see docs/LUYRA_MIGRATION.md). Ported from
@@ -15,11 +16,13 @@ import { neon, type NeonQueryFunction } from "@neondatabase/serverless"
 let client: NeonQueryFunction<false, false> | undefined
 
 export function isFinanceDatabaseConfigured(): boolean {
-  return Boolean(process.env.FINANCE_DATABASE_URL)
+  return normalizeFinanceDatabaseUrl(process.env.FINANCE_DATABASE_URL) !== null
 }
 
 function getClient(): NeonQueryFunction<false, false> {
-  return (client ??= neon(process.env.FINANCE_DATABASE_URL!))
+  // requireFinanceUserId() checks isFinanceDatabaseConfigured() first, so a
+  // malformed value is reported as "not configured" before reaching here.
+  return (client ??= neon(normalizeFinanceDatabaseUrl(process.env.FINANCE_DATABASE_URL) ?? ""))
 }
 
 export const sql: NeonQueryFunction<false, false> = new Proxy(
