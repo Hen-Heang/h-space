@@ -80,3 +80,33 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
 
   return (body as { data: T }).data
 }
+
+/**
+ * Fetches a file (not a `{ data }` envelope) from a finance route with the
+ * H-Space Bearer token, e.g. the transaction export. Returns the body and the
+ * server's suggested filename. Same account-switch guard as apiFetch.
+ */
+export async function apiDownload(path: string): Promise<{ blob: Blob; filename: string | null }> {
+  const userId = getUserId()
+  if (!userId) throw new ApiError("SESSION_CHANGED", "Your account changed. Please try again.", 401)
+  const token = await getSupabaseAccessToken()
+  if (getUserId() !== userId) {
+    throw new ApiError("SESSION_CHANGED", "Your account changed. Please try again.", 401)
+  }
+  const response = await fetch(path, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!response.ok) {
+    const body = await readJson(response)
+    if (isApiErrorBody(body))
+      throw new ApiError(body.error.code, body.error.message, response.status)
+    throw new ApiError(
+      "HTTP_ERROR",
+      `Download from ${path} failed with status ${response.status}`,
+      response.status,
+    )
+  }
+  const disposition = response.headers.get("content-disposition") ?? ""
+  const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? null
+  return { blob: await response.blob(), filename }
+}

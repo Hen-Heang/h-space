@@ -4,7 +4,7 @@ vi.mock("server-only", () => ({}))
 const requireUser = vi.fn()
 vi.mock("@/lib/server/ai", () => ({ requireUser: (req: Request) => requireUser(req) }))
 
-import { financeConfigProblems, requireFinanceUserId } from "./auth"
+import { financeConfigProblems, requireFinanceAppUser, requireFinanceUserId } from "./auth"
 import { AppError } from "./errors"
 
 // A fake, password-free URL whose host is a sentinel we can search the log for.
@@ -164,5 +164,41 @@ describe("requireFinanceUserId", () => {
   it("fails closed with 503 when the finance database is not configured", async () => {
     vi.stubEnv("FINANCE_DATABASE_URL", "")
     expect((await failure(requireFinanceUserId(req()))).status).toBe(503)
+  })
+})
+
+const { findUserById } = vi.hoisted(() => ({ findUserById: vi.fn() }))
+vi.mock("@/lib/server/finance/repositories/user-repository", () => ({
+  findUserById: (...a: unknown[]) => findUserById(...a),
+}))
+
+describe("requireFinanceAppUser", () => {
+  const H = "11111111-1111-4111-8111-111111111111"
+  const L = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+  const request = () =>
+    new Request("http://localhost/api/finance/email/status", {
+      headers: { authorization: "Bearer t" },
+    })
+
+  beforeEach(() => {
+    vi.stubEnv("FINANCE_DATABASE_URL", FAKE_DB_URL)
+    vi.stubEnv("FINANCE_ACCOUNT_LINKS", `${H}=${L}`)
+    requireUser.mockResolvedValue({ user: { id: H }, db: {} })
+  })
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    requireUser.mockReset()
+    findUserById.mockReset()
+  })
+
+  it("returns the linked user's own row", async () => {
+    findUserById.mockResolvedValue({ id: L, email: "owner@example.invalid" })
+    await expect(requireFinanceAppUser(request())).resolves.toMatchObject({ id: L })
+    expect(findUserById).toHaveBeenCalledWith(L)
+  })
+
+  it("fails with 404 when the linked finance user has no row", async () => {
+    findUserById.mockResolvedValue(null)
+    await expect(requireFinanceAppUser(request())).rejects.toMatchObject({ status: 404 })
   })
 })

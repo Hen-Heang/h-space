@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api/finance-client"
+import { apiDownload, apiFetch } from "@/lib/api/finance-client"
 import type {
   ApplyBudgetPlanInput,
   BulkTransactionActionInput,
@@ -399,4 +399,20 @@ export function sendMonthlyReportEmail(
     method: "POST",
     body: JSON.stringify({ type: "monthly", month, monthLabel }),
   })
+}
+
+/** Downloads the full transaction history (CSV or JSON) through the browser. */
+export async function downloadFinanceExport(format: "csv" | "json"): Promise<void> {
+  const { blob, filename } = await apiDownload(`/api/finance/export?format=${format}`)
+  const url = URL.createObjectURL(blob)
+  try {
+    const link = document.createElement("a")
+    link.href = url
+    link.download = filename ?? `finance-transactions.${format}`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  } finally {
+    URL.revokeObjectURL(url)
+  }
 }

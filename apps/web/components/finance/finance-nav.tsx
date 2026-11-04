@@ -15,6 +15,7 @@ const FINANCE_LINKS = [
   { href: "/finance/subscriptions", label: "Subscriptions" },
   { href: "/finance/review", label: "Review" },
   { href: "/finance/analytics", label: "Analytics" },
+  { href: "/finance/settings", label: "Settings" },
 ] as const
 
 function isActive(pathname: string, href: string): boolean {
