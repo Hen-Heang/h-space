@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { toLocalDateString } from "@/lib/date-utils"
 import { calculateGoalDeadlineInfo, formatDeadlineFooter, type Goal } from "@/lib/goals"
 
 const baseGoal = (overrides: Partial<Goal> = {}): Goal =>
@@ -37,7 +38,9 @@ describe("formatDeadlineFooter", () => {
   })
 
   it("shows 'Due today' when the target date is today", () => {
-    const today = new Date().toISOString().split("T")[0]
+    // The local date, like the app. toISOString() gave the UTC date, so this
+    // failed before 09:00 KST, when UTC is still on the previous day.
+    const today = toLocalDateString(new Date())
     const goal = baseGoal({ target_date: today })
     const info = calculateGoalDeadlineInfo(goal)
     expect(formatDeadlineFooter(goal, info)).toBe("Due today")

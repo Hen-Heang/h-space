@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence, type Variants } from "motion/react"
 import { ArrowRight, Filter, Loader2, Search, Sparkles, Zap } from "lucide-react"
@@ -61,65 +62,55 @@ export default function CreateGoalPage() {
   const primaryTemplates = filteredTemplates.filter((t) => !LIFE_GOAL_CATEGORIES.has(t.category))
   const lifeGoalTemplates = filteredTemplates.filter((t) => LIFE_GOAL_CATEGORIES.has(t.category))
 
-  const handleSelectTemplate = (template: GoalTemplate) => {
-    router.push(`/goals/create/template/${template.id}`)
-  }
-
+  // The whole card is one real link (keyboard, middle-click, "open in new
+  // tab"), with nothing interactive inside it — the arrow is decoration.
   const renderTemplateCard = (template: GoalTemplate) => (
     <motion.div key={template.id} variants={itemVariants}>
-      <Card
-        role="link"
-        tabIndex={0}
-        className="group relative flex h-full cursor-pointer flex-col transition-colors hover:border-primary/30 focus-visible:ring-2 focus-visible:ring-ring"
-        onClick={() => handleSelectTemplate(template)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault()
-            handleSelectTemplate(template)
-          }
-        }}
+      <Link
+        href={`/goals/create/template/${template.id}`}
+        className="group block h-full rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <CardHeader className="p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div
-              className="mb-1 flex h-12 w-12 items-center justify-center rounded-lg text-2xl shadow-sm"
-              style={{ background: template.color }}
-            >
-              {template.icon}
+        <Card className="relative flex h-full flex-col transition-colors group-hover:border-primary/30">
+          <CardHeader className="p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div
+                aria-hidden="true"
+                className="mb-1 flex h-12 w-12 items-center justify-center rounded-lg text-2xl"
+                style={{ background: template.color }}
+              >
+                {template.icon}
+              </div>
+              <ArrowRight
+                aria-hidden="true"
+                className="mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary"
+              />
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="shrink-0 translate-x-4 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100"
-            >
-              <ArrowRight className="h-5 w-5 text-primary" />
-            </Button>
-          </div>
-          <CardTitle className="mt-3 text-lg font-semibold leading-tight tracking-tight transition-colors group-hover:text-primary">
-            {template.name}
-          </CardTitle>
-          <CardDescription className="mt-1 line-clamp-2 text-sm font-medium leading-relaxed">
-            {template.description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="mt-auto p-5 pt-0">
-          <div className="mb-3">
-            <span className="rounded-md border border-primary/10 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-              {template.category}
-            </span>
-          </div>
-          <div className="flex items-center gap-4 border-t border-foreground/[0.05] pt-3 text-xs font-medium text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <Sparkles size={12} className="text-primary/60" />
-              {template.sections.length} sections
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Zap size={12} className="text-primary/60" />
-              {template.sections.reduce((acc, s) => acc + s.fields.length, 0)} fields
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+            <CardTitle className="mt-3 text-lg font-semibold leading-tight tracking-tight transition-colors group-hover:text-primary">
+              {template.name}
+            </CardTitle>
+            <CardDescription className="mt-1 line-clamp-2 text-sm font-medium leading-relaxed">
+              {template.description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="mt-auto p-5 pt-0">
+            <div className="mb-3">
+              <span className="rounded-md border border-primary/10 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                {template.category}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 border-t border-foreground/[0.05] pt-3 text-xs font-medium text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Sparkles size={12} className="text-primary/60" />
+                {template.sections.length} sections
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Zap size={12} className="text-primary/60" />
+                {template.sections.reduce((acc, s) => acc + s.fields.length, 0)} fields
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
     </motion.div>
   )
 
@@ -261,28 +252,22 @@ export default function CreateGoalPage() {
             </div>
           </div>
 
-          <Card
-            role="link"
-            tabIndex={0}
-            className="cursor-pointer border-dashed transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={() => router.push("/goals/create/custom")}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault()
-                router.push("/goals/create/custom")
-              }
-            }}
+          <Link
+            href="/goals/create/custom"
+            className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <CardContent className="flex flex-col items-center justify-center py-6 text-center">
-              <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Sparkles className="h-6 w-6" />
-              </div>
-              <h3 className="mb-1 text-base font-semibold">Custom Goal</h3>
-              <p className="px-4 text-sm text-muted-foreground">
-                Build a unique goal with full manual control.
-              </p>
-            </CardContent>
-          </Card>
+            <Card className="border-dashed transition-colors group-hover:border-primary/40">
+              <CardContent className="flex flex-col items-center justify-center py-6 text-center">
+                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Sparkles className="h-6 w-6" aria-hidden="true" />
+                </div>
+                <h3 className="mb-1 text-base font-semibold">Custom Goal</h3>
+                <p className="px-4 text-sm text-muted-foreground">
+                  Build a unique goal with full manual control.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
         {/* Right: template grid */}

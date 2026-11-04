@@ -539,7 +539,7 @@ export const navSections: NavSection[] = [
         description: "Your long-term, phase-by-phase learning/career plan",
         keywords: ["milestones", "phases", "timeline", "long-term", "planning"],
         // Not a primary nav destination — it's a long-term planning tool
-        // reachable from the Goals Overview tab (RoadmapTeaser) and
+        // reachable from the Learning hub's Library (RoadmapLibraryItem) and
         // search/More sheet. Route and localStorage data are untouched.
         showInSidebar: false,
       },

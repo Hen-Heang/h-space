@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, Clock, Flag, MoreHorizontal, Paperclip, Target } from "lucide-react"
+import { Check, MoreHorizontal, Paperclip } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -29,7 +29,7 @@ export interface GoalTaskRowProps {
   todayYmd: string
   phase?: GoalPlanPhase | null
   keyResult?: GoalKeyResult | null
-  /** "card" = mobile/stacked; "row" = desktop dense list. */
+  /** "card" = phones and grouped lists; "row" = the desktop table. */
   variant: "card" | "row"
   isSelected?: boolean
   showPhase?: boolean
@@ -44,20 +44,30 @@ export interface GoalTaskRowProps {
 export const formatEffort = (m: number): string =>
   m <= 0 ? "—" : m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ""}` : `${m}m`
 
-const IMPACT_STYLES: Record<string, string> = {
-  high: "bg-orange-500/10 text-orange-700 dark:text-orange-400",
-  medium: "bg-foreground/5 text-muted-foreground",
-  low: "bg-foreground/5 text-muted-foreground/80",
-}
+/**
+ * The desktop table's columns, shared by the header (AllTasksView) and every
+ * row so they can't drift apart. From 1024px: done · task · status · schedule
+ * · effort · menu. Phase, key result and impact join only from 1280px (`xl`),
+ * so the title keeps its room on a laptop-width screen.
+ */
+export const taskTableColumns = (showPhase = true) =>
+  cn(
+    "grid items-center gap-2 grid-cols-[auto_minmax(0,1fr)_7rem_7rem_4.5rem_auto]",
+    showPhase
+      ? "xl:grid-cols-[auto_minmax(0,1fr)_6.5rem_6.5rem_8rem_8rem_4.5rem_4.5rem_auto]"
+      : "xl:grid-cols-[auto_minmax(0,1fr)_6.5rem_6.5rem_8rem_4.5rem_4.5rem_auto]",
+  )
 
 /**
  * One task, in either presentation. Both variants share the same data and
- * the same actions — the mobile card is not a squeezed desktop table row, and
+ * the same actions — the phone row is not a squeezed desktop table row, and
  * the desktop row is never horizontally scrolled on mobile.
  *
- * Deliberately shows a fixed, small set of fields (status, date, duration,
- * phase, key result, impact, blocked reason, evidence flag) rather than every
- * column the row has; the rest lives in the details panel.
+ * The phone row shows the title and one metadata line: status, schedule and
+ * (only when it's required) the evidence marker. Phase, key result, impact
+ * and effort live in the details sheet — lists that show this row already
+ * group by phase and key result. The desktop table shows them as columns
+ * from `xl`.
  */
 export function GoalTaskRow({
   task,
@@ -90,6 +100,7 @@ export function GoalTaskRow({
       className={cn(
         // 44px hit area on touch, tighter visual box on desktop.
         "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg sm:h-8 sm:w-8",
+        "[@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11",
       )}
     >
       <span
@@ -112,7 +123,7 @@ export function GoalTaskRow({
           variant="ghost"
           size="icon"
           aria-label={`Actions for "${title}"`}
-          className="h-11 w-11 shrink-0 rounded-lg sm:h-8 sm:w-8"
+          className="h-11 w-11 shrink-0 rounded-lg sm:h-8 sm:w-8 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
         >
           <MoreHorizontal className="h-4 w-4" />
         </Button>
@@ -148,7 +159,7 @@ export function GoalTaskRow({
   const statusBadge = (
     <span
       className={cn(
-        "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
+        "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
         overdue ? "bg-red-500/10 text-red-700 dark:text-red-400" : TASK_STATUS_STYLES[status],
       )}
     >
@@ -171,10 +182,8 @@ export function GoalTaskRow({
     return (
       <li
         className={cn(
-          "grid items-center gap-2 border-b border-border/50 px-1.5 py-1.5 text-sm transition-colors last:border-b-0 hover:bg-accent/40",
-          showPhase
-            ? "grid-cols-[auto_minmax(0,1fr)_6.5rem_6.5rem_8rem_8rem_4.5rem_4.5rem_auto]"
-            : "grid-cols-[auto_minmax(0,1fr)_6.5rem_6.5rem_8rem_4.5rem_4.5rem_auto]",
+          taskTableColumns(showPhase),
+          "border-b border-border px-1.5 py-1.5 text-sm transition-colors last:border-b-0 hover:bg-accent/40",
           isSelected && "bg-accent/60",
         )}
       >
@@ -182,29 +191,36 @@ export function GoalTaskRow({
         <button
           type="button"
           onClick={() => onOpen(task)}
-          className="min-w-0 truncate text-left font-medium text-foreground hover:underline"
+          className="min-w-0 py-1 text-left font-medium text-foreground hover:underline"
         >
-          <span className={cn(isDone && "text-muted-foreground line-through")}>{title}</span>
+          <span
+            className={cn(
+              "line-clamp-2 break-words",
+              isDone && "text-muted-foreground line-through",
+            )}
+          >
+            {title}
+          </span>
           {task.blocked_reason && status === "blocked" && (
-            <span className="ml-2 text-[11px] font-normal text-red-600 dark:text-red-400">
+            <span className="block truncate text-xs font-normal text-red-600 dark:text-red-400">
               {task.blocked_reason}
             </span>
           )}
         </button>
         <span className="truncate">{statusBadge}</span>
-        <span className="truncate text-xs font-medium text-muted-foreground">{scheduleLabel}</span>
+        <span className="truncate text-xs text-muted-foreground">{scheduleLabel}</span>
         {showPhase && (
-          <span className="truncate text-xs font-medium text-muted-foreground">
+          <span className="hidden truncate text-xs text-muted-foreground xl:block">
             {phase?.title ?? "—"}
           </span>
         )}
-        <span className="truncate text-xs font-medium text-muted-foreground">
+        <span className="hidden truncate text-xs text-muted-foreground xl:block">
           {keyResult?.title ?? "—"}
         </span>
-        <span className="truncate text-xs font-medium capitalize text-muted-foreground">
+        <span className="hidden truncate text-xs capitalize text-muted-foreground xl:block">
           {task.impact_level ?? "—"}
         </span>
-        <span className="flex items-center gap-1.5 text-xs font-medium tabular-nums text-muted-foreground">
+        <span className="flex items-center gap-1.5 text-xs tabular-nums text-muted-foreground">
           {formatEffort(effort)}
           {task.evidence_required && (
             <Paperclip size={12} aria-label="Evidence required" className="shrink-0" />
@@ -216,65 +232,31 @@ export function GoalTaskRow({
   }
 
   return (
-    <li
-      className={cn(
-        "rounded-xl border border-border/60 px-2.5 py-2 transition-colors",
-        isSelected && "border-primary/40 bg-primary/[0.03]",
-      )}
-    >
+    <li className={cn("py-1 transition-colors", isSelected && "bg-accent/60")}>
       <div className="flex items-start gap-1.5">
         {completionControl}
         <button
           type="button"
           onClick={() => onOpen(task)}
-          className="min-w-0 flex-1 py-2 text-left"
+          className="min-w-0 flex-1 rounded-md py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span
             className={cn(
-              "block text-sm font-medium leading-snug",
+              "line-clamp-2 break-words text-base font-medium leading-snug",
               isDone ? "text-muted-foreground line-through" : "text-foreground",
             )}
           >
             {title}
           </span>
-          <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-medium text-muted-foreground">
+          <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted-foreground">
             {statusBadge}
             {scheduleLabel}
-            {effort > 0 && (
-              <span className="inline-flex items-center gap-1">
-                <Clock size={11} /> {formatEffort(effort)}
-              </span>
-            )}
-            {phase && (
-              <span className="inline-flex min-w-0 items-center gap-1">
-                <Flag size={11} className="shrink-0" />
-                <span className="truncate">{phase.title}</span>
-              </span>
-            )}
-            {keyResult && (
-              <span className="inline-flex min-w-0 items-center gap-1">
-                <Target size={11} className="shrink-0" />
-                <span className="truncate">{keyResult.title}</span>
-              </span>
-            )}
-            {task.impact_level && (
-              <span
-                className={cn(
-                  "rounded-full px-1.5 py-0.5 text-[10px]",
-                  IMPACT_STYLES[task.impact_level],
-                )}
-              >
-                {task.impact_level} impact
-              </span>
-            )}
             {task.evidence_required && (
-              <span className="inline-flex items-center gap-1">
-                <Paperclip size={11} /> Evidence
-              </span>
+              <Paperclip size={12} aria-label="Evidence required" className="shrink-0" />
             )}
           </span>
           {status === "blocked" && task.blocked_reason && (
-            <span className="mt-1 block text-[11px] font-medium text-red-600 dark:text-red-400">
+            <span className="mt-1 block text-xs font-medium text-red-600 dark:text-red-400">
               Blocked: {task.blocked_reason}
             </span>
           )}

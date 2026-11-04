@@ -3,11 +3,14 @@ import { CalendarDays, ChevronRight } from "lucide-react"
 
 import { navSections, workspaceTabs, type NavItem } from "@/lib/navigation"
 
+import { RoadmapLibraryItem } from "./RoadmapLibraryItem"
+
 // The rest of the Learning workspace — routes that are neither a Learning tab
 // nor the hub itself (Foundations, Reading, Scenarios, Exam Prep, History).
 // Derived from the registry so a new Learning route shows up here without a
 // second list to maintain. The weekday study plan (/practice/today) isn't a
-// registry entry, so it's appended by hand.
+// registry entry, so it's appended by hand; so is the dev roadmap, which the
+// registry files under the Planner (RoadmapLibraryItem).
 const tabIds = new Set((workspaceTabs.learn ?? []).map((tab) => tab.id))
 
 const weekdayPlan: NavItem = {
@@ -57,6 +60,8 @@ export function LibraryList() {
             </li>
           )
         })}
+        {/* A study plan, so its visible door is here; shows browser-local progress. */}
+        <RoadmapLibraryItem />
       </ul>
     </section>
   )

@@ -4,16 +4,24 @@ import { useMemo } from "react"
 import Link from "next/link"
 import { CalendarClock } from "lucide-react"
 
+import {
+  DASHBOARD_ROW,
+  DASHBOARD_ROWS,
+  DashboardCard,
+  DashboardNote,
+} from "@/components/home/dashboard-card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DeadlineStatusBadge } from "@/components/goals/DeadlineStatusBadge"
 import { useGoals } from "@/hooks/useGoals"
 import { calculateGoalDeadlineInfo } from "@/lib/goals"
+import { cn } from "@/lib/utils"
 
-// Cross-goal deadline list for the Productivity dashboard — the Goals page
-// only surfaces a single "N overdue" banner, not a ranked list, so this
-// composes sortedGoals + calculateGoalDeadlineInfo into one.
+// Cross-goal deadline list for the Goals Overview — the Goals page only
+// surfaces a single "N overdue" count, not a ranked list, so this composes
+// sortedGoals + calculateGoalDeadlineInfo into one. Overdue goals sort first
+// (negative days remaining), so it also covers what the old amber banner said.
 export function UpcomingDeadlines({ limit = 5 }: { limit?: number }) {
-  const { sortedGoals, isLoading } = useGoals()
+  const { sortedGoals, isLoading, isError } = useGoals()
 
   const upcoming = useMemo(
     () =>
@@ -27,38 +35,37 @@ export function UpcomingDeadlines({ limit = 5 }: { limit?: number }) {
   )
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-900/40">
-      <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">
-        <CalendarClock size={14} strokeWidth={2.5} />
-        Upcoming Deadlines
-      </h3>
-
+    <DashboardCard title="Upcoming deadlines" icon={CalendarClock}>
       {isLoading ? (
-        <div className="mt-4 space-y-3">
+        <div className="space-y-2 py-1">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-14 w-full rounded-2xl" />
+            <Skeleton key={i} className="h-11 w-full rounded-md" />
           ))}
         </div>
+      ) : isError ? (
+        <DashboardNote tone="error">Couldn&apos;t load your deadlines.</DashboardNote>
       ) : upcoming.length === 0 ? (
-        <p className="mt-4 rounded-2xl border border-border bg-accent/5 px-4 py-4 text-sm font-medium text-muted-foreground">
-          No goals with a deadline coming up.
-        </p>
+        <DashboardNote>No goals with a deadline coming up.</DashboardNote>
       ) : (
-        <div className="mt-4 space-y-2">
+        <ul className={DASHBOARD_ROWS}>
           {upcoming.map(({ goal, info }) => (
-            <Link
-              key={goal.id}
-              href={`/goals/${goal.id}`}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-background/40 px-4 py-3 transition-colors hover:bg-accent/40"
-            >
-              <span className="min-w-0 truncate text-sm font-bold text-foreground">
-                {goal.title}
-              </span>
-              <DeadlineStatusBadge deadlineInfo={info} size="sm" />
-            </Link>
+            <li key={goal.id}>
+              <Link
+                href={`/goals/${goal.id}`}
+                className={cn(
+                  DASHBOARD_ROW,
+                  "flex-wrap justify-between gap-x-3 gap-y-1 hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring",
+                )}
+              >
+                <span className="line-clamp-2 min-w-0 flex-1 basis-40 break-words text-base text-foreground">
+                  {goal.title}
+                </span>
+                <DeadlineStatusBadge deadlineInfo={info} size="sm" />
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-    </div>
+    </DashboardCard>
   )
 }

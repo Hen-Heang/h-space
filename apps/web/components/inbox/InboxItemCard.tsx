@@ -4,8 +4,8 @@ import { useState } from "react"
 import {
   Archive,
   ArchiveRestore,
-  CalendarClock,
   ListChecks,
+  MoreHorizontal,
   NotebookPen,
   Pin,
   PinOff,
@@ -23,9 +23,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ReminderButton } from "@/components/reminders/ReminderButton"
 import { isSpringInboxEnabled } from "@/lib/feature-flags"
@@ -33,6 +31,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { getApiErrorMessage } from "@/lib/api"
@@ -50,15 +49,28 @@ const TYPE_LABEL: Record<InboxItem["itemType"], string> = {
   journal: "Journal thought",
 }
 
+const CONVERTED_LABEL: Record<NonNullable<InboxItem["convertedToType"]>, string> = {
+  note: "Note",
+  task: "Task",
+  journal: "Journal",
+}
+
 function todayYmd(): string {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
 }
 
+/**
+ * One captured item as a divider row (the page puts the rows on one surface).
+ * The content leads; type, time, status and tags share one quiet metadata
+ * line instead of a row of badges. Only "Convert" (the inbox's job) and the
+ * reminder bell stay visible — pin, archive and delete live in the ⋯ menu.
+ */
 export function InboxItemCard({ item }: { item: InboxItem }) {
   const { togglePinned, archive, restore, remove, convertToNote, convertToTask, convertToJournal } =
     useInboxMutations()
   const [busy, setBusy] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   async function run(action: () => Promise<unknown>, successMessage: string) {
     setBusy(true)
@@ -78,89 +90,60 @@ export function InboxItemCard({ item }: { item: InboxItem }) {
     hour: "numeric",
     minute: "2-digit",
   })
+  const name = item.title?.trim() || item.content.slice(0, 40)
+  const isArchived = item.status === "archived"
 
   return (
-    <div
+    <li
       className={cn(
-        "rounded-lg border border-border bg-card p-4 shadow-sm transition-opacity",
+        "py-3 transition-opacity",
         item.status !== "inbox" && "opacity-70",
         busy && "pointer-events-none opacity-60",
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{TYPE_LABEL[item.itemType]}</Badge>
-          {item.status !== "inbox" && (
-            <Badge variant="outline" className="capitalize">
-              {item.status}
-            </Badge>
-          )}
-          {item.convertedToType && (
-            <Badge variant="outline">
-              →{" "}
-              {item.convertedToType === "note"
-                ? "Note"
-                : item.convertedToType === "task"
-                  ? "Task"
-                  : "Journal"}
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-1">
-          <ReminderButton
-            entityType="inbox_item"
-            entityId={item.id}
-            deepLink="https://hengo.henheang.site/inbox"
-            defaultTitle={item.title?.trim() || item.content.slice(0, 60)}
-            // Reminders can't follow an item that lives only in hspace-api yet
-            // (see remindersApi.create).
-            allowCreate={!isSpringInboxEnabled()}
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={item.pinned ? "Unpin" : "Pin"}
-            onClick={() =>
-              run(
-                () => togglePinned.mutateAsync({ id: item.id, pinned: !item.pinned }),
-                item.pinned ? "Unpinned" : "Pinned",
-              )
-            }
-          >
-            {item.pinned ? (
-              <Pin size={16} className="fill-current text-primary" />
-            ) : (
-              <PinOff size={16} />
-            )}
-          </Button>
-        </div>
-      </div>
-
       {item.title && (
-        <h3 className="mt-2 break-words text-sm font-semibold text-foreground [overflow-wrap:anywhere]">
+        <h3 className="break-words text-base font-medium text-foreground [overflow-wrap:anywhere]">
           {item.title}
         </h3>
       )}
-      <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">
+      <p
+        className={cn(
+          "whitespace-pre-wrap break-words text-sm leading-relaxed [overflow-wrap:anywhere]",
+          item.title ? "mt-0.5 text-muted-foreground" : "text-foreground",
+        )}
+      >
         {item.content}
       </p>
 
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        {item.tags.map((tag) => (
-          <Badge key={tag} variant="outline" className="text-xs">
-            #{tag}
-          </Badge>
-        ))}
-      </div>
-
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1 text-xs text-muted-foreground">
-          <CalendarClock size={12} />
-          {capturedLabel}
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+          {item.pinned && (
+            <span className="inline-flex items-center gap-1 text-primary">
+              <Pin size={12} className="fill-current" aria-hidden="true" />
+              Pinned
+            </span>
+          )}
+          <span>{TYPE_LABEL[item.itemType]}</span>
+          <span aria-hidden="true">·</span>
+          <time dateTime={item.capturedAt}>{capturedLabel}</time>
+          {item.status !== "inbox" && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span className="capitalize">{item.status}</span>
+            </>
+          )}
+          {item.convertedToType && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>→ {CONVERTED_LABEL[item.convertedToType]}</span>
+            </>
+          )}
+          {item.tags.map((tag) => (
+            <span key={tag}>#{tag}</span>
+          ))}
         </p>
 
-        <div className="flex items-center gap-1">
+        <div className="ml-auto flex shrink-0 items-center gap-1">
           {item.status === "inbox" && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -173,7 +156,7 @@ export function InboxItemCard({ item }: { item: InboxItem }) {
                   className="rounded-lg"
                   onClick={() => run(() => convertToNote.mutateAsync(item), "Converted to a note")}
                 >
-                  <NotebookPen size={14} className="text-indigo-500" /> Convert to note
+                  <NotebookPen size={14} aria-hidden="true" /> Convert to note
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="rounded-lg"
@@ -184,7 +167,7 @@ export function InboxItemCard({ item }: { item: InboxItem }) {
                     )
                   }
                 >
-                  <ListChecks size={14} className="text-blue-500" /> Convert to task (today)
+                  <ListChecks size={14} aria-hidden="true" /> Convert to task (today)
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="rounded-lg"
@@ -192,56 +175,99 @@ export function InboxItemCard({ item }: { item: InboxItem }) {
                     run(() => convertToJournal.mutateAsync(item), "Added to your journal")
                   }
                 >
-                  <Sparkles size={14} className="text-amber-500" /> Convert to journal entry
+                  <Sparkles size={14} aria-hidden="true" /> Convert to journal entry
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={item.status === "archived" ? "Restore" : "Archive"}
-            onClick={() =>
-              run(
-                () =>
-                  item.status === "archived"
-                    ? restore.mutateAsync(item.id)
-                    : archive.mutateAsync(item.id),
-                item.status === "archived" ? "Restored to inbox" : "Archived",
-              )
-            }
-          >
-            {item.status === "archived" ? <ArchiveRestore size={16} /> : <Archive size={16} />}
-          </Button>
+          <ReminderButton
+            entityType="inbox_item"
+            entityId={item.id}
+            deepLink="https://hengo.henheang.site/inbox"
+            defaultTitle={item.title?.trim() || item.content.slice(0, 60)}
+            // Reminders can't follow an item that lives only in hspace-api yet
+            // (see remindersApi.create).
+            allowCreate={!isSpringInboxEnabled()}
+          />
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button type="button" variant="ghost" size="icon-sm" aria-label="Delete">
-                <Trash2 size={16} />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`More actions for "${name}"`}
+              >
+                <MoreHorizontal size={16} />
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete this item?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This permanently removes the captured item. This can&apos;t be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => run(() => remove.mutateAsync(item.id), "Deleted")}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-44 rounded-xl">
+              <DropdownMenuItem
+                className="rounded-lg"
+                onClick={() =>
+                  run(
+                    () => togglePinned.mutateAsync({ id: item.id, pinned: !item.pinned }),
+                    item.pinned ? "Unpinned" : "Pinned",
+                  )
+                }
+              >
+                {item.pinned ? (
+                  <PinOff size={14} aria-hidden="true" />
+                ) : (
+                  <Pin size={14} aria-hidden="true" />
+                )}
+                {item.pinned ? "Unpin" : "Pin"}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="rounded-lg"
+                onClick={() =>
+                  run(
+                    () =>
+                      isArchived ? restore.mutateAsync(item.id) : archive.mutateAsync(item.id),
+                    isArchived ? "Restored to inbox" : "Archived",
+                  )
+                }
+              >
+                {isArchived ? (
+                  <ArchiveRestore size={14} aria-hidden="true" />
+                ) : (
+                  <Archive size={14} aria-hidden="true" />
+                )}
+                {isArchived ? "Restore" : "Archive"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                className="rounded-lg"
+                onSelect={() => setConfirmDelete(true)}
+              >
+                <Trash2 size={14} aria-hidden="true" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
-    </div>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the captured item. This can&apos;t be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => run(() => remove.mutateAsync(item.id), "Deleted")}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </li>
   )
 }

@@ -27,7 +27,7 @@ import {
 } from "@/lib/task-views"
 import { cn } from "@/lib/utils"
 
-import { GoalTaskRow } from "./GoalTaskRow"
+import { GoalTaskRow, taskTableColumns } from "./GoalTaskRow"
 
 interface AllTasksViewProps {
   tasks: Task[]
@@ -271,7 +271,7 @@ export function AllTasksView({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="filter-from" className="text-[11px]">
+                <Label htmlFor="filter-from" className="text-xs">
                   From
                 </Label>
                 <Input
@@ -283,7 +283,7 @@ export function AllTasksView({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="filter-to" className="text-[11px]">
+                <Label htmlFor="filter-to" className="text-xs">
                   To
                 </Label>
                 <Input
@@ -322,30 +322,33 @@ export function AllTasksView({
         </CollapsibleContent>
       </Collapsible>
 
-      <p className="px-1 text-[11px] font-medium text-muted-foreground">
+      <p className="px-1 text-xs text-muted-foreground">
         {visible.length} of {tasks.length} task{tasks.length === 1 ? "" : "s"}
       </p>
 
       {visible.length === 0 ? (
-        <Card className="rounded-xl border-dashed border-border p-5">
-          <p className="text-sm font-medium text-muted-foreground">No tasks match these filters.</p>
-        </Card>
+        <p className="px-1 py-4 text-sm text-muted-foreground">No tasks match these filters.</p>
       ) : isMobile ? (
-        <ul className="space-y-1.5 pb-20">
+        <ul className="divide-y divide-border pb-20">
           {visible.map((task) => (
             <GoalTaskRow key={task.id} variant="card" {...rowProps(task)} />
           ))}
         </ul>
       ) : (
         <Card className="overflow-hidden rounded-xl border-border p-0">
-          <div className="grid grid-cols-[auto_minmax(0,1fr)_6.5rem_6.5rem_8rem_8rem_4.5rem_4.5rem_auto] items-center gap-2 border-b border-border bg-muted/30 px-1.5 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <div
+            className={cn(
+              taskTableColumns(),
+              "border-b border-border bg-muted/30 px-1.5 py-2 text-xs font-medium text-muted-foreground",
+            )}
+          >
             <span className="w-8" aria-hidden />
             <span>Task</span>
             <span>Status</span>
             <span>Schedule</span>
-            <span>Phase</span>
-            <span>Key result</span>
-            <span>Impact</span>
+            <span className="hidden xl:block">Phase</span>
+            <span className="hidden xl:block">Key result</span>
+            <span className="hidden xl:block">Impact</span>
             <span>Effort</span>
             <span className="w-8" aria-hidden />
           </div>
@@ -381,9 +384,7 @@ export function AllTasksView({
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <fieldset className="space-y-1.5">
-      <legend className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </legend>
+      <legend className="text-xs font-medium text-muted-foreground">{label}</legend>
       <div className="flex flex-wrap gap-1.5">{children}</div>
     </fieldset>
   )
