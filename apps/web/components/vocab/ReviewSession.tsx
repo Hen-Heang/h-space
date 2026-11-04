@@ -176,7 +176,7 @@ function GradeButtons({
           {showKeys && (
             <kbd
               aria-hidden="true"
-              className="absolute right-1.5 top-1 hidden font-mono text-[10px] opacity-70 [@media(pointer:fine)]:block"
+              className="absolute right-1.5 top-1 hidden font-mono text-xs opacity-70 [@media(pointer:fine)]:block"
             >
               {index + 1}
             </kbd>
@@ -260,7 +260,7 @@ function FlashCard({
             {/* m-auto centers when the content fits and keeps it reachable via
                 scroll when a long meaning/example makes it taller than the card. */}
             <span className="m-auto flex w-full flex-col items-center">
-              <span className="mb-6 rounded-full bg-accent/40 px-3 py-1 text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+              <span className="mb-6 rounded-full bg-accent/40 px-3 py-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 {reversed ? "English" : "Korean"}
               </span>
               <p
@@ -290,7 +290,7 @@ function FlashCard({
           {/* Back */}
           <div className="absolute inset-0 backface-hidden rotate-y-180 flex flex-col overflow-y-auto rounded-3xl border-2 border-b-[6px] border-[#58cc02]/40 bg-[#58cc02]/[0.06] p-6 text-center dark:bg-[#58cc02]/[0.08] sm:rounded-3xl sm:p-8">
             <div className="m-auto flex w-full flex-col items-center">
-              <span className="mb-4 rounded-full bg-[#58cc02]/15 px-3 py-1 text-[12px] font-bold uppercase tracking-wide text-[#58a302] dark:text-[#89e219]">
+              <span className="mb-4 rounded-full bg-[#58cc02]/15 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#58a302] dark:text-[#89e219]">
                 {reversed ? "Korean" : "Meaning"}
               </span>
               <p
@@ -457,7 +457,7 @@ function ChoiceCard({
     <div className="flex flex-col gap-6">
       {/* Prompt Card */}
       <div className="flex flex-col items-center justify-center rounded-3xl border border-border bg-accent/5 p-6 text-center dark:bg-white/5 sm:rounded-3xl sm:p-10">
-        <span className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground mb-4">
+        <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-4">
           Select Meaning
         </span>
         <p
@@ -595,7 +595,7 @@ function RecallCard({
     <div className="flex flex-col gap-6">
       {/* Prompt Card */}
       <div className="flex flex-col items-center justify-center rounded-3xl border border-border bg-accent/5 p-6 text-center dark:bg-white/5 sm:rounded-3xl sm:p-10">
-        <span className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground mb-4">
+        <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-4">
           Type in Korean
         </span>
         <p
@@ -695,7 +695,7 @@ function RecallCard({
               <div className="min-w-0">
                 <p
                   className={cn(
-                    "text-[12px] font-bold uppercase tracking-wide",
+                    "text-xs font-bold uppercase tracking-wide",
                     result === "correct" ? "text-emerald-600" : "text-red-500",
                   )}
                 >
@@ -824,7 +824,7 @@ function ListeningCard({
     <div className="flex flex-col gap-6">
       {/* Audio stage */}
       <div className="flex h-[min(26rem,58dvh)] flex-col items-center justify-center gap-6 rounded-3xl border-2 border-b-[6px] border-border bg-card p-6 text-center dark:bg-slate-900/60 sm:h-96 sm:rounded-3xl sm:p-8">
-        <span className="rounded-full bg-accent/40 px-3 py-1 text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+        <span className="rounded-full bg-accent/40 px-3 py-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
           Listen &amp; Recall
         </span>
 
@@ -995,7 +995,7 @@ function SentenceCard({
     <div className="flex flex-col gap-5">
       {/* Prompt card */}
       <div className="flex flex-col items-center justify-center rounded-3xl border border-border bg-accent/5 p-6 text-center dark:bg-white/5 sm:p-10">
-        <span className="mb-4 text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+        <span className="mb-4 text-xs font-bold uppercase tracking-wide text-muted-foreground">
           Write a Sentence
         </span>
         <p
@@ -1053,7 +1053,7 @@ function SentenceCard({
           >
             <RotateCcw size={14} strokeWidth={3} /> Retry challenge
           </button>
-          <p className="text-center text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+          <p className="text-center text-xs font-bold uppercase tracking-wide text-muted-foreground">
             Or rate this word yourself and continue
           </p>
           <GradeButtons card={card} onGrade={advanceCard} />
@@ -1063,7 +1063,7 @@ function SentenceCard({
       {(phase === "writing" || phase === "checking") && challenge && (
         <div className="space-y-3">
           <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-1.5">
-            <span className="text-[12px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400">
+            <span className="text-xs font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400">
               Task
             </span>
             <p className="text-sm font-bold text-foreground leading-relaxed">
@@ -1131,7 +1131,7 @@ function SentenceCard({
 
           {result.correctedSentence && result.correctedSentence !== attempt.trim() && (
             <div className="rounded-2xl border border-sky-500/20 bg-sky-500/5 p-3 space-y-1">
-              <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-sky-600 dark:text-sky-400">
+              <span className="text-xs font-bold uppercase tracking-[0.18em] text-sky-600 dark:text-sky-400">
                 Corrected
               </span>
               <p className="text-sm font-bold text-foreground">{result.correctedSentence}</p>
@@ -1140,7 +1140,7 @@ function SentenceCard({
 
           {result.betterAlternative && (
             <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3 space-y-1">
-              <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">
+              <span className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">
                 More natural
               </span>
               <p className="text-sm font-bold text-foreground">{result.betterAlternative}</p>
@@ -1162,7 +1162,7 @@ function SentenceCard({
 
           {/* Grade buttons — score drives the recommendation, learner confirms */}
           <div className="space-y-2">
-            <p className="text-center text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+            <p className="text-center text-xs font-bold uppercase tracking-wide text-muted-foreground">
               How well did you do?
             </p>
             <GradeButtons card={card} onGrade={advanceCard} />
@@ -1521,8 +1521,8 @@ export function ReviewSession({
             <ArrowLeft aria-hidden="true" size={20} strokeWidth={2.5} />
           </button>
           <div className="flex-1 min-w-0">
-            <p className="text-[16px] font-bold tracking-tight text-foreground">Memory Lab</p>
-            <p className="text-[12px] font-medium text-muted-foreground leading-tight">
+            <p className="text-base font-bold tracking-tight text-foreground">Memory Lab</p>
+            <p className="text-xs font-medium text-muted-foreground leading-tight">
               {isDueSession
                 ? hasMoreQueued
                   ? `${filteredDueToday.length} of ${dueCount} due — next batch ready`
@@ -1535,7 +1535,7 @@ export function ReviewSession({
               <p className="text-base font-bold text-emerald-600 leading-none">
                 {filteredDueToday.length}
               </p>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mt-0.5">
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mt-0.5">
                 {hasMoreQueued ? "In batch" : "Due"}
               </p>
             </div>
@@ -1544,7 +1544,7 @@ export function ReviewSession({
               <p className="text-base font-bold text-foreground leading-none">
                 {filteredAllWords.length}
               </p>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mt-0.5">
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mt-0.5">
                 Total
               </p>
             </div>
@@ -1557,7 +1557,7 @@ export function ReviewSession({
             {/* Category grid */}
             {categories.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   <Layers3 size={12} strokeWidth={3} />
                   Filter by Category
                   {selectedCategories.size > 0 && (
@@ -1611,7 +1611,7 @@ export function ReviewSession({
             <div className="space-y-2">
               <p
                 id="memory-lab-mode-label"
-                className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground"
+                className="text-xs font-bold uppercase tracking-wide text-muted-foreground"
               >
                 Study Mode
               </p>
@@ -1721,7 +1721,7 @@ export function ReviewSession({
           >
             <ArrowLeft aria-hidden="true" size={20} strokeWidth={2.5} />
           </button>
-          <span className="ml-3 text-[14px] font-bold uppercase tracking-wide text-foreground">
+          <span className="ml-3 text-sm font-bold uppercase tracking-wide text-foreground">
             Session Results
           </span>
         </div>
@@ -1744,7 +1744,7 @@ export function ReviewSession({
 
             <div>
               <h2 className="text-4xl font-bold tracking-tight text-foreground">{headline}</h2>
-              <p className="mt-3 text-[16px] font-medium text-muted-foreground leading-relaxed">
+              <p className="mt-3 text-base font-medium text-muted-foreground leading-relaxed">
                 You knew <span className="text-emerald-600 font-bold">{knew}</span> of{" "}
                 <span className="text-foreground font-bold">{total}</span> words on the first try.
                 Keep this momentum up to strengthen long-term memory.
@@ -1874,14 +1874,14 @@ export function ReviewSession({
         </button>
         <div className="flex items-center gap-3">
           <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-          <span className="text-[14px] font-bold uppercase tracking-wide text-foreground">
+          <span className="text-sm font-bold uppercase tracking-wide text-foreground">
             {Math.min(attemptsCount + 1, total)} <span className="opacity-20 mx-1">/</span> {total}
           </span>
           {/* Sync status — reassures the user reviews are persisting (and warns if not) */}
           {(saveError || pendingSaves > 0 || knewCount + lapsedIds.size > 0) && (
             <span
               className={cn(
-                "flex items-center gap-1 text-[12px] font-medium",
+                "flex items-center gap-1 text-xs font-medium",
                 saveError
                   ? "text-red-500"
                   : pendingSaves > 0

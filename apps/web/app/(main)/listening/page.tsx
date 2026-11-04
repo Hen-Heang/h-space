@@ -249,10 +249,10 @@ function ListeningPageContent() {
                   <Headphones size={20} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-600/70 dark:text-emerald-400/70">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-600/70 dark:text-emerald-400/70">
                     {lesson.topic}
                   </p>
-                  <h3 className="text-base font-extrabold text-foreground">{lesson.title}</h3>
+                  <h3 className="text-base font-bold text-foreground">{lesson.title}</h3>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -305,7 +305,7 @@ function ListeningPageContent() {
                     key={i}
                     className="rounded-2xl border border-border bg-background/60 px-4 py-3 dark:bg-white/4"
                   >
-                    <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground/70">
+                    <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground/70">
                       {line.speaker}
                     </p>
                     <p className="mt-1 font-bold text-foreground">{line.korean}</p>

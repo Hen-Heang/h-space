@@ -71,7 +71,7 @@ export function CorrectionCard({
       <div className="flex items-start justify-between gap-3 px-4 pt-3.5">
         <div className="flex items-center gap-2">
           <Sparkles size={14} className="text-amber-600 dark:text-amber-400" strokeWidth={2.5} />
-          <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-400">
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-400">
             Quick correction
           </span>
         </div>
@@ -87,7 +87,7 @@ export function CorrectionCard({
 
       <div className="space-y-2.5 px-4 py-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground/60">
             What you wrote
           </p>
           <p className="mt-0.5 break-keep text-sm font-semibold text-red-700/90 line-through dark:text-red-400/80">
@@ -96,7 +96,7 @@ export function CorrectionCard({
         </div>
 
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground/60">
             Corrected
           </p>
           <p className="mt-0.5 break-keep text-sm font-bold text-foreground">
@@ -106,7 +106,7 @@ export function CorrectionCard({
 
         {showNatural && (
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">
+            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground/60">
               More natural
             </p>
             <p className="mt-0.5 break-keep text-sm font-semibold text-emerald-700 dark:text-emerald-400">
@@ -115,9 +115,7 @@ export function CorrectionCard({
           </div>
         )}
 
-        {explanation && (
-          <p className="text-[13px] leading-5 text-muted-foreground">{explanation}</p>
-        )}
+        {explanation && <p className="text-xs leading-5 text-muted-foreground">{explanation}</p>}
       </div>
 
       <div className="flex flex-wrap gap-2 px-4 pb-3.5">
@@ -126,7 +124,7 @@ export function CorrectionCard({
           size="sm"
           variant="outline"
           onClick={onTryAgain}
-          className="h-8 rounded-lg border-border/70 bg-background/60 px-3 text-[11px] font-bold"
+          className="h-8 rounded-lg border-border/70 bg-background/60 px-3 text-xs font-bold"
         >
           <RotateCcw size={12} className="mr-1.5" />
           Try again
@@ -138,7 +136,7 @@ export function CorrectionCard({
             onClick={saveVocabulary}
             disabled={saving || saved}
             className={cn(
-              "h-8 rounded-lg px-3 text-[11px] font-bold text-white",
+              "h-8 rounded-lg px-3 text-xs font-bold text-white",
               saved ? "bg-emerald-600/70" : "bg-emerald-600 hover:bg-emerald-500",
             )}
           >

@@ -124,7 +124,7 @@ export function SmartPeek({ word, children }: { word: string; children: React.Re
                             {data.word}
                           </h4>
                           {data.hanja && (
-                            <span className="rounded-md bg-accent px-1.5 py-0.5 text-[11px] font-bold text-muted-foreground">
+                            <span className="rounded-md bg-accent px-1.5 py-0.5 text-xs font-bold text-muted-foreground">
                               {data.hanja}
                             </span>
                           )}

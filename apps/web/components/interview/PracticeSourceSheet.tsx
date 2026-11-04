@@ -184,7 +184,7 @@ export function PracticeSourceSheet({
                     >
                       {level.label}
                       {level.id === recommended && (
-                        <Badge variant="secondary" className="text-[10px]">
+                        <Badge variant="secondary" className="text-xs">
                           Suggested
                         </Badge>
                       )}

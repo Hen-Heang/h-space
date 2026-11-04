@@ -263,11 +263,10 @@ describe("section (workspace) selection", () => {
   })
 })
 
-describe("global sidebar: workspaces, Finance, and tools", () => {
-  it("lists the six workspaces and Finance shortcut in order", () => {
+describe("global sidebar: workspaces and tools", () => {
+  it("lists the six sidebar destinations in order, with Finance instead of My Apps", () => {
     expect(workspaceNavItems.map((i) => i.label)).toEqual([
       "Overview",
-      "My Apps",
       "Finance",
       "Planner",
       "Learning",
@@ -276,7 +275,6 @@ describe("global sidebar: workspaces, Finance, and tools", () => {
     ])
     expect(workspaceNavItems.map((i) => i.href)).toEqual([
       "/home",
-      "/apps",
       "/finance",
       "/goals",
       "/learn",
@@ -304,7 +302,7 @@ describe("global sidebar: workspaces, Finance, and tools", () => {
     }
   })
 
-  it("keeps a workspace lit on every route inside it", () => {
+  it("keeps each sidebar destination lit on its routes", () => {
     const cases: [string, string, string?][] = [
       ["/home", "nav-today"],
       ["/goals/calendar", "nav-plan"],
@@ -316,7 +314,8 @@ describe("global sidebar: workspaces, Finance, and tools", () => {
       ["/phrasebook", "nav-learn", "mode=reading"],
       ["/ask-hengo/memories", "nav-memory"],
       ["/timeline", "nav-memory"],
-      ["/vault", "nav-apps"],
+      ["/finance", "nav-finance"],
+      ["/finance/review", "nav-finance"],
       ["/growth", "nav-grow"],
       ["/growth/recovery/log", "nav-grow"],
       ["/statistics", "nav-grow"],
@@ -363,7 +362,7 @@ describe("workspace tabs (secondary navigation)", () => {
       "growth-journal",
       "grow-progress",
     ])
-    expect(ids(workspaceTabs.apps)).toEqual(["apps-catalog", "apps-vault", "apps-luyra"])
+    expect(ids(workspaceTabs.apps)).toEqual(["apps-catalog", "apps-vault"])
     expect(navItem("apps-luyra")).toMatchObject({
       href: "/finance",
       label: "Finance",
@@ -381,7 +380,9 @@ describe("workspace tabs (secondary navigation)", () => {
     for (const query of ["finance", "luyra", "money", "budget"]) {
       expect(terms).toContain(query)
     }
-    // Phones reach it through the More sheet's My Apps list.
+    // Finance is a direct phone tab and remains discoverable in the route list.
+    expect(mobileNavItems[3].id).toBe("nav-finance")
+    expect(mobileNavItems[3].href).toBe("/finance")
     const apps = browseSections.find((s) => s.id === "apps")!
     expect(apps.items.map((i) => i.id)).toContain("apps-luyra")
   })
@@ -437,18 +438,17 @@ describe("workspace tabs (secondary navigation)", () => {
 })
 
 describe("mobile bottom bar + More", () => {
-  it("has Home · Plan · Learn · Apps before the More trigger", () => {
+  it("has Home · Plan · Learn · Finance before the More trigger", () => {
     expect(mobileNavItems.map((i) => i.shortLabel ?? i.label)).toEqual([
       "Home",
       "Plan",
       "Learn",
-      "Apps",
+      "Finance",
     ])
   })
 
   it("leads the More sheet with every workspace and tool that has no tab", () => {
     expect(moreNavItems.map((i) => i.label)).toEqual([
-      "Finance",
       "Notes",
       "Growth",
       "AI Assistant",
@@ -463,7 +463,6 @@ describe("mobile bottom bar + More", () => {
       "/inbox",
       "/vocab",
       "/history",
-      "/vault",
       "/finance/transactions",
     ]) {
       const lit = mobileNavItems.filter((item) => isNavigationItemActive({ pathname: route, item }))
@@ -473,7 +472,15 @@ describe("mobile bottom bar + More", () => {
   })
 
   it("lights More on routes no tab owns", () => {
-    for (const route of ["/notes", "/timeline", "/growth", "/progress", "/settings"]) {
+    for (const route of [
+      "/apps",
+      "/vault",
+      "/notes",
+      "/timeline",
+      "/growth",
+      "/progress",
+      "/settings",
+    ]) {
       expect(isMoreRoute(route), route).toBe(true)
     }
     expect(isMoreRoute("/chat")).toBe(true)

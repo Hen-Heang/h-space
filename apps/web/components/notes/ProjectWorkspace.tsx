@@ -36,7 +36,7 @@ import {
 import { cn } from "@/lib/utils"
 
 const panel = "rounded-xl border border-border bg-card"
-const cardTitle = "text-[15px] font-semibold text-foreground"
+const cardTitle = "text-base font-semibold text-foreground"
 
 function NoteRow({ note }: { note: NoteMeta }) {
   const updated = updatedLabel(note.updatedAt)
@@ -46,7 +46,7 @@ function NoteRow({ note }: { note: NoteMeta }) {
       className="flex flex-col gap-1.5 px-4 py-3 text-foreground outline-none transition-colors hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     >
       <span className="flex min-w-0 items-center gap-1.5">
-        <span className="truncate text-[15px] font-semibold">{note.title}</span>
+        <span className="truncate text-base font-semibold">{note.title}</span>
         {note.pinned && (
           <Pin size={13} className="shrink-0 text-primary" aria-label="Pinned" role="img" />
         )}
@@ -418,7 +418,7 @@ export function ProjectWorkspace({ project, notes }: { project: Project; notes: 
               {decisions.map((note) => (
                 <li key={note.slug} className={cn(panel, "space-y-2 p-4")}>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h3 className="text-[15px] font-semibold text-foreground">{note.title}</h3>
+                    <h3 className="text-base font-semibold text-foreground">{note.title}</h3>
                     {note.updatedAt && (
                       <time dateTime={note.updatedAt} className="text-xs text-muted-foreground">
                         {formatDay(note.updatedAt)}

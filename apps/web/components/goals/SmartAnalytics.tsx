@@ -100,7 +100,7 @@ export function SmartAnalytics({
       {/* Headline stats */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <Card className="rounded-[1.5rem] border-border bg-card/50 p-5">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
             Productivity
           </p>
           <p className={cn("mt-1 text-3xl font-bold tabular-nums", scoreColor)}>
@@ -109,7 +109,7 @@ export function SmartAnalytics({
           </p>
         </Card>
         <Card className="rounded-[1.5rem] border-border bg-card/50 p-5">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
             Velocity
           </p>
           <p className="mt-1 flex items-center gap-1.5 text-lg font-bold capitalize text-foreground">
@@ -117,7 +117,7 @@ export function SmartAnalytics({
           </p>
         </Card>
         <Card className="rounded-[1.5rem] border-border bg-card/50 p-5">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
             Est. finish
           </p>
           <p className="mt-1 text-lg font-bold text-foreground">

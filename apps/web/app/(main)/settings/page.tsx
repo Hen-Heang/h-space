@@ -4,13 +4,13 @@ import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
+  LayoutGrid,
   Mail,
   Monitor,
   CheckCircle2,
   LogOut,
   ChevronRight,
   ShieldCheck,
-  Globe,
   CalendarDays,
   Camera,
   Loader2,
@@ -107,6 +107,9 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState("")
   const [email, setEmail] = useState("")
   const [koreanLevel, setKoreanLevel] = useState("BEGINNER")
+  // No longer editable here (the "Background & Work" card was removed), but
+  // still loaded: updateProfile writes the whole row, so a display-name save
+  // must send these back unchanged instead of clearing them.
   const [nativeLanguage, setNativeLanguage] = useState("")
   const [occupation, setOccupation] = useState("")
   const [loading, setLoading] = useState(true)
@@ -298,6 +301,25 @@ export default function SettingsPage() {
     >
       {/* The app shell provides the Settings page title. */}
       <motion.div variants={itemVariants}>
+        <p className="px-1 py-1 text-sm text-muted-foreground">Workspace</p>
+      </motion.div>
+
+      <motion.div variants={itemVariants}>
+        <SectionCard>
+          <SectionRow last>
+            <Link
+              href="/apps"
+              className="flex min-h-11 items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <RowIcon icon={LayoutGrid} />
+              <span className="flex-1 text-sm font-semibold text-foreground">My Apps</span>
+              <ChevronRight size={16} className="text-muted-foreground" />
+            </Link>
+          </SectionRow>
+        </SectionCard>
+      </motion.div>
+
+      <motion.div variants={itemVariants}>
         <p className="px-1 py-1 text-sm text-muted-foreground">Profile, preferences & account</p>
       </motion.div>
 
@@ -428,92 +450,6 @@ export default function SettingsPage() {
           />
         </RowList>
       </motion.section>
-
-      {/* Background + Work */}
-      <motion.div variants={itemVariants}>
-        <SectionCard>
-          <SectionRow>
-            <SectionHeader
-              icon={Globe}
-              title="Background & Work"
-              description="Your native language sets what glosses are written in; your role sets what the AI's examples are about"
-            />
-          </SectionRow>
-          <SectionRow last>
-            {/* Two fields, not four. Country produced one weak prompt line
-                ("From: X") and Years of experience was never read by anything
-                at all — both are still collected once at registration, so
-                nothing is lost by not asking again here. The two that survive
-                each change the output in a way you can point at: native
-                language decides the gloss language, occupation is what the
-                system prompt means by "ground examples in the learner's job".
-                See learnerProfileBlock in lib/server/ai.ts and
-                buildRealtimeInstructions in lib/realtime/session-context.ts. */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <FieldLabel status={<FieldSaveStatus state={stateOf("nativeLanguage")} />}>
-                  Native language
-                </FieldLabel>
-                <select
-                  value={nativeLanguage}
-                  onChange={(e) => {
-                    setNativeLanguage(e.target.value)
-                    saveProfileField("nativeLanguage", { nativeLanguage: e.target.value })
-                  }}
-                  className="h-11 w-full rounded-lg border border-border bg-accent/5 px-3 text-base font-medium text-foreground outline-none transition-colors focus:bg-background focus-visible:ring-2 focus-visible:ring-ring dark:bg-white/5"
-                >
-                  <option value="">Select language</option>
-                  {[
-                    "Khmer",
-                    "English",
-                    "Chinese",
-                    "Japanese",
-                    "Vietnamese",
-                    "Thai",
-                    "Indonesian",
-                    "Filipino",
-                    "Malay",
-                    "Other",
-                  ].map((l) => (
-                    <option key={l} value={l}>
-                      {l}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <FieldLabel status={<FieldSaveStatus state={stateOf("occupation")} />}>
-                  Occupation
-                </FieldLabel>
-                <select
-                  value={occupation}
-                  onChange={(e) => {
-                    setOccupation(e.target.value)
-                    saveProfileField("occupation", { occupation: e.target.value })
-                  }}
-                  className="h-11 w-full rounded-lg border border-border bg-accent/5 px-3 text-base font-medium text-foreground outline-none transition-colors focus:bg-background focus-visible:ring-2 focus-visible:ring-ring dark:bg-white/5"
-                >
-                  <option value="">Select role</option>
-                  {[
-                    "Frontend Developer",
-                    "Backend Developer",
-                    "Full-Stack Developer",
-                    "QA Engineer",
-                    "DevOps Engineer",
-                    "Product Manager",
-                    "Data Scientist",
-                    "Other",
-                  ].map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </SectionRow>
-        </SectionCard>
-      </motion.div>
 
       {/* Notifications */}
       <motion.div variants={itemVariants}>

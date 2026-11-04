@@ -153,7 +153,7 @@ export function CashFlowTrendChart({ data }: { data: DailyFlowPoint[] }) {
           </div>
         )}
       </div>
-      <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+      <div className="mt-2 flex justify-between text-xs text-muted-foreground">
         <span>Day 1</span>
         <span>Day {data.length}</span>
       </div>

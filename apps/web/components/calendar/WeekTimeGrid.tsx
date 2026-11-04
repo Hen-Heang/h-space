@@ -343,7 +343,7 @@ function DayColumn({
               {p.task.title || p.task.description || "Untitled"}
             </div>
             {height > 30 && (
-              <div className="truncate text-[11px] opacity-80">
+              <div className="truncate text-xs opacity-80">
                 {formatTaskTimeRange(
                   p.task.daily_start_time,
                   p.task.daily_end_time,

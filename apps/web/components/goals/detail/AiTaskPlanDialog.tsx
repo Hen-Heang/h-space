@@ -151,7 +151,7 @@ export function AiTaskPlanDialog({
                         key={preset}
                         type="button"
                         onClick={() => setNote(preset)}
-                        className="rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        className="rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                       >
                         {preset}
                       </button>
@@ -190,7 +190,7 @@ export function AiTaskPlanDialog({
                         aria-label={`Task ${i + 1} title`}
                         className="h-10 rounded-lg text-sm font-medium"
                       />
-                      <p className="text-[11px] font-medium text-muted-foreground">
+                      <p className="text-xs font-medium text-muted-foreground">
                         {draft.start_date} → {draft.end_date}
                         {draft.duration_minutes ? ` · ${draft.duration_minutes}m` : ""}
                       </p>

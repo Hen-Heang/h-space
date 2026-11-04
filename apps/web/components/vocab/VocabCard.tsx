@@ -333,7 +333,7 @@ export function VocabCard({ item, onReview, onUpdate, onDelete }: VocabCardProps
               {item.difficultyLevel && (
                 <span
                   className={cn(
-                    "rounded-full px-2 py-0.5 text-[12px] font-bold uppercase tracking-wider",
+                    "rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wider",
                     item.difficultyLevel === "Easy"
                       ? "bg-emerald-500/10 text-emerald-600"
                       : item.difficultyLevel === "Medium"
@@ -352,11 +352,11 @@ export function VocabCard({ item, onReview, onUpdate, onDelete }: VocabCardProps
             <div className="mt-6 rounded-2xl border border-border bg-accent/5 p-4 dark:bg-white/5">
               <div className="flex items-center gap-2 mb-2">
                 <BookOpen size={12} className="text-muted-foreground/40" />
-                <span className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+                <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   Usage Context
                 </span>
               </div>
-              <p className="text-sm font-bold leading-relaxed text-foreground/80 [overflow-wrap:anywhere] sm:text-[16px]">
+              <p className="text-sm font-bold leading-relaxed text-foreground/80 [overflow-wrap:anywhere] sm:text-base">
                 {item.example}
               </p>
               {item.exampleTranslation && (
@@ -376,14 +376,14 @@ export function VocabCard({ item, onReview, onUpdate, onDelete }: VocabCardProps
             item.tags.map((tag) => (
               <span
                 key={tag}
-                className="flex items-center gap-1 rounded-full bg-accent/30 px-2.5 py-1 text-[12px] font-bold uppercase tracking-wider text-muted-foreground/70"
+                className="flex items-center gap-1 rounded-full bg-accent/30 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-muted-foreground/70"
               >
                 <Tag size={10} strokeWidth={3} />
                 {tag}
               </span>
             ))
           ) : (
-            <span className="text-[12px] font-bold text-muted-foreground italic">No tags</span>
+            <span className="text-xs font-bold text-muted-foreground italic">No tags</span>
           )}
         </div>
 

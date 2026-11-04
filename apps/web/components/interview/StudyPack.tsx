@@ -148,7 +148,7 @@ export function StudyPack({
                           >
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="font-bold text-foreground">{frame.label}</p>
-                              <Badge variant="outline" className="rounded-lg text-[10px]">
+                              <Badge variant="outline" className="rounded-lg text-xs">
                                 {frame.useFor}
                               </Badge>
                             </div>
@@ -258,7 +258,7 @@ export function StudyPack({
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                               {source.publisher}
                             </p>
                             <p className="mt-1 text-sm font-bold leading-snug text-foreground">
@@ -344,7 +344,7 @@ function VocabCard({ item }: { item: VocabEntry }) {
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-bold text-foreground">{item.term}</p>
             {item.priority === "core" && (
-              <Badge className="rounded-md border-0 bg-amber-500/10 px-1.5 py-0 text-[9px] text-amber-700 dark:text-amber-400">
+              <Badge className="rounded-md border-0 bg-amber-500/10 px-1.5 py-0 text-xs text-amber-700 dark:text-amber-400">
                 CORE
               </Badge>
             )}
@@ -376,7 +376,7 @@ function SpeakingAnswerCard({ question, number }: { question: PracticeQuestion; 
   return (
     <div className="rounded-2xl border border-border bg-accent/5 p-4">
       <div className="flex items-start gap-3">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-[11px] font-bold text-blue-600">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-xs font-bold text-blue-600">
           {number}
         </span>
         <div className="min-w-0 flex-1">
@@ -395,7 +395,7 @@ function SpeakingAnswerCard({ question, number }: { question: PracticeQuestion; 
           {question.keywords && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {question.keywords.map((keyword) => (
-                <Badge key={keyword} variant="outline" className="rounded-lg text-[10px] font-bold">
+                <Badge key={keyword} variant="outline" className="rounded-lg text-xs font-bold">
                   {keyword}
                 </Badge>
               ))}
@@ -419,7 +419,7 @@ function SpeakingAnswerCard({ question, number }: { question: PracticeQuestion; 
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                   {question.answerEn}
                 </p>
-                <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                <p className="mt-2 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                   Shadow once, then replace the details with your real answer.
                 </p>
               </div>
@@ -449,7 +449,7 @@ function ListeningQuestionCard({
     <div className="rounded-2xl border border-violet-500/15 bg-violet-500/5 p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-400">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-400">
             Question {number} · Audio only
           </p>
           <p className="mt-1 text-xs font-medium text-muted-foreground">

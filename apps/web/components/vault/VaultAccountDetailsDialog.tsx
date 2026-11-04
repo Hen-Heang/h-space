@@ -92,7 +92,7 @@ export function VaultAccountDetailsDialog({
               <Row label="Login">
                 {account.loginIdentifier ? (
                   <div className="flex items-center gap-1">
-                    <span className="min-w-0 flex-1 font-mono text-[0.8rem] break-all">
+                    <span className="min-w-0 flex-1 font-mono text-xs break-all">
                       {account.loginIdentifier}
                     </span>
                     <Button
@@ -111,10 +111,7 @@ export function VaultAccountDetailsDialog({
               <Row label="Password">
                 {account.passwordCiphertext ? (
                   <div className="flex items-center gap-1">
-                    <span
-                      className="min-w-0 flex-1 font-mono text-[0.8rem] break-all"
-                      aria-live="polite"
-                    >
+                    <span className="min-w-0 flex-1 font-mono text-xs break-all" aria-live="polite">
                       {shown ?? (
                         <span className="tracking-widest text-muted-foreground">
                           <span aria-hidden="true">••••••••</span>

@@ -222,7 +222,7 @@ const HengoWelcome: FC = () => {
         <h2 className="text-balance text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
           {isTechnicalMode ? "Practice Korean for your workday" : "Speak Korean with confidence"}
         </h2>
-        <p className="mx-auto mt-2 max-w-md text-pretty text-[14px] font-medium leading-relaxed text-muted-foreground sm:text-[15px]">
+        <p className="mx-auto mt-2 max-w-md text-pretty text-sm font-medium leading-relaxed text-muted-foreground sm:text-base">
           {isTechnicalMode
             ? "Rehearse meetings, code reviews, and everyday office conversations with a patient coach."
             : "Have a natural conversation, get gentle corrections, and keep going without breaking your flow."}
@@ -253,7 +253,7 @@ const HengoWelcome: FC = () => {
       <div className="w-full max-w-3xl space-y-3 px-3 sm:px-4">
         <div className="flex items-end justify-between px-1">
           <div>
-            <p className="text-[13px] font-bold text-foreground">Choose a conversation</p>
+            <p className="text-xs font-bold text-foreground">Choose a conversation</p>
             <p className="mt-0.5 text-xs font-medium text-muted-foreground">
               Practice a situation you will actually use.
             </p>
@@ -297,7 +297,7 @@ const HengoWelcome: FC = () => {
             onClick={() => sendSuggestion(s)}
             className="group flex items-center gap-2 rounded-full border border-border/60 bg-background/60 px-3.5 py-1.5 text-left transition-all hover:border-blue-500/30 hover:bg-muted/60 disabled:opacity-40 active:scale-95"
           >
-            <span className="text-[13px]">{s.emoji}</span>
+            <span className="text-xs">{s.emoji}</span>
             <span className="text-sm font-semibold text-foreground/80 group-hover:text-foreground">
               {s.label}
             </span>

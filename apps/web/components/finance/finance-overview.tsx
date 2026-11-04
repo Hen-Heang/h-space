@@ -184,7 +184,7 @@ function FinancialHealthBucketCard({ health }: { health: FinanceBucketHealth }) 
         {health.status !== "unavailable" && (
           <span
             className={cn(
-              "shrink-0 rounded-full border border-current/20 px-2 py-0.5 text-[11px] font-semibold",
+              "shrink-0 rounded-full border border-current/20 px-2 py-0.5 text-xs font-semibold",
               BUCKET_STATUS_TEXT_CLASS[health.status],
             )}
           >
@@ -786,7 +786,7 @@ function SpendingTrend({ data }: { data: DailySpendingPoint[] }) {
           />
         ) : null}
       </svg>
-      <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+      <div className="mt-2 flex justify-between text-xs text-muted-foreground">
         <span>Day 1</span>
         <span>Day {data.length}</span>
       </div>

@@ -53,17 +53,17 @@ export function SessionSummary({
           <p className="mt-2 font-mono text-lg font-semibold">
             {Math.max(1, Math.round(summary.durationSeconds / 60))}
           </p>
-          <p className="text-[0.68rem] uppercase tracking-wide text-muted-foreground">minutes</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">minutes</p>
         </div>
         <div className="rounded-xl border border-border/70 bg-card p-3 text-center">
           <Mic className="mx-auto size-4 text-primary" aria-hidden="true" />
           <p className="mt-2 font-mono text-lg font-semibold">{summary.speakingAttempts}</p>
-          <p className="text-[0.68rem] uppercase tracking-wide text-muted-foreground">attempts</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">attempts</p>
         </div>
         <div className="rounded-xl border border-border/70 bg-card p-3 text-center">
           <MessageSquare className="mx-auto size-4 text-primary" aria-hidden="true" />
           <p className="mt-2 font-mono text-lg font-semibold">{summary.completedTurns}</p>
-          <p className="text-[0.68rem] uppercase tracking-wide text-muted-foreground">turns</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">turns</p>
         </div>
       </div>
 

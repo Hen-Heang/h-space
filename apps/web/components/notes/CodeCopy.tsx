@@ -35,8 +35,8 @@ export function CodeCopy() {
         position: absolute;
         top: 10px;
         right: 10px;
-        font-size: 11px;
-        font-family: system-ui, sans-serif;
+        font-size: 13px;
+        font-family: var(--font-sans-stack);
         padding: 3px 10px;
         background: ${bg};
         color: ${color};

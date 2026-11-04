@@ -24,7 +24,7 @@ export function SpeakingScoreCard({ result }: { result: SpeakingCheckResponse })
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
               Your score
             </p>
-            <Badge className="rounded-lg border-none bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-400">
+            <Badge className="rounded-lg border-none bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-400">
               <Info size={12} className="mr-1" strokeWidth={2.5} />
               Estimated from transcript — no audio analysis
             </Badge>
@@ -39,7 +39,7 @@ export function SpeakingScoreCard({ result }: { result: SpeakingCheckResponse })
                   key={key}
                   className="rounded-2xl border border-border bg-background/60 px-3 py-2.5"
                 >
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                  <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                     {SPEAKING_SCORE_LABELS[key]}
                   </p>
                   <p
@@ -70,7 +70,7 @@ export function SpeakingScoreCard({ result }: { result: SpeakingCheckResponse })
           {/* Corrected answer */}
           {result.correctedAnswer && (
             <div className="rounded-2xl border border-border bg-background/60 p-4">
-              <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 <SpellCheck size={12} strokeWidth={2.5} /> Your answer, fixed
               </p>
               <div className="mt-1.5 flex items-start justify-between gap-3">
@@ -85,7 +85,7 @@ export function SpeakingScoreCard({ result }: { result: SpeakingCheckResponse })
           {/* Model answer */}
           {result.betterAlternative && (
             <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-              <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
                 <MessageSquareQuote size={12} strokeWidth={2.5} /> A natural way to say it
               </p>
               <div className="mt-1.5 flex items-start justify-between gap-3">

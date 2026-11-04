@@ -121,14 +121,14 @@ export function ShadowPractice({ sentences, onClose }: ShadowPracticeProps) {
                   ))
                 : current.ko}
             </p>
-            {current.en && <p className="mt-2 text-[13px] text-muted-foreground">{current.en}</p>}
+            {current.en && <p className="mt-2 text-xs text-muted-foreground">{current.en}</p>}
 
             <div className="mt-4 flex items-center gap-2">
-              <span className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 py-1.5 text-[11px] font-bold text-foreground">
+              <span className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 py-1.5 text-xs font-bold text-foreground">
                 <SpeakButton text={current.ko} title="Play at natural speed" />
                 Natural
               </span>
-              <span className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 py-1.5 text-[11px] font-bold text-foreground">
+              <span className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 py-1.5 text-xs font-bold text-foreground">
                 <SpeakButton text={current.ko} playbackRate={0.6} title="Play slowly" />
                 Slow
               </span>
@@ -138,10 +138,10 @@ export function ShadowPractice({ sentences, onClose }: ShadowPracticeProps) {
           {/* What the recognizer heard. */}
           {(speech.transcript || listening) && (
             <div className="rounded-2xl border border-border/50 bg-background px-4 py-3">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 You said
               </p>
-              <p className="mt-1 min-h-6 text-[15px] font-medium text-foreground" lang="ko">
+              <p className="mt-1 min-h-6 text-base font-medium text-foreground" lang="ko">
                 {speech.transcript || (listening ? "듣고 있어요…" : "")}
               </p>
             </div>
@@ -152,7 +152,7 @@ export function ShadowPractice({ sentences, onClose }: ShadowPracticeProps) {
               <div className="flex items-center justify-between">
                 <span
                   className={cn(
-                    "rounded-full px-2.5 py-1 text-[12px] font-bold",
+                    "rounded-full px-2.5 py-1 text-xs font-bold",
                     GRADE_META[comparison.grade].className,
                   )}
                 >
@@ -160,33 +160,31 @@ export function ShadowPractice({ sentences, onClose }: ShadowPracticeProps) {
                 </span>
                 <div className="flex gap-4 text-right">
                   <div>
-                    <p className="text-[15px] font-bold text-foreground">
+                    <p className="text-base font-bold text-foreground">
                       {comparison.wordAccuracy}%
                     </p>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       words recognized
                     </p>
                   </div>
                   <div>
-                    <p className="text-[15px] font-bold text-foreground">
-                      {comparison.similarity}%
-                    </p>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <p className="text-base font-bold text-foreground">{comparison.similarity}%</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       text match
                     </p>
                   </div>
                 </div>
               </div>
-              <p className="text-[11px] leading-relaxed text-muted-foreground">
+              <p className="text-xs leading-relaxed text-muted-foreground">
                 Based on speech-to-text — a rough guide to which words came through, not a
                 pronunciation score.
               </p>
             </div>
           )}
 
-          {speech.error && <p className="text-center text-[12px] text-rose-500">{speech.error}</p>}
+          {speech.error && <p className="text-center text-xs text-rose-500">{speech.error}</p>}
           {!speech.supported && (
-            <p className="text-center text-[12px] text-muted-foreground">
+            <p className="text-center text-xs text-muted-foreground">
               Speech recognition isn&apos;t available in this browser — you can still listen and
               repeat aloud.
             </p>
@@ -216,7 +214,7 @@ export function ShadowPractice({ sentences, onClose }: ShadowPracticeProps) {
               type="button"
               variant="outline"
               onClick={reset}
-              className="h-12 flex-1 gap-1.5 rounded-2xl text-[13px] font-bold"
+              className="h-12 flex-1 gap-1.5 rounded-2xl text-xs font-bold"
             >
               <RotateCcw size={16} />
               Retry
@@ -227,7 +225,7 @@ export function ShadowPractice({ sentences, onClose }: ShadowPracticeProps) {
               onClick={() => (listening ? speech.stop() : speech.start())}
               disabled={!speech.supported}
               className={cn(
-                "h-12 flex-1 gap-1.5 rounded-2xl text-[13px] font-bold text-white",
+                "h-12 flex-1 gap-1.5 rounded-2xl text-xs font-bold text-white",
                 listening ? "bg-rose-500 hover:bg-rose-400" : "bg-blue-600 hover:bg-blue-500",
               )}
             >
@@ -239,7 +237,7 @@ export function ShadowPractice({ sentences, onClose }: ShadowPracticeProps) {
           <Button
             type="button"
             onClick={goNext}
-            className="h-12 flex-1 gap-1.5 rounded-2xl bg-foreground text-[13px] font-bold text-background hover:opacity-90"
+            className="h-12 flex-1 gap-1.5 rounded-2xl bg-foreground text-xs font-bold text-background hover:opacity-90"
           >
             Next
             <ArrowRight size={16} />

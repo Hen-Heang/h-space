@@ -57,21 +57,33 @@ button text. Don't put `muted-foreground` text on a `muted` fill below 14px.
 Root size is `clamp(16px, 0.35vw + 15px, 17px)` (16.5px on phones). All sizes are
 rem, so they follow browser zoom and the user's text-size setting.
 
-| Role                                      | Classes                                                               | ≈ px    |
-| ----------------------------------------- | --------------------------------------------------------------------- | ------- |
-| Page title (shell `h1`)                   | desktop `text-base font-semibold`; mobile `text-[17px] font-semibold` | 16–17   |
-| Display heading (rare: empty state, hero) | `text-2xl font-semibold tracking-tight`                               | 24      |
-| Section heading (`h2`)                    | `text-lg font-semibold` (`PageSection`)                               | 18      |
-| Row / card title                          | `text-base font-medium`                                               | 16      |
-| Body                                      | `text-base`                                                           | 16      |
-| Secondary / description                   | `text-sm text-muted-foreground`                                       | 14      |
-| Metadata, labels, badges, timestamps      | `text-xs text-muted-foreground`                                       | **13**  |
-| Buttons, inputs                           | `Button` (`text-sm` semibold); inputs `text-base` (no iOS zoom)       | 14 / 16 |
+Inter is the primary UI font, loaded with `next/font/google` and self-hosted by
+Next.js at build time. Pretendard Variable is the Korean fallback; its licensed
+variable WOFF2 dynamic subsets are served locally and selected by Unicode range.
+Noto Sans Khmer is a non-preloaded `next/font/google` fallback for Khmer text.
+The final system stack is retained, and the existing system monospace stack is
+unchanged. This stack is declared once in `app/globals.css` and exposed through
+Tailwind v4's `@theme inline` tokens.
+
+The shared weight scale is 400, 500, 600 and 700 (`font-normal`, `font-medium`,
+`font-semibold`, `font-bold`). Use `leading-heading` (1.25) for headings,
+`leading-body` (1.55) for interface copy and `leading-learning` (1.7) for long
+learning content. Korean and Khmer text does not inherit negative tracking.
+
+| Role                                      | Classes                                               | ≈ px    |
+| ----------------------------------------- | ----------------------------------------------------- | ------- |
+| Page title (shell `h1`)                   | `text-page-title font-semibold`                       | 17      |
+| Display heading (rare: empty state, hero) | `text-2xl font-semibold tracking-tight`               | 24      |
+| Section heading (`h2`)                    | `text-section-heading font-semibold` (`PageSection`)  | 18      |
+| Row / card title                          | `text-card-heading font-medium`                       | 16      |
+| Body                                      | `text-body`                                           | 16      |
+| Secondary / description                   | `text-secondary text-muted-foreground`                | 14      |
+| Metadata, labels, badges, timestamps      | `text-caption text-muted-foreground`                  | **13**  |
+| Buttons, inputs                           | `text-button-label`; inputs `text-body` (no iOS zoom) | 14 / 16 |
 
 - `text-xs` is redefined to **13px** (`--text-xs` in `globals.css`). It is the
-  floor: don't use `text-[10px]`, `text-[11px]` or `text-[12px]` for anything
-  a person needs to read. The only exceptions are dense visualisations
-  (a calendar month cell, a chart axis), and even those prefer `text-xs`.
+  floor for readable interface text; use it instead of smaller arbitrary sizes
+  for captions, labels, badges, timestamps and chart annotations.
 - Uppercase "kicker" labels (`.app-kicker`) are allowed once per section at most.
   Prefer sentence case.
 - Long text wraps. Titles use `min-w-0` plus `line-clamp-2` or `break-words`,

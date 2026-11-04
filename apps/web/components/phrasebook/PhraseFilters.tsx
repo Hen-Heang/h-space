@@ -40,7 +40,7 @@ export function PhraseFilters({
 
       {categories.length > 1 && (
         <div>
-          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/70">
+          <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground/70">
             Category
           </p>
           <ChipSelect
@@ -53,7 +53,7 @@ export function PhraseFilters({
 
       {situations.length > 1 && (
         <div>
-          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/70">
+          <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground/70">
             Situation
           </p>
           <ChipSelect
@@ -66,7 +66,7 @@ export function PhraseFilters({
 
       {difficulties.length > 1 && (
         <div>
-          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/70">
+          <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground/70">
             Difficulty
           </p>
           <ChipSelect

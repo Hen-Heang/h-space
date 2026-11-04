@@ -272,7 +272,7 @@ export default function LoginPage() {
       )}
 
       {!mfaToken && (
-        <p className="mt-6 flex items-center justify-center gap-2 text-[13px] text-muted-foreground">
+        <p className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <ShieldCheck
             size={15}
             aria-hidden="true"

@@ -41,7 +41,7 @@ export function LiveElapsedClock({ since }: { since: string }) {
                 className="text-4xl font-bold tracking-normal tabular-nums text-foreground sm:text-5xl"
               />
             )}
-            <span className="mt-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            <span className="mt-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
               {unit.label}
             </span>
           </div>

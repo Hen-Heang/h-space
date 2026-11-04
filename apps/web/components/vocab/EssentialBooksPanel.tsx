@@ -132,7 +132,7 @@ export function EssentialBooksPanel({ words, loading }: EssentialBooksPanelProps
                       <h3 className="font-semibold text-foreground">{book.title}</h3>
                       <span
                         className={cn(
-                          "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                          "rounded-full px-2 py-0.5 text-xs font-semibold",
                           book.accent,
                         )}
                       >
@@ -217,7 +217,7 @@ function Metric({ label, value }: MetricProps) {
       <p className="font-mono text-sm font-semibold tabular-nums text-foreground sm:text-base">
         {value}
       </p>
-      <p className="mt-0.5 truncate text-[10px] font-medium text-muted-foreground sm:text-[11px]">
+      <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground sm:text-xs">
         {label}
       </p>
     </div>

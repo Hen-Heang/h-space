@@ -297,7 +297,7 @@ function TaskDetailsBody({
             <dl className="space-y-2 rounded-xl border border-border/60 p-3">
               {task.expected_output && (
                 <div>
-                  <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Expected output
                   </dt>
                   <dd className="text-sm text-foreground/85">{task.expected_output}</dd>
@@ -305,7 +305,7 @@ function TaskDetailsBody({
               )}
               {task.completion_criteria && (
                 <div>
-                  <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Done when
                   </dt>
                   <dd className="text-sm text-foreground/85">{task.completion_criteria}</dd>
@@ -314,7 +314,7 @@ function TaskDetailsBody({
             </dl>
           )}
 
-          <p className="text-[11px] font-medium text-muted-foreground">
+          <p className="text-xs font-medium text-muted-foreground">
             {task.evidence_required ? "Evidence required · " : ""}
             Source: {task.scheduling_source ?? task.source ?? "manual"}
             {task.reschedule_count ? ` · rescheduled ${task.reschedule_count}×` : ""}

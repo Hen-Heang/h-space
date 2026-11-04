@@ -50,7 +50,7 @@ export function ServiceAvatar({
         className={cn(
           box,
           "ring-1 ring-border/60",
-          label.length >= 3 ? "text-[0.7rem] tracking-tight" : label.length === 2 && "text-sm",
+          label.length >= 3 ? "text-xs tracking-tight" : label.length === 2 && "text-sm",
         )}
         style={{
           backgroundColor: brand.hex,

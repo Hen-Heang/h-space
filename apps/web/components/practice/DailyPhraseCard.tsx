@@ -54,14 +54,14 @@ export function DailyPhraseCard({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           {phrase.formality && (
-            <span className="inline-flex rounded-full bg-blue-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
+            <span className="inline-flex rounded-full bg-blue-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
               {phrase.formality}
             </span>
           )}
           <div className="mt-4 flex items-center gap-2">
             <h3
               lang="ko"
-              className="break-keep text-xl font-extrabold tracking-tight text-foreground sm:text-2xl"
+              className="break-keep text-xl font-bold tracking-tight text-foreground sm:text-2xl"
             >
               {phrase.phrase}
             </h3>

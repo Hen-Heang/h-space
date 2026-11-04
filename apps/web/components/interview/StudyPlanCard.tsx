@@ -225,7 +225,7 @@ export function StudyPlanCard() {
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             This week
           </p>
-          <Badge variant="outline" className="rounded-lg px-2 py-0.5 text-[11px]">
+          <Badge variant="outline" className="rounded-lg px-2 py-0.5 text-xs">
             {completed}/{total}
           </Badge>
         </div>

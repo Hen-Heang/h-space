@@ -20,8 +20,8 @@ export function WeatherBadge({ weather, variant, className }: WeatherBadgeProps)
       aria-label={`Forecast: ${label}, high ${tempMax}, low ${tempMin} degrees Celsius`}
       className={cn(
         "inline-flex shrink-0 items-center gap-0.5 leading-none text-muted-foreground",
-        variant === "month" && "h-6 text-[10px]",
-        variant === "time-grid" && "text-[10px]",
+        variant === "month" && "h-6 text-xs",
+        variant === "time-grid" && "text-xs",
         className,
       )}
     >

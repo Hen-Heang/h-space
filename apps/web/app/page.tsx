@@ -377,7 +377,7 @@ export default function Home() {
                             <Sparkles size={16} className="text-white" strokeWidth={2.5} />
                           </div>
                           <div>
-                            <p className="text-[13px] font-bold leading-none text-foreground">
+                            <p className="text-xs font-bold leading-none text-foreground">
                               AI Coach
                             </p>
                             <p className="mt-1 text-xs font-medium text-blue-500">● Online now</p>
@@ -446,7 +446,7 @@ export default function Home() {
                       {/* Input bar */}
                       <div className="border-t border-border/50 bg-background/80 p-4 pt-3 backdrop-blur-md">
                         <div className="flex items-center gap-3 rounded-2xl border border-border bg-accent/30 px-4 py-3">
-                          <span className="flex-1 text-[13px] text-muted-foreground font-medium">
+                          <span className="flex-1 text-xs text-muted-foreground font-medium">
                             Ask in English...
                           </span>
                           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md">
@@ -513,7 +513,7 @@ export default function Home() {
                         <Icon size={24} strokeWidth={2} className={feature.iconColor} />
                       </div>
                       <h3 className="mt-6 text-xl font-bold text-foreground">{feature.title}</h3>
-                      <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+                      <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                         {feature.description}
                       </p>
                       <div className="mt-6 flex items-center gap-2 text-sm font-bold text-foreground/40 group-hover:text-foreground transition-colors">
@@ -606,7 +606,7 @@ export default function Home() {
                           </span>
                         </div>
                         <h3 className="mt-1.5 text-xl font-bold text-foreground">{step.title}</h3>
-                        <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
+                        <p className="mt-2 text-base leading-relaxed text-muted-foreground">
                           {step.description}
                         </p>
                       </div>

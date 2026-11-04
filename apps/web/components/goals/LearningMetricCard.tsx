@@ -129,7 +129,7 @@ export function LearningMetricCard({
         <div className="flex items-center gap-2">
           <BarChart3 size={15} strokeWidth={2.5} className="text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Learning progress</h3>
-          <span className="rounded-full bg-accent/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+          <span className="rounded-full bg-accent/60 px-2 py-0.5 text-xs font-medium text-muted-foreground">
             auto-tracked
           </span>
           {saving && <Loader2 size={13} className="animate-spin text-muted-foreground/40" />}

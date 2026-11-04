@@ -1,3 +1,4 @@
+@import "../public/fonts/pretendard/pretendard-variable.css";
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "tw-shimmer";
@@ -23,12 +24,9 @@ html[data-theme-transition]::view-transition-new(root) {
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Literal families avoid Tailwind v4's circular --font-sans resolution. */
-  --font-sans:
-    "Segoe UI", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", ui-sans-serif, system-ui,
-    sans-serif;
-  --font-mono:
-    "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Consolas, ui-monospace, monospace;
+  /* Explicit stacks avoid a circular --font-sans / @theme reference. */
+  --font-sans: var(--font-sans-stack);
+  --font-mono: var(--font-mono-stack);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -99,6 +97,31 @@ html[data-theme-transition]::view-transition-new(root) {
 }
 
 @theme {
+  --text-page-title: 1.0625rem;
+  --text-page-title--line-height: 1.25;
+  --text-section-heading: 1.125rem;
+  --text-section-heading--line-height: 1.25;
+  --text-card-heading: 1rem;
+  --text-card-heading--line-height: 1.25;
+  --text-body: 1rem;
+  --text-body--line-height: 1.55;
+  --text-secondary: 0.875rem;
+  --text-secondary--line-height: 1.55;
+  --text-nav-label: 0.9375rem;
+  --text-button-label: 0.875rem;
+  --text-form-label: 0.875rem;
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.25rem;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --leading-heading: 1.25;
+  --leading-body: 1.55;
+  --leading-learning: 1.7;
+
   /* Type scale floor (docs/design-system.md). `text-xs` is the metadata /
      label size and the smallest size the app uses for anything meaningful:
      13px instead of Tailwind's 12px, so captions, badges and timestamps stay
@@ -123,12 +146,12 @@ html[data-theme-transition]::view-transition-new(root) {
 }
 
 :root {
-  --font-sans:
-    "Segoe UI", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, -apple-system,
-    BlinkMacSystemFont, sans-serif;
-  --font-mono:
+  --font-sans-stack:
+    var(--font-inter), "Pretendard Variable", var(--font-khmer), "Noto Sans KR",
+    "Apple SD Gothic Neo", "Malgun Gothic", ui-sans-serif, system-ui, sans-serif;
+  --font-mono-stack:
     "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Consolas, "Liberation Mono", Menlo,
-    monospace;
+    ui-monospace, monospace;
   /* H-Space palette (Figma "H-Space / Semantic colors") — cool neutrals with
      one violet accent. `--accent` is
      shadcn's hover/selected surface, not the brand color; the brand color is
@@ -252,8 +275,7 @@ html[data-theme-transition]::view-transition-new(root) {
     @apply bg-background text-foreground;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
-    line-height: 1.55;
-    letter-spacing: -0.006em;
+    line-height: var(--leading-body);
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
     min-height: 100dvh;
@@ -266,7 +288,18 @@ html[data-theme-transition]::view-transition-new(root) {
   h5,
   h6 {
     @apply font-semibold tracking-tight text-foreground;
-    line-height: 1.2;
+    line-height: var(--leading-heading);
+  }
+
+  :lang(ko),
+  :lang(ko) *,
+  :lang(km),
+  :lang(km) * {
+    letter-spacing: normal;
+  }
+
+  :where(.prose p, .prose li) {
+    line-height: var(--leading-learning);
   }
 
   /* Compact application type ramp. Pages can still opt into larger display
@@ -422,8 +455,8 @@ html[data-theme-transition]::view-transition-new(root) {
   position: absolute;
   top: 0.55rem;
   left: 0.9rem;
-  font-family: var(--font-mono), monospace;
-  font-size: 10px;
+  font-family: var(--font-mono-stack);
+  font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #7d8590;

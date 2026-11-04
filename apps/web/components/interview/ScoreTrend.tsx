@@ -45,7 +45,7 @@ export function ScoreTrend({ records }: { records: ScorecardRecord[] }) {
     <div className="overflow-hidden rounded-[1.8rem] border border-border bg-card p-5 shadow-sm dark:bg-slate-900/40 sm:rounded-[2.2rem] sm:p-6">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+          <p className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">
             Your Progress
           </p>
           <h3 className="mt-1 text-lg font-bold tracking-tight text-foreground">

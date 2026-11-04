@@ -221,7 +221,7 @@ function GrammarTracker({
             )}
           >
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[13px] font-bold leading-snug text-foreground/80 line-clamp-2">
+              <span className="text-xs font-bold leading-snug text-foreground/80 line-clamp-2">
                 {point}
               </span>
               <span
@@ -349,7 +349,7 @@ function PracticeCalendar({
             <div
               key={day}
               className={cn(
-                "relative flex aspect-square items-center justify-center rounded-xl text-[13px] font-bold",
+                "relative flex aspect-square items-center justify-center rounded-xl text-xs font-bold",
                 isActive
                   ? "bg-blue-500 text-white shadow-md shadow-blue-500/20"
                   : isToday
@@ -980,7 +980,7 @@ export default function HistoryPage() {
                                         className="mt-0.5 shrink-0 text-sky-500"
                                         strokeWidth={2.5}
                                       />
-                                      <p className="text-[13px] font-bold text-sky-700 dark:text-sky-300">
+                                      <p className="text-xs font-bold text-sky-700 dark:text-sky-300">
                                         {entry.englishTranslation}
                                       </p>
                                     </div>
@@ -995,7 +995,7 @@ export default function HistoryPage() {
                                           type="button"
                                           onClick={() => handleTagClick(p.trim())}
                                           className={cn(
-                                            "rounded-full border px-3 py-1 text-[12px] font-bold transition-colors",
+                                            "rounded-full border px-3 py-1 text-xs font-bold transition-colors",
                                             activeTag === p.trim()
                                               ? "border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400"
                                               : "border-border bg-accent/30 text-foreground/70 hover:bg-accent",
@@ -1008,7 +1008,7 @@ export default function HistoryPage() {
                                   )}
 
                                   {/* Explanation */}
-                                  <p className="text-[13px] font-medium leading-relaxed text-muted-foreground">
+                                  <p className="text-xs font-medium leading-relaxed text-muted-foreground">
                                     {entry.explanation}
                                   </p>
                                 </div>

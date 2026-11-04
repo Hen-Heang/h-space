@@ -176,7 +176,7 @@ function Metric({ label, value }: MetricProps) {
       <p className="font-mono text-base font-semibold tabular-nums text-foreground sm:text-lg">
         {value}
       </p>
-      <p className="mt-0.5 truncate text-[11px] font-medium text-muted-foreground sm:text-xs">
+      <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground sm:text-xs">
         {label}
       </p>
     </div>

@@ -1,3 +1,122 @@
+## 2026-11-04 - Pre-typography handoff snapshot
+
+# HANDOFF
+
+## Snapshot
+
+- **Updated:** 2026-11-04.
+- **Checkout:** feat/finance-settings at a820e7b, tracking origin/feat/finance-review. No commit or push was made during this navigation update.
+- **Navigation:** Finance is a global sidebar destination and remains the fourth mobile bottom-bar tab. My Apps was removed from the global workspace sidebar and added as a Settings destination. Finance's seven local page tabs remain intact.
+- **Verification:** 116 navigation tests passed; pnpm build passed; Prettier passed for changed navigation files. Settings and Finance passed the synthetic UI route sweep at 430, 1024, and 1440 px with no horizontal overflow. Screenshots: apps/web/test-results/ui-sweep/finance-settings-sidebar-move/.
+- **Uncommitted work preserved:** Finance settings, categories/payment method API, reports, export, email, Telegram, analytics, and navigation changes plus untracked luyra-web/. Do not stage or discard unrelated work.
+
+## Current focus
+
+1. Review the Finance settings/report/export work in the current worktree.
+2. Preserve Finance's Neon data ownership and the independent Luyra deployment configuration.
+3. Keep untracked luyra-web/ until its purpose is confirmed.
+
+
+## 2026-11-04 - Finance and My Apps navigation move
+
+# HANDOFF
+
+## Snapshot
+
+- **Updated:** 2026-11-04.
+- **Checkout:** feat/finance-settings at a820e7b, tracking origin/feat/finance-review. HEAD includes the Luyra monthly review slice and the Finance tab layout update. No Git commit was made by the agent during this responsive review.
+- **Finance tabs:** all seven destinations (Overview, Transactions, Budgets, Savings, Subscriptions, Review, Analytics) display in a 2- or 3-column grid on phones and a single row on wider screens. Every destination stays visible without horizontal scrolling.
+- **Verification:** pnpm build passed; the synthetic Finance route sweep passed 7/7 pages at 320, 375, 390, 430, 768, 1024, and 1440 px with no horizontal overflow. Prettier passed for finance-nav.tsx. Screenshots are in ignored apps/web/test-results/ui-sweep/finance-tabs-grid/.
+- **Review note:** the sweep used synthetic fixtures, not a real account. Existing small secondary labels remain reported by the sweep.
+- **Uncommitted work preserved:** Settings Finance shortcut, analytics amount wrapping fix, navigation test updates, additional Finance settings/report/export and Telegram work, and untracked luyra-web/. Do not stage or discard these items.
+
+## Current focus
+
+1. Review the Finance monthly review slice on the current branch.
+2. Preserve Finance's Neon data ownership and the independent Luyra deployment configuration.
+3. Keep luyra-web/ until its purpose is confirmed.
+
+
+## 2026-11-04 - Finance tabs responsive review
+
+# HANDOFF
+
+## Snapshot
+
+- **Updated:** 2026-11-04.
+- **Checkout:** feat/finance-subscriptions at 183057f (subscription and merchant-name port). The pre-existing untracked luyra-web/ directory is preserved. No commit, push, or deploy was made for this navigation work.
+- **Finance navigation:** removed the standalone Finance row from the desktop sidebar and the Finance tab from My Apps workspace tabs. Added a Finance link on Settings. The fourth mobile bottom-bar slot now opens Finance; My Apps is available from More.
+- **Mobile layout fix:** analytics category rows keep KRW totals on one line and truncate long category names.
+- **Verification:** navigation tests 115/115 passed; pnpm build passed. Synthetic Finance route sweep passed for Overview, Transactions, Budgets, Savings, Subscriptions, and Analytics at 320, 375, 390, 430, 768, 1024, and 1440 px (6/6). After the analytics row fix, Analytics passed again at all seven widths. The Settings Finance entry passed at 320 and 430 px. Screenshots are in ignored apps/web/test-results/ui-sweep/finance-navigation-fix/, apps/web/test-results/ui-sweep/finance-analytics-overflow-fix/, and apps/web/test-results/ui-sweep/finance-settings-entry/.
+- **Review note:** the sweep reported existing 11px secondary labels on Overview, Transactions, Savings, and Analytics. It found no horizontal overflow. The review used synthetic fixtures, not a real finance account.
+
+## Current focus
+
+1. Owner reviews the finance-subscriptions branch work and confirms navigation placement on their account.
+2. Continue preserving Finance's Neon data ownership and independent Luyra deployment configuration; no live data or deployment settings were changed here.
+3. Preserve the local untracked luyra-web/ directory until its purpose is confirmed.
+
+
+## 2026-11-04 - Finance navigation and mobile review
+
+# HANDOFF
+
+## Snapshot
+
+- **Updated:** 2026-11-04.
+- **Merged:** PR #75, finance foundation plus savings, into `main` at `67d66ecfa6f53e82b1fa9fa7cb5814e251e9499a`. Verified on GitHub and by fetching `origin/main` and checking ancestry.
+- **PR #74:** closed/marked merged by GitHub because its branch commits were included through #75. No open PRs remained at the final check. Branches were retained.
+- **Review fix commit:** `2472ebeebee174cefc78d832d76a79815da9d4d9`, pushed to `feat/finance-savings` before merging.
+  - Every finance query key includes the H-Space user ID; options are constructed at call time. Anonymous queries are disabled. Invalidation is account-scoped.
+  - FinanceSessionBoundary remounts finance forms on account changes and hides them on sign-out. The finance HTTP client rejects account changes while acquiring credentials or awaiting responses. Late transaction saves cannot fill another account's cache.
+  - Savings contribution insertion and balance increment run in one Neon HTTP transaction. The insert selects and locks the owned goal; absent/foreign goals return 404.
+  - Formatted imported finance files to repository conventions. Verified 125 touched files were formatting-only; semantic edits were limited to the review fixes and their tests.
+- **Verification:** latest-head Web CI succeeded (Lint & Format, Test, Build Verification, Quality Gate); 1790 tests passed in CI. Vercel preview passed. Local lint/build/format checks passed; lint has 5 existing warnings. Both review threads resolved; no unresolved threads at merge time.
+- **Browser:** synthetic overview, transactions and savings at 430px/1440px all passed overflow checks against the local production build. Existing 11px labels were reported. Screenshot artifacts: `apps/web/test-results/ui-sweep/pr75-review-fixes/` (ignored). Temporary preview server on 3115 was stopped.
+- **Not verified:** production rollout, real-account finance rendering, real cron execution, or live database rollback. No production env/deployment changes and no live SQL were performed in this task. PR #75 retains the owner's production configuration checklist (`FINANCE_DATABASE_URL`, `FINANCE_ACCOUNT_LINKS`, `CRON_SECRET`, Luyra cron off).
+- **Checkout:** retained `feat/finance-savings` at the merged fix head. Existing untracked `luyra-web/` was preserved. This HANDOFF/history rotation is local and uncommitted.
+
+## Current focus
+
+1. Owner checks production configuration and real-account Finance behavior. See `docs/LUYRA_MIGRATION.md` and PR #75 for cutover/rollback boundaries; independent Luyra remains the fallback.
+2. Preserve the earlier exam-script reseed follow-up and UI redesign Phases 5/6 work described in the archived snapshot at the top of `HANDOFF_HISTORY.md`.
+3. Rollback is a reviewed revert of merge `67d66ec`; no schema migration was introduced by these review fixes. A code revert does not undo any later financial writes.
+
+
+## 2026-11-04 - Before PR 75 review fixes and merge
+
+# HANDOFF
+
+## Snapshot
+
+- **Updated:** 2026-11-04
+- **On `main` and in production:** UI redesign Phases 1–4 (#64–#67), PR #72 (iPhone 15 typography audit), and PR #71 (full 제6회 interview script). The previous snapshot is the top entry of `HANDOFF_HISTORY.md`.
+- **Exam Prep script (#71):**
+  - `lib/interview.ts` seeds the full 2026-09-30 Notion script ("한국에 온 후 새로 생긴 습관/취미") and adds a first outline section, `self-intro` (자기소개). `opening` is now only the topic intro.
+  - The home station is kept out of the public seed on purpose (`lib/interview-content.test.ts` checks this).
+  - Migration `20261104120000_reseed_habits_full_script` was **applied to the live database** on 2026-11-04, after production had deployed #71. Each `weather` draft was first saved as the version "Before full-script reseed (2026-11-04)"; then only the outline keys were cleared, so `/interview/script` refills them from the seed. Roll back from the page's Versions list.
+  - Not verified: the owner's real account after the reseed (an agent can't read the live table). Open `/interview/script` and confirm 자기소개 comes first.
+- **In review:** branch `chore/remove-google-calendar` holds the work that was left uncommitted after #72 merged, with `main` merged in:
+  - Google Calendar integration removed: routes, callback and settings pages, hooks, `lib/server/google-calendar-*`, `UpcomingEventsCard` and `CalendarSourceFilter`. The `kori_google_calendar_integrations` table stays in the database.
+  - The mobile glass fallback under reduced transparency (bottom nav and the Exam Prep section-jump menu), with `interview-audit.e2e.ts` checks.
+  - Calendar/task UI tweaks, `apps/web/scripts/ui-sweep-report.mjs`, and AGENTS/security-rule updates.
+  - Merge conflicts (HANDOFF files, `roadmap/page.tsx`, `ChatWindow.tsx`) were resolved to `main`'s side; those were typography and contrast lines `main` had already reviewed.
+  - `interview-script-repeat.e2e.ts` now saves the `self-intro` section, the new first section, instead of `opening`.
+- **Verification (this branch):** `tsc --noEmit` clean; unit tests 141 files / 1643 pass; `interview-script-repeat.e2e.ts` 3/3 pass against `next dev` on :3000.
+  - Not run: the full e2e suite. An earlier session saw the calendar sticky-shell test expect `overflow: hidden/hidden` while Chrome computes `clip/hidden`; it was left unchanged.
+- **Tracked test artifact:** `apps/web/test-results/playwright/.last-run.json` changes on every e2e run. Don't stage it.
+
+## Current focus
+
+1. The owner reviews and merges the `chore/remove-google-calendar` PR.
+2. The owner checks `/interview/script` on production after the reseed.
+3. Then **Phase 5** of the UI redesign: Learning, AI, Notes and Growth. The plan is in the history entry above and in the "Phase 5" section of `apps/web/docs/ui-redesign-audit.md`.
+
+## Running the sweep
+
+The command is in `apps/web/docs/design-system.md` §8. Use `UI_SWEEP_ROUTES=goals/overview,inbox` without a leading slash. A git worktree has no `.env.local`, so run its dev server with dummy local values for `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `NEXT_PUBLIC_AUTH_API_URL`; the sweep mocks everything else.
+
+
 ## 2026-11-04 - UI redesign Phases 1-4 on main
 
 # HANDOFF

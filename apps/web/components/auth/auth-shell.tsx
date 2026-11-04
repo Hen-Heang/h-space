@@ -186,13 +186,13 @@ function BrandPanel({ variant }: { variant: "signin" | "signup" }) {
                 >
                   <span
                     className={cn(
-                      "flex size-8 shrink-0 items-center justify-center rounded-full text-[13px] font-bold",
+                      "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
                       index === 0 ? "bg-white text-brand-surface" : "bg-white/15",
                     )}
                   >
                     {index + 1}
                   </span>
-                  <span className="text-[15px] font-medium">{step}</span>
+                  <span className="text-base font-medium">{step}</span>
                 </li>
               ))}
             </ol>
@@ -233,7 +233,7 @@ function BrandPanel({ variant }: { variant: "signin" | "signup" }) {
         )}
       </div>
 
-      <div className="flex flex-wrap justify-between gap-4 text-[13px] text-white/70">
+      <div className="flex flex-wrap justify-between gap-4 text-xs text-white/70">
         <span>Designed for focus, powered by your ideas.</span>
         <span>© {new Date().getFullYear()} H-Space</span>
       </div>
@@ -275,7 +275,7 @@ export function AuthHeading({
         {title}
       </h1>
       {description && (
-        <p className="text-[15px] leading-relaxed text-muted-foreground">{description}</p>
+        <p className="text-base leading-relaxed text-muted-foreground">{description}</p>
       )}
     </div>
   )

@@ -132,7 +132,7 @@ export function CorrectionsReview({ onDone }: { onDone?: () => void }) {
             >
               <ArrowLeft size={20} strokeWidth={2.5} />
             </button>
-            <span className="text-[14px] font-bold uppercase tracking-wide text-foreground">
+            <span className="text-sm font-bold uppercase tracking-wide text-foreground">
               {currentIndex + 1} <span className="opacity-20 mx-1">/</span> {total}
             </span>
           </div>
@@ -147,7 +147,7 @@ export function CorrectionsReview({ onDone }: { onDone?: () => void }) {
               className="rounded-3xl border-2 border-b-[6px] border-border bg-card p-6 dark:bg-slate-900/60 sm:p-8"
             >
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   What you wrote
                 </p>
                 {card.occurrenceCount > 1 && (
@@ -175,7 +175,7 @@ export function CorrectionsReview({ onDone }: { onDone?: () => void }) {
                   <div className="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/[0.06] p-5 dark:bg-emerald-500/[0.08]">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-[12px] font-bold uppercase tracking-wide text-emerald-700/70 dark:text-emerald-400/70">
+                        <p className="text-xs font-bold uppercase tracking-wide text-emerald-700/70 dark:text-emerald-400/70">
                           Correct
                         </p>
                         <p className="mt-1 break-keep text-2xl font-bold leading-snug text-foreground sm:text-3xl">
@@ -188,7 +188,7 @@ export function CorrectionsReview({ onDone }: { onDone?: () => void }) {
 
                   {card.naturalVersion && (
                     <div className="rounded-2xl border-2 border-sky-500/30 bg-sky-500/[0.05] p-5 dark:bg-sky-500/[0.07]">
-                      <p className="text-[12px] font-bold uppercase tracking-wide text-sky-700/70 dark:text-sky-400/70">
+                      <p className="text-xs font-bold uppercase tracking-wide text-sky-700/70 dark:text-sky-400/70">
                         Natural Korean
                       </p>
                       <p className="mt-1 break-keep text-xl font-bold leading-snug text-foreground">
@@ -225,7 +225,7 @@ export function CorrectionsReview({ onDone }: { onDone?: () => void }) {
                         <span className="text-xs font-bold uppercase tracking-wider">
                           {GRADE_STYLES[rating].label}
                         </span>
-                        <span className="text-[12px] font-bold opacity-80">
+                        <span className="text-xs font-bold opacity-80">
                           {formatInterval(previewIntervalDays(card, rating))}
                         </span>
                       </button>

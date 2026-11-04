@@ -111,7 +111,7 @@ function NotificationRow({
           <p className="text-sm font-bold text-foreground">{title}</p>
           {!n.read && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
         </div>
-        <p className="mt-0.5 text-[13px] font-medium leading-snug text-muted-foreground">{body}</p>
+        <p className="mt-0.5 text-xs font-medium leading-snug text-muted-foreground">{body}</p>
 
         {isInvite && n.invitationStatus === "accepted" && (
           <p className="mt-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
@@ -217,7 +217,7 @@ export function NotificationBell({ className }: { className?: string } = {}) {
         >
           <Bell size={18} strokeWidth={2.5} />
           {unreadCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground shadow-md ring-2 ring-background">
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground shadow-md ring-2 ring-background">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
@@ -232,7 +232,7 @@ export function NotificationBell({ className }: { className?: string } = {}) {
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-bold tracking-tight text-foreground">Notifications</h3>
             {unreadCount > 0 && (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold tabular-nums text-primary">
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold tabular-nums text-primary">
                 {unreadCount}
               </span>
             )}

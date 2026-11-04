@@ -101,7 +101,7 @@ export function SpeakingModeView({ cards, onExhausted }: SpeakingModeViewProps) 
       </div>
 
       <div className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-card p-6 text-center dark:bg-slate-900/40 sm:p-8">
-        <span className="rounded-full bg-accent/40 px-3 py-1 text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+        <span className="rounded-full bg-accent/40 px-3 py-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
           Answer aloud
         </span>
         <p className="break-keep text-2xl font-bold leading-snug text-foreground [overflow-wrap:anywhere]">
@@ -199,7 +199,7 @@ export function SpeakingModeView({ cards, onExhausted }: SpeakingModeViewProps) 
           <div className="rounded-2xl border border-sky-500/20 bg-sky-500/5 p-3">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-sky-600 dark:text-sky-400">
+                <p className="text-xs font-bold uppercase tracking-wide text-sky-600 dark:text-sky-400">
                   Corrected
                 </p>
                 <p className="break-keep text-sm font-semibold text-foreground [overflow-wrap:anywhere]">
@@ -219,7 +219,7 @@ export function SpeakingModeView({ cards, onExhausted }: SpeakingModeViewProps) 
               <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                    <p className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
                       More natural
                     </p>
                     <p className="break-keep text-sm font-semibold text-foreground [overflow-wrap:anywhere]">
@@ -250,7 +250,7 @@ export function SpeakingModeView({ cards, onExhausted }: SpeakingModeViewProps) 
 
           {feedback.retryWords.length > 0 && (
             <div>
-              <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/70">
+              <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground/70">
                 Worth retrying
               </p>
               <div className="flex flex-wrap gap-2">

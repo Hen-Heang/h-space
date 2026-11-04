@@ -295,7 +295,7 @@ function FeedbackLine({
     <div className="rounded-xl bg-muted/60 p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
+          <p className="text-xs font-semibold text-muted-foreground">{label}</p>
           <p className="mt-1 break-keep text-sm font-medium [overflow-wrap:anywhere]">{value}</p>
         </div>
         {speak && <SpeakButton text={value} className="min-h-10 min-w-10 shrink-0" />}

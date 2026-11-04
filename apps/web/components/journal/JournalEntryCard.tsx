@@ -111,7 +111,7 @@ export function JournalEntryCard({ entry }: { entry: JournalEntry }) {
       {entry.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {entry.tags.map((tag) => (
-            <Badge key={tag} variant="outline" className="text-[11px]">
+            <Badge key={tag} variant="outline" className="text-xs">
               #{tag}
             </Badge>
           ))}
