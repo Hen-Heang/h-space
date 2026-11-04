@@ -76,7 +76,8 @@ function VocabPageContent() {
   // "/vocab?tab=phrases" (used by the daily_phrase mission step) lands
   // directly on the Phrases tab instead of the vocabulary deck.
   const searchParams = useSearchParams()
-  const defaultTab = searchParams.get("tab") === "phrases" ? "phrases" : "vocabulary"
+  const tabParam = searchParams.get("tab")
+  const defaultTab = tabParam === "phrases" || tabParam === "courses" ? tabParam : "vocabulary"
   // Set by a deck's "Review this deck" button; consumed by ReviewSession to
   // jump straight into a scoped Memory Lab session for that category.
   const [focusCategory, setFocusCategory] = useState<string | null>(null)
@@ -142,110 +143,105 @@ function VocabPageContent() {
         </p>
       </motion.div>
 
+      {/* The daily task leads the page; the full session opens in a focused overlay. */}
+      <motion.div variants={itemVariants} className="space-y-6">
+        <ReviewSession
+          dueToday={dueToday}
+          dueCount={dueCount}
+          allWords={words}
+          loading={loading}
+          onRate={rateWord}
+          focusCategory={focusCategory}
+          onFocusHandled={() => setFocusCategory(null)}
+          autoStart={autoStart}
+          onAutoStartHandled={() => {
+            setAutoStart(null)
+            // Drop the param so a refresh or a Back-then-Forward doesn't
+            // silently re-launch a session the learner already left.
+            const url = new URL(window.location.href)
+            url.searchParams.delete("review")
+            window.history.replaceState(null, "", `${url.pathname}${url.search}`)
+          }}
+        />
+
+        {error ? <ErrorBanner>{error}</ErrorBanner> : null}
+      </motion.div>
+
+      {/* One tab row under the workspace tabs — Words · Courses · Phrases.
+          Library/Courses used to be a second tab row nested inside Words, so
+          the page stacked three levels of tabs. The values stay "vocabulary"
+          and "phrases" so `/vocab?tab=phrases` deep links keep working. */}
       <motion.div variants={itemVariants}>
-        <Tabs defaultValue={defaultTab} className="gap-0">
-          <TabsList className="grid h-12 w-full grid-cols-2 rounded-2xl border border-border/70 bg-muted/60 p-1 sm:max-w-md">
-            <TabsTrigger value="vocabulary" className="rounded-xl px-3 font-semibold">
+        <Tabs defaultValue={defaultTab} className="gap-4">
+          <TabsList className="no-scrollbar w-fit max-w-full overflow-x-auto">
+            <TabsTrigger value="vocabulary">
               <LibraryBig aria-hidden="true" />
               Words
-              <span className="font-mono text-xs text-muted-foreground">{words.length}</span>
+              <span className="text-xs tabular-nums text-muted-foreground">{words.length}</span>
             </TabsTrigger>
-            <TabsTrigger value="phrases" className="rounded-xl px-3 font-semibold">
+            <TabsTrigger value="courses">
+              <GraduationCap aria-hidden="true" />
+              Courses
+            </TabsTrigger>
+            <TabsTrigger value="phrases">
               <MessageSquareText aria-hidden="true" />
               Phrases
-              <span className="font-mono text-xs text-muted-foreground">
+              <span className="text-xs tabular-nums text-muted-foreground">
                 {phraseHistory?.length ?? 0}
               </span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="vocabulary" className="space-y-6 pt-5 sm:pt-6">
-            {/* The daily task leads the page; the full session opens in a focused overlay. */}
-            <ReviewSession
-              dueToday={dueToday}
-              dueCount={dueCount}
-              allWords={words}
-              loading={loading}
-              onRate={rateWord}
-              focusCategory={focusCategory}
-              onFocusHandled={() => setFocusCategory(null)}
-              autoStart={autoStart}
-              onAutoStartHandled={() => {
-                setAutoStart(null)
-                // Drop the param so a refresh or a Back-then-Forward doesn't
-                // silently re-launch a session the learner already left.
-                const url = new URL(window.location.href)
-                url.searchParams.delete("review")
-                window.history.replaceState(null, "", `${url.pathname}${url.search}`)
-              }}
-            />
-
-            {error ? <ErrorBanner>{error}</ErrorBanner> : null}
-
-            <Tabs defaultValue="library" className="gap-4">
-              <TabsList className="w-fit">
-                <TabsTrigger value="library">
-                  <LibraryBig aria-hidden="true" />
-                  Library
-                </TabsTrigger>
-                <TabsTrigger value="courses">
-                  <GraduationCap aria-hidden="true" />
-                  Courses
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="library" className="space-y-4">
-                {words.length > 0 ? (
-                  <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1.5 transition-shadow focus-within:ring-3 focus-within:ring-ring/30">
-                    <Search
-                      aria-hidden="true"
-                      size={18}
-                      strokeWidth={2}
-                      className="pointer-events-none ml-2 shrink-0 text-muted-foreground"
-                    />
-                    <Input
-                      value={query}
-                      onChange={(event) => setQuery(event.target.value)}
-                      placeholder="Search Korean, English, deck, or tag…"
-                      aria-label={`Search ${words.length} saved vocabulary words`}
-                      className="h-11 min-w-0 flex-1 border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
-                    />
-                    {query ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-lg"
-                        onClick={() => setQuery("")}
-                        aria-label="Clear vocabulary search"
-                        className="shrink-0 rounded-xl text-muted-foreground"
-                      >
-                        <X />
-                      </Button>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                <VocabDictionary
-                  words={words}
-                  loading={loading}
-                  query={query}
-                  onUpdate={updateWord}
-                  onDelete={deleteWord}
-                  onAdd={addWord}
-                  onReviewDeck={setFocusCategory}
-                  onStartAdd={() => setAddOpen(true)}
-                  onClearSearch={() => setQuery("")}
+          <TabsContent value="vocabulary" className="space-y-4">
+            {words.length > 0 ? (
+              <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1.5 transition-shadow focus-within:ring-3 focus-within:ring-ring/30">
+                <Search
+                  aria-hidden="true"
+                  size={18}
+                  strokeWidth={2}
+                  className="pointer-events-none ml-2 shrink-0 text-muted-foreground"
                 />
-              </TabsContent>
+                <Input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search Korean, English, deck, or tag…"
+                  aria-label={`Search ${words.length} saved vocabulary words`}
+                  className="h-11 min-w-0 flex-1 border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
+                />
+                {query ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-lg"
+                    onClick={() => setQuery("")}
+                    aria-label="Clear vocabulary search"
+                    className="shrink-0 rounded-xl text-muted-foreground"
+                  >
+                    <X />
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
 
-              <TabsContent value="courses" className="space-y-6">
-                <CoreKoreanPanel words={words} loading={loading} />
-                <EssentialBooksPanel words={words} loading={loading} />
-              </TabsContent>
-            </Tabs>
+            <VocabDictionary
+              words={words}
+              loading={loading}
+              query={query}
+              onUpdate={updateWord}
+              onDelete={deleteWord}
+              onAdd={addWord}
+              onReviewDeck={setFocusCategory}
+              onStartAdd={() => setAddOpen(true)}
+              onClearSearch={() => setQuery("")}
+            />
           </TabsContent>
 
-          <TabsContent value="phrases" className="pt-6">
+          <TabsContent value="courses" className="space-y-6">
+            <CoreKoreanPanel words={words} loading={loading} />
+            <EssentialBooksPanel words={words} loading={loading} />
+          </TabsContent>
+
+          <TabsContent value="phrases">
             <PhrasesTab />
           </TabsContent>
         </Tabs>

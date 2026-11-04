@@ -189,7 +189,7 @@ export function PhrasebookHome() {
 
       {isFiltering ? (
         <motion.div variants={itemVariants} className="space-y-3">
-          <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground/70">
+          <h2 className="text-base font-semibold text-foreground">
             {filteredCards.length} {filteredCards.length === 1 ? "result" : "results"}
           </h2>
           {filteredCards.length === 0 ? (
@@ -212,9 +212,7 @@ export function PhrasebookHome() {
       ) : (
         <>
           <motion.div variants={itemVariants} className="space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground/70">
-              Practice packs
-            </h2>
+            <h2 className="text-base font-semibold text-foreground">Practice packs</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {seededCollections.map((collection) => {
                 const stats = statsFor(collection.id)
@@ -232,9 +230,7 @@ export function PhrasebookHome() {
 
           <motion.div variants={itemVariants} className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground/70">
-                My Q&A
-              </h2>
+              <h2 className="text-base font-semibold text-foreground">My Q&A</h2>
               <Link
                 href="/phrasebook/new"
                 className="text-xs font-bold text-primary hover:underline"
@@ -265,9 +261,7 @@ export function PhrasebookHome() {
 
           {recentlyPracticed.length > 0 && (
             <motion.div variants={itemVariants} className="space-y-3">
-              <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground/70">
-                Recently practiced
-              </h2>
+              <h2 className="text-base font-semibold text-foreground">Recently practiced</h2>
               <div className="space-y-3">
                 {recentlyPracticed.map((card) => (
                   <PhraseCardListItem

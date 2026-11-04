@@ -37,9 +37,9 @@ export default function KoreanCoachScenariosPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
           Scenario practice
         </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h2 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
           What do you need to say?
-        </h1>
+        </h2>
         <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">
           Choose one focused situation. The coach will speak first, keep the transcript hidden, and
           ask only one short question at a time.

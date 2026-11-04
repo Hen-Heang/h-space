@@ -264,6 +264,75 @@ text: the `⌘K` hint only.
 - Remove hero h1s on Korean Coach, recovery, review and practice/today.
 - Notes reader: 16px body, single gutter.
 
+_Status — 5a, the P0 fixes (2026-11-04, branch `ui/redesign-phase5a`):_
+
+- **Overflow at 320/390px fixed** (baseline: 5 of 12 routes failed; after:
+  12/12 pass at 320/390/768/1024/1440):
+  - `/chat` — the mode switcher's wrapper had no `min-w-0`, so five 44px
+    modes pushed the history button off the screen (to 399px at 390). The
+    switcher now scrolls inside the space between back and history.
+  - `/interview/script` — the four-mode bar (≈386px) scrolls inside its own
+    box; its 12px uppercase labels are 13px sentence case, primary not blue.
+  - `/review/*` — `ReviewTabs` is the underline tab style instead of a boxed
+    blue segmented control whose `flex-1` links couldn't shrink.
+  - `/notes/new` — the slug input gets `min-w-0` (an input's intrinsic
+    width stopped `flex-1` from shrinking it).
+  - Recovery `LogFlow` — the five intensity buttons are a 5-column grid of
+    squares, not five fixed 56px buttons (328px).
+- **Touch and zoom** — chat composer input is 16px (no iOS zoom); send,
+  stop and voice are 44px on touch and primary-coloured; message-action icons
+  keep their 24px look with a 44px `after:` hit area; the edit composer's
+  buttons are 44px on touch. `/history` search is 16px on phones;
+  `CheckinCalendar` month buttons are 44px on touch.
+- **Names and state** — `/history` month buttons are labelled; the roadmap
+  topic toggle is a `role="checkbox"` with `aria-checked` and its topic as
+  its name (40px hit area), and its edit/delete buttons are labelled.
+- **`RecoveryOverview`** — the "N due" badge sits beside the icon instead of
+  overlapping the count; 10–11px text is 13px. Copy unchanged.
+- The sweep now also covers `/roadmap`, `/interview/script` and
+  `/growth/recovery/log`.
+
+Left for 5b: the remaining hero `h1`s, one tab level on `/vocab` and
+`/phrasebook`, the Notes reader gutter, chat's two header rows and the
+remaining blue in chat (user bubbles, the start button). At 320px chat's
+five modes scroll — "Review" and "My Data" sit off to the right until swiped;
+5b's single header row should make them fit.
+
+_Status — 5b, hierarchy (2026-11-04, branch `ui/redesign-phase5b`):_
+
+- **One `h1` per page** — 23 files that rendered their own `h1` under the
+  shell's demote it to `h2`: Korean Coach (hub and six subroutes, plus
+  `SessionSummary`), Recovery (overview, dashboard, insights, plan, review,
+  settings, lock gate and three forms), Review (morning, evening, weekly),
+  the Notes reader, practice/today and chat's "Ask Hengo". `UrgeRescueFlow`
+  keeps its `h1`s: `/growth/recovery/urge` is chromeless, so there's no shell
+  title, and only one step shows at a time. Visual hero boxes are unchanged.
+- **Dark-on-dark titles fixed** — the global `h1–h6 { color: foreground }`
+  rule beats a dark panel's inherited white. practice/today's hero title and
+  five `UrgeRescueFlow` step titles (on `bg-slate-950`) now set `text-white`.
+  practice/today also renders `<div>`s instead of a second `<main>`.
+- **One tab level** — `/vocab` stacked three (workspace, Words/Phrases,
+  Library/Courses inside Words); it now has one row, Words · Courses ·
+  Phrases, with the daily review card above it. `?tab=phrases` still works
+  and `?tab=courses` is new. `/phrasebook` already had one local row; its
+  0.18em uppercase section headings are sentence-case 16px. The tab rule is
+  written down in `design-system.md` §7.
+- **Notes reader** — one gutter (the shell's; the reader added 16–48px
+  more), 16px body at every width (`prose-base`, was `prose-sm` on phones),
+  primary links, no blur on the floating pills, a 14px TOC heading.
+- **Chat** — on phones the mode switcher is one "current mode ▾" menu
+  (`DropdownMenuRadioGroup`), so all five modes are reachable at 320px; the
+  segmented control stays from `sm`. User bubbles, the start button and
+  selected states use primary, not blue. Every 8–12px label in chat is 13px.
+  The two header rows were **not** merged: the second (`ChatWindow`) carries
+  voice-call state, and merging is a larger change than this pass.
+
+Sweep: `/chat`, `/vocab`, `/phrasebook`, `/notes`, `/korean-coach`,
+`/growth/recovery`, `/growth/recovery/log`, `/review/*`, `/learn/today` and
+`/history` pass at 320/390/768/1024/1440. Not seen rendered: practice/today's
+hero (synthetic data leaves it loading), the Notes reader with a real note,
+and the urge flow's steps.
+
 **Phase 6 — consistency pass**
 
 - Re-run the sweep at all widths, light and dark.

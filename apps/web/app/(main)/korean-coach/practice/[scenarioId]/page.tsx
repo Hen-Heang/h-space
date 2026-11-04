@@ -365,9 +365,9 @@ export default function KoreanCoachPracticePage() {
                 <Badge variant="secondary">{scenario.difficulty}</Badge>
                 <Badge variant="secondary">{scenario.estimatedMinutes} min</Badge>
               </div>
-              <h1 className="mt-5 text-3xl font-semibold" lang="ko">
+              <h2 className="mt-5 text-3xl font-semibold" lang="ko">
                 {scenario.koreanTitle}
-              </h1>
+              </h2>
               <p className="mt-1 text-lg font-medium">{scenario.englishTitle}</p>
               <p className="mt-3 leading-7 text-muted-foreground">{scenario.description}</p>
             </div>

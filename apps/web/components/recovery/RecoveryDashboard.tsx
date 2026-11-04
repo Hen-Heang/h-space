@@ -210,10 +210,10 @@ export function RecoveryDashboard({
               <p className="text-xs font-semibold uppercase tracking-[0.08em] text-blue-300">
                 Recovery workspace
               </p>
-              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-[1.75rem]">
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-[1.75rem]">
                 {greeting()}
                 {displayName ? `, ${displayName.split(" ")[0]}` : ""}
-              </h1>
+              </h2>
             </div>
             <span className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 text-xs text-white/70">
               {recoveryLockEnabled ? (

@@ -37,9 +37,9 @@ export function SessionSummary({
         <p className="mt-4 text-xs font-semibold uppercase tracking-[0.12em] text-primary">
           Session complete
         </p>
-        <h1 id="session-summary" className="mt-2 text-3xl font-semibold tracking-tight">
+        <h2 id="session-summary" className="mt-2 text-3xl font-semibold tracking-tight">
           Useful progress, kept simple
-        </h1>
+        </h2>
         {scenario && (
           <p className="mt-2 text-muted-foreground">
             {scenario.englishTitle} · <span lang="ko">{scenario.koreanTitle}</span>

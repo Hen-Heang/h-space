@@ -50,7 +50,7 @@ export default function KoreanCoachHistoryPage() {
           <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Clock3 aria-hidden="true" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">Recent sessions</h1>
+          <h2 className="text-2xl font-semibold tracking-tight">Recent sessions</h2>
         </div>
       </header>
 

@@ -686,11 +686,16 @@ function PhaseCard({
                       key={topic.id}
                       className="flex w-full items-start gap-2 rounded-xl px-1 py-1 transition-colors hover:bg-accent/20"
                     >
+                      {/* A real checkbox to assistive tech (name + checked state),
+                          20px to look at with a 40px tap area. */}
                       <button
                         type="button"
+                        role="checkbox"
+                        aria-checked={isDone}
+                        aria-label={topic.text}
                         onClick={() => onToggle(topic.id)}
                         className={cn(
-                          "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all active:scale-95",
+                          "relative mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all after:absolute after:-inset-2.5 after:content-[''] active:scale-95",
                           isDone
                             ? "border-emerald-500 bg-emerald-500 text-white"
                             : "border-border text-transparent hover:border-primary/50",
@@ -713,16 +718,18 @@ function PhaseCard({
                             setEditingTopicId(topic.id)
                             setEditTopicText(topic.text)
                           }}
-                          className="rounded-md p-1 text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground active:scale-95"
+                          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95 [@media(pointer:coarse)]:p-3"
                           title="Edit"
+                          aria-label={`Edit "${topic.text}"`}
                         >
                           <Pencil size={11} />
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteTopic(topic.id)}
-                          className="rounded-md p-1 text-muted-foreground/60 transition-colors hover:bg-red-500/10 hover:text-red-500 active:scale-95"
+                          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500 active:scale-95 [@media(pointer:coarse)]:p-3"
                           title="Delete"
+                          aria-label={`Delete "${topic.text}"`}
                         >
                           <Trash2 size={11} />
                         </button>

@@ -80,14 +80,14 @@ export function NoteView({ slug, note, html, onEdit, onTogglePin, onDelete }: No
                   ?.scrollIntoView({ behavior: "smooth", block: "start" })
               })
             }}
-            className="flex min-h-11 max-w-[16rem] items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-xs font-semibold text-muted-foreground shadow-lg backdrop-blur-xl active:scale-95"
+            className="flex min-h-11 max-w-[16rem] items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground shadow-lg active:scale-95"
           >
             <List size={13} className="shrink-0" />
             <span className="truncate">{activeSectionLabel}</span>
           </button>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-xs font-semibold text-muted-foreground shadow-lg backdrop-blur-xl active:scale-95"
+            className="flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground shadow-lg active:scale-95"
           >
             <ArrowUp size={13} />
             Top
@@ -99,7 +99,7 @@ export function NoteView({ slug, note, html, onEdit, onTogglePin, onDelete }: No
         {/* Main content column */}
         <div className="min-w-0 max-w-4xl flex-1">
           {/* Top action bar */}
-          <div className="flex items-center justify-between gap-2 border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur-xl sm:px-8 md:sticky md:top-[var(--shell-header-h,0px)] md:z-20">
+          <div className="flex items-center justify-between gap-2 border-b border-border bg-background/95 py-3 md:sticky md:top-[var(--shell-header-h,0px)] md:z-20">
             <Link
               href="/notes"
               className="flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -119,14 +119,14 @@ export function NoteView({ slug, note, html, onEdit, onTogglePin, onDelete }: No
           </div>
 
           {/* Page header */}
-          <div className="px-4 pb-6 pt-6 sm:px-8 sm:pt-8 md:px-12">
+          <div className="pb-6 pt-6 sm:pt-8">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-card">
               <TechIcon name={note.icon} size={28} />
             </div>
 
-            <h1 className="mb-2 text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+            <h2 className="mb-2 text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
               {note.title}
-            </h1>
+            </h2>
 
             {note.description && (
               <p className="mb-4 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
@@ -175,7 +175,7 @@ export function NoteView({ slug, note, html, onEdit, onTogglePin, onDelete }: No
                   href={note.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 font-medium text-blue-600 hover:underline dark:text-blue-400"
+                  className="flex items-center gap-1.5 font-medium text-primary hover:underline"
                 >
                   <ExternalLink size={12} />
                   Source
@@ -198,7 +198,7 @@ export function NoteView({ slug, note, html, onEdit, onTogglePin, onDelete }: No
           </div>
 
           {/* Mobile TOC */}
-          <div id="note-toc-mobile" className="mb-5 scroll-mt-16 px-4 sm:px-8 md:px-12 xl:hidden">
+          <div id="note-toc-mobile" className="mb-5 scroll-mt-16 xl:hidden">
             <button
               onClick={() => setShowMobileToc((v) => !v)}
               className="flex min-h-11 w-full items-center justify-between rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/50"
@@ -220,12 +220,12 @@ export function NoteView({ slug, note, html, onEdit, onTogglePin, onDelete }: No
 
           {/* Article content */}
           <article
-            className="prose prose-zinc max-w-none break-words px-4 pb-12 prose-sm [overflow-wrap:anywhere] dark:prose-invert sm:px-8 sm:prose-base md:px-12 prose-headings:font-semibold prose-headings:tracking-tight prose-a:text-blue-600 prose-pre:max-w-full prose-pre:overflow-x-auto prose-code:rounded prose-code:bg-accent prose-code:px-1 prose-code:py-0.5 prose-code:font-mono prose-code:text-sm prose-code:before:content-none prose-code:after:content-none dark:prose-a:text-blue-400"
+            className="prose prose-base prose-zinc max-w-none break-words pb-12 [overflow-wrap:anywhere] dark:prose-invert prose-headings:font-semibold prose-headings:tracking-tight prose-a:text-primary prose-pre:max-w-full prose-pre:overflow-x-auto prose-code:rounded prose-code:bg-accent prose-code:px-1 prose-code:py-0.5 prose-code:font-mono prose-code:text-sm prose-code:before:content-none prose-code:after:content-none"
             dangerouslySetInnerHTML={{ __html: html }}
           />
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-border/60 px-4 pb-12 pt-6 sm:px-8 md:px-12">
+          <div className="flex items-center justify-between border-t border-border pb-12 pt-6">
             <Link
               href="/notes"
               className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"

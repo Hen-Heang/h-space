@@ -212,7 +212,7 @@ export default function KoreanCoachListeningPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
                 Listening focus
               </p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight">Listen before you read</h1>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight">Listen before you read</h2>
               <p className="mt-3 leading-7 text-muted-foreground">
                 Hear a short Korean sentence, type what you understood, then reveal the transcript
                 and useful vocabulary. Each sentence has up to three replays.

@@ -105,7 +105,7 @@ export default function KoreanCoachPreferencesPage() {
             <Settings2 aria-hidden="true" />
           </div>
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Learning preferences</h1>
+            <h2 className="text-3xl font-semibold tracking-tight">Learning preferences</h2>
             <p className="mt-1 text-muted-foreground">Short defaults you can change at any time.</p>
           </div>
         </div>

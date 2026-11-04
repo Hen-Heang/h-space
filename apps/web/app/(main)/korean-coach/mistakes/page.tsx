@@ -82,7 +82,7 @@ export default function KoreanCoachMistakesPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
               Mistake notebook
             </p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight">Review useful patterns</h1>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight">Review useful patterns</h2>
             <p className="mt-2 max-w-2xl leading-7 text-muted-foreground">
               Repeated corrections stay in one card and increase their occurrence count, so the
               notebook remains focused instead of filling with duplicates.

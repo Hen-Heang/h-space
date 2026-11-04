@@ -58,7 +58,7 @@ export function RecoveryLockGate({ children }: { children: React.ReactNode }) {
         <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
           {hasCredential ? <LockKeyhole size={24} /> : <ShieldCheck size={24} />}
         </span>
-        <h1 className="mt-5 text-xl font-semibold">Recovery is locked</h1>
+        <h2 className="mt-5 text-xl font-semibold">Recovery is locked</h2>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           {hasCredential
             ? "Enter the local PIN for this device. The workspace locks again when the app moves to the background."

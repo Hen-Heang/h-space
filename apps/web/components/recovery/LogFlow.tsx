@@ -87,7 +87,9 @@ export function LogFlow({
             <p className="text-center text-sm font-semibold text-muted-foreground">
               How strong is it right now?
             </p>
-            <div className="flex items-center justify-center gap-3">
+            {/* Five equal squares that shrink to fit: five fixed 56px buttons
+                with 12px gaps were 328px and ran off a 320px screen. */}
+            <div className="mx-auto grid max-w-sm grid-cols-5 gap-2 sm:gap-3">
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
@@ -97,9 +99,9 @@ export function LogFlow({
                     advance()
                   }}
                   className={cn(
-                    "flex size-14 items-center justify-center rounded-2xl border text-lg font-bold transition-all active:scale-95 sm:size-16",
+                    "flex aspect-square min-h-11 w-full items-center justify-center rounded-2xl border text-lg font-bold transition-all active:scale-95",
                     intensity === n
-                      ? "border-blue-500/40 bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                      ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-card text-foreground hover:bg-accent",
                   )}
                 >
