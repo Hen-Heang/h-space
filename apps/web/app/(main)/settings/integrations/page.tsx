@@ -60,7 +60,7 @@ export default function IntegrationsSettingsPage() {
 
       <motion.div variants={itemVariants}>
         <BackLink href="/settings" label="Settings" desktopOnly />
-        <h1 className="mt-2 text-xl font-bold text-foreground">Integrations</h1>
+        <h2 className="mt-2 text-lg font-semibold text-foreground">Integrations</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {showCard
             ? "Connect external calendars and services to Hengo."

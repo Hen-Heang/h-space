@@ -55,9 +55,7 @@ export function ReminderRow({ reminder }: { reminder: Reminder }) {
   }
 
   return (
-    <div
-      className={`space-y-2 rounded-2xl border border-border bg-card p-4 ${busy ? "pointer-events-none opacity-60" : ""}`}
-    >
+    <div className={`space-y-2 py-4 ${busy ? "pointer-events-none opacity-60" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -66,9 +64,9 @@ export function ReminderRow({ reminder }: { reminder: Reminder }) {
               {reminder.status}
             </Badge>
           </div>
-          <h3 className="mt-1.5 break-words text-sm font-semibold text-foreground [overflow-wrap:anywhere]">
+          <h4 className="mt-1.5 break-words text-base font-medium text-foreground [overflow-wrap:anywhere]">
             {reminder.title}
-          </h3>
+          </h4>
           {reminder.body && (
             <p className="mt-0.5 line-clamp-2 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">
               {reminder.body}
@@ -92,7 +90,7 @@ export function ReminderRow({ reminder }: { reminder: Reminder }) {
         </p>
       )}
 
-      <div className="flex items-center justify-end gap-1.5 border-t border-border/60 pt-2">
+      <div className="flex items-center justify-end gap-1.5">
         {reminder.status === "active" && (
           <>
             <DropdownMenu>

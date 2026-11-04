@@ -15,6 +15,8 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Input } from "@/components/ui/input"
 import {
   appCategories,
@@ -57,11 +59,11 @@ function useAppFavorites() {
 }
 
 const CHIP =
-  "inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-md border px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+  "inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-md border px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:min-h-11"
 
 function ProjectLink({ link }: { link: HSpaceProject["links"][number] }) {
   const className =
-    "inline-flex min-h-9 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium text-foreground outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+    "inline-flex min-h-9 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium text-foreground outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:min-h-11"
   const Icon = link.kind === "github" ? Github : ArrowUpRight
 
   if (link.href.startsWith("/")) {
@@ -113,7 +115,7 @@ export function AppsCatalog() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search apps"
             aria-label="Search apps"
-            className="h-9 pl-9"
+            className="h-10 pl-9 [@media(pointer:coarse)]:h-11"
           />
         </div>
         <div
@@ -166,27 +168,32 @@ export function AppsCatalog() {
       </p>
 
       {visible.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border px-5 py-10 text-center">
-          <p className="text-sm font-medium text-foreground">No apps match.</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {favoritesOnly && favorites.size === 0
+        <EmptyState
+          surface
+          icon={Search}
+          title="No apps match."
+          description={
+            favoritesOnly && favorites.size === 0
               ? "Star an app to keep it at the top of this list."
-              : "Try a different search or category."}
-          </p>
-          {filtered && (
-            <button
-              type="button"
-              onClick={() => {
-                setQuery("")
-                setCategory("all")
-                setFavoritesOnly(false)
-              }}
-              className="mt-3 inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-primary hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              Clear filters
-            </button>
-          )}
-        </div>
+              : "Try a different search or category."
+          }
+          action={
+            filtered && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setQuery("")
+                  setCategory("all")
+                  setFavoritesOnly(false)
+                }}
+                className="text-primary"
+              >
+                Clear filters
+              </Button>
+            )
+          }
+        />
       ) : (
         <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {visible.map((project) => {
@@ -200,10 +207,10 @@ export function AppsCatalog() {
                       <Icon className="size-[18px]" aria-hidden="true" />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <h2 className="truncate text-sm font-semibold text-foreground">
+                      <h2 className="truncate text-base font-semibold text-foreground">
                         {project.name}
                       </h2>
-                      <p className="text-xs text-muted-foreground">{project.area}</p>
+                      <p className="text-sm text-muted-foreground">{project.area}</p>
                     </div>
                     <button
                       type="button"
@@ -214,7 +221,7 @@ export function AppsCatalog() {
                           ? `Remove ${project.name} from favorites`
                           : `Add ${project.name} to favorites`
                       }
-                      className="-m-1 flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                      className="-m-1 flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:size-11"
                     >
                       <Star
                         size={16}
@@ -235,7 +242,7 @@ export function AppsCatalog() {
                     {project.stack.map((technology) => (
                       <li
                         key={technology}
-                        className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground"
+                        className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
                       >
                         {technology}
                       </li>

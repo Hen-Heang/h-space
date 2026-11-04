@@ -81,13 +81,7 @@ function StepBadge({ n, done }: { n: number; done?: boolean }) {
 
 function Card({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <motion.section
-      variants={itemVariants}
-      className={cn(
-        "rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6 dark:bg-slate-900/40",
-        className,
-      )}
-    >
+    <motion.section variants={itemVariants} className={cn("app-surface p-5 sm:p-6", className)}>
       {children}
     </motion.section>
   )
@@ -479,7 +473,7 @@ export default function SecuritySettingsPage() {
         <BackLink href="/settings" label="Settings" desktopOnly />
         <div className="mt-2 flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-foreground">Two-step verification</h1>
+            <h2 className="text-lg font-semibold text-foreground">Two-step verification</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Link an authenticator app, such as Google Authenticator, to protect your account.
             </p>

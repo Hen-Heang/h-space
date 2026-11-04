@@ -92,7 +92,7 @@ function StatTile({
     </>
   )
   const className = cn(
-    "flex min-h-20 flex-col justify-center rounded-xl border bg-card px-4 py-3 text-left shadow-sm dark:bg-slate-900/40",
+    "flex min-h-20 flex-col justify-center rounded-xl border bg-card px-4 py-3 text-left",
     active ? "border-primary/50 ring-1 ring-primary/30" : "border-border",
   )
   return onClick ? (
@@ -123,7 +123,7 @@ function AccountCollection({
 }) {
   if (layout === "list") {
     return (
-      <ul className="divide-y divide-border/70 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <ul className="app-surface divide-y divide-border overflow-hidden">
         {accounts.map((account) => (
           <li key={account.id} className="min-w-0">
             <VaultAccountRow account={account} {...actions} />
@@ -501,31 +501,16 @@ export function VaultDashboard() {
       variants={containerVariants}
       className="space-y-5 pb-12 sm:space-y-6"
     >
-      <motion.header
-        variants={itemVariants}
-        className="relative overflow-hidden rounded-lg border border-border/70 bg-card/90 p-5 shadow-sm shadow-slate-950/5 sm:p-6 dark:bg-slate-900/70"
-      >
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-primary/25 to-transparent"
-          aria-hidden="true"
-        />
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex min-w-0 items-start gap-4">
-            <span
-              className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
-              aria-hidden="true"
-            >
-              <Vault className="size-6" />
-            </span>
-            <div className="min-w-0 space-y-1">
-              <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-                Account vault
-              </h1>
-              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                Quickly find the right login for each service, organized by category.
-              </p>
-            </div>
-          </div>
+      {/* No second hero: the shell header already titles the page
+          ("My Apps / H-Vault") and the workspace tabs sit above. One line of
+          description, then the vault's actions. Layout only — every action
+          below is unchanged. */}
+      <motion.header variants={itemVariants}>
+        <h2 className="sr-only">Account vault</h2>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            Quickly find the right login for each service, organized by category.
+          </p>
           <div className="flex w-full flex-col gap-2 min-[420px]:flex-row min-[420px]:flex-wrap sm:w-auto lg:justify-end">
             {!locked && !needsMfa && (
               <>

@@ -225,6 +225,36 @@ owner's approval.
 - Vault hero becomes tabs + one line; flat account rows. No logic changes.
 - Settings subpages lose their second h1s.
 
+_Status (2026-11-04, branch `ui/redesign-phase4`):_
+
+- **My Apps** — chips, project links, the favourite star, search and "Clear
+  filters" are 44px on touch; stack tags use the 13px floor; card titles are
+  16px; the empty state is `EmptyState`.
+- **Settings** — every group is one flat surface with a real `h2` and a
+  neutral icon (no shadow, no per-group colour). The pages Settings links to
+  are one "Preferences & security" `RowList` of real `Link` rows, not a
+  card per `<button onClick={router.push}>`. The two rows that opened the
+  same page (Learning goal, Romanization) are one row whose description names
+  both. Notification rows have neutral icons; "Custom reminders" is a link;
+  the reminder-time picker is no longer a tinted box inside the card.
+- **Settings subpages** — security, reminders and integrations demote their
+  title to `h2` (the shell keeps the only `h1`). Security's card loses its
+  shadow; its QR frame, setup key and backup codes are unchanged (MFA flow
+  untouched). Reminders are divider rows on one surface per group, with
+  sentence-case `h3` group headings.
+- **H-Vault (layout only)** — the boxed hero with a second `h1` is one line
+  plus the same actions; stat tiles and the compact list lose their shadows;
+  account cards drop the muted login box and the dashed password box; 11px
+  pills are 13px. The 320px overflow is fixed: Radix `Select.Value` drops
+  `className`, so the sort value is truncated from the trigger
+  (`[&>[data-slot=select-value]]:truncate`). `lib/vault-*`, `hooks/useVault`,
+  `lib/api/vault`, `lib/csp.ts` and every handler are unchanged.
+
+Sweep (worktree dev server, synthetic session, vault in demo mode with
+fictional accounts): `/apps`, `/vault`, `/settings` and its three subpages
+pass at 320/390/768/1024/1440 (`/vault` also at 375). Remaining sub-13px
+text: the `⌘K` hint only.
+
 **Phase 5 — Learning, AI, Notes, Growth**
 
 - Chat composer: 16px input and 44px controls; one header row; violet only.
