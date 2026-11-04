@@ -111,11 +111,26 @@ moved; H-Space already owns those.
      `/finance/savings`, goals create/edit/delete and contributions
      (`/api/finance/savings`, `/[id]`, `/[id]/contributions`). Luyra's
      service already checked goal ownership; route tests cover it.
-   - To do: subscriptions, review, settings (categories, payment methods,
-     preferences, reports), export, Money Coach.
-5. **Background flows** — the other crons (alerts, reports, spikes), Telegram webhook, Web Push (subscriptions are
-   origin-bound: re-subscribe on H-Space), Resend email links. Switch each off
-   in Luyra in the same change that switches it on here.
+   - Subscriptions + merchant names — ✅ PR #77.
+   - Review + next-month budget plan — ✅ PR #78 (plan apply is rebuilt
+     server-side; foreign categories/amounts → 409).
+   - Settings, reports (print/email/Telegram send) and CSV/JSON export —
+     ✅ PR #79 (`/reports-print` outside the shell; export via Bearer
+     download). Left out: Luyra's theme toggle (H-Space has one).
+   - To do: AI Money Coach (provider decision: Claude vs H-Space's OpenAI).
+5. **Background flows**
+   - Alert/report jobs — ✅ code (branch `feat/finance-alert-jobs`):
+     `/api/finance/cron/{daily-reminder,budget-alerts,daily-log-reminder,
+     spending-spike,weekly-summary,monthly-report}` on Luyra's schedules in
+     `apps/web/vercel.json`, all behind `CRON_SECRET`. They deliver by
+     Telegram (`TELEGRAM_BOT_TOKEN`) and/or email (`RESEND_API_KEY`,
+     optional `RESEND_FROM_EMAIL`); with neither set they do nothing. Sent
+     reports are marked per month/channel in the database, so a report is
+     never sent twice. **Turn Luyra's Vercel Cron Jobs off when this
+     deploys**, or each alert arrives twice (one from the archive).
+   - To do: Telegram linking + webhook (re-point the bot's webhook to
+     H-Space), Web Push (subscriptions belong to Luyra's site: re-subscribe
+     on H-Space) and the push budget-alert job.
 6. **Cutover** — `luyra.henheang.site` redirects to H-Space `/finance`; My Apps
    card becomes an internal link. The old `luyra` Neon project stays as the
    read-only archive (no Luyra `DATABASE_URL` change).
