@@ -18,7 +18,7 @@ export function WeeklyReviewView({ summary }: { summary: WeeklyReviewSummary }) 
   return (
     <div className="space-y-4">
       <motion.div variants={itemVariants}>
-        <h1 className="text-xl font-semibold text-foreground">{summary.rangeLabel}</h1>
+        <h2 className="text-xl font-semibold text-foreground">{summary.rangeLabel}</h2>
         <p className="mt-1 text-sm text-muted-foreground">This week, at a glance.</p>
       </motion.div>
 

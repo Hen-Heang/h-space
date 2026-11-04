@@ -126,6 +126,12 @@ popovers, menus, the floating AI button).
 
 ## 7. Interaction and states
 
+- **Tabs, two kinds:** tabs that _navigate between routes_ are underline tabs
+  (`WorkspaceTabs`, `GoalDetailNav`, `ReviewTabs`) — real links, the current
+  one marked with `aria-current="page"` and a primary underline. A switch
+  between _modes of one page_ is a segmented control (the `Tabs` primitive,
+  `StudyModeTabs`). At most **one** local row of either under the workspace
+  tabs; never a tab row nested inside a tab panel.
 - **Primary action:** one `Button` (default variant) per view, beside the tabs.
   Secondary actions are `outline`/`ghost`. Destructive is the tinted
   `destructive` variant, always behind a confirm.

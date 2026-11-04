@@ -77,17 +77,17 @@ export function DailyStudyPlanPage() {
 
   if (study.loading) {
     return (
-      <main className="space-y-4 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-12">
+      <div className="space-y-4 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-12">
         <Skeleton className="h-64 rounded-2xl" />
         <Skeleton className="h-32 rounded-2xl" />
         <Skeleton className="h-80 rounded-2xl" />
-      </main>
+      </div>
     )
   }
 
   if (!study.plan || !planWithLiveActivities) {
     return (
-      <main className="pb-24">
+      <div className="pb-24">
         <ErrorBanner>
           {study.error || "No daily plan is available yet."}
           <Button
@@ -100,7 +100,7 @@ export function DailyStudyPlanPage() {
             Retry
           </Button>
         </ErrorBanner>
-      </main>
+      </div>
     )
   }
 
@@ -128,7 +128,7 @@ export function DailyStudyPlanPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-7xl space-y-6 overflow-x-clip pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-12">
+    <div className="mx-auto w-full max-w-7xl space-y-6 overflow-x-clip pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-12">
       <section className="overflow-hidden rounded-2xl bg-slate-950 text-white shadow-sm">
         <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[1.35fr_0.65fr] lg:p-9">
           <div className="min-w-0">
@@ -139,9 +139,11 @@ export function DailyStudyPlanPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-blue-300">Study now</p>
-                <h1 className="mt-1 break-keep text-2xl font-bold leading-tight sm:text-3xl [overflow-wrap:anywhere]">
+                {/* Explicit text-white: the global h1–h6 colour (foreground) beats
+                    the panel's inherited white, so it rendered dark-on-dark. */}
+                <h2 className="mt-1 break-keep text-2xl font-bold leading-tight text-white sm:text-3xl [overflow-wrap:anywhere]">
                   {next ? next.title : "Daily plan complete"}
-                </h1>
+                </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
                   {next
                     ? `${next.estimatedMinutes} minutes · starts at ${next.plannedStart}. ${next.description}`
@@ -416,7 +418,7 @@ export function DailyStudyPlanPage() {
           </p>
         </div>
       </section>
-    </main>
+    </div>
   )
 }
 

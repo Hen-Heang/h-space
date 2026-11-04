@@ -67,9 +67,9 @@ export function DebriefForm({
     >
       <div>
         <p className="app-kicker">Continue recovery</p>
-        <h1 className="mt-2 text-xl font-bold text-foreground">
+        <h2 className="mt-2 text-xl font-bold text-foreground">
           One moment does not erase your progress.
-        </h1>
+        </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Let&apos;s protect the rest of today. Your current streak may change, but your recovery
           progress does not disappear.

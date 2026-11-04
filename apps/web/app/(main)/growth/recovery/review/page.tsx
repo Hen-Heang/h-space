@@ -46,7 +46,7 @@ export default function RecoveryReviewPage() {
       <BackLink href="/growth/recovery" label="Recovery" />
       <div>
         <p className="app-kicker">Weekly review</p>
-        <h1 className="mt-1 text-2xl font-semibold">Learn from the week, then adjust one thing</h1>
+        <h2 className="mt-1 text-2xl font-semibold">Learn from the week, then adjust one thing</h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
           This review uses deterministic statistics first. Honest records add context; they never
           erase progress.

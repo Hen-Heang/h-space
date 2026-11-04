@@ -49,7 +49,7 @@ export function TableOfContents({ html, mobile = false }: { html: string; mobile
 
   return (
     <nav className={mobile ? "w-full p-4" : "p-4"}>
-      <div className="mb-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+      <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
         <List size={14} />
         Table of Contents
       </div>

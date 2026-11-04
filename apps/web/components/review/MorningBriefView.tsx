@@ -18,7 +18,7 @@ export function MorningBriefView({ brief }: { brief: MorningBrief }) {
   return (
     <div className="space-y-4">
       <motion.div variants={itemVariants}>
-        <h1 className="text-xl font-semibold text-foreground">{brief.dateLabel}</h1>
+        <h2 className="text-xl font-semibold text-foreground">{brief.dateLabel}</h2>
         <div className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
           <Flame size={14} className="text-orange-500" />
           {brief.streakDays} day streak
