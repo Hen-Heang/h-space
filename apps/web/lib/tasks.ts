@@ -44,16 +44,7 @@ export interface Task {
   //    canonical rule lives in lib/task-status.ts.
   status?: TaskStatus
   blocked_reason?: string | null
-  // ── External calendar events (Settings > Integrations > Google Calendar —
-  //    see lib/external-calendar.ts). Set only on synthetic Task-shaped items
-  //    adapted from a Google event for display in the existing calendar
-  //    views; absent/undefined for every real Hengo task. Views use this to
-  //    disable completion/edit/delete affordances and show a read-only style.
-  externalSource?: "google"
 }
-
-export const isExternalTask = (task: Pick<Task, "externalSource">): boolean =>
-  task.externalSource != null
 
 export type TaskSchedulingSource = "manual" | "ai" | "recurring_rule" | "rescheduled"
 

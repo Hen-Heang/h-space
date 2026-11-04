@@ -209,17 +209,17 @@ const HengoWelcome: FC = () => {
         </div>
 
         <div className="mb-3 flex items-center justify-center gap-2">
-          <span className="rounded-full border border-blue-500/15 bg-blue-500/[0.07] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-blue-700 dark:text-blue-300">
+          <span className="rounded-full border border-blue-500/15 bg-blue-500/[0.07] px-2.5 py-1 text-xs font-bold uppercase tracking-[0.14em] text-blue-700 dark:text-blue-300">
             AI Korean Coach
           </span>
           {isTechnicalMode && (
-            <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+            <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
               Developer mode
             </span>
           )}
         </div>
 
-        <h2 className="text-balance text-[1.75rem] font-bold tracking-[-0.035em] text-foreground sm:text-3xl">
+        <h2 className="text-balance text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
           {isTechnicalMode ? "Practice Korean for your workday" : "Speak Korean with confidence"}
         </h2>
         <p className="mx-auto mt-2 max-w-md text-pretty text-[14px] font-medium leading-relaxed text-muted-foreground sm:text-[15px]">
@@ -241,7 +241,7 @@ const HengoWelcome: FC = () => {
           </Button>
         )}
 
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] font-medium text-muted-foreground/70">
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs font-medium text-muted-foreground/70">
           <span>Live subtitles</span>
           <span aria-hidden="true">·</span>
           <span>Gentle corrections</span>
@@ -253,13 +253,13 @@ const HengoWelcome: FC = () => {
       <div className="w-full max-w-3xl space-y-3 px-3 sm:px-4">
         <div className="flex items-end justify-between px-1">
           <div>
-            <p className="text-[13px] font-bold text-foreground">Choose a conversation</p>
-            <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">
+            <p className="text-sm font-semibold text-foreground">Choose a conversation</p>
+            <p className="mt-0.5 text-xs font-medium text-muted-foreground">
               Practice a situation you will actually use.
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {CHAT_PRESETS.map((preset, i) => (
             <motion.button
               key={preset.id}
@@ -269,15 +269,15 @@ const HengoWelcome: FC = () => {
               type="button"
               disabled={!canInteract}
               onClick={() => send(preset.prompt)}
-              className="group flex min-h-[7.25rem] flex-col items-start rounded-2xl border border-border/70 bg-card/70 p-3.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-500/35 hover:bg-card hover:shadow-md disabled:opacity-40 active:translate-y-0 active:scale-[0.98]"
+              className="group flex min-h-[7.25rem] flex-col items-start rounded-2xl border border-border/70 bg-card/70 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-500/35 hover:bg-card hover:shadow-md disabled:opacity-40 active:translate-y-0 active:scale-[0.98]"
             >
               <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-muted/70 text-base ring-1 ring-border/50 transition-colors group-hover:bg-blue-500/10">
                 {preset.emoji}
               </span>
-              <span className="text-[13px] font-bold leading-tight text-foreground/90 group-hover:text-blue-700 dark:group-hover:text-blue-300">
+              <span className="text-sm font-semibold leading-tight text-foreground/90 group-hover:text-blue-700 dark:group-hover:text-blue-300">
                 {preset.label}
               </span>
-              <span className="mt-1 line-clamp-2 text-[11px] font-medium leading-snug text-muted-foreground">
+              <span className="mt-1 line-clamp-2 text-xs font-medium leading-snug text-muted-foreground">
                 {preset.description}
               </span>
             </motion.button>
@@ -298,7 +298,7 @@ const HengoWelcome: FC = () => {
             className="group flex items-center gap-2 rounded-full border border-border/60 bg-background/60 px-3.5 py-1.5 text-left transition-all hover:border-blue-500/30 hover:bg-muted/60 disabled:opacity-40 active:scale-95"
           >
             <span className="text-[13px]">{s.emoji}</span>
-            <span className="text-[12px] font-semibold text-foreground/75 group-hover:text-foreground">
+            <span className="text-xs font-semibold text-foreground/75 group-hover:text-foreground">
               {s.label}
             </span>
           </motion.button>
@@ -848,7 +848,7 @@ export function ChatWindow({
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600 shadow-inner">
                   <Sparkles size={24} className="animate-pulse" />
                 </div>
-                <p className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   Syncing History
                 </p>
               </div>

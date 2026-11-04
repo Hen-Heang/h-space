@@ -99,6 +99,43 @@ async function smallTargets(page: Page, min: number) {
 }
 
 for (const theme of ["light", "dark"] as const) {
+  test(`mobile glass respects reduced transparency (${theme})`, async ({ page, context }) => {
+    await installMocks(page, theme)
+    await page.setViewportSize({ width: 430, height: 932 })
+    const session = await context.newCDPSession(page)
+    await session.send("Emulation.setEmulatedMedia", {
+      features: [{ name: "prefers-reduced-transparency", value: "reduce" }],
+    })
+    await page.goto("/interview/script")
+    await expect(page.getByLabel("Jump to section")).toBeVisible({ timeout: 60_000 })
+    await expect(page.locator("html")).toHaveClass(new RegExp(theme))
+    expect(
+      await page.evaluate(() => matchMedia("(prefers-reduced-transparency: reduce)").matches),
+    ).toBe(true)
+
+    const navigation = page.getByRole("navigation", { name: "Primary", exact: true })
+    await expect(navigation.getByRole("listitem")).toHaveCount(5)
+    await expect(navigation.locator("ul > :not(li)")).toHaveCount(0)
+
+    for (const surface of [navigation.locator("ul"), page.getByLabel("Jump to section")]) {
+      const styles = await surface.evaluate((element) => {
+        const style = getComputedStyle(element)
+        const reference = document.createElement("div")
+        reference.style.backgroundColor = "var(--background)"
+        element.parentElement!.appendChild(reference)
+        const opaqueBackground = getComputedStyle(reference).backgroundColor
+        reference.remove()
+        return {
+          background: style.backgroundColor,
+          opaqueBackground,
+          backdropFilter: style.backdropFilter,
+        }
+      })
+      expect(styles.background).toBe(styles.opaqueBackground)
+      expect(styles.backdropFilter).toBe("none")
+    }
+  })
+
   test(`every Exam Prep route fits each width without overflow (${theme})`, async ({ page }) => {
     test.setTimeout(240_000)
     await installMocks(page, theme)

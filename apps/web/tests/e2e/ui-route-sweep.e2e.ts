@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
 
+test.use({ screenshot: "off", trace: "off" })
+
 // UI route sweep — opt-in (`UI_SWEEP=1`). Loads every signed-in route family
 // with a synthetic session and synthetic Supabase rows, then:
 //   1. fails on horizontal overflow: the page scrolls sideways, or an element
@@ -116,24 +118,26 @@ const fixtures: Record<string, unknown[]> = {
   goal_stars: [],
 }
 
-async function installMocks(page: Page) {
+async function installMocks(page: Page, signedIn = true) {
   await page.addInitScript(
-    ({ userId, token, dark }) => {
-      window.localStorage.setItem(
-        "hspace-auth",
-        JSON.stringify({
-          accessToken: token,
-          refreshToken: "refresh",
-          expiresAt: 2_000_000_000_000,
-          user: { id: userId, email: "browser-test@example.com", name: "Test", imageUrl: null },
-          supabaseToken: token,
-          supabaseTokenExpiresAt: 2_000_000_000_000,
-        }),
-      )
-      window.localStorage.setItem(`hengo:onboarding:${userId}`, "done")
+    ({ userId, token, dark, signedIn }) => {
+      if (signedIn) {
+        window.localStorage.setItem(
+          "hspace-auth",
+          JSON.stringify({
+            accessToken: token,
+            refreshToken: "refresh",
+            expiresAt: 2_000_000_000_000,
+            user: { id: userId, email: "browser-test@example.com", name: "Test", imageUrl: null },
+            supabaseToken: token,
+            supabaseTokenExpiresAt: 2_000_000_000_000,
+          }),
+        )
+        window.localStorage.setItem(`hengo:onboarding:${userId}`, "done")
+      }
       window.localStorage.setItem("theme", dark ? "dark" : "light")
     },
-    { userId: USER_ID, token: JWT, dark },
+    { userId: USER_ID, token: JWT, dark, signedIn },
   )
 
   // Registered first, so it's the fallback: abort anything off this machine.
@@ -171,6 +175,42 @@ async function installMocks(page: Page) {
 // Real signed-in feature routes (redirect stubs like /focus/*, /mistakes and
 // /daily-phrase are left out on purpose; chromeless OAuth screens too).
 const ROUTES = [
+  "/",
+  "/login",
+  "/register",
+  "/privacy",
+  "/terms",
+  "/forgot-password",
+  "/reset-password",
+  "/unlock-account",
+  "/verify-email",
+  "/reading/new",
+  "/phrasebook/new",
+  "/phrasebook/practice",
+  "/practice/today",
+  "/study-packs/social-awareness",
+  "/roadmap",
+  "/korean-coach/scenarios",
+  "/korean-coach/mistakes",
+  "/korean-coach/preferences",
+  "/korean-coach/listening",
+  "/korean-coach/history",
+  "/growth/recovery/urge",
+  "/growth/recovery/triggers",
+  "/growth/recovery/settings",
+  "/growth/recovery/review",
+  "/growth/recovery/plans",
+  "/growth/recovery/plan",
+  "/growth/recovery/pause",
+  "/growth/recovery/log",
+  "/growth/recovery/check-in",
+  "/growth/recovery/checkins",
+  "/growth/recovery/debrief",
+  "/growth/recovery/insights",
+  "/interview/listening",
+  "/interview/speaking",
+  "/interview/repeat",
+  "/interview/script",
   "/home",
   "/apps",
   "/vault",
@@ -217,7 +257,6 @@ const ROUTES = [
   "/settings",
   "/settings/security",
   "/settings/reminders",
-  "/settings/integrations",
   "/account",
 ]
 
@@ -228,6 +267,7 @@ function slug(route: string) {
 }
 
 test.describe("UI route sweep", () => {
+  test.describe.configure({ mode: "parallel" })
   test.skip(!enabled, "Set UI_SWEEP=1 to run the UI route sweep.")
   const routes = onlyRoutes ? ROUTES.filter((r) => onlyRoutes.includes(r.slice(1))) : ROUTES
   const widths = onlyWidths ?? WIDTHS
@@ -235,7 +275,7 @@ test.describe("UI route sweep", () => {
   for (const route of routes) {
     test(route, async ({ page }) => {
       test.setTimeout(240_000)
-      await installMocks(page)
+      await installMocks(page, route !== "/")
       const failures: string[] = []
       const smallText = new Set<string>()
 
@@ -243,20 +283,51 @@ test.describe("UI route sweep", () => {
       // every layout react to resize, and a reload per width made a full
       // sweep take an hour on `next dev`.
       for (const [index, width] of widths.entries()) {
-        await page.setViewportSize({ width, height: width < 768 ? 860 : 900 })
+        await page.setViewportSize({ width, height: width === 430 ? 932 : width < 768 ? 860 : 900 })
         if (index === 0) {
           await page.goto(route)
           // Redirect stubs (/ask-hengo → /chat) must settle first, or the
           // baseline measures a half-rendered "Rendering…" frame.
-          await page.waitForLoadState("networkidle", { timeout: 30_000 }).catch(() => {})
+          await page.waitForLoadState("domcontentloaded")
           // The shell's own <main>, by id: a page that renders a second
           // <main> (practice/today does — a known P1) must not stop the
           // measurement with a strict-mode locator error.
-          await expect(page.locator("main#main-content")).toBeVisible({ timeout: 90_000 })
+          await expect(
+            page.locator(
+              [
+                "/",
+                "/login",
+                "/register",
+                "/privacy",
+                "/terms",
+                "/forgot-password",
+                "/reset-password",
+                "/unlock-account",
+                "/verify-email",
+              ].includes(route)
+                ? "body"
+                : "main#main-content",
+            ),
+          ).toBeVisible({ timeout: 90_000 })
           await page.waitForTimeout(1200)
         } else {
           await page.waitForTimeout(500)
         }
+        await page
+          .locator('[data-slot="skeleton"]:visible')
+          .first()
+          .waitFor({ state: "hidden", timeout: 5000 })
+          .catch(() => {})
+
+        // Reveal sections animated on entry before measuring their final layout.
+        await page.evaluate(async () => {
+          for (let y = 0; y < document.documentElement.scrollHeight; y += innerHeight) {
+            scrollTo(0, y)
+            await new Promise((resolve) => setTimeout(resolve, 80))
+          }
+          scrollTo(0, 0)
+        })
+        await page.waitForTimeout(600)
 
         const report = await page.evaluate(() => {
           const vw = window.innerWidth
@@ -287,26 +358,58 @@ test.describe("UI route sweep", () => {
           }
           const overflow: string[] = []
           const tiny: string[] = []
+          const typography: string[] = []
+          const smallInputs: string[] = []
           const root = document.documentElement
           const pageScroll = root.scrollWidth - root.clientWidth
           if (pageScroll > 1) overflow.push(`page scrolls sideways by ${pageScroll}px`)
           for (const el of Array.from(document.querySelectorAll("body *"))) {
+            if (el.closest('[aria-hidden="true"]')) continue
             const r = el.getBoundingClientRect()
             if (r.width === 0 || r.height === 0) continue
             const s = getComputedStyle(el)
             if (s.visibility === "hidden" || s.position === "fixed") continue
-            if ((r.right > vw + 1 || r.left < -1) && !heldSideways(el, r)) {
+            const decorative =
+              !el.textContent?.trim() &&
+              el.children.length === 0 &&
+              s.position === "absolute" &&
+              !el.matches("input, textarea, button, a, img, video, canvas")
+            if (!decorative && (r.right > vw + 1 || r.left < -1) && !heldSideways(el, r)) {
               overflow.push(`${Math.round(r.left)}→${Math.round(r.right)} ${describe(el)}`)
             }
             const ownText = Array.from(el.childNodes).some(
               (c) => c.nodeType === 3 && (c.textContent ?? "").trim().length > 1,
             )
             // 13px is the `text-xs` floor; anything smaller is a hard-coded size.
+            if (ownText && /^(H[1-6]|BUTTON)$/.test(el.tagName)) {
+              typography.push(`${s.fontSize}/${s.fontWeight}/${s.lineHeight} ${describe(el)}`)
+            }
+            if (
+              el.matches("input:not([type=checkbox]):not([type=radio]), textarea, select") &&
+              parseFloat(s.fontSize) < 16
+            ) {
+              smallInputs.push(`${s.fontSize} ${describe(el)}`)
+            }
             if (ownText && parseFloat(s.fontSize) < 13) {
               tiny.push(`${s.fontSize} ${describe(el)}`)
             }
           }
-          return { overflow: overflow.slice(0, 7), tiny: tiny.slice(0, 8) }
+          return {
+            overflow: overflow.slice(0, 7),
+            tiny,
+            typography,
+            smallInputs,
+            loadingPlaceholders: Array.from(
+              document.querySelectorAll('[data-slot="skeleton"]'),
+            ).filter((el) => el.getBoundingClientRect().height > 0).length,
+            viewport: { width: innerWidth, height: innerHeight },
+            url: location.pathname,
+          }
+        })
+
+        await test.info().attach(`layout-${width}`, {
+          body: JSON.stringify(report, null, 2),
+          contentType: "application/json",
         })
 
         if (report.overflow.length) {
@@ -317,6 +420,8 @@ test.describe("UI route sweep", () => {
         await page.screenshot({
           path: `test-results/ui-sweep/${label}${dark ? "-dark" : ""}/${slug(route)}-${width}.png`,
           fullPage: true,
+          scale: "css",
+          animations: "disabled",
         })
       }
 

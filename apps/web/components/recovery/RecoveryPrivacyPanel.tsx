@@ -197,7 +197,7 @@ export function RecoveryPrivacyPanel({
           />
         </div>
         <div className="mt-4 rounded-2xl bg-muted/50 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Preview
           </p>
           <p className="mt-1 text-sm font-medium">Hengo</p>

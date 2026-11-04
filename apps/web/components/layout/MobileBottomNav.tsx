@@ -38,7 +38,7 @@ function TabLabel({ active, children }: { active: boolean; children: React.React
  *
  * The bar is a floating glass capsule (translucent fill, heavy blur, a
  * hairline highlight rim) with a "lens" that slides behind the current tab.
- * With `prefers-reduced-transparency` the globals.css `backdrop-blur-xl`
+ * With `prefers-reduced-transparency` the globals.css `mobile-glass`
  * rule swaps the glass for the opaque background; with reduced motion the
  * lens jumps instead of sliding. Its height is mirrored in AppShell's
  * `--shell-bottom-nav-h`.
@@ -67,7 +67,7 @@ export function MobileBottomNav({
     >
       <ul
         className={cn(
-          "pointer-events-auto relative mx-auto flex max-w-lg items-stretch rounded-full p-1",
+          "mobile-glass pointer-events-auto relative mx-auto flex max-w-lg items-stretch rounded-full p-1",
           // Glass: a thin tinted fill, heavy blur + saturation for the
           // refracted look, a light rim and a soft floating shadow.
           "border border-white/60 bg-background/60 backdrop-blur-xl backdrop-saturate-150",
@@ -76,7 +76,7 @@ export function MobileBottomNav({
         )}
       >
         {activeIndex >= 0 && (
-          <span
+          <li
             aria-hidden
             className={cn(
               "pointer-events-none absolute inset-y-1 left-1 rounded-full",

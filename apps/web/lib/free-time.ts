@@ -1,9 +1,8 @@
 // Deterministic free-time arithmetic (Phase 8) — no AI involved. Pure minute
 // arithmetic operating on plain numbers; the only place local-time semantics
-// enter is where a Task/Google-ISO instant is converted to "minutes since
-// midnight", which callers do in the browser (matching how the rest of the
-// calendar — WeekTimeGrid, lib/external-calendar.ts — already treats local
-// wall-clock time as the source of truth). Never call this from a server
+// enter is where a task's time is converted to "minutes since midnight",
+// which callers do in the browser (matching how the rest of the calendar —
+// WeekTimeGrid — already treats local wall-clock time as the source of truth). Never call this from a server
 // route: the server's own timezone could disagree with the viewer's.
 import { getTaskTimeBounds } from "@/lib/calendar"
 import type { Task } from "@/lib/tasks"
@@ -90,50 +89,14 @@ export function taskBusyRanges(tasks: Task[]): TimeRange[] {
     .map((b) => ({ start: b.startMin, end: b.endMin }))
 }
 
-/** Clips an ISO [start, end) instant range to minutes-of-day for `date`, in the caller's local time. Null if there's no overlap with that day. */
-export function isoRangeToDayMinutes(
-  startIso: string,
-  endIso: string,
-  date: Date,
-): TimeRange | null {
-  const dayStart = new Date(date)
-  dayStart.setHours(0, 0, 0, 0)
-  const dayEnd = new Date(dayStart)
-  dayEnd.setDate(dayEnd.getDate() + 1)
-
-  const start = Math.max(new Date(startIso).getTime(), dayStart.getTime())
-  const end = Math.min(new Date(endIso).getTime(), dayEnd.getTime())
-  if (end <= start) return null
-
-  return {
-    start: Math.round((start - dayStart.getTime()) / 60_000),
-    end: Math.round((end - dayStart.getTime()) / 60_000),
-  }
-}
-
-export function googleBusyRangesForDay(
-  busy: { start: string; end: string }[],
-  date: Date,
-): TimeRange[] {
-  return busy
-    .map((b) => isoRangeToDayMinutes(b.start, b.end, date))
-    .filter((r): r is TimeRange => r !== null)
-}
-
-/** Combines Hengo tasks + Google FreeBusy blocks for one day into free windows. */
+/** Free windows between one day's Hengo tasks. */
 export function getAvailableFocusWindows(params: {
-  date: Date
   tasks: Task[]
-  googleBusy?: { start: string; end: string }[]
   dayBounds?: TimeRange
   minWindowMinutes?: number
   maxTotalMinutes?: number
 }): TimeRange[] {
-  const busy = [
-    ...taskBusyRanges(params.tasks),
-    ...googleBusyRangesForDay(params.googleBusy ?? [], params.date),
-  ]
-  return computeFreeWindows(busy, params.dayBounds ?? DEFAULT_DAY_BOUNDS, {
+  return computeFreeWindows(taskBusyRanges(params.tasks), params.dayBounds ?? DEFAULT_DAY_BOUNDS, {
     minWindowMinutes: params.minWindowMinutes,
     maxTotalMinutes: params.maxTotalMinutes,
   })

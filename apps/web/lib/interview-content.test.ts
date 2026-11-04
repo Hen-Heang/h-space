@@ -9,10 +9,10 @@ import {
   type QuestionBankItem,
 } from "./interview-practice"
 
-// Two sections of the 제6회 final script (Notion FINAL INTERVIEW SCRIPT), pinned
+// Two sections of the 제6회 full script (Notion "00 — 최종 스크립트"), pinned
 // so the Korean seed and its English translation stay in step.
 const TRANSPORT_KO =
-  "캄보디아에서는 밖에 갈 때 보통 오토바이나 차를 이용했습니다. 하지만 한국에서는 걸어서 출근하고, 멀리 갈 때는 버스나 지하철을 이용합니다.\n\n저는 지하철 5호선을 자주 이용합니다. 처음에는 지하철 노선과 환승이 어려웠지만, 지금은 혼자서도 서울의 여러 곳에 갈 수 있습니다."
+  "캄보디아에서는 출근하거나 밖에 갈 때 보통 오토바이나 차를 이용했습니다. 하지만 한국에서는 매일 걸어서 출근하고, 멀리 갈 때는 버스나 지하철을 이용합니다.\n\n저는 지하철 5호선을 자주 이용합니다. 처음에는 지하철 노선과 환승이 조금 어려웠지만, 지금은 용산이나 경복궁 같은 서울의 여러 곳에도 혼자 갈 수 있습니다.\n\n그래서 한국에 온 후 혼자 이동하는 것에 많이 익숙해졌습니다."
 const EXERCISE_EN_MARKERS = ["Yeouido Park", "Han River", "refreshed"]
 
 // A sentence ending in informal-polite -요 ("…해요.", "…이에요?"). The final
@@ -112,6 +112,20 @@ describe("current exam script content (habits & hobbies)", () => {
         informal: false,
       })
     }
+  })
+
+  it("keeps the self-introduction and the details the short script had dropped", () => {
+    const seed = weather.scriptSeed ?? {}
+    expect(seed["self-intro"]).toContain("캄보디아에서 온 히엉입니다")
+    expect(seed["self-intro"]).toContain("잘 부탁드립니다")
+    expect(seed.opening).not.toContain("안녕하십니까")
+    expect(seed["weather-check"]).toContain("우비")
+    expect(seed["recycling-cooking"]).toContain("헷갈렸지만")
+    expect(seed["recycling-cooking"]).toContain("배달")
+    expect(seed.exercise).toContain("배구와 축구")
+    expect(seed["friends-travel"]).toContain("놈반쪽이라는 캄보디아 국수")
+    expect(seed["korean-study"]).toContain("계속 공부하고 싶습니다")
+    expect(seed.closing).toContain("대중교통을 이용하는 습관")
   })
 
   it("keeps the home station out of the public script", () => {

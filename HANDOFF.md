@@ -3,24 +3,24 @@
 ## Snapshot
 
 - **Updated:** 2026-11-04
-- **Shipped:** UI/UX redesign Phases 1–3 (PRs #64, #65) are on `main`.
-- **In review:** **Phase 3b** (Planner leftovers), branch `ui/redesign-phase3b`, worked in the git worktree `E:\Fullstack\h-space-phase3b`. Status and details are in `apps/web/docs/ui-redesign-audit.md` → "Phase 3b status".
-  - `/goals/overview`: every card uses `DashboardCard`, has inline error states (`useGoals` exposes `isError`), and the duplicate deadline banner is gone. The roadmap entry moved to the Learning hub's Library (`RoadmapLibraryItem`, `lib/roadmap-progress.ts`); `RoadmapTeaser` is deleted.
-  - Goal detail: underline tabs like `WorkspaceTabs`. The task table has 6 columns below 1280px, and phase, key result and impact appear from `xl`. Phone and Plan rows are divider rows with one metadata line. There are no bordered rows inside cards in Plan, Progress or Schedule, and their text uses the 13px floor. `KeyResultsCard` is flattened.
-  - Month view: the "add" button is visible on touch. `/goals/create`: template and custom cards are real links with nothing interactive inside.
-  - Inbox: divider rows on one surface, one metadata line, Convert + reminder + `⋯` (pin, archive, delete). The error state has "Try again" (`useInbox` exposes `refetch`).
-  - `--destructive-foreground` is defined, so delete-confirm buttons get readable text in both themes.
-- **Verification (Phase 3b):**
-  - Type-check passes and lint is clean on the changed files.
-  - Unit tests: 1647/1648. The failure is `lib/goals.test.ts` "Due today": the test builds "today" from the UTC date, so it fails between 00:00 and 09:00 KST. This is pre-existing and doesn't affect CI (UTC).
-  - Sweep: 9 changed routes × 320/390/768/1024/1440 with no overflow. It ran against a worktree dev server with dummy local env.
-  - **Not verified:** real-account data, the Inbox delete-confirm opened from the new menu, and touch tablets on a real device.
-- **Open PRs:** #59 (Exam Prep voice polish) and the Phase 3b PR.
+- **Task:** Fix PR #72, Glass tab bar on mobile and a calmer Exam Prep script page.
+- **Branch / PR head inspected:** `fix/iphone15-typography-audit`, `4c65ba8`. No inline GitHub review findings; Codex review reported no findings. CodeRabbit skipped automatic review.
+- **Local fixes (uncommitted):**
+  - `MobileBottomNav.tsx` and `/interview/script/page.tsx` use a scoped `mobile-glass` fallback in `globals.css`. Reduced transparency makes the mobile bar and section-jump menu opaque in both themes, preserving intentionally forced-dark surfaces elsewhere.
+  - Decorative lens is an aria-hidden list item, making the navigation list valid markup.
+  - `interview-audit.e2e.ts` checks computed background and blur in both themes at 430x932, plus five accessible navigation list items.
+- **Checks:**
+  - `pnpm lint`: passes, five existing unrelated warnings. Targeted eslint and Prettier pass.
+  - `pnpm test`: 141 files / 1643 tests pass.
+  - `pnpm build`: passes, including TypeScript and static generation.
+  - Playwright: 18 passed / 2 failed across interview-audit, shell-sticky and interview-script-repeat. Both new reduced-transparency tests pass. Dark mode reproduced a 55%-opaque background before the fix.
+  - Remaining failures: Listen & Repeat expects the old opening first, while concurrent `lib/interview.ts` edits insert a self-introduction; calendar expects overflow hidden/hidden, while this Chrome computes clip/hidden. These expectations were left unchanged.
+- **Preservation:** Extensive staged deletions and unstaged edits predated this task (Google Calendar removal, typography, calendar and interview content). Preserve all of them. No staging, commit, push, merge, deployment or database changes performed.
+- **Browser environment:** Used installed Chrome with `PLAYWRIGHT_EXECUTABLE_PATH`, existing server via `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000`, and `--output test-results/pr72`. Bundled Chromium is absent. The automatic server command passes an extra `--` to Next; the existing server was reused. No physical iPhone or real-account verification.
+- **Graph:** h-space generation 2026-10-21T08:40:53Z has changed metadata; e2e tests are excluded. Current source reads and executed tests provided verification.
 
-## Current focus
+## Next steps
 
-1. The owner reviews and merges the Phase 3b PR.
-2. Then **Phase 4**: My Apps, Vault (layout only, no crypto/session/CSP changes) and Settings.
-3. Small follow-up: make `lib/goals.test.ts` build "today" in local time.
-
-The sweep command is in `apps/web/docs/design-system.md` §8. A worktree has no `.env.local`, so run its dev server with dummy local values for `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `NEXT_PUBLIC_AUTH_API_URL`; the sweep mocks everything. Use `UI_SWEEP_ROUTES=goals/overview,inbox` without a leading slash.
+1. Review the four implementation/test files and handoff changes. Commit/push only when explicitly requested. Rollback: remove these scoped local changes while preserving earlier work.
+2. Resolve the two broader browser expectations alongside the concurrent content/calendar work before claiming a fully green browser suite.
+3. Earlier Planner Phase 3b context and its worktree are preserved in the newest HANDOFF_HISTORY.md entry; consult it before resuming the redesign roadmap.

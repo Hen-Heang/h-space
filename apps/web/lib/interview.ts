@@ -102,15 +102,22 @@ export interface InterviewTopic {
 }
 
 // Section-by-section scaffold for the script the candidate writes and submits.
-// Mirrors the examiner's question arc so practice and the written script align.
-// Section ids are new for the 제6회 topic so an old saved script (keyed by the
-// previous sections' ids) never overrides the new seed text.
+// Mirrors the interview's real order — self-introduction, then the topic, then
+// Q&A — so practice and the written script align. Section ids are new for the
+// 제6회 topic so an old saved script (keyed by the previous sections' ids)
+// never overrides the new seed text.
 const HABITS_SCRIPT_OUTLINE: ScriptSection[] = [
   {
+    id: "self-intro",
+    titleKo: "자기소개",
+    titleEn: "Self-introduction",
+    hint: "30초 정도로 이름, 나라, 한국에 온 지 얼마나 되었는지, 하는 일, 한국어 공부, 취미를 짧게 말하세요. 예: 오늘 면접에서 최선을 다하겠습니다.",
+  },
+  {
     id: "opening",
-    titleKo: "인사 및 주제 소개",
-    titleEn: "Greeting & topic intro",
-    hint: "간단히 인사하고 오늘 이야기할 주제를 소개하세요. 예: 오늘은 한국에 온 후 새로 생긴 습관과 취미에 대해 말씀드리겠습니다.",
+    titleKo: "주제 소개",
+    titleEn: "Topic intro",
+    hint: "자기소개에서 이미 인사했으니 바로 주제를 소개하세요. 예: 오늘은 한국에 온 후 새로 생긴 습관과 취미에 대해 말씀드리겠습니다.",
   },
   {
     id: "transport",
@@ -122,13 +129,13 @@ const HABITS_SCRIPT_OUTLINE: ScriptSection[] = [
     id: "weather-check",
     titleKo: "날씨 확인 습관",
     titleEn: "Checking the weather",
-    hint: "밖에 나가기 전에 날씨를 확인하는 습관과 그 이유(비, 눈, 추위 → 우산, 옷 준비)를 이야기하세요.",
+    hint: "캄보디아(오토바이에 우비)와 한국(계절·하루 중 날씨 변화)을 비교하고, 그래서 우산이나 옷을 미리 준비한다고 이야기하세요.",
   },
   {
     id: "recycling-cooking",
     titleKo: "분리배출과 요리",
     titleEn: "Separating trash & cooking",
-    hint: "쓰레기 분리배출(음식물 쓰레기, 재활용)과 음식 습관(배달 → 직접 요리)이 어떻게 달라졌는지 이야기하세요.",
+    hint: "쓰레기 분리배출(음식물 쓰레기, 재활용, 환경)과 음식 습관(한국 음식 적응 → 직접 요리 → 김치찌개)이 어떻게 달라졌는지 이야기하세요.",
   },
   {
     id: "exercise",
@@ -140,62 +147,69 @@ const HABITS_SCRIPT_OUTLINE: ScriptSection[] = [
     id: "friends-travel",
     titleKo: "친구와 새로운 곳 가기",
     titleEn: "Friends & new places",
-    hint: "한국에서 만난 친구들과 가 본 곳(수원, 대전, 부산)을 이야기하세요. 'V-아/어 봤어요' 표현을 써 보세요.",
+    hint: "한국에서 만난 캄보디아 친구들과 올해 설날에 간 수원(화성행궁, 놈반쪽)을 이야기하고, 그 경험으로 무엇을 알게 되었는지 덧붙이세요.",
   },
   {
     id: "korean-study",
     titleKo: "한국어 공부 습관",
     titleEn: "Studying Korean",
-    hint: "왜 한국어를 매일 공부하는지, 처음에 어려웠던 점과 지금 달라진 점을 이야기하세요.",
+    hint: "왜 한국어를 매일 공부하는지(회사 문서, 동료의 말), 처음에 어려웠던 점과 지금 달라진 점을 이야기하세요.",
   },
   {
     id: "closing",
     titleKo: "마무리",
     titleEn: "Conclusion",
-    hint: "작은 변화들이 나에게 어떤 의미인지 정리하고, 앞으로의 다짐으로 마무리하세요. 예: 감사합니다.",
+    hint: "생긴 습관들을 한 문장으로 정리하고, 작은 변화들이 나에게 어떤 의미인지, 앞으로의 다짐으로 마무리하세요. 예: 감사합니다.",
   },
 ]
 
-// The candidate's final interview script (Notion: "K-Specialist 6th — Henry",
-// FINAL INTERVIEW SCRIPT), in formal -습니다 style, split into the outline
-// sections above. Notion's one weather + recycling sentence is split across
-// those two sections; the home station is left out on purpose (public repo).
+// The candidate's full interview script (Notion: "00 — 한국에 온 후 새로 생긴
+// 습관/취미 — 최종 스크립트", 2026-09-30 Korean speaking script, plus the
+// 자기소개 from the "K-Specialist 6th — Henry" dashboard), in formal -습니다
+// style, split into the outline sections above. The home station is left out on
+// purpose (public repo).
 const HABITS_SCRIPT_SEED: Record<string, string> = {
+  "self-intro":
+    "안녕하십니까. 저는 캄보디아에서 온 히엉입니다. 영어 이름은 헨리입니다.\n\n한국에 온 지 거의 1년이 되었고, 지금은 서울에 있는 회사에서 개발 일을 하고 있습니다.\n\n회사에서 한국어 문서를 읽고 동료들과 한국어로 이야기해야 해서, 매일 조금씩 한국어를 공부하고 있습니다.\n\n쉬는 날에는 여의도공원에서 산책하거나 한강에서 자전거 타는 것을 좋아합니다.\n\n오늘 면접에서 최선을 다하겠습니다. 잘 부탁드립니다.",
   opening:
-    "안녕하십니까. 히엉입니다.\n\n오늘은 한국에 온 후 새로 생긴 습관과 취미에 대해 말씀드리겠습니다.\n\n한국에 온 지 거의 1년이 되었습니다. 그동안 제 생활에 여러 가지 새로운 습관이 생겼습니다.",
+    "오늘은 한국에 온 후 새로 생긴 습관과 취미에 대해 말씀드리겠습니다.\n\n한국에 온 후 제 생활이 많이 달라졌습니다. 예전에는 하지 않았던 일들이 지금은 자연스러운 습관이 되었습니다.",
   transport:
-    "캄보디아에서는 밖에 갈 때 보통 오토바이나 차를 이용했습니다. 하지만 한국에서는 걸어서 출근하고, 멀리 갈 때는 버스나 지하철을 이용합니다.\n\n저는 지하철 5호선을 자주 이용합니다. 처음에는 지하철 노선과 환승이 어려웠지만, 지금은 혼자서도 서울의 여러 곳에 갈 수 있습니다.",
-  "weather-check": "또 밖에 나가기 전에 날씨를 확인합니다.",
+    "캄보디아에서는 출근하거나 밖에 갈 때 보통 오토바이나 차를 이용했습니다. 하지만 한국에서는 매일 걸어서 출근하고, 멀리 갈 때는 버스나 지하철을 이용합니다.\n\n저는 지하철 5호선을 자주 이용합니다. 처음에는 지하철 노선과 환승이 조금 어려웠지만, 지금은 용산이나 경복궁 같은 서울의 여러 곳에도 혼자 갈 수 있습니다.\n\n그래서 한국에 온 후 혼자 이동하는 것에 많이 익숙해졌습니다.",
+  "weather-check":
+    "그리고 밖에 나가기 전에 날씨를 꼭 확인합니다.\n\n캄보디아에서도 가끔 날씨를 확인했지만, 날씨가 덥고 비가 자주 오기 때문에 오토바이에 우비를 항상 가지고 다녔습니다.\n\n한국은 계절에 따라 날씨 변화가 크고, 하루에도 날씨가 달라질 때가 있어서 우산이나 옷을 미리 준비하는 습관이 생겼습니다.",
   "recycling-cooking":
-    "그리고 쓰레기를 버릴 때는 분리배출도 신경 씁니다.\n\n한국에 처음 왔을 때는 한국 음식에 익숙하지 않아서 직접 요리를 시작했습니다. 지금은 김치찌개도 만들 수 있고, 한국 음식에도 많이 익숙해졌습니다.",
+    "또 하나는 쓰레기 분리배출입니다.\n\n캄보디아에서는 쓰레기를 종류별로 나눠서 버리는 일이 많지 않았습니다. 하지만 한국에서는 음식물 쓰레기와 재활용을 따로 버려야 합니다. 처음에는 조금 헷갈렸지만, 지금은 쓰레기를 버리기 전에 꼭 확인합니다. 이 습관 덕분에 환경에 대해서도 더 생각하게 되었습니다.\n\n음식 습관도 많이 바뀌었습니다. 한국에 처음 왔을 때는 한국 음식에 아직 익숙하지 않아서 직접 요리를 시작했습니다. 지금은 간단한 음식뿐만 아니라 김치찌개도 만들 수 있고, 한국 음식에도 많이 익숙해져서 잘 먹고 있습니다.\n\n피곤하거나 요리하기 싫은 날에는 가끔 배달도 이용합니다.",
   exercise:
-    "두 번째는 운동입니다.\n\n한국에 온 후에는 산책, 조깅, 자전거 타기를 더 자주 하게 되었습니다. 퇴근 후나 주말에는 여의도공원에서 걷거나 조깅을 하고, 한강에서는 자전거를 탑니다.\n\n운동을 하고 나면 기분이 상쾌하고 스트레스도 줄어드는 것 같습니다.",
+    "그리고 한국에 온 후 새로운 취미도 생겼습니다.\n\n캄보디아에서는 배구와 축구를 좋아했습니다. 요즘은 산책, 조깅, 자전거 타기를 더 자주 합니다. 퇴근 후나 주말에는 여의도공원에서 걷거나 조깅을 합니다.\n\n특히 한강을 따라 자전거 타는 것을 좋아합니다. 자전거를 타면서 한강을 보면 기분이 상쾌하고, 스트레스도 줄어드는 것 같습니다.",
   "friends-travel":
-    "세 번째는 새로운 곳에 가 보는 것입니다.\n\n올해 설날에는 한국에 사는 캄보디아 친구들과 수원에 갔습니다. 수원 화성행궁을 구경하고, 캄보디아 식당에서 놈반쪽도 같이 먹었습니다.\n\n친구들과 명절을 보내면서 새로운 곳도 경험할 수 있어서 특히 기억에 남았습니다.",
+    "한국에 온 후 한국에 사는 새로운 캄보디아 친구들도 만났습니다.\n\n올해 설날에는 친구들과 수원에 갔습니다. 수원 화성행궁을 구경하고, 캄보디아 식당에서 놈반쪽이라는 캄보디아 국수도 같이 먹었습니다.\n\n한국에서 캄보디아 친구들과 명절을 보내고, 새로운 곳도 구경할 수 있어서 특히 기억에 남았습니다. 이런 경험 덕분에 새로운 친구도 사귀고, 한국의 여러 지역과 문화를 더 많이 알게 되었습니다.",
   "korean-study":
-    "마지막으로 한국어 공부도 중요한 습관이 되었습니다.\n\n회사와 일상생활에서 한국어가 필요해서 매일 조금씩 공부하고 있습니다. 특히 회사에서는 한국어 문서를 읽거나 동료들의 말을 이해해야 할 때가 있습니다.\n\n처음에는 듣기와 말하기가 많이 어려웠지만, 지금은 예전보다 조금 더 잘 이해할 수 있게 되었습니다.",
+    "마지막으로, 한국어 공부도 중요한 습관이 되었습니다.\n\n회사 업무와 일상생활에서 한국어가 필요하기 때문에 매일 조금씩 공부하고 있습니다. 특히 회사에서는 한국어 문서를 읽거나 동료들의 말을 이해해야 할 때가 있습니다.\n\n처음에는 듣기와 말하기가 많이 어려웠지만, 꾸준히 연습하면서 지금은 예전보다 조금 더 잘 이해할 수 있게 되었습니다. 아직 부족한 부분이 있지만 계속 공부하고 싶습니다.",
   closing:
-    "이런 작은 변화들 덕분에 혼자 할 수 있는 일이 많아졌고, 한국 생활에도 더 잘 적응하게 되었습니다.\n\n앞으로도 좋은 습관을 계속 유지하고, 한국에서 새로운 경험을 더 많이 해 보고 싶습니다.\n\n감사합니다.",
+    "한국에 오기 전에는 이런 습관이 많지 않았습니다. 하지만 한국에서 생활하면서 걷는 습관, 대중교통을 이용하는 습관, 날씨를 확인하는 습관, 요리와 운동, 한국어 공부까지 제 생활에 많은 변화가 생겼습니다.\n\n이런 작은 변화들 덕분에 혼자 할 수 있는 일이 많아졌고, 한국 생활에도 더 잘 적응하게 되었습니다.\n\n앞으로도 좋은 습관을 계속 유지하고, 한국에서 새로운 경험을 더 많이 해 보고 싶습니다.\n\n감사합니다.",
 }
 
-// English translation of the final script, section by section, mirroring
+// English translation of the script, section by section, mirroring
 // HABITS_SCRIPT_SEED's paragraphing.
 const HABITS_SCRIPT_SEED_EN: Record<string, string> = {
+  "self-intro":
+    "Hello. I am Hieng, from Cambodia. My English name is Henry.\n\nIt has been almost one year since I came to Korea, and now I work as a developer at a company in Seoul.\n\nAt work I need to read Korean documents and talk with my coworkers in Korean, so I study Korean a little every day.\n\nOn my days off, I like walking in Yeouido Park or riding a bicycle along the Han River.\n\nI will do my best in today's interview. Thank you.",
   opening:
-    "Hello. I am Hieng.\n\nToday, I would like to talk about the new habits and hobbies I developed after coming to Korea.\n\nIt has been almost one year since I came to Korea. During that time, I have developed several new habits.",
+    "Today, I would like to talk about the new habits and hobbies I developed after coming to Korea.\n\nMy daily life has changed a lot since I came to Korea. Things I did not do before have now become natural habits.",
   transport:
-    "In Cambodia, I usually used a motorbike or a car when I went out. But in Korea, I walk to work, and when I go somewhere far, I take the bus or subway.\n\nI often take subway Line 5. At first, the subway lines and transfers were difficult, but now I can go to many places in Seoul by myself.",
-  "weather-check": "I also check the weather before I go outside.",
+    "In Cambodia, I usually used a motorbike or a car when I went to work or went out. But in Korea, I walk to work every day, and when I go somewhere far, I take the bus or subway.\n\nI often take subway Line 5. At first, the subway lines and transfers were a little difficult, but now I can go to many places in Seoul, such as Yongsan or Gyeongbokgung, by myself.\n\nSo since coming to Korea, I have become very used to getting around on my own.",
+  "weather-check":
+    "I also always check the weather before I go out.\n\nIn Cambodia, I sometimes checked the weather too, but because it is hot and rains often, I always kept a raincoat on my motorbike.\n\nIn Korea, the weather changes a lot with the seasons and can even change during the day, so I got into the habit of preparing an umbrella or the right clothes in advance.",
   "recycling-cooking":
-    "And when I throw away trash, I pay attention to separating it.\n\nWhen I first came to Korea, I was not used to Korean food, so I started cooking for myself. Now I can even make kimchi stew, and I have become much more used to Korean food.",
+    "Another habit is separating trash.\n\nIn Cambodia, people did not often separate trash by type. But in Korea, food waste and recycling have to be thrown away separately. At first it was a little confusing, but now I always check before I throw something away. Because of this habit, I also think more about the environment.\n\nMy eating habits also changed a lot. When I first came to Korea, I was not used to Korean food yet, so I started cooking for myself. Now I can make not only simple food but even kimchi stew, and I have become used to Korean food and enjoy it.\n\nOn days when I am tired or do not want to cook, I sometimes order delivery.",
   exercise:
-    "The second is exercise.\n\nAfter coming to Korea, I started walking, jogging, and cycling more often. After work or on weekends, I walk or jog at Yeouido Park, and I ride a bicycle along the Han River.\n\nAfter exercising, I feel refreshed and my stress seems to go down.",
+    "I also developed new hobbies after coming to Korea.\n\nIn Cambodia, I liked volleyball and football. These days, I walk, jog, and cycle more often. After work or on weekends, I walk or jog at Yeouido Park.\n\nI especially like riding a bicycle along the Han River. When I look at the Han River while cycling, I feel refreshed and my stress seems to go down.",
   "friends-travel":
-    "The third is visiting new places.\n\nThis Seollal, I went to Suwon with Cambodian friends who live in Korea. We looked around Hwaseong Haenggung and ate nom banh chok together at a Cambodian restaurant.\n\nIt was especially memorable because I could spend the holiday with friends and experience a new place.",
+    "After coming to Korea, I also met new Cambodian friends who live here.\n\nThis Seollal, I went to Suwon with my friends. We looked around Hwaseong Haenggung and ate nom banh chok, a Cambodian noodle dish, together at a Cambodian restaurant.\n\nIt was especially memorable because I could spend the holiday with Cambodian friends in Korea and see a new place. Thanks to experiences like this, I have made new friends and learned more about different regions and cultures in Korea.",
   "korean-study":
-    "Lastly, studying Korean has also become an important habit.\n\nI need Korean at work and in daily life, so I study a little every day. At work especially, there are times when I need to read Korean documents or understand what my coworkers say.\n\nAt first, listening and speaking were very difficult, but now I can understand a little better than before.",
+    "Lastly, studying Korean has also become an important habit.\n\nI need Korean for work and daily life, so I study a little every day. At work especially, there are times when I need to read Korean documents or understand what my coworkers say.\n\nAt first, listening and speaking were very difficult, but by practicing steadily, I can now understand a little better than before. I still have a lot to improve, but I want to keep studying.",
   closing:
-    "Thanks to these small changes, I can do many more things by myself, and I have adapted better to life in Korea.\n\nI want to keep these good habits and have many more new experiences in Korea.\n\nThank you.",
+    "Before coming to Korea, I did not have many of these habits. But while living here, my life has changed a lot: walking, using public transportation, checking the weather, cooking and exercising, and even studying Korean.\n\nThanks to these small changes, I can do many more things by myself, and I have adapted better to life in Korea.\n\nI want to keep these good habits and have many more new experiences in Korea.\n\nThank you.",
 }
 
 const HABITS_ANSWER_FRAMES: AnswerFrame[] = [
@@ -743,10 +757,10 @@ export const INTERVIEW_TOPICS: InterviewTopic[] = [
       "Follow this natural question arc, one question per turn, going a little deeper each time:",
       "1) Why they chose the topic and what changed after coming to Korea (습관, 취미, 생활이 달라지다).",
       "2) Transportation: motorbike/car in Cambodia vs walking to work, bus, subway in Korea (노선, 처음에는 어려웠다).",
-      "3) Checking the weather before going out (비, 눈, 추위, 우산, 옷을 미리 준비하다).",
-      "4) Separating trash (분리배출, 음식물 쓰레기, 재활용, 환경) and cooking at home instead of delivery (직접 요리하다).",
+      "3) Checking the weather before going out — raincoat on the motorbike in Cambodia vs changeable Korean weather (비, 눈, 추위, 우산, 옷을 미리 준비하다).",
+      "4) Separating trash (분리배출, 음식물 쓰레기, 재활용, 환경) and cooking — started because Korean food felt unfamiliar, can now make 김치찌개 (직접 요리하다).",
       "5) New hobbies: walking, jogging, cycling at 여의도공원 and 한강 — why, how often, how it feels (상쾌하다, 스트레스).",
-      "6) New Cambodian friends and trips (수원, 대전, 부산 — 가 보다).",
+      "6) New Cambodian friends and the 설날 trip to 수원 (화성행궁, 놈반쪽 — a Cambodian noodle dish; 가 보다, 기억에 남다).",
       "7) Studying Korean every day — why, what is hardest (듣기, 말하기), how it changed.",
       "8) Reflection: what changed most, the best habit, which habits to keep (독립적이다, 건강하다, 유지하다).",
       "Reuse universal follow-ups (왜요? 언제부터? 얼마나 자주? 누구와? 가장 기억에 남는 경험?) and occasionally rephrase the same question in different words, as real examiners do. Mix in everyday probes about work and life in Korea.",

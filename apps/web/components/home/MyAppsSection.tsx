@@ -95,7 +95,7 @@ export function MyAppsSection({
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
                   <Icon className="size-5" strokeWidth={2} aria-hidden="true" />
                 </div>
-                <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs font-semibold text-muted-foreground">
                   {project.area}
                 </span>
               </div>
@@ -113,7 +113,7 @@ export function MyAppsSection({
                   {project.stack.map((technology) => (
                     <li
                       key={technology}
-                      className="rounded-md bg-muted/60 px-2 py-1 text-[11px] font-medium text-muted-foreground"
+                      className="rounded-md bg-muted/60 px-2 py-1 text-xs font-medium text-muted-foreground"
                     >
                       {technology}
                     </li>

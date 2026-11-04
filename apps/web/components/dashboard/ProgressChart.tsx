@@ -27,7 +27,7 @@ export function ProgressChart({ data }: { data: ProgressPoint[] }) {
             Weekly progress
           </h3>
         </div>
-        <div className="rounded-full bg-cyan-500/10 px-3 py-1 text-[11px] font-medium text-cyan-700 dark:text-cyan-300 ring-1 ring-cyan-500/20">
+        <div className="rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-700 dark:text-cyan-300 ring-1 ring-cyan-500/20">
           Last 7 days
         </div>
       </div>
@@ -52,7 +52,7 @@ export function ProgressChart({ data }: { data: ProgressPoint[] }) {
                 dataKey="day"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "var(--color-muted-foreground)", fontSize: 11, fontWeight: 600 }}
+                tick={{ fill: "var(--color-muted-foreground)", fontSize: 13, fontWeight: 600 }}
                 dy={15}
               />
               <Tooltip
@@ -67,11 +67,11 @@ export function ProgressChart({ data }: { data: ProgressPoint[] }) {
                   backdropFilter: "blur(8px)",
                 }}
                 labelStyle={{
-                  fontWeight: "900",
+                  fontWeight: "600",
                   marginBottom: "4px",
                   color: "var(--color-foreground)",
                   textTransform: "uppercase",
-                  fontSize: "10px",
+                  fontSize: "13px",
                   letterSpacing: "0.1em",
                 }}
                 itemStyle={{ padding: 0, fontSize: "14px", fontWeight: "bold" }}

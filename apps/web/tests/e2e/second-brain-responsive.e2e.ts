@@ -79,6 +79,7 @@ test.describe("authenticated second-brain journey at 428 × 926", () => {
     await expect(page.getByRole("link", { name: "Morning" })).toHaveAttribute(
       "aria-current",
       "page",
+
     )
     await expectNoDocumentOverflow(page)
     expect(browserErrors).toEqual([])

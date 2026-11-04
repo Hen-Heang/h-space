@@ -49,17 +49,13 @@ function SectionHeader({
     <div className="flex items-center gap-2 px-1">
       <Icon size={16} strokeWidth={2.5} className="text-blue-600 dark:text-blue-400" />
       <h3 className="text-base font-bold tracking-tight text-foreground">{title}</h3>
-      {hint && <span className="text-[11px] font-bold text-muted-foreground">{hint}</span>}
+      {hint && <span className="text-xs font-bold text-muted-foreground">{hint}</span>}
     </div>
   )
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground/70">
-      {children}
-    </p>
-  )
+  return <p className="mb-1.5 text-xs font-semibold text-muted-foreground/70">{children}</p>
 }
 
 export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
@@ -361,7 +357,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
               className="space-y-3 rounded-[1.8rem] border border-border bg-card p-5 shadow-sm dark:bg-slate-900/40"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Paragraph {i + 1}
                 </span>
                 <button
@@ -455,7 +451,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
               className="space-y-3 rounded-[1.8rem] border border-border bg-card p-5 shadow-sm dark:bg-slate-900/40"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Question {qi + 1}
                 </span>
                 <button
@@ -519,7 +515,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
                 onChange={(e) => updateQuiz(qi, { explanation: e.target.value })}
                 placeholder="Explanation shown after answering (optional)"
               />
-              <p className="text-[11px] font-bold text-muted-foreground">
+              <p className="text-xs font-bold text-muted-foreground">
                 Tap the ✓ next to an option to mark it as the correct answer.
               </p>
             </div>

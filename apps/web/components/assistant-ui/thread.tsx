@@ -234,7 +234,7 @@ const Composer: FC = () => {
         >
           <ComposerPrimitive.Input
             placeholder="Write or speak in Korean…"
-            className="aui-composer-input caret-primary placeholder:text-muted-foreground/45 max-h-40 min-h-11 w-full resize-none bg-transparent px-3 py-1.5 text-[15px] font-medium outline-none sm:text-base"
+            className="aui-composer-input caret-primary placeholder:text-muted-foreground/45 max-h-40 min-h-11 w-full resize-none bg-transparent px-3 py-1.5 text-base font-medium outline-none"
             rows={1}
             enterKeyHint="send"
             aria-label="Chat message"

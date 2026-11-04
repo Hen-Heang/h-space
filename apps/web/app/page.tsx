@@ -342,9 +342,9 @@ export default function Home() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-foreground">배포</p>
-                    <p className="text-[11px] text-muted-foreground">deployment</p>
+                    <p className="text-xs text-muted-foreground">deployment</p>
                   </div>
-                  <div className="ml-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[11px] font-bold text-blue-600">
+                  <div className="ml-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-bold text-blue-600">
                     +2 XP
                   </div>
                 </motion.div>
@@ -359,7 +359,7 @@ export default function Home() {
                   <div className="text-lg">🔥</div>
                   <div>
                     <p className="text-xs font-bold text-foreground">7-day streak</p>
-                    <p className="text-[11px] text-muted-foreground">Keep it up!</p>
+                    <p className="text-xs text-muted-foreground">Keep it up!</p>
                   </div>
                 </motion.div>
 
@@ -380,9 +380,7 @@ export default function Home() {
                             <p className="text-[13px] font-bold leading-none text-foreground">
                               AI Coach
                             </p>
-                            <p className="mt-1 text-[11px] font-medium text-blue-500">
-                              ● Online now
-                            </p>
+                            <p className="mt-1 text-xs font-medium text-blue-500">● Online now</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1">
@@ -404,7 +402,7 @@ export default function Home() {
                               </div>
                             )}
                             <div
-                              className={`max-w-[85%] rounded-2xl px-4 py-3 text-[12.5px] leading-relaxed shadow-sm ${
+                              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
                                 msg.role === "you"
                                   ? "rounded-tr-sm bg-blue-600 font-medium text-white"
                                   : "rounded-tl-sm border border-border bg-accent/30 text-foreground"
@@ -585,8 +583,8 @@ export default function Home() {
                   return (
                     <motion.div
                       key={step.title}
-                      initial={{ opacity: 0, x: 20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
+                      initial={{ opacity: 0, y: 12 }}
+                      whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.5, delay: i * 0.1 }}
                       className="flex gap-5"
@@ -601,7 +599,7 @@ export default function Home() {
                           <div className="mt-2 w-px flex-1 bg-border/60" />
                         )}
                       </div>
-                      <div className="pb-2">
+                      <div className="min-w-0 flex-1 pb-2">
                         <div className="flex items-center gap-3">
                           <span className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">
                             Step {step.step}
@@ -625,8 +623,8 @@ export default function Home() {
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
               <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 className="space-y-8"
               >

@@ -457,36 +457,36 @@ function PhaseCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-semibold text-muted-foreground/40">
+            <span className="text-xs font-semibold text-muted-foreground">
               Phase {phase.number}
             </span>
             <span
-              className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", phase.levelColor)}
+              className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", phase.levelColor)}
             >
               {phase.level}
             </span>
-            <span className="text-[10px] font-medium text-muted-foreground/40">{phase.months}</span>
+            <span className="text-xs font-medium text-muted-foreground">{phase.months}</span>
             {isCurrent && !isComplete ? (
-              <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+              <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-semibold text-blue-600 dark:text-blue-400">
                 Current
               </span>
             ) : null}
           </div>
           <p className="mt-0.5 text-sm font-bold text-foreground">{phase.title}</p>
-          <p className="text-[11px] font-medium text-muted-foreground/50">{phase.subtitle}</p>
+          <p className="text-xs font-medium text-muted-foreground">{phase.subtitle}</p>
         </div>
         <AnimatedCircularProgressBar
           value={pct}
           gaugePrimaryColor={isComplete ? "#10b981" : "var(--primary)"}
           gaugeSecondaryColor="var(--muted)"
           label={`Progress for ${phase.title}`}
-          className="size-12 shrink-0 font-mono text-[10px]"
+          className="size-12 shrink-0 font-mono text-xs"
         />
         <ChevronDown
           size={16}
           strokeWidth={2}
           className={cn(
-            "shrink-0 text-muted-foreground/60 transition-transform",
+            "shrink-0 text-muted-foreground transition-transform",
             isOpen && "rotate-180",
           )}
         />
@@ -500,7 +500,7 @@ function PhaseCard({
           className={cn("h-full rounded-full", isComplete ? "bg-emerald-500" : "bg-blue-500")}
         />
       </div>
-      <p className="px-5 pb-4 text-[10px] font-medium text-muted-foreground/60 sm:px-6">
+      <p className="px-5 pb-4 text-xs font-medium text-muted-foreground sm:px-6">
         {done} / {total} topics completed
       </p>
 
@@ -607,7 +607,7 @@ function PhaseCard({
                   <button
                     type="button"
                     onClick={startEditingPhase}
-                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-muted-foreground/40 transition-colors hover:bg-accent hover:text-foreground active:scale-95"
+                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95"
                   >
                     <Pencil size={11} />
                     Edit Phase
@@ -701,7 +701,7 @@ function PhaseCard({
                       <span
                         className={cn(
                           "flex-1 text-sm font-medium leading-snug",
-                          isDone ? "text-muted-foreground/40 line-through" : "text-foreground",
+                          isDone ? "text-muted-foreground line-through" : "text-foreground",
                         )}
                       >
                         {topic.text}
@@ -713,7 +713,7 @@ function PhaseCard({
                             setEditingTopicId(topic.id)
                             setEditTopicText(topic.text)
                           }}
-                          className="rounded-md p-1 text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground active:scale-95"
+                          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95"
                           title="Edit"
                         >
                           <Pencil size={11} />
@@ -721,7 +721,7 @@ function PhaseCard({
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteTopic(topic.id)}
-                          className="rounded-md p-1 text-muted-foreground/60 transition-colors hover:bg-red-500/10 hover:text-red-500 active:scale-95"
+                          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500 active:scale-95"
                           title="Delete"
                         >
                           <Trash2 size={11} />
@@ -769,7 +769,7 @@ function PhaseCard({
                   <button
                     type="button"
                     onClick={() => setAddingTopic(true)}
-                    className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-[11px] font-semibold text-muted-foreground/40 transition-colors hover:bg-accent/30 hover:text-muted-foreground active:scale-95"
+                    className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent/30 hover:text-muted-foreground active:scale-95"
                   >
                     <Plus size={12} />
                     Add topic
@@ -787,7 +787,7 @@ function PhaseCard({
                         className="mt-0.5 shrink-0 text-violet-500"
                       />
                       <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/40">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           Mini Project
                         </p>
                         <p className="text-xs font-medium text-foreground/70">{phase.project}</p>
@@ -802,7 +802,7 @@ function PhaseCard({
                         className="mt-0.5 shrink-0 text-orange-500"
                       />
                       <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/40">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           Exit Test
                         </p>
                         <p className="text-xs font-medium text-foreground/70">{phase.exitTest}</p>
@@ -1092,7 +1092,7 @@ export default function RoadmapPage() {
     >
       <div>
         <h1 className="text-lg font-bold text-foreground">Learning Roadmap</h1>
-        <p className="text-[11px] font-medium text-muted-foreground/50">
+        <p className="text-xs font-medium text-muted-foreground">
           Java → Spring Boot → Senior Backend Engineer
         </p>
       </div>
@@ -1109,13 +1109,13 @@ export default function RoadmapPage() {
             />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-foreground">Overall Progress</p>
-              <p className="text-[11px] font-medium text-muted-foreground/50">
+              <p className="text-xs font-medium text-muted-foreground">
                 {totalDone} of {totalTopics} topics complete
               </p>
               {currentPhase && (
                 <div className="mt-3 flex items-center gap-2">
                   <Flame size={13} strokeWidth={2} className="text-orange-500" />
-                  <span className="text-[11px] font-semibold text-muted-foreground/70">
+                  <span className="text-xs font-semibold text-muted-foreground">
                     Currently on:{" "}
                     <span className="text-foreground">
                       Phase {currentPhase.number} — {currentPhase.title}
@@ -1129,7 +1129,7 @@ export default function RoadmapPage() {
               strokeWidth={1.5}
               className={cn(
                 "shrink-0 transition-colors",
-                overallPct === 100 ? "text-amber-500" : "text-muted-foreground/60",
+                overallPct === 100 ? "text-amber-500" : "text-muted-foreground",
               )}
             />
           </div>
@@ -1147,12 +1147,12 @@ export default function RoadmapPage() {
                   onClick={() => setOpenPhase((o) => (o === phase.id ? null : phase.id))}
                   className={cn(
                     // ::after grows the tap area to ~44px tall; the chip looks the same.
-                    "relative flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-semibold transition-all after:absolute after:-inset-y-2 after:inset-x-0 after:content-[''] active:scale-95",
+                    "relative flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all after:absolute after:-inset-y-2 after:inset-x-0 after:content-[''] active:scale-95",
                     complete
                       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                       : started
                         ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                        : "bg-accent/60 text-muted-foreground/50 hover:text-foreground",
+                        : "bg-accent/60 text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {complete ? (
@@ -1201,7 +1201,7 @@ export default function RoadmapPage() {
           <button
             type="button"
             onClick={() => setShowAddPhase(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-border py-4 text-sm font-semibold text-muted-foreground/40 transition-colors hover:border-foreground/20 hover:text-foreground/60 active:scale-[0.99]"
+            className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-border py-4 text-sm font-semibold text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground/60 active:scale-[0.99]"
           >
             <Plus size={16} />
             Add Phase
@@ -1210,7 +1210,7 @@ export default function RoadmapPage() {
       </div>
 
       <div className="flex flex-col items-center gap-2">
-        <p className="text-center text-[10px] font-medium uppercase tracking-wide text-muted-foreground/60">
+        <p className="text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Roadmap v2.0 · 2-Year Plan · Cambodia Bank Goal
         </p>
         {resetConfirm ? (
@@ -1235,7 +1235,7 @@ export default function RoadmapPage() {
           <button
             type="button"
             onClick={() => setResetConfirm(true)}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium text-muted-foreground/60 transition-colors hover:text-muted-foreground active:scale-95"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-muted-foreground active:scale-95"
           >
             <RotateCcw size={11} />
             Reset to defaults

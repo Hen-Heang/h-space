@@ -4,7 +4,6 @@ import {
   computeFreeWindows,
   formatFreeWindow,
   getAvailableFocusWindows,
-  isoRangeToDayMinutes,
   mergeBusyRanges,
   taskBusyRanges,
   type TimeRange,
@@ -95,41 +94,6 @@ describe("computeFreeWindows", () => {
   })
 })
 
-describe("isoRangeToDayMinutes", () => {
-  const date = new Date(2026, 7, 12) // Aug 12, 2026, local time
-
-  it("converts a range fully inside the day", () => {
-    const start = new Date(date)
-    start.setHours(9, 0, 0, 0)
-    const end = new Date(date)
-    end.setHours(10, 30, 0, 0)
-    expect(isoRangeToDayMinutes(start.toISOString(), end.toISOString(), date)).toEqual({
-      start: 9 * 60,
-      end: 10 * 60 + 30,
-    })
-  })
-
-  it("clips a range that spans past midnight into the next day", () => {
-    const start = new Date(date)
-    start.setHours(22, 0, 0, 0)
-    const end = new Date(date)
-    end.setDate(end.getDate() + 1)
-    end.setHours(2, 0, 0, 0)
-    expect(isoRangeToDayMinutes(start.toISOString(), end.toISOString(), date)).toEqual({
-      start: 22 * 60,
-      end: 24 * 60,
-    })
-  })
-
-  it("returns null when the range doesn't overlap the day at all", () => {
-    const start = new Date(date)
-    start.setDate(start.getDate() + 2)
-    const end = new Date(start)
-    end.setHours(23, 59, 0, 0)
-    expect(isoRangeToDayMinutes(start.toISOString(), end.toISOString(), date)).toBeNull()
-  })
-})
-
 describe("taskBusyRanges", () => {
   it("includes timed, incomplete tasks and excludes completed and all-day tasks", () => {
     const ranges = taskBusyRanges([
@@ -147,18 +111,12 @@ describe("taskBusyRanges", () => {
 })
 
 describe("getAvailableFocusWindows", () => {
-  it("combines Hengo tasks and Google busy blocks for the day", () => {
-    const date = new Date(2026, 7, 12)
-    const isoAt = (h: number, m = 0) => {
-      const d = new Date(date)
-      d.setHours(h, m, 0, 0)
-      return d.toISOString()
-    }
-
+  it("returns the free windows between the day's tasks", () => {
     const windows = getAvailableFocusWindows({
-      date,
-      tasks: [task({ daily_start_time: "09:00:00", daily_end_time: "18:30:00" })],
-      googleBusy: [{ start: isoAt(19, 30), end: isoAt(20, 30) }],
+      tasks: [
+        task({ id: "work", daily_start_time: "09:00:00", daily_end_time: "18:30:00" }),
+        task({ id: "evening", daily_start_time: "19:30:00", daily_end_time: "20:30:00" }),
+      ],
       dayBounds: { start: 7 * 60, end: 22 * 60 + 30 },
     })
 

@@ -62,7 +62,7 @@ export function PhrasebookStatsCard() {
               {stats[tile.key]}
               {tile.suffix ?? ""}
             </p>
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {tile.label}
             </p>
           </div>
@@ -71,7 +71,7 @@ export function PhrasebookStatsCard() {
 
       {totalActivity > 0 && (
         <div>
-          <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+          <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
             <span>Workplace</span>
             <span>Daily life</span>
           </div>
@@ -84,14 +84,14 @@ export function PhrasebookStatsCard() {
 
       {stats.mostDifficultSituations.length > 0 && (
         <div>
-          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Toughest situations
           </p>
           <div className="flex flex-wrap gap-1.5">
             {stats.mostDifficultSituations.map((s) => (
               <span
                 key={s.situation}
-                className="rounded-full bg-red-500/10 px-2 py-0.5 text-[11px] font-semibold text-red-700 dark:text-red-400"
+                className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400"
               >
                 {s.situation} ({s.failureCount})
               </span>
