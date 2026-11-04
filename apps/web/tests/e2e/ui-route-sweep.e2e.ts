@@ -284,6 +284,7 @@ const ROUTES = [
   "/finance/subscriptions",
   "/finance/review",
   "/finance/analytics",
+  "/finance/settings",
 ]
 
 const WIDTHS = [320, 375, 390, 430, 768, 1024, 1440]

@@ -484,6 +484,48 @@ export function financeFixture(url: URL): unknown {
       }
     case "review":
       return review(month)
+    case "reports/weekly": {
+      const r = review(month)
+      return {
+        weekStart: `${month}-02`,
+        weekEnd: `${month}-08`,
+        incomeKrw: 3200000,
+        expenseKrw: 1056300,
+        netCashFlowKrw: 2143700,
+        previousWeekExpenseKrw: 980000,
+        expenseChangePct: 7.8,
+        topCategories: categories.slice(0, 3).map((c) => ({
+          categoryId: c.categoryId,
+          categoryName: c.categoryName,
+          amountKrw: c.amountKrw,
+          pctOfTotal: 30,
+        })),
+        budgetWarnings: performance.filter((p) => p.status !== "ok"),
+        savingsProgress: r.savingsProgress,
+        subscriptionsMonthlyKrw: r.subscriptionsMonthlyKrw,
+      }
+    }
+    case "reports/monthly": {
+      const r = review(month)
+      return {
+        month,
+        totals: r.totals,
+        previousTotals: r.previousTotals,
+        topCategories: categories.slice(0, 5).map((c) => ({
+          categoryId: c.categoryId,
+          categoryName: c.categoryName,
+          amountKrw: c.amountKrw,
+          pctOfTotal: 20,
+        })),
+        categoryComparison: r.categoryComparison,
+        budgetPerformance: r.budgetPerformance,
+        subscriptionsMonthlyKrw: r.subscriptionsMonthlyKrw,
+        savingsProgress: r.savingsProgress,
+        observations: r.observations,
+      }
+    }
+    case "email/status":
+      return { configured: false, recipientEmail: "owner@example.invalid" }
     case "templates":
     case "recurring":
       return []

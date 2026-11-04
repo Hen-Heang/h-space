@@ -4,6 +4,8 @@ import { parseFinanceAccountLinks, resolveLuyraUserId } from "@/lib/server/finan
 import { normalizeFinanceDatabaseUrl } from "@/lib/server/finance/database-url"
 import { isFinanceDatabaseConfigured } from "@/lib/server/finance/db"
 import { AppError, Errors } from "@/lib/server/finance/errors"
+import { findUserById } from "@/lib/server/finance/repositories/user-repository"
+import type { AppUser } from "@/types/user"
 
 /**
  * Why finance is unavailable, by setting NAME only — never a value. Returned
@@ -75,4 +77,16 @@ export async function requireFinanceUserId(req: Request): Promise<string> {
     throw new AppError("FINANCE_NOT_LINKED", "No finance account is linked to this user", 403)
   }
   return financeUserId
+}
+
+/**
+ * Like requireFinanceUserId, but also returns the linked Luyra user's profile
+ * row (for its email address) — Luyra's `ensureAppUser()` equivalent. The row
+ * must already exist: H-Space never creates finance users.
+ */
+export async function requireFinanceAppUser(req: Request): Promise<AppUser> {
+  const financeUserId = await requireFinanceUserId(req)
+  const user = await findUserById(financeUserId)
+  if (!user) throw Errors.notFound("Finance account")
+  return user
 }
