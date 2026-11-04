@@ -88,7 +88,7 @@ export function FinanceReportsSection() {
 
   useEffect(() => {
     getTelegramLinkStatus()
-      .then((status) => setTelegramLinked(status.linked))
+      .then((status) => setTelegramLinked(status.configured && status.linked))
       .catch(() => setTelegramLinked(false))
   }, [refreshKey])
 
