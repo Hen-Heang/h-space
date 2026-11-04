@@ -98,14 +98,14 @@ export function AddWordCard({ categories, onAdd, onUpdate, embedded = false }: A
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-              <p className="text-[12px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+              <p className="text-xs font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
                 Manual entry
               </p>
             </div>
             <h3 className="mt-3 text-xl font-bold text-foreground sm:mt-4 sm:text-2xl">
               Add a Word
             </h3>
-            <p className="mt-2 text-sm font-medium leading-relaxed text-muted-foreground sm:text-[16px]">
+            <p className="mt-2 text-sm font-medium leading-relaxed text-muted-foreground sm:text-base">
               Type a Korean word and save — meaning is optional, Hengo can fill it in for you.
             </p>
           </div>
@@ -180,7 +180,7 @@ export function AddWordCard({ categories, onAdd, onUpdate, embedded = false }: A
           {saving ? "Saving…" : "Add to deck"}
         </Button>
         {categories.length > 0 && (
-          <p className="text-center text-[12px] font-bold uppercase tracking-wide text-muted-foreground sm:text-right">
+          <p className="text-center text-xs font-bold uppercase tracking-wide text-muted-foreground sm:text-right">
             {categories.length} {categories.length === 1 ? "topic" : "topics"} so far
           </p>
         )}

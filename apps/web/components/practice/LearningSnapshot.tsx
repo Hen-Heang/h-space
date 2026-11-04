@@ -48,7 +48,7 @@ function Tile({
         <Icon size={18} strokeWidth={2} />
       </div>
       <div className="min-w-0">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
           {eyebrow}
         </p>
         <p className="mt-0.5 truncate text-sm font-bold text-foreground">{title}</p>

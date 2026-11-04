@@ -85,7 +85,7 @@ export const ModernTaskItem = memo(function ModernTaskItem({
         <span
           title={rawTitle}
           className={cn(
-            "block w-full min-w-0 overflow-hidden whitespace-nowrap text-ellipsis truncate text-[13px] font-medium leading-tight",
+            "block w-full min-w-0 overflow-hidden whitespace-nowrap text-ellipsis truncate text-xs font-medium leading-tight",
             task.completed ? "text-muted-foreground line-through" : "text-foreground",
           )}
         >

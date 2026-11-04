@@ -104,7 +104,7 @@ export function ListeningModeView({ cards, onExhausted }: ListeningModeViewProps
       </div>
 
       <div className="flex flex-col items-center gap-5 rounded-3xl border-2 border-b-[6px] border-border bg-card p-6 text-center dark:bg-slate-900/60 sm:p-8">
-        <span className="rounded-full bg-accent/40 px-3 py-1 text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+        <span className="rounded-full bg-accent/40 px-3 py-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
           Listen &amp; respond
         </span>
         <button
@@ -147,7 +147,7 @@ export function ListeningModeView({ cards, onExhausted }: ListeningModeViewProps
       {error && <p className="text-center text-xs font-semibold text-destructive">{error}</p>}
 
       <div className="space-y-2.5">
-        <p className="text-center text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+        <p className="text-center text-xs font-bold uppercase tracking-wide text-muted-foreground">
           Choose the appropriate answer
         </p>
         {options.map((option, i) => {

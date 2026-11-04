@@ -194,7 +194,7 @@ export function MonthView({
                             className={cn(
                               // Dense-visualisation exception (docs/design-system.md):
                               // 11px only in a ~41px phone month cell, 13px from sm.
-                              "mx-0.5 flex items-center gap-1 truncate rounded-md border border-l-2 px-2 py-1 text-left text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 sm:text-xs",
+                              "mx-0.5 flex items-center gap-1 truncate rounded-md border border-l-2 px-2 py-1 text-left text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 sm:text-xs",
                               task.completed
                                 ? "text-muted-foreground line-through opacity-60"
                                 : "text-foreground hover:brightness-95 dark:hover:brightness-110",
@@ -214,7 +214,7 @@ export function MonthView({
                         )
                       })}
                       {dayTasks.length > maxVisibleTasks && (
-                        <div className="text-center text-[11px] font-medium text-muted-foreground sm:text-xs">
+                        <div className="text-center text-xs font-medium text-muted-foreground sm:text-xs">
                           +{dayTasks.length - maxVisibleTasks} more
                         </div>
                       )}

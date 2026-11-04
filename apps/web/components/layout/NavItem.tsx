@@ -17,12 +17,12 @@ import { cn } from "@/lib/utils"
 export type NavRowVariant = "sidebar" | "list"
 
 const ROW_BASE =
-  "group relative flex items-center gap-2.5 rounded-md text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+  "group relative flex items-center gap-2.5 rounded-md font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
 
 const ROW_SIZE: Record<NavRowVariant, string> = {
   // Compact desktop rows; the touch-first list keeps a 48px+ target.
-  sidebar: "min-h-9 px-2.5 py-1.5",
-  list: "min-h-12 px-3 py-2.5 text-[15px]",
+  sidebar: "min-h-9 px-2.5 py-1.5 text-sm",
+  list: "min-h-12 px-3 py-2.5 text-nav-label",
 }
 
 const ROW_STATE = {

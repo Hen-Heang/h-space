@@ -97,14 +97,14 @@ export function ManagementPanel({
                           {name}
                           {isSelf && <span className="ml-1 text-muted-foreground">(you)</span>}
                         </p>
-                        <p className="text-[11px] font-medium capitalize text-muted-foreground">
+                        <p className="text-xs font-medium capitalize text-muted-foreground">
                           {m.role}
                         </p>
                       </div>
                       {isCreator ? (
                         <Badge
                           variant="secondary"
-                          className="border-none bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                          className="border-none bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
                         >
                           Owner
                         </Badge>
@@ -219,7 +219,7 @@ function Row({
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <div className="min-w-0">
         <p className="text-sm font-medium text-foreground">{title}</p>
-        <p className="text-[11px] font-medium leading-relaxed text-muted-foreground">
+        <p className="text-xs font-medium leading-relaxed text-muted-foreground">
           {description}
         </p>
       </div>

@@ -379,7 +379,7 @@ export function TransactionList() {
             <SlidersHorizontal className="size-4" aria-hidden="true" />
             Filters
             {advancedFilterCount > 0 && (
-              <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
+              <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                 {advancedFilterCount}
               </span>
             )}

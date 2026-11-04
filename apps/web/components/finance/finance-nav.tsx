@@ -37,7 +37,7 @@ export function FinanceNav() {
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-lg px-2 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring sm:min-h-9 sm:w-auto sm:px-3 sm:text-sm",
+                  "flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-lg px-2 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring sm:min-h-9 sm:w-auto sm:px-3 sm:text-sm",
                   active
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",

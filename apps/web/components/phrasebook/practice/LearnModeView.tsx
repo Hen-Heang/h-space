@@ -71,7 +71,7 @@ export function LearnModeView({ cards, romanizationPreference, onExhausted }: Le
 
         {card.questionVariants.length > 0 && (
           <div className="mt-4 space-y-1 border-t border-border/60 pt-4">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground/70">
+            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground/70">
               Similar ways to ask
             </p>
             {card.questionVariants.map((variant) => (
@@ -90,7 +90,7 @@ export function LearnModeView({ cards, romanizationPreference, onExhausted }: Le
         )}
 
         <div className="mt-4 space-y-2 border-t border-border/60 pt-4">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground/70">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground/70">
             Answers
           </p>
           {[...recommended, ...alternatives].map((answer, i) => (
@@ -126,7 +126,7 @@ export function LearnModeView({ cards, romanizationPreference, onExhausted }: Le
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
                   {answer.isRecommended && (
-                    <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-400">
+                    <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-bold uppercase text-emerald-700 dark:text-emerald-400">
                       Recommended
                     </span>
                   )}
@@ -143,7 +143,7 @@ export function LearnModeView({ cards, romanizationPreference, onExhausted }: Le
 
         {card.usageNote && (
           <div className="mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+            <p className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
               Usage note
             </p>
             <p className="mt-1 text-sm text-foreground">{card.usageNote}</p>
@@ -152,7 +152,7 @@ export function LearnModeView({ cards, romanizationPreference, onExhausted }: Le
 
         {card.vocabulary.length > 0 && (
           <div className="mt-4 border-t border-border/60 pt-4">
-            <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/70">
+            <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground/70">
               Vocabulary
             </p>
             <div className="flex flex-wrap gap-2">

@@ -76,7 +76,7 @@ function NoteRow({
       className={cn("flex flex-col gap-1.5 px-4 py-3 text-foreground", rowLink)}
     >
       <span className="flex min-w-0 items-center gap-1.5">
-        <span className={cn("truncate font-semibold", compact ? "text-sm" : "text-[15px]")}>
+        <span className={cn("truncate font-semibold", compact ? "text-sm" : "text-base")}>
           {note.title}
         </span>
         {note.pinned && (
@@ -135,7 +135,7 @@ function ProjectListRow({ group }: { group: NoteProject }) {
     >
       <ProjectTile name={project.name} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-semibold text-foreground">
+        <span className="block truncate text-base font-semibold text-foreground">
           {project.name}
         </span>
         <span className="block truncate text-sm text-muted-foreground">
@@ -164,7 +164,7 @@ function NoProjectRow({ group, onOpen }: { group: NoteProject; onOpen: () => voi
         <Inbox size={18} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-semibold text-foreground">No project</span>
+        <span className="block text-base font-semibold text-foreground">No project</span>
         <span className="block text-sm text-muted-foreground">
           {noteCountText(group.noteCount)}
           {updated && ` · Updated ${updated}`}
@@ -591,7 +591,7 @@ export function NotesHome({
 
           <aside aria-label="Notes shortcuts" className="min-w-0 space-y-6">
             <section aria-labelledby="notes-capture" className={cn(panel, "space-y-2.5 p-4")}>
-              <h2 id="notes-capture" className="text-[15px] font-semibold text-foreground">
+              <h2 id="notes-capture" className="text-base font-semibold text-foreground">
                 Quick Capture
               </h2>
               <label htmlFor="notes-capture-text" className="sr-only">
@@ -624,7 +624,7 @@ export function NotesHome({
             </section>
 
             <section aria-labelledby="notes-pinned" className="space-y-2">
-              <h2 id="notes-pinned" className="text-[15px] font-semibold text-foreground">
+              <h2 id="notes-pinned" className="text-base font-semibold text-foreground">
                 Pinned notes
               </h2>
               {pinned.length > 0 ? (
@@ -637,7 +637,7 @@ export function NotesHome({
             </section>
 
             <section aria-labelledby="notes-recent" className="space-y-2">
-              <h2 id="notes-recent" className="text-[15px] font-semibold text-foreground">
+              <h2 id="notes-recent" className="text-base font-semibold text-foreground">
                 Recent notes
               </h2>
               {recent.length > 0 ? (
@@ -650,7 +650,7 @@ export function NotesHome({
             <section aria-labelledby="notes-resources" className={cn(panel, "space-y-1.5 p-4")}>
               <h2
                 id="notes-resources"
-                className="flex items-center gap-2 text-[15px] font-semibold text-foreground"
+                className="flex items-center gap-2 text-base font-semibold text-foreground"
               >
                 <BookMarked size={16} aria-hidden="true" className="text-muted-foreground" />
                 Knowledge resources

@@ -28,7 +28,7 @@ export function AnalyticsCard({ analytics }: { analytics: InterviewAnalytics }) 
               </p>
             </div>
           </div>
-          <Badge className="rounded-lg border-none bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-400">
+          <Badge className="rounded-lg border-none bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-400">
             <Info size={12} className="mr-1" strokeWidth={2.5} />
             Estimated from transcript — no audio analysis
           </Badge>
@@ -38,7 +38,7 @@ export function AnalyticsCard({ analytics }: { analytics: InterviewAnalytics }) 
         {/* Delivery estimates */}
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-2xl border border-border bg-accent/5 p-4">
-            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
               <Ruler size={12} strokeWidth={2.5} /> Sentence length
             </p>
             <p className="mt-1.5 text-2xl font-bold tabular-nums text-foreground">
@@ -49,7 +49,7 @@ export function AnalyticsCard({ analytics }: { analytics: InterviewAnalytics }) 
             </p>
           </div>
           <div className="rounded-2xl border border-border bg-accent/5 p-4">
-            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
               <AudioLines size={12} strokeWidth={2.5} /> Fillers &amp; hesitation
             </p>
             <p className="mt-1.5 text-sm font-medium leading-relaxed text-foreground/90">
@@ -61,7 +61,7 @@ export function AnalyticsCard({ analytics }: { analytics: InterviewAnalytics }) 
         {/* Vocabulary range */}
         {analytics.vocabRangeNotes && (
           <div className="rounded-2xl border border-sky-500/20 bg-sky-500/5 p-4">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-sky-600 dark:text-sky-400">
+            <p className="text-xs font-bold uppercase tracking-wide text-sky-600 dark:text-sky-400">
               Vocabulary range
             </p>
             <p className="mt-1.5 text-sm font-medium leading-relaxed text-foreground/90">

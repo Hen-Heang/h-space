@@ -216,7 +216,7 @@ export function ScheduleRuleDialog({
                 }
                 className="h-11 rounded-xl"
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Months without this day are skipped, never moved to another day.
               </p>
             </div>
@@ -316,7 +316,7 @@ export function ScheduleRuleDialog({
           )}
 
           <div className="rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Next 14 days
             </p>
             <p className="mt-1 text-xs font-medium text-foreground">

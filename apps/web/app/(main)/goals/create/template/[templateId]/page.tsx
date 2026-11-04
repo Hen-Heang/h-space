@@ -214,7 +214,7 @@ export default function TemplateFormPage() {
               className={cn(error && "border-destructive/50 bg-destructive/5")}
             />
             {field.helperText && !error && (
-              <p className="ml-1 text-[11px] font-medium text-muted-foreground">
+              <p className="ml-1 text-xs font-medium text-muted-foreground">
                 {field.helperText}
               </p>
             )}
@@ -234,7 +234,7 @@ export default function TemplateFormPage() {
               className={cn("min-h-[120px]", error && "border-destructive/50 bg-destructive/5")}
             />
             {field.helperText && !error && (
-              <p className="ml-1 text-[11px] font-medium text-muted-foreground">
+              <p className="ml-1 text-xs font-medium text-muted-foreground">
                 {field.helperText}
               </p>
             )}
@@ -314,7 +314,7 @@ export default function TemplateFormPage() {
                     <CardContent className="space-y-4 p-5">
                       {compoundField.fields.map((subField) => (
                         <div key={subField.id} className="space-y-2">
-                          <Label className="ml-1 text-[11px] font-medium text-muted-foreground/70">
+                          <Label className="ml-1 text-xs font-medium text-muted-foreground/70">
                             {subField.label}
                           </Label>
                           <Input
@@ -399,7 +399,7 @@ export default function TemplateFormPage() {
           </div>
         </div>
         <div className="hidden flex-col items-end sm:flex">
-          <span className="text-[11px] font-medium text-muted-foreground">
+          <span className="text-xs font-medium text-muted-foreground">
             Section {currentSection + 1} of {template.sections.length}
           </span>
           <span className="text-xs font-semibold text-primary">
@@ -518,7 +518,7 @@ export default function TemplateFormPage() {
                   <h3 className="truncate text-base font-semibold tracking-tight">
                     {template.name}
                   </h3>
-                  <p className="text-[11px] font-medium text-primary/70">{template.category}</p>
+                  <p className="text-xs font-medium text-primary/70">{template.category}</p>
                 </div>
               </div>
               <p className="line-clamp-4 text-xs font-medium leading-relaxed text-muted-foreground">
@@ -530,7 +530,7 @@ export default function TemplateFormPage() {
           <div className="rounded-lg border border-primary/10 bg-primary/5 p-5">
             <div className="mb-3 flex items-center gap-2">
               <Zap size={14} className="text-primary" />
-              <span className="text-[11px] font-medium text-primary">Tip</span>
+              <span className="text-xs font-medium text-primary">Tip</span>
             </div>
             <p className="text-xs font-medium italic leading-relaxed text-foreground/80">
               Fill in the details and we&apos;ll prefill your goal. AI task generation arrives soon

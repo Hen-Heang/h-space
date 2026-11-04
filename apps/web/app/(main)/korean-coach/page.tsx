@@ -186,7 +186,7 @@ function CompactLink({
       </span>
       {label}
       {badge != null && (
-        <span className="rounded-full bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-bold text-rose-700 dark:text-rose-400">
+        <span className="rounded-full bg-rose-500/15 px-1.5 py-0.5 text-xs font-bold text-rose-700 dark:text-rose-400">
           {badge}
         </span>
       )}

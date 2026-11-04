@@ -99,11 +99,11 @@ describe("MobileBottomNav", () => {
     render(<MobileBottomNav pathname={pathname} searchParams={searchParams} />)
   }
 
-  it("renders Home · Plan · Learn · Apps plus a More trigger", () => {
+  it("renders Home · Plan · Learn · Finance plus a More trigger", () => {
     setup("/home")
     const nav = screen.getByRole("navigation", { name: "Primary" })
     expect(within(nav).getAllByRole("listitem")).toHaveLength(5)
-    for (const label of ["Home", "Plan", "Learn", "Apps", "More"]) {
+    for (const label of ["Home", "Plan", "Learn", "Finance", "More"]) {
       expect(within(nav).getByText(label)).toBeTruthy()
     }
     expect(within(nav).getByRole("button", { name: "More" })).toBeTruthy()
@@ -112,20 +112,28 @@ describe("MobileBottomNav", () => {
   it("uses the workspace route mapping, in order", () => {
     setup("/home")
     const hrefs = screen.getAllByRole("link").map((el) => el.getAttribute("href"))
-    expect(hrefs).toEqual(["/home", "/goals", "/learn", "/apps"])
+    expect(hrefs).toEqual(["/home", "/goals", "/learn", "/finance"])
   })
 
   it("marks the current destination with aria-current", () => {
-    setup("/apps")
+    setup("/finance/transactions")
     const current = screen
       .getAllByRole("link")
       .filter((el) => el.getAttribute("aria-current") === "page")
     expect(current).toHaveLength(1)
-    expect(current[0].getAttribute("href")).toBe("/apps")
+    expect(current[0].getAttribute("href")).toBe("/finance")
   })
 
   it("lights More, not a tab, on routes no tab owns", () => {
-    for (const route of ["/notes", "/growth/recovery", "/progress", "/chat", "/settings"]) {
+    for (const route of [
+      "/apps",
+      "/vault",
+      "/notes",
+      "/growth/recovery",
+      "/progress",
+      "/chat",
+      "/settings",
+    ]) {
       setup(route)
       expect(
         screen.queryAllByRole("link").filter((el) => el.getAttribute("aria-current") === "page"),
@@ -151,9 +159,9 @@ describe("MobileBottomNav", () => {
     }
   })
 
-  it("lights the Apps tab inside H-Vault", () => {
+  it("lights More on My Apps pages outside the bottom bar", () => {
     setup("/vault")
-    expect(screen.getByRole("link", { name: "Apps" }).getAttribute("aria-current")).toBe("page")
+    expect(screen.getByRole("button", { name: "More" }).getAttribute("aria-current")).toBe("page")
   })
 
   it("opens the More sheet from the trigger", () => {
@@ -352,7 +360,7 @@ describe("DesktopSidebar", () => {
     return onToggle
   }
 
-  it("renders the six workspaces, Finance shortcut, and tools under two headings", () => {
+  it("renders Finance with the workspace destinations and tools under two headings", () => {
     setup("/practice", false)
     const nav = screen.getByRole("navigation", { name: "Primary" })
     const links = within(nav).getAllByRole("link")
@@ -386,6 +394,16 @@ describe("DesktopSidebar", () => {
     expect(screen.getByRole("link", { name: "AI Assistant" }).getAttribute("aria-current")).toBe(
       "page",
     )
+  })
+
+  it("lights Finance across its routes", () => {
+    for (const route of ["/finance", "/finance/transactions", "/finance/review"]) {
+      setup(route, false)
+      expect(screen.getByRole("link", { name: "Finance" }).getAttribute("aria-current")).toBe(
+        "page",
+      )
+      cleanup()
+    }
   })
 
   it("gives every collapsed icon an accessible name", () => {
@@ -437,15 +455,15 @@ describe("DesktopHeader", () => {
 
 describe("TabletNavigationRail", () => {
   it("shows the same workspaces and tools as the desktop sidebar, with short labels", () => {
-    renderWithTooltips(<TabletNavigationRail pathname="/vault" searchParams={undefined} />)
+    renderWithTooltips(<TabletNavigationRail pathname="/finance/review" searchParams={undefined} />)
     const nav = screen.getByRole("navigation", { name: "Primary" })
     expect(
       within(nav)
         .getAllByRole("link")
         .map((el) => el.getAttribute("href")),
     ).toEqual([...workspaceNavItems, ...toolNavItems].map((item) => item.href))
-    expect(screen.getByRole("link", { name: "My Apps" }).getAttribute("aria-current")).toBe("page")
-    expect(within(nav).getByText("Apps")).toBeTruthy()
+    expect(screen.getByRole("link", { name: "Finance" }).getAttribute("aria-current")).toBe("page")
+    expect(within(nav).getByText("Finance")).toBeTruthy()
   })
 })
 

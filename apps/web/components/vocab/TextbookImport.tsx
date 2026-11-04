@@ -89,14 +89,14 @@ export function TextbookImport({ existingTerms, onImport, embedded = false }: Te
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
-              <p className="text-[12px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400">
+              <p className="text-xs font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400">
                 Textbook Import
               </p>
             </div>
             <h3 className="mt-3 text-xl font-bold text-foreground sm:mt-4 sm:text-2xl">
               Paste Your Lesson
             </h3>
-            <p className="mt-2 text-sm font-medium leading-relaxed text-muted-foreground sm:text-[16px]">
+            <p className="mt-2 text-sm font-medium leading-relaxed text-muted-foreground sm:text-base">
               Copy a word list from your textbook (사회통합프로그램, TOPIK, class notes) and paste
               it here. AI turns it into flashcards — your translations are kept exactly as written.
             </p>

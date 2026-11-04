@@ -43,8 +43,8 @@ export function HolidayMarker({ date, holidays, onClick, variant, className }: H
       title={summary}
       className={cn(
         "flex min-w-0 items-center justify-center gap-1 overflow-hidden rounded-md font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70",
-        variant === "month" && "h-6 shrink-0 px-0.5 text-[9px]",
-        variant === "time-grid" && "mx-auto mb-1 min-h-6 max-w-[calc(100%-0.5rem)] px-1 text-[9px]",
+        variant === "month" && "h-6 shrink-0 px-0.5 text-xs",
+        variant === "time-grid" && "mx-auto mb-1 min-h-6 max-w-[calc(100%-0.5rem)] px-1 text-xs",
         accentClass,
         className,
       )}

@@ -83,7 +83,7 @@ export function TransactionRow({
           <p className="min-w-0 flex-1 truncate" title={meta}>
             {meta}
           </p>
-          <div className="ml-auto flex max-w-full flex-wrap justify-end gap-x-2 text-right text-[11px] tabular-nums sm:text-xs">
+          <div className="ml-auto flex max-w-full flex-wrap justify-end gap-x-2 text-right text-xs tabular-nums sm:text-xs">
             {transaction.currency === "USD" && transaction.originalAmount !== null && (
               <span className="break-words">
                 {usd.format(transaction.originalAmount)}

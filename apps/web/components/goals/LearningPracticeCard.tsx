@@ -37,7 +37,7 @@ export function LearningPracticeCard({
           <GraduationCap size={14} strokeWidth={2.5} />
           Learning Practice
         </h3>
-        <span className="text-[11px] font-bold text-muted-foreground">
+        <span className="text-xs font-bold text-muted-foreground">
           {completedCount}/{matches.length}
         </span>
       </div>
@@ -68,7 +68,7 @@ export function LearningPracticeCard({
             </span>
             <Link
               href={link.href}
-              className="shrink-0 rounded-xl bg-blue-600/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-blue-600 transition-colors hover:bg-blue-600/20 dark:text-blue-400"
+              className="shrink-0 rounded-xl bg-blue-600/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-blue-600 transition-colors hover:bg-blue-600/20 dark:text-blue-400"
             >
               {link.label} →
             </Link>

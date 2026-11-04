@@ -123,7 +123,7 @@ function TriggerRow({
     <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card p-3">
       <span className="min-w-0 text-sm text-foreground">
         <span className="block truncate">{trigger.label}</span>
-        <span className="mt-0.5 block text-[11px] text-muted-foreground">
+        <span className="mt-0.5 block text-xs text-muted-foreground">
           {categoryLabel(trigger.category)}
         </span>
       </span>

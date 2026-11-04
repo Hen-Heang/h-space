@@ -125,7 +125,7 @@ export function PhraseCardListItem({
           {card.tags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+              className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-muted-foreground"
             >
               <Sparkles size={10} /> {tag}
             </span>

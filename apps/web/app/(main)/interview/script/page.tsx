@@ -1283,7 +1283,7 @@ export default function InterviewScriptPage() {
                     <div key={section.id} className="group flex items-start gap-2">
                       <p
                         lang="ko"
-                        className="min-w-0 flex-1 whitespace-pre-wrap break-keep text-[17px] leading-[2.05] text-slate-800 dark:text-slate-200"
+                        className="min-w-0 flex-1 whitespace-pre-wrap break-keep text-lg leading-[2.05] text-slate-800 dark:text-slate-200"
                       >
                         {section.text}
                       </p>

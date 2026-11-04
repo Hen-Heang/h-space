@@ -84,14 +84,14 @@ const CorrectionNotice: FC<{ correction: VoiceCorrection; onDismiss: () => void 
           <Lightbulb size={13} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-200/90">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-200/90">
             더 자연스럽게
           </p>
-          <p className="mt-1 text-[14px] font-semibold leading-snug text-white" lang="ko">
+          <p className="mt-1 text-sm font-semibold leading-snug text-white" lang="ko">
             {suggestion}
           </p>
           {mistake?.explanation && (
-            <p className="mt-1 text-[12px] font-medium leading-relaxed text-amber-100/80">
+            <p className="mt-1 text-xs font-medium leading-relaxed text-amber-100/80">
               {mistake.explanation}
             </p>
           )}
@@ -289,16 +289,16 @@ export const RealtimeVoicePanel = memo(function RealtimeVoicePanel({
 
       <header className="relative z-10 flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 pt-[max(1rem,env(safe-area-inset-top))] sm:flex-nowrap sm:px-6 sm:pt-5">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="flex h-8 items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-100 backdrop-blur-xl">
+          <span className="flex h-8 items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 text-xs font-bold uppercase tracking-[0.14em] text-blue-100 backdrop-blur-xl">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
             Live Korean
           </span>
-          <span className="hidden items-center gap-1.5 text-[11px] font-semibold text-slate-400 lg:flex">
+          <span className="hidden items-center gap-1.5 text-xs font-semibold text-slate-400 lg:flex">
             <Captions size={13} />
             KO · EN captions
           </span>
           {scenarioTitle && (
-            <span className="flex h-8 max-w-[45vw] items-center gap-1.5 truncate rounded-full border border-blue-300/20 bg-blue-400/10 px-3 text-[11px] font-bold text-blue-100">
+            <span className="flex h-8 max-w-[45vw] items-center gap-1.5 truncate rounded-full border border-blue-300/20 bg-blue-400/10 px-3 text-xs font-bold text-blue-100">
               <Sparkles size={12} className="shrink-0" />
               <span className="truncate">{scenarioTitle}</span>
             </span>
@@ -306,7 +306,7 @@ export const RealtimeVoicePanel = memo(function RealtimeVoicePanel({
         </div>
 
         <div className="order-3 flex w-full justify-center sm:order-none sm:w-auto sm:shrink-0">
-          <span className="flex h-8 items-center rounded-full border border-blue-300/15 bg-blue-400/10 px-3 text-[10px] font-bold text-blue-100 sm:text-[11px]">
+          <span className="flex h-8 items-center rounded-full border border-blue-300/15 bg-blue-400/10 px-3 text-xs font-bold text-blue-100 sm:text-xs">
             {formatLearnerLevel(learnerLevel)} · {formatSpeechPace(speechRate)}
           </span>
         </div>
@@ -317,7 +317,7 @@ export const RealtimeVoicePanel = memo(function RealtimeVoicePanel({
           size="sm"
           onClick={onEnd}
           autoFocus
-          className="h-9 rounded-full border border-white/10 bg-white/[0.07] px-3.5 text-[12px] font-bold text-white hover:bg-white/15 hover:text-white"
+          className="h-9 rounded-full border border-white/10 bg-white/[0.07] px-3.5 text-xs font-bold text-white hover:bg-white/15 hover:text-white"
         >
           <PhoneOff size={14} />
           End
@@ -377,9 +377,9 @@ export const RealtimeVoicePanel = memo(function RealtimeVoicePanel({
               ) : (
                 <Mic size={16} className="text-blue-300" />
               )}
-              <p className="text-[13px] font-bold text-blue-100">{copy.label}</p>
+              <p className="text-xs font-bold text-blue-100">{copy.label}</p>
             </div>
-            <p className="mt-1 text-[11px] font-medium text-slate-400 sm:text-[12px]">
+            <p className="mt-1 text-xs font-medium text-slate-400 sm:text-xs">
               {copy.detail}
             </p>
           </div>
@@ -406,7 +406,7 @@ export const RealtimeVoicePanel = memo(function RealtimeVoicePanel({
           )}
 
           <div className="w-full max-w-3xl rounded-[1.5rem] border border-white/10 bg-white/[0.065] px-5 py-5 text-center shadow-2xl shadow-black/20 backdrop-blur-2xl sm:rounded-[2rem] sm:px-8 sm:py-7">
-            <div className="mb-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-blue-300">
+            <div className="mb-2 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-blue-300">
               <Captions size={13} />
               Hengo · live subtitle
             </div>
@@ -423,18 +423,18 @@ export const RealtimeVoicePanel = memo(function RealtimeVoicePanel({
                 )}
               </p>
             ) : (
-              <p className="text-[13px] font-medium text-slate-400">
+              <p className="text-xs font-medium text-slate-400">
                 Captions off — listening practice. Hengo is{" "}
                 {phase === "speaking" ? "speaking" : "here"}.
               </p>
             )}
             {assistantEnglish && (
               <p
-                className="mx-auto mt-3 max-w-2xl text-pretty border-t border-white/[0.08] pt-3 text-[13px] font-medium leading-relaxed text-blue-200/85 sm:text-[15px]"
+                className="mx-auto mt-3 max-w-2xl text-pretty border-t border-white/[0.08] pt-3 text-xs font-medium leading-relaxed text-blue-200/85 sm:text-base"
                 lang="en"
                 aria-live="polite"
               >
-                <span className="mr-1.5 rounded bg-blue-400/15 px-1 py-px align-[1px] text-[9px] font-bold uppercase tracking-wider text-blue-200">
+                <span className="mr-1.5 rounded bg-blue-400/15 px-1 py-px align-[1px] text-xs font-bold uppercase tracking-wider text-blue-200">
                   EN
                 </span>
                 {assistantEnglish}
@@ -444,7 +444,7 @@ export const RealtimeVoicePanel = memo(function RealtimeVoicePanel({
               <button
                 type="button"
                 onClick={() => setEnglishRevealed(true)}
-                className="mx-auto mt-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11px] font-bold text-blue-200 transition-colors hover:bg-white/12"
+                className="mx-auto mt-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs font-bold text-blue-200 transition-colors hover:bg-white/12"
               >
                 <Captions size={12} />
                 Show English
@@ -454,11 +454,11 @@ export const RealtimeVoicePanel = memo(function RealtimeVoicePanel({
 
           {showKorean && (
             <div className="mt-3 min-h-16 w-full max-w-2xl rounded-2xl border border-white/[0.07] bg-black/15 px-4 py-3 text-center">
-              <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-emerald-300/80">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-300/80">
                 You · live subtitle
               </p>
               <p
-                className="mt-1 text-[14px] font-medium leading-relaxed text-slate-200 sm:text-[15px]"
+                className="mt-1 text-sm font-medium leading-relaxed text-slate-200 sm:text-base"
                 lang="ko"
                 aria-live="polite"
               >
@@ -482,14 +482,14 @@ export const RealtimeVoicePanel = memo(function RealtimeVoicePanel({
 
           {turns.length > 1 && (
             <div className="mt-4 w-full max-w-2xl rounded-2xl border border-white/[0.07] bg-white/[0.035] p-3 text-left">
-              <p className="px-1 pb-2 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500">
+              <p className="px-1 pb-2 text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
                 Recent transcript
               </p>
               <div className="max-h-28 space-y-2 overflow-y-auto pr-1">
                 {turns.slice(-4).map((turn) => (
                   <div
                     key={turn.id}
-                    className="flex gap-2 text-[11px] leading-relaxed sm:text-[12px]"
+                    className="flex gap-2 text-xs leading-relaxed sm:text-xs"
                   >
                     <span
                       className={cn(
@@ -513,13 +513,13 @@ export const RealtimeVoicePanel = memo(function RealtimeVoicePanel({
               className="mt-4 w-full max-w-xl rounded-2xl border border-red-400/25 bg-red-400/10 px-4 py-3 text-center"
               role="alert"
             >
-              <p className="text-[12px] font-semibold leading-relaxed text-red-100">{error}</p>
+              <p className="text-xs font-semibold leading-relaxed text-red-100">{error}</p>
               {phase === "error" && (
                 <Button
                   type="button"
                   size="sm"
                   onClick={onRetry}
-                  className="mt-3 h-8 rounded-full bg-white px-3 text-[11px] font-bold text-slate-950 hover:bg-slate-100"
+                  className="mt-3 h-8 rounded-full bg-white px-3 text-xs font-bold text-slate-950 hover:bg-slate-100"
                 >
                   <RotateCcw size={13} />
                   Try again
@@ -558,7 +558,7 @@ export const RealtimeVoicePanel = memo(function RealtimeVoicePanel({
             <PhoneOff size={21} />
           </Button>
         </div>
-        <p className="text-center text-[10px] font-medium text-slate-500">
+        <p className="text-center text-xs font-medium text-slate-500">
           AI-generated voice · {model ? model.replace(/^gpt-/, "") : "secure realtime session"}
         </p>
       </footer>

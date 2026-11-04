@@ -1,8 +1,22 @@
 import type { Metadata, Viewport } from "next"
+import { Inter, Noto_Sans_Khmer } from "next/font/google"
 
 import { AppProviders } from "@/components/providers/app-providers"
 
 import "./globals.css"
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+})
+
+const notoSansKhmer = Noto_Sans_Khmer({
+  subsets: ["khmer", "latin"],
+  display: "swap",
+  variable: "--font-khmer",
+  preload: false,
+})
 
 // Tells the browser to shrink the visual viewport (and dvh units) when the
 // virtual keyboard opens — keeps the chat input visible on mobile.
@@ -65,7 +79,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${inter.variable} ${notoSansKhmer.variable}`}
+      suppressHydrationWarning
+    >
       <body className="bg-background text-foreground antialiased" suppressHydrationWarning>
         <AppProviders>{children}</AppProviders>
       </body>

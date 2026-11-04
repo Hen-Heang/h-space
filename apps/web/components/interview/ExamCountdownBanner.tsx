@@ -94,7 +94,7 @@ export function ExamCountdownBanner() {
                       <span className="text-lg font-bold tabular-nums leading-none tracking-tight text-foreground sm:text-2xl">
                         {display[unit.key]}
                       </span>
-                      <span className="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.15em] text-muted-foreground sm:text-[9px]">
+                      <span className="mt-0.5 text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground sm:text-xs">
                         {unit.label}
                       </span>
                     </div>

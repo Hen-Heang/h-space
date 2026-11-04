@@ -48,8 +48,8 @@ function Stat({ icon, value, label }: { icon: React.ReactNode; value: string; la
   return (
     <div className="flex flex-1 flex-col items-center gap-1 rounded-2xl border border-border/60 bg-muted/30 px-2 py-3 text-center">
       <span className="text-muted-foreground">{icon}</span>
-      <span className="text-[17px] font-bold leading-none text-foreground">{value}</span>
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <span className="text-lg font-bold leading-none text-foreground">{value}</span>
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
     </div>
@@ -75,11 +75,11 @@ export function VoiceSessionReport({
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/12 text-blue-600 dark:text-blue-400">
               <Sparkles size={16} />
             </span>
-            <DialogTitle className="text-[17px] font-bold tracking-tight">
+            <DialogTitle className="text-lg font-bold tracking-tight">
               Speaking session summary
             </DialogTitle>
           </div>
-          <DialogDescription className="text-[13px]">
+          <DialogDescription className="text-xs">
             {report.scenarioTitle
               ? `Scenario: ${report.scenarioTitle}`
               : "Here's how your live Korean practice went."}
@@ -109,7 +109,7 @@ export function VoiceSessionReport({
           {report.scenarioTitle && report.scenarioCompleted !== null && (
             <div
               className={cn(
-                "flex items-center gap-2 rounded-2xl border px-4 py-3 text-[13px] font-semibold",
+                "flex items-center gap-2 rounded-2xl border px-4 py-3 text-xs font-semibold",
                 report.scenarioCompleted
                   ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
                   : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
@@ -122,14 +122,14 @@ export function VoiceSessionReport({
 
           {report.strengths.length > 0 && (
             <section className="space-y-2">
-              <h4 className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 What went well
               </h4>
               <ul className="space-y-1.5">
                 {report.strengths.map((strength, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 text-[13px] leading-relaxed text-foreground/90"
+                    className="flex items-start gap-2 text-xs leading-relaxed text-foreground/90"
                   >
                     <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-emerald-500" />
                     {strength}
@@ -141,7 +141,7 @@ export function VoiceSessionReport({
 
           {report.corrections.length > 0 && (
             <section className="space-y-2">
-              <h4 className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 Key corrections ({report.corrections.length})
               </h4>
               <div className="space-y-2">
@@ -150,7 +150,7 @@ export function VoiceSessionReport({
                     key={i}
                     className="rounded-2xl border border-border/60 bg-muted/20 px-3.5 py-3"
                   >
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                       <span className="text-muted-foreground line-through" lang="ko">
                         {correction.original}
                       </span>
@@ -160,11 +160,11 @@ export function VoiceSessionReport({
                       </span>
                     </div>
                     {correction.natural && correction.natural !== correction.corrected && (
-                      <p className="mt-1 text-[12px] text-blue-600 dark:text-blue-400" lang="ko">
+                      <p className="mt-1 text-xs text-blue-600 dark:text-blue-400" lang="ko">
                         자연스럽게: {correction.natural}
                       </p>
                     )}
-                    <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                       {correction.explanation}
                     </p>
                   </div>
@@ -176,7 +176,7 @@ export function VoiceSessionReport({
           {report.vocabulary.length > 0 && (
             <section className="space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   Useful expressions
                 </h4>
                 <Button
@@ -185,7 +185,7 @@ export function VoiceSessionReport({
                   size="sm"
                   onClick={onSaveVocabulary}
                   disabled={vocabState !== "idle"}
-                  className="h-7 gap-1.5 rounded-full px-2.5 text-[11px] font-bold text-blue-600 dark:text-blue-400"
+                  className="h-7 gap-1.5 rounded-full px-2.5 text-xs font-bold text-blue-600 dark:text-blue-400"
                 >
                   {vocabState === "saving" ? (
                     <Loader2 size={12} className="animate-spin" />
@@ -201,7 +201,7 @@ export function VoiceSessionReport({
                 {report.vocabulary.map((vocab, i) => (
                   <span
                     key={i}
-                    className="rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-[12px] font-medium text-foreground"
+                    className="rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-xs font-medium text-foreground"
                   >
                     <span lang="ko" className="font-bold">
                       {vocab.korean}
@@ -214,14 +214,14 @@ export function VoiceSessionReport({
           )}
 
           <section className="rounded-2xl border border-blue-500/25 bg-blue-500/[0.07] px-4 py-3">
-            <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300">
               <Lightbulb size={13} />
               Recommended next
             </div>
-            <p className="mt-1 text-[13px] font-bold text-foreground">
+            <p className="mt-1 text-xs font-bold text-foreground">
               {report.recommendedPractice.label}
             </p>
-            <p className="text-[12px] text-muted-foreground">{report.recommendedPractice.reason}</p>
+            <p className="text-xs text-muted-foreground">{report.recommendedPractice.reason}</p>
           </section>
         </div>
 
@@ -230,7 +230,7 @@ export function VoiceSessionReport({
             type="button"
             variant="outline"
             onClick={onPracticeAgain}
-            className="h-11 gap-1.5 rounded-xl text-[13px] font-bold"
+            className="h-11 gap-1.5 rounded-xl text-xs font-bold"
           >
             <RotateCcw size={15} />
             Practice again
@@ -239,7 +239,7 @@ export function VoiceSessionReport({
             <Button
               type="button"
               onClick={onReviewCorrections}
-              className="h-11 gap-1.5 rounded-xl bg-blue-600 text-[13px] font-bold text-white hover:bg-blue-500"
+              className="h-11 gap-1.5 rounded-xl bg-blue-600 text-xs font-bold text-white hover:bg-blue-500"
             >
               Review corrections
               <ArrowRight size={15} />
@@ -248,7 +248,7 @@ export function VoiceSessionReport({
             <Button
               type="button"
               onClick={onStartRecommended}
-              className="h-11 gap-1.5 rounded-xl bg-blue-600 text-[13px] font-bold text-white hover:bg-blue-500"
+              className="h-11 gap-1.5 rounded-xl bg-blue-600 text-xs font-bold text-white hover:bg-blue-500"
             >
               {report.recommendedPractice.label}
               <ArrowRight size={15} />

@@ -27,7 +27,7 @@ const GROUPS: { id: string; label: string; items: NavItem[] }[] = [
 ]
 
 /**
- * The global sidebar shows six workspaces, a direct Finance link, the AI
+ * The global sidebar shows six workspace destinations, including Finance, the AI
  * Assistant, and Settings from `workspaceNavItems` / `toolNavItems` in
  * `lib/navigation.ts`. A workspace's own pages (Planner's Tasks/Goals/Calendar,
  * …) are its local tabs, never extra rows here.

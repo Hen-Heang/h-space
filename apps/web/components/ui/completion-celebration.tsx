@@ -98,7 +98,7 @@ export function CompletionCelebration({
               🎉
             </motion.div>
             <p className="text-xl font-bold tracking-tight text-foreground">{message}</p>
-            <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
               {subtitle}
             </p>
           </motion.div>

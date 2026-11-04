@@ -184,7 +184,7 @@ export function SentenceChallenge({ cardId, term, onGetChallenge, onCheckSentenc
                         strokeWidth={2.5}
                         className="text-violet-600 dark:text-violet-400"
                       />
-                      <span className="text-[12px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400">
+                      <span className="text-xs font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400">
                         Task
                       </span>
                     </div>
@@ -268,7 +268,7 @@ export function SentenceChallenge({ cardId, term, onGetChallenge, onCheckSentenc
                   {/* Corrected / Better */}
                   {result.correctedSentence && result.correctedSentence !== attempt.trim() && (
                     <div className="rounded-2xl border border-sky-500/20 bg-sky-500/5 p-3 space-y-1">
-                      <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-sky-600 dark:text-sky-400">
+                      <span className="text-xs font-bold uppercase tracking-[0.18em] text-sky-600 dark:text-sky-400">
                         Corrected
                       </span>
                       <p className="text-sm font-bold text-foreground">
@@ -285,7 +285,7 @@ export function SentenceChallenge({ cardId, term, onGetChallenge, onCheckSentenc
                           strokeWidth={2.5}
                           className="text-amber-600 dark:text-amber-400"
                         />
-                        <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">
+                        <span className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">
                           More natural
                         </span>
                       </div>
@@ -313,14 +313,14 @@ export function SentenceChallenge({ cardId, term, onGetChallenge, onCheckSentenc
                     <button
                       type="button"
                       onClick={handleRetry}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl border border-border bg-background py-3 text-[12px] font-bold uppercase tracking-wide text-muted-foreground transition-all hover:bg-accent active:scale-95"
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl border border-border bg-background py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground transition-all hover:bg-accent active:scale-95"
                     >
                       <RotateCcw size={12} strokeWidth={2.5} /> Try again
                     </button>
                     <button
                       type="button"
                       onClick={handleNewChallenge}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-violet-600 py-3 text-[12px] font-bold uppercase tracking-wide text-white shadow-md shadow-violet-600/20 transition-all hover:bg-violet-500 active:scale-95"
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-violet-600 py-3 text-xs font-bold uppercase tracking-wide text-white shadow-md shadow-violet-600/20 transition-all hover:bg-violet-500 active:scale-95"
                     >
                       <PenLine size={12} strokeWidth={2.5} /> New challenge
                     </button>

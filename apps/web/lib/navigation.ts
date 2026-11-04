@@ -755,7 +755,7 @@ function section(id: NavSectionId): NavSection {
 // decides visibility itself:
 //
 //   1. `workspaceNavItems` + `toolNavItems` — the global sidebar / tablet rail:
-//      six workspaces, a direct Finance link, the AI Assistant, and Settings.
+//      six workspaces including Finance, the AI Assistant, and Settings.
 //   2. `workspaceTabs` — each workspace's local navigation, rendered inside the
 //      workspace by `WorkspaceTabs` (Planner: Tasks · Goals · Calendar · …).
 //   3. `mobileNavItems` — the four mobile bottom-bar tabs before "More".
@@ -791,12 +791,6 @@ export const workspaceNavItems: NavItem[] = [
     description: todayItem.description,
     match: todayItem.match,
   }),
-  workspaceEntry("apps", {
-    shortLabel: "Apps",
-    description: "Projects and personal applications",
-  }),
-  // Direct shortcut to the separately deployed Luyra app. NavRow opens
-  // external destinations in a new tab, while My Apps keeps its own Finance tab.
   { ...navItem("apps-luyra"), id: "nav-finance", shortLabel: "Finance" },
   workspaceEntry("plan", { shortLabel: "Plan", description: "Tasks, goals, and calendar" }),
   workspaceEntry("learn", {
@@ -818,7 +812,7 @@ export const toolNavItems: NavItem[] = [
 ]
 
 /** Mobile bottom bar: four tabs; the fifth slot is the "More" sheet trigger. */
-export const mobileNavItems: NavItem[] = ["nav-today", "nav-plan", "nav-learn", "nav-apps"].map(
+export const mobileNavItems: NavItem[] = ["nav-today", "nav-plan", "nav-learn", "nav-finance"].map(
   (id) => workspaceNavItems.find((item) => item.id === id)!,
 )
 
@@ -860,7 +854,7 @@ export const workspaceTabs: Partial<Record<NavSectionId, NavItem[]>> = {
     "learn-korean-coach",
     "learn-listening",
   ].map(navItem),
-  apps: [...["apps-catalog", "apps-vault"].map(navItem), navItem("apps-luyra")],
+  apps: ["apps-catalog", "apps-vault"].map(navItem),
 }
 
 /**

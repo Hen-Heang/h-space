@@ -36,9 +36,11 @@ export function CategoryDistribution({ categories }: { categories: CategoryAmoun
               <div className="flex items-center gap-3">
                 <CategoryIcon icon={category.categoryIcon} color={category.categoryColor} />
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-col items-start gap-1 xs:flex-row xs:justify-between xs:gap-4">
-                    <p className="truncate text-sm font-semibold">{category.categoryName}</p>
-                    <p className="[overflow-wrap:anywhere] font-mono text-sm font-semibold tabular-nums">
+                  <div className="flex min-w-0 items-baseline justify-between gap-2">
+                    <p className="min-w-0 flex-1 truncate text-sm font-semibold">
+                      {category.categoryName}
+                    </p>
+                    <p className="shrink-0 whitespace-nowrap font-mono text-sm font-semibold tabular-nums">
                       {krw.format(category.amountKrw)}
                     </p>
                   </div>

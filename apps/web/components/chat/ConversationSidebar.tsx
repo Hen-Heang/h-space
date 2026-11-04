@@ -172,7 +172,7 @@ export function ConversationSidebar({
                       {c.title || "Untitled chat"}
                     </span>
                     {(c.updatedAt || c.createdAt || c.messageCount != null) && (
-                      <span className="block truncate text-[11px] font-medium text-muted-foreground/50">
+                      <span className="block truncate text-xs font-medium text-muted-foreground/50">
                         {c.messageCount != null
                           ? c.messageCount > 0
                             ? `${c.messageCount} message${c.messageCount === 1 ? "" : "s"}`

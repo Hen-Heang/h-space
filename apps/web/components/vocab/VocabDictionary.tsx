@@ -283,7 +283,7 @@ export function VocabDictionary({
 
           <div className="space-y-4 p-3 sm:p-4" role="group" aria-label="Vocabulary view controls">
             <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                 Book · level · priority · part of speech
               </p>
               <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
@@ -366,7 +366,7 @@ export function VocabDictionary({
             </div>
 
             <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                 Progress
               </p>
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -386,7 +386,7 @@ export function VocabDictionary({
                     )}
                   >
                     {label}
-                    <span className="font-mono text-[10px] opacity-65">{filterCounts[value]}</span>
+                    <span className="font-mono text-xs opacity-65">{filterCounts[value]}</span>
                   </Button>
                 ))}
               </div>
@@ -505,7 +505,7 @@ export function VocabDictionary({
             <Layers3 size={40} strokeWidth={1.5} />
           </div>
           <h3 className="text-xl font-bold text-foreground">Start Your Collection</h3>
-          <p className="mx-auto mt-3 max-w-xs text-[16px] font-medium leading-relaxed text-muted-foreground">
+          <p className="mx-auto mt-3 max-w-xs text-base font-medium leading-relaxed text-muted-foreground">
             Save words from chat sessions or use the AI Deck Builder to start mastering Korean
             vocabulary.
           </p>

@@ -42,7 +42,7 @@ function OptionGroup<T extends string>({
 }) {
   return (
     <div className="space-y-2">
-      <h4 className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+      <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
         {label}
       </h4>
       <div className="grid grid-cols-2 gap-2">
@@ -63,13 +63,13 @@ function OptionGroup<T extends string>({
             >
               <span
                 className={cn(
-                  "text-[13px] font-bold",
+                  "text-xs font-bold",
                   active ? "text-blue-700 dark:text-blue-300" : "text-foreground",
                 )}
               >
                 {option.label}
               </span>
-              <span className="text-[11px] leading-snug text-muted-foreground">
+              <span className="text-xs leading-snug text-muted-foreground">
                 {option.description}
               </span>
             </button>
@@ -103,10 +103,10 @@ export function VoicePracticeSetup({
         className="dark max-h-[92dvh] gap-0 overflow-hidden rounded-t-3xl border-white/10 bg-slate-950 p-0 text-white shadow-2xl shadow-black/50"
       >
         <SheetHeader className="border-b border-white/10 px-5 pt-5 pb-4 text-left">
-          <SheetTitle className="text-[17px] font-bold tracking-tight">
+          <SheetTitle className="text-lg font-bold tracking-tight">
             Set up your speaking practice
           </SheetTitle>
-          <SheetDescription className="text-[13px]">
+          <SheetDescription className="text-xs">
             {scenarioTitle
               ? `Roleplay: ${scenarioTitle}`
               : "Choose how you want to practice today."}
@@ -144,7 +144,7 @@ export function VoicePracticeSetup({
           <Button
             type="button"
             onClick={() => onStart(options)}
-            className="h-12 w-full gap-2 rounded-xl bg-blue-600 text-[14px] font-bold text-white hover:bg-blue-500"
+            className="h-12 w-full gap-2 rounded-xl bg-blue-600 text-sm font-bold text-white hover:bg-blue-500"
           >
             <Mic size={17} />
             {options.mode === "shadow" ? "Start shadowing" : "Start speaking"}

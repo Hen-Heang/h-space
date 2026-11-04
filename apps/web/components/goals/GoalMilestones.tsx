@@ -90,7 +90,7 @@ export function GoalMilestones({
         <div className="flex items-center gap-2">
           <Flag size={15} strokeWidth={2.5} className="text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Sub-goals</h3>
-          <span className="rounded-full bg-accent/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+          <span className="rounded-full bg-accent/60 px-2 py-0.5 text-xs font-medium text-muted-foreground">
             milestones
           </span>
           {saving && <Loader2 size={13} className="animate-spin text-muted-foreground/40" />}
@@ -145,7 +145,7 @@ export function GoalMilestones({
                 {m.title}
               </span>
               {due && (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-accent/40 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-accent/40 px-2 py-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   <CalendarDays size={11} strokeWidth={2.5} />
                   {due}
                 </span>

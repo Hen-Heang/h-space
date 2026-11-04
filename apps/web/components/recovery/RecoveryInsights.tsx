@@ -276,7 +276,7 @@ export function RecoveryInsights({
                 No events include both sleep quality and urge intensity yet.
               </p>
             )}
-            <p className="mt-4 text-[11px] leading-5 text-muted-foreground">
+            <p className="mt-4 text-xs leading-5 text-muted-foreground">
               Correlation can suggest an experiment; it does not prove that sleep caused an urge.
             </p>
           </CardContent>

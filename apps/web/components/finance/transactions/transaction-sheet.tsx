@@ -479,7 +479,7 @@ function TransactionSheetFields({
               href="https://www.exchangerate-api.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-auto text-[11px] underline-offset-2 hover:underline"
+              className="ml-auto text-xs underline-offset-2 hover:underline"
             >
               Rates by Exchange Rate API
             </a>

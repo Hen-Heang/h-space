@@ -280,14 +280,14 @@ export default function ReadingUnitPage() {
         <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-xl dark:bg-slate-900/40 sm:p-8">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
                 {READING_CATEGORIES[unit.category].label}
               </span>
-              <span className="inline-flex rounded-full bg-muted px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
                 {unit.level}
               </span>
               {progress.status === "completed" && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-white">
                   <CheckCircle2 size={11} strokeWidth={3} /> Completed
                 </span>
               )}
@@ -336,7 +336,7 @@ export default function ReadingUnitPage() {
           <div className="mt-4 flex items-center gap-3">
             <h2
               lang="ko"
-              className="min-w-0 break-words text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl"
+              className="min-w-0 break-words text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
             >
               {unit.episode ? `${unit.episode} · ` : ""}
               {unit.title}
@@ -347,7 +347,7 @@ export default function ReadingUnitPage() {
           <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-muted-foreground/80">
             {unit.summary}
           </p>
-          <p className="mt-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/50">
+          <p className="mt-3 text-xs font-bold uppercase tracking-wider text-muted-foreground/50">
             Source: {unit.source}
           </p>
         </div>
@@ -361,9 +361,9 @@ export default function ReadingUnitPage() {
         >
           <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
             <GraduationCap size={16} strokeWidth={2.5} />
-            <span className="text-[11px] font-bold uppercase tracking-[0.18em]">Grammar focus</span>
+            <span className="text-xs font-bold uppercase tracking-[0.18em]">Grammar focus</span>
           </div>
-          <p className="mt-2 text-lg font-extrabold text-foreground">{unit.grammarNote.pattern}</p>
+          <p className="mt-2 text-lg font-bold text-foreground">{unit.grammarNote.pattern}</p>
           <p className="mt-1.5 text-sm leading-6 text-sky-800 dark:text-sky-200">
             {unit.grammarNote.explanation}
           </p>
@@ -414,7 +414,7 @@ export default function ReadingUnitPage() {
                       again, and shows position in the passage (4 of 7). */}
                   <span
                     aria-label={`Point ${i + 1}`}
-                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-[12px] font-bold tabular-nums text-emerald-600 ring-1 ring-emerald-500/20 dark:text-emerald-400"
+                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-xs font-bold tabular-nums text-emerald-600 ring-1 ring-emerald-500/20 dark:text-emerald-400"
                   >
                     {i + 1}
                   </span>
@@ -531,11 +531,11 @@ export default function ReadingUnitPage() {
                         the reading points and quiz numbering. */}
                       <span
                         aria-label={`Word ${vi + 1}`}
-                        className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-md bg-emerald-500/10 px-1 text-[11px] font-bold tabular-nums text-emerald-600 ring-1 ring-emerald-500/20 dark:text-emerald-400"
+                        className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-md bg-emerald-500/10 px-1 text-xs font-bold tabular-nums text-emerald-600 ring-1 ring-emerald-500/20 dark:text-emerald-400"
                       >
                         {vi + 1}
                       </span>
-                      <p lang="ko" className="font-extrabold text-foreground">
+                      <p lang="ko" className="font-bold text-foreground">
                         {v.term}
                       </p>
                       <SpeakButton text={v.term} />
@@ -586,7 +586,7 @@ export default function ReadingUnitPage() {
             className="text-emerald-600 dark:text-emerald-400"
           />
           <h3 className="text-base font-bold tracking-tight text-foreground">Comprehension Quiz</h3>
-          <span className="text-[11px] font-bold text-muted-foreground/60">
+          <span className="text-xs font-bold text-muted-foreground/60">
             {unit.quiz.length > 0 ? "Pass to complete the unit" : "No quiz in this unit"}
           </span>
         </div>
@@ -670,7 +670,7 @@ export default function ReadingUnitPage() {
                     key={qi}
                     className="rounded-[1.8rem] border border-border bg-card p-5 shadow-sm dark:bg-slate-900/40"
                   >
-                    <p className="font-extrabold text-foreground">
+                    <p className="font-bold text-foreground">
                       <span className="mr-2 text-muted-foreground/50">Q{qi + 1}.</span>
                       {q.question}
                     </p>

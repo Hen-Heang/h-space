@@ -55,7 +55,7 @@ export function SavingsGoalCard({
             )}
           </div>
           {goal.purpose && (
-            <span className="mt-1 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            <span className="mt-1 inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium text-muted-foreground">
               {SAVINGS_PURPOSE_LABELS[goal.purpose]}
             </span>
           )}

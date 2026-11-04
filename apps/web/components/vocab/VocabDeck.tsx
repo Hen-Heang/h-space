@@ -79,7 +79,7 @@ function DeckAddForm({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center justify-center gap-2 border-t border-border/60 px-4 py-3.5 text-[12px] font-bold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-accent/5 hover:text-foreground"
+        className="flex w-full items-center justify-center gap-2 border-t border-border/60 px-4 py-3.5 text-xs font-bold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-accent/5 hover:text-foreground"
       >
         <Plus size={14} strokeWidth={3} />
         Add word to this deck
@@ -93,7 +93,7 @@ function DeckAddForm({
   return (
     <div className="space-y-2 border-t border-border/60 bg-accent/[0.03] p-3 sm:p-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="truncate text-[12px] font-bold uppercase tracking-wide text-muted-foreground">
+        <p className="truncate text-xs font-bold uppercase tracking-wide text-muted-foreground">
           New word in “{category}”
         </p>
         <button
@@ -210,13 +210,13 @@ export function VocabDeck({
               <FolderOpen size={18} strokeWidth={2.5} />
             </div>
             {dueCount > 0 && (
-              <span className="shrink-0 rounded-full bg-amber-500/10 px-2 py-1 text-[11px] font-bold tabular-nums text-amber-600 dark:text-amber-400">
+              <span className="shrink-0 rounded-full bg-amber-500/10 px-2 py-1 text-xs font-bold tabular-nums text-amber-600 dark:text-amber-400">
                 {dueCount} due
               </span>
             )}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-[15px] font-bold text-foreground">{name}</p>
+            <p className="truncate text-base font-bold text-foreground">{name}</p>
             <p className="text-xs font-bold text-muted-foreground">
               {items.length} {items.length === 1 ? "word" : "words"}
             </p>
@@ -230,7 +230,7 @@ export function VocabDeck({
             </p>
           )}
           <div className="mt-auto w-full">
-            <div className="flex items-center justify-between text-[11px] font-bold">
+            <div className="flex items-center justify-between text-xs font-bold">
               <span className="uppercase tracking-wide text-muted-foreground">Mastery</span>
               <span className="tabular-nums text-teal-600">{avgMastery}%</span>
             </div>
@@ -257,13 +257,13 @@ export function VocabDeck({
             <FolderOpen size={18} strokeWidth={2.5} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[16px] font-bold text-foreground">{name}</p>
+            <p className="truncate text-base font-bold text-foreground">{name}</p>
             <p className="text-xs font-bold text-muted-foreground">
               {items.length} {items.length === 1 ? "word" : "words"} · {avgMastery}% mastered
             </p>
           </div>
           {dueCount > 0 && (
-            <span className="shrink-0 rounded-full bg-amber-500/10 px-2 py-1 text-[11px] font-bold tabular-nums text-amber-600 dark:text-amber-400">
+            <span className="shrink-0 rounded-full bg-amber-500/10 px-2 py-1 text-xs font-bold tabular-nums text-amber-600 dark:text-amber-400">
               {dueCount} due
             </span>
           )}
@@ -320,7 +320,7 @@ export function VocabDeck({
                       <button
                         type="button"
                         onClick={() => setExpandedId(null)}
-                        className="mt-2 w-full rounded-xl py-2 text-[12px] font-bold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground"
+                        className="mt-2 w-full rounded-xl py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground"
                       >
                         Collapse
                       </button>
@@ -360,7 +360,7 @@ export function VocabDeck({
                       </div>
                       <span
                         className={cn(
-                          "shrink-0 rounded-full px-2.5 py-1 font-mono text-[11px] font-semibold",
+                          "shrink-0 rounded-full px-2.5 py-1 font-mono text-xs font-semibold",
                           masteryColor(item.mastery),
                         )}
                       >

@@ -112,7 +112,7 @@ export function TodayPracticeCard({
               </p>
               <p
                 lang="ko"
-                className="mt-1 break-keep text-[17px] font-semibold leading-relaxed text-foreground"
+                className="mt-1 break-keep text-lg font-semibold leading-relaxed text-foreground"
               >
                 {next.questionKo}
               </p>

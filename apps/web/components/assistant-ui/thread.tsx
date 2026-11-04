@@ -312,13 +312,13 @@ const CorrectionCard: FC = () => {
         </p>
       </div>
       <div className="p-4">
-        <div className="text-[15px] leading-relaxed font-bold text-amber-900 dark:text-amber-100">
+        <div className="text-base leading-relaxed font-bold text-amber-900 dark:text-amber-100">
           {custom.correction}
         </div>
         {custom.translation && (
           <div className="mt-3 flex items-start gap-3 rounded-xl bg-white/50 p-3 dark:bg-black/30">
             <Languages size={14} className="mt-0.5 shrink-0 text-amber-600/60" />
-            <p className="text-[13px] leading-relaxed font-medium text-amber-800/80 italic dark:text-amber-200/70">
+            <p className="text-xs leading-relaxed font-medium text-amber-800/80 italic dark:text-amber-200/70">
               {custom.translation}
             </p>
           </div>
@@ -369,11 +369,11 @@ const AssistantText: FC<{ text: string }> = ({ text }) => {
 
   return (
     <div className="space-y-2.5">
-      <p className="text-[17px] font-medium leading-relaxed text-foreground">{subtitles.korean}</p>
+      <p className="text-lg font-medium leading-relaxed text-foreground">{subtitles.korean}</p>
       {(subtitles.en || subtitles.rr) && (
         <div className="space-y-1 rounded-xl border border-border/50 bg-muted/40 px-3.5 py-2.5">
           {subtitles.en && (
-            <p className="text-[13px] font-medium leading-snug text-muted-foreground">
+            <p className="text-xs font-medium leading-snug text-muted-foreground">
               <span className="mr-1.5 rounded bg-primary/10 px-1 py-px text-xs font-semibold text-primary align-[1px]">
                 EN
               </span>
@@ -388,7 +388,7 @@ const AssistantText: FC<{ text: string }> = ({ text }) => {
       {subtitles.fix && (
         <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-3.5 py-2.5">
           <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">More natural</p>
-          <p className="mt-0.5 text-[13px] font-medium leading-snug text-foreground/90">
+          <p className="mt-0.5 text-xs font-medium leading-snug text-foreground/90">
             {subtitles.fix}
           </p>
         </div>

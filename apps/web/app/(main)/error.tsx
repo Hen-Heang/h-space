@@ -19,7 +19,7 @@ export default function MainError({
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
       <p className="text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Error</p>
-      <h1 className="mt-3 text-2xl font-extrabold tracking-tight">This page hit a snag</h1>
+      <h1 className="mt-3 text-2xl font-bold tracking-tight">This page hit a snag</h1>
       <p className="mt-3 max-w-sm text-sm font-medium text-muted-foreground">
         Something went wrong loading this page. Your navigation is still available above.
       </p>

@@ -70,7 +70,7 @@ export function MobileHeader({
       )}
 
       <h1
-        className={`min-w-0 flex-1 truncate text-[17px] font-semibold tracking-tight text-foreground ${detail ? "" : "pl-2"}`}
+        className={`min-w-0 flex-1 truncate text-page-title font-semibold tracking-tight text-foreground ${detail ? "" : "pl-2"}`}
       >
         {title}
       </h1>

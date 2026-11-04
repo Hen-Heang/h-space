@@ -55,7 +55,7 @@ export default function EmojiIconPicker({
           <div className="max-h-64 space-y-3 overflow-y-auto">
             {EMOJI_GROUPS.map((group) => (
               <div key={group.label}>
-                <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   {group.label}
                 </p>
                 <div className="grid grid-cols-8 gap-1">

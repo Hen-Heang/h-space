@@ -39,7 +39,9 @@ export function DesktopHeader({
             </span>
           </>
         )}
-        <h1 className="truncate text-base font-semibold tracking-tight text-foreground">{title}</h1>
+        <h1 className="truncate text-page-title font-semibold tracking-tight text-foreground">
+          {title}
+        </h1>
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5">
