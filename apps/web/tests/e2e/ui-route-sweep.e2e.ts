@@ -281,6 +281,7 @@ const ROUTES = [
   "/finance/transactions",
   "/finance/budgets",
   "/finance/savings",
+  "/finance/subscriptions",
   "/finance/analytics",
 ]
 

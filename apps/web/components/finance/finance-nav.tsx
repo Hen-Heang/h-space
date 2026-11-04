@@ -13,6 +13,7 @@ const FINANCE_LINKS = [
   { href: "/finance/transactions", label: "Transactions" },
   { href: "/finance/budgets", label: "Budgets" },
   { href: "/finance/savings", label: "Savings" },
+  { href: "/finance/subscriptions", label: "Subscriptions" },
   { href: "/finance/analytics", label: "Analytics" },
 ] as const
 
