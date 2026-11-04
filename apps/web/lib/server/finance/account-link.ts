@@ -22,9 +22,12 @@ export type FinanceAccountLinks = ReadonlyMap<string, string>
  * dropping an entry. An H-Space id may appear only once.
  */
 export function parseFinanceAccountLinks(raw: string | undefined | null): FinanceAccountLinks | null {
-  if (!raw || raw.trim() === "") return null
+  // Vercel stores a value exactly as typed, so `"a=b"` pasted from an
+  // .env.local line arrives with its quotes. Strip one matching pair.
+  const value = raw?.trim().replace(/^(["'])([\s\S]*)\1$/, "$2").trim()
+  if (!value) return null
   const links = new Map<string, string>()
-  for (const entry of raw.split(",")) {
+  for (const entry of value.split(",")) {
     const parts = entry.trim().split("=")
     if (parts.length !== 2) return null
     const hspaceId = parts[0]!.trim().toLowerCase()

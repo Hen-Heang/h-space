@@ -25,6 +25,19 @@ describe("parseFinanceAccountLinks", () => {
   })
 
   it.each([
+    ["double quotes", `"${H1}=${L1}"`],
+    ["single quotes", `'${H1}=${L1}'`],
+    ["quotes and a trailing newline", `"${H1}=${L1}"\n`],
+  ])("accepts a value wrapped in %s (as pasted into Vercel)", (_label, raw) => {
+    const links = parseFinanceAccountLinks(raw)
+    expect(links && resolveLuyraUserId(links, H1)).toBe(L1)
+  })
+
+  it("still rejects mismatched quotes", () => {
+    expect(parseFinanceAccountLinks(`"${H1}=${L1}'`)).toBeNull()
+  })
+
+  it.each([
     ["missing", undefined],
     ["null", null],
     ["empty", ""],

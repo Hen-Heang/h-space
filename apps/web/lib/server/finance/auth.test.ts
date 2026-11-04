@@ -4,8 +4,72 @@ vi.mock("server-only", () => ({}))
 const requireUser = vi.fn()
 vi.mock("@/lib/server/ai", () => ({ requireUser: (req: Request) => requireUser(req) }))
 
-import { requireFinanceUserId } from "./auth"
+import { financeConfigProblems, requireFinanceUserId } from "./auth"
 import { AppError } from "./errors"
+
+// A fake, password-free URL whose host is a sentinel we can search the log for.
+const SENTINEL_HOST = "finance-db-sentinel.invalid"
+const FAKE_DB_URL = `postgres://${SENTINEL_HOST}/db`
+
+describe("financeConfigProblems", () => {
+  const H = "11111111-1111-4111-8111-111111111111"
+  const L = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+
+  it("is empty when everything is set", () => {
+    expect(financeConfigProblems({ FINANCE_DATABASE_URL: FAKE_DB_URL, FINANCE_ACCOUNT_LINKS: `${H}=${L}` })).toEqual([])
+  })
+
+  it("names each missing setting", () => {
+    expect(financeConfigProblems({})).toEqual([
+      "FINANCE_DATABASE_URL is not set",
+      "FINANCE_ACCOUNT_LINKS is not set",
+    ])
+  })
+
+  it("calls out a malformed link without echoing its value", () => {
+    const problems = financeConfigProblems({ FINANCE_DATABASE_URL: FAKE_DB_URL, FINANCE_ACCOUNT_LINKS: `${H}:${L}` })
+    expect(problems).toHaveLength(1)
+    expect(problems[0]).toMatch(/FINANCE_ACCOUNT_LINKS is malformed/)
+    expect(problems[0]).not.toContain(H)
+  })
+})
+
+describe("requireFinanceUserId — server log", () => {
+  const H = "11111111-1111-4111-8111-111111111111"
+  const L = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+  const OTHER = "22222222-2222-4222-8222-222222222222"
+  const request = () => new Request("http://localhost/api/finance/overview", { headers: { authorization: "Bearer t" } })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.restoreAllMocks()
+    requireUser.mockReset()
+  })
+
+  it("logs which setting is missing, never the database URL", async () => {
+    vi.stubEnv("FINANCE_DATABASE_URL", FAKE_DB_URL)
+    vi.stubEnv("FINANCE_ACCOUNT_LINKS", "")
+    requireUser.mockResolvedValue({ user: { id: H }, db: {} })
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    await expect(requireFinanceUserId(request())).rejects.toMatchObject({ status: 503 })
+    const logged = warn.mock.calls.flat().join(" ")
+    expect(logged).toContain("FINANCE_ACCOUNT_LINKS is not set")
+    expect(logged).not.toContain(SENTINEL_HOST)
+  })
+
+  it("logs the caller's own H-Space id when it isn't linked, not the Luyra id", async () => {
+    vi.stubEnv("FINANCE_DATABASE_URL", FAKE_DB_URL)
+    vi.stubEnv("FINANCE_ACCOUNT_LINKS", `${H}=${L}`)
+    requireUser.mockResolvedValue({ user: { id: OTHER }, db: {} })
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    await expect(requireFinanceUserId(request())).rejects.toMatchObject({ status: 403 })
+    const logged = warn.mock.calls.flat().join(" ")
+    expect(logged).toContain(OTHER)
+    expect(logged).not.toContain(L)
+  })
+})
 
 // Synthetic ids only.
 const HSPACE_ID = "11111111-1111-4111-8111-111111111111"
