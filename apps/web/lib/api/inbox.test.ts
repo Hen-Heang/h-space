@@ -6,7 +6,6 @@ vi.mock("./hspace-http", () => http)
 const flags = vi.hoisted(() => ({
   isSpringInboxEnabled: vi.fn(() => true),
   isVaultLiveEnabled: vi.fn(() => false),
-  isCalendarIntegrationsEnabled: vi.fn(() => false),
 }))
 vi.mock("@/lib/feature-flags", () => flags)
 

@@ -2,7 +2,6 @@
 // card components stay thin and this logic stays unit-testable.
 
 import type { Goal } from "@/lib/goals"
-import type { ExternalCalendarEvent } from "@/lib/external-calendar"
 
 const INACTIVE_GOAL_STATUSES = new Set(["completed", "archived"])
 
@@ -35,29 +34,6 @@ export function goalTaskProgress(
     total: counts.total,
     pct: Math.round((counts.completed / counts.total) * 100),
   }
-}
-
-/** Start of today through the end of tomorrow, in the browser's local time. */
-export function upcomingEventsWindow(now = new Date()): { timeMin: string; timeMax: string } {
-  const start = new Date(now)
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(start)
-  end.setDate(end.getDate() + 2)
-  end.setMilliseconds(-1)
-  return { timeMin: start.toISOString(), timeMax: end.toISOString() }
-}
-
-/** Events that haven't ended yet, soonest first. */
-export function selectUpcomingEvents(
-  events: ExternalCalendarEvent[],
-  now = new Date(),
-  limit = 4,
-): ExternalCalendarEvent[] {
-  const nowMs = now.getTime()
-  return events
-    .filter((e) => new Date(e.end).getTime() > nowMs)
-    .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
-    .slice(0, limit)
 }
 
 /**

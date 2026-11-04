@@ -3,46 +3,27 @@
 ## Snapshot
 
 - **Updated:** 2026-11-04
-- **Shipped:** UI/UX redesign **Phases 1–4** of six are on `main`.
-  - #64: foundation and app shell.
-  - #65: Home and the Planner.
-  - #66: Phase 3b, the Planner leftovers.
-  - #67: Phase 4, My Apps, Settings and the H-Vault layout.
-  - Also on `main`: #59, Exam Prep voice polish.
-  - Production comes from Vercel's normal `main` build; no agent deploy. The production build for `1bba2d7` was **not confirmed** from the agent side (deployment status lookup is denied), so check the Vercel dashboard.
-- **Phase 3b** (#66):
-  - `/goals/overview` uses `DashboardCard` with inline errors (`useGoals().isError`). The roadmap entry moved to the Learning Library (`RoadmapLibraryItem`, `lib/roadmap-progress.ts`).
-  - Goal-detail tabs use the underline style. The task table has 6 columns below 1280px. Rows on phones and in Plan are divider rows.
-  - Inbox has divider rows, a `⋯` menu and a retry on errors (`useInbox().refetch`).
-  - `--destructive-foreground` is defined.
-  - `lib/goals.test.ts` now builds "today" in local time, so it no longer fails before 09:00 KST.
-- **Phase 4** (#67):
-  - My Apps targets are 44px on touch.
-  - Settings groups are flat surfaces with real `h2`s, and one "Preferences & security" `RowList` of links. The two rows that opened Korean Coach preferences are merged into one.
-  - Settings subpages demote their title to `h2`. Reminders are divider rows.
-  - **H-Vault layout only:** the hero, shadows and nested boxes are gone, and `/vault` no longer overflows at 320px. Radix `Select.Value` drops `className`, so truncate from the trigger with `[&>[data-slot=select-value]]:truncate`. No change to `lib/vault-*`, `hooks/useVault`, `lib/api/vault` or `lib/csp.ts`.
-- **Verification:**
-  - Full unit suite: 1655/1655 on the Phase 4 branch.
-  - Sweeps of every changed route at 320–1440px with no overflow.
-  - Synthetic session and data only; the vault was in demo mode with fictional accounts.
-  - **Not verified:** real-account states, the unlocked live vault and its dialogs, the MFA flow end to end, and touch tablets on a real device.
-- **Docs:** status for each phase is in `apps/web/docs/ui-redesign-audit.md` ("Phase 3b status", and under the Phase 4 plan). The rules are in `apps/web/docs/design-system.md`.
-- **Gotchas:**
-  - `next dev` can miss a `globals.css` change; restart it before trusting screenshots.
-  - On Windows, stopping a background `npx next dev` can leave the Next server process running on its port. Kill it by PID before starting another, or a sweep silently measures the old code.
-  - This machine runs low on memory with two dev servers plus Playwright; a dev server can crash with "memory allocation … failed".
-- **Open PRs:** this HANDOFF update.
+- **On `main` and in production:** UI redesign Phases 1–4 (#64–#67), PR #72 (iPhone 15 typography audit), and PR #71 (full 제6회 interview script). The previous snapshot is the top entry of `HANDOFF_HISTORY.md`.
+- **Exam Prep script (#71):**
+  - `lib/interview.ts` seeds the full 2026-09-30 Notion script ("한국에 온 후 새로 생긴 습관/취미") and adds a first outline section, `self-intro` (자기소개). `opening` is now only the topic intro.
+  - The home station is kept out of the public seed on purpose (`lib/interview-content.test.ts` checks this).
+  - Migration `20261104120000_reseed_habits_full_script` was **applied to the live database** on 2026-11-04, after production had deployed #71. Each `weather` draft was first saved as the version "Before full-script reseed (2026-11-04)"; then only the outline keys were cleared, so `/interview/script` refills them from the seed. Roll back from the page's Versions list.
+  - Not verified: the owner's real account after the reseed (an agent can't read the live table). Open `/interview/script` and confirm 자기소개 comes first.
+- **In review:** branch `chore/remove-google-calendar` holds the work that was left uncommitted after #72 merged, with `main` merged in:
+  - Google Calendar integration removed: routes, callback and settings pages, hooks, `lib/server/google-calendar-*`, `UpcomingEventsCard` and `CalendarSourceFilter`. The `kori_google_calendar_integrations` table stays in the database.
+  - The mobile glass fallback under reduced transparency (bottom nav and the Exam Prep section-jump menu), with `interview-audit.e2e.ts` checks.
+  - Calendar/task UI tweaks, `apps/web/scripts/ui-sweep-report.mjs`, and AGENTS/security-rule updates.
+  - Merge conflicts (HANDOFF files, `roadmap/page.tsx`, `ChatWindow.tsx`) were resolved to `main`'s side; those were typography and contrast lines `main` had already reviewed.
+  - `interview-script-repeat.e2e.ts` now saves the `self-intro` section, the new first section, instead of `opening`.
+- **Verification (this branch):** `tsc --noEmit` clean; unit tests 141 files / 1643 pass; `interview-script-repeat.e2e.ts` 3/3 pass against `next dev` on :3000.
+  - Not run: the full e2e suite. An earlier session saw the calendar sticky-shell test expect `overflow: hidden/hidden` while Chrome computes `clip/hidden`; it was left unchanged.
+- **Tracked test artifact:** `apps/web/test-results/playwright/.last-run.json` changes on every e2e run. Don't stage it.
 
 ## Current focus
 
-1. The owner checks Phases 1–4 on production, especially what the sweep couldn't cover: real goals and tasks, deleting an Inbox item from the `⋯` menu, the roadmap row in Learning → Library, the merged Settings row, and the vault both unlocked and at phone width.
-2. Then **Phase 5**: Learning, AI, Notes and Growth.
-   - The chat composer needs a 16px input and 44px controls.
-   - Fix the `/chat` mode-switcher overflow, `/interview/script`, `/history` labels, `LogFlow`, the `RecoveryOverview` badge and `CheckinCalendar` targets.
-   - One tab level per page (`/vocab`, `/phrasebook`).
-   - Remove the hero `h1`s on Korean Coach, Recovery, Review and practice/today.
-   - Plan in the audit's "Phase 5" section.
-3. **Phase 6:** a consistency pass, dark mode, a keyboard pass, and deleting dead components.
+1. The owner reviews and merges the `chore/remove-google-calendar` PR.
+2. The owner checks `/interview/script` on production after the reseed.
+3. Then **Phase 5** of the UI redesign: Learning, AI, Notes and Growth. The plan is in the history entry above and in the "Phase 5" section of `apps/web/docs/ui-redesign-audit.md`.
 
 ## Running the sweep
 

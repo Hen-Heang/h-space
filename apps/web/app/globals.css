@@ -343,6 +343,9 @@ html[data-theme-transition]::view-transition-new(root) {
      `var(--background)` is the light-theme color and would paint a white patch
      over UI that never switches out of dark mode. */
   @media (prefers-reduced-transparency: reduce) {
+    /* These theme-aware surfaces also need an opaque dark-mode fallback.
+       Keep the generic exclusions below for intentionally forced-dark UI. */
+    .mobile-glass,
     .backdrop-blur-xl:not(.dark, .dark *),
     .backdrop-blur-2xl:not(.dark, .dark *),
     .backdrop-blur-3xl:not(.dark, .dark *) {

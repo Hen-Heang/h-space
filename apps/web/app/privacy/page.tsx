@@ -31,7 +31,7 @@ export default function PrivacyPage() {
         </Link>
       </div>
 
-      <article className="prose prose-sm dark:prose-invert max-w-none break-words [overflow-wrap:anywhere] prose-headings:font-semibold prose-headings:tracking-tight">
+      <article className="prose prose-sm dark:prose-invert max-w-none break-words [overflow-wrap:anywhere] prose-headings:font-semibold prose-headings:tracking-tight prose-code:text-xs">
         <h1>Privacy Policy</h1>
         <p className="text-muted-foreground">Last updated: 2026</p>
 
@@ -60,10 +60,6 @@ export default function PrivacyPage() {
             <strong>Device information</strong> — a push-notification token if you opt in to
             notifications.
           </li>
-          <li>
-            <strong>Google Calendar events</strong> — if you connect Google Calendar from Settings,
-            we read your event titles and times (read-only) to display them in H-Space.
-          </li>
         </ul>
 
         <h2>How it&apos;s used</h2>
@@ -87,18 +83,7 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Google</strong> is used if you choose &quot;Sign in with Google,&quot; to verify
-            your identity. If you connect Google Calendar from Settings, we request read-only access
-            (<code>calendar.readonly</code>) to your calendar events so we can show them in H-Space;
-            we don&apos;t modify or delete your Google Calendar data. You can disconnect this access
-            at any time from Settings or from your{" "}
-            <a
-              href="https://myaccount.google.com/permissions"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Google Account permissions
-            </a>
-            .
+            your identity.
           </li>
         </ul>
 

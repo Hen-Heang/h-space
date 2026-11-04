@@ -5,7 +5,7 @@ import { addDays, format, isSameDay, isToday, startOfWeek } from "date-fns"
 
 import { cn } from "@/lib/utils"
 import type { Task } from "@/lib/tasks"
-import { getTaskColor, hexWithAlpha, isExternalTask } from "@/lib/tasks"
+import { getTaskColor, hexWithAlpha } from "@/lib/tasks"
 import { getAllDayTasks, layoutDayTasks, MINUTES_IN_DAY, formatTaskTimeRange } from "@/lib/calendar"
 import { getHolidaysForDate } from "@/lib/holidays"
 import { HolidayMarker } from "./HolidayMarker"
@@ -115,7 +115,7 @@ export function WeekTimeGrid({
               >
                 <div
                   className={cn(
-                    "text-[11px] font-semibold uppercase tracking-wider sm:text-xs",
+                    "text-xs font-semibold uppercase tracking-wider",
                     isHoliday ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground",
                   )}
                 >
@@ -228,11 +228,10 @@ function AllDayStrip({ days, getTasksForDate, onTaskClick, colWidth }: AllDayStr
                 type="button"
                 onClick={() => onTaskClick(task)}
                 title={task.title || task.description || "Untitled"}
-                aria-label={`${task.title || task.description || "Untitled"}${isExternalTask(task) ? ", Google Calendar, read-only" : ""}`}
+                aria-label={task.title || task.description || "Untitled"}
                 className={cn(
                   "min-h-11 w-full truncate rounded-md border-l-2 px-1.5 py-1 text-left text-xs font-medium text-foreground transition-colors lg:min-h-7",
                   task.completed && "line-through opacity-60",
-                  isExternalTask(task) && "border-dashed",
                 )}
                 style={{ backgroundColor: hexWithAlpha(color, 0.16), borderLeftColor: color }}
               >
@@ -320,11 +319,10 @@ function DayColumn({
               p.task.daily_start_time,
               p.task.daily_end_time,
               p.task.is_anytime,
-            )}${isExternalTask(p.task) ? ", Google Calendar, read-only" : ""}`}
+            )}`}
             className={cn(
               "absolute z-10 overflow-hidden rounded-lg border border-l-[3px] px-1.5 py-1 text-left text-foreground shadow-sm transition-shadow duration-150 hover:z-30 hover:shadow-md focus-visible:z-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/80",
               p.task.completed && "opacity-60",
-              isExternalTask(p.task) && "border-dashed",
             )}
             style={{
               top,

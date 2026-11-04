@@ -36,7 +36,6 @@ import { useIsAdmin } from "@/hooks/useInvites"
 import { InvitesManager } from "@/components/settings/InvitesManager"
 import { FieldSaveStatus } from "@/components/ui/field-save-status"
 import { TEXT_DEBOUNCE_MS, useFieldAutosave } from "@/hooks/useFieldAutosave"
-import { isCalendarIntegrationsEnabled } from "@/lib/feature-flags"
 import { cn } from "@/lib/utils"
 
 // One bordered surface per group (docs/design-system.md): no shadow, rows
@@ -404,11 +403,7 @@ export default function SettingsPage() {
           (kori_korean_coach_preferences.main_goal / romanization_mode) that
           the tutoring prompt, Coach's scenario recommendation and Phrasebook
           read. Linked rather than duplicated here so there is only ever one
-          control for each; one row, since both used to open the same page.
-
-          Integrations stay hidden until Plan is navigable (see
-          lib/feature-flags.ts); only the entry point and the page body are
-          gated. */}
+          control for each; one row, since both used to open the same page. */}
       <motion.section variants={itemVariants} aria-labelledby="settings-more-heading">
         <h2
           id="settings-more-heading"
@@ -431,15 +426,6 @@ export default function SettingsPage() {
             description="Protect sign-in with an authenticator app and backup codes"
             trailing={<ChevronRight size={16} aria-hidden="true" />}
           />
-          {isCalendarIntegrationsEnabled() && (
-            <InteractiveRow
-              href="/settings/integrations"
-              leading={<RowIcon icon={CalendarDays} />}
-              title="Integrations"
-              description="Connect Google Calendar and other services"
-              trailing={<ChevronRight size={16} aria-hidden="true" />}
-            />
-          )}
         </RowList>
       </motion.section>
 
@@ -474,7 +460,7 @@ export default function SettingsPage() {
                     setNativeLanguage(e.target.value)
                     saveProfileField("nativeLanguage", { nativeLanguage: e.target.value })
                   }}
-                  className="h-11 w-full rounded-lg border border-border bg-accent/5 px-3 text-sm font-semibold text-foreground outline-none transition-colors focus:bg-background focus-visible:ring-2 focus-visible:ring-ring dark:bg-white/5"
+                  className="h-11 w-full rounded-lg border border-border bg-accent/5 px-3 text-base font-medium text-foreground outline-none transition-colors focus:bg-background focus-visible:ring-2 focus-visible:ring-ring dark:bg-white/5"
                 >
                   <option value="">Select language</option>
                   {[
@@ -505,7 +491,7 @@ export default function SettingsPage() {
                     setOccupation(e.target.value)
                     saveProfileField("occupation", { occupation: e.target.value })
                   }}
-                  className="h-11 w-full rounded-lg border border-border bg-accent/5 px-3 text-sm font-semibold text-foreground outline-none transition-colors focus:bg-background focus-visible:ring-2 focus-visible:ring-ring dark:bg-white/5"
+                  className="h-11 w-full rounded-lg border border-border bg-accent/5 px-3 text-base font-medium text-foreground outline-none transition-colors focus:bg-background focus-visible:ring-2 focus-visible:ring-ring dark:bg-white/5"
                 >
                   <option value="">Select role</option>
                   {[
@@ -636,7 +622,7 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     saveStudyReminders(studyRemindersEnabled, Number(e.target.value))
                   }
-                  className="h-11 rounded-lg border border-border bg-background px-3 text-sm font-semibold text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+                  className="h-11 rounded-lg border border-border bg-background px-3 text-base font-medium text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {Array.from({ length: 24 }, (_, h) => (
                     <option key={h} value={h}>

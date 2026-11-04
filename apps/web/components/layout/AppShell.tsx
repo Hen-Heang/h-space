@@ -124,10 +124,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // decision page, not a Hengo feature — it must never show the app's own
   // nav chrome, same treatment as the pause timer.
   const isConsentRoute = pathname === "/oauth/consent"
-  // Same treatment for the Google Calendar OAuth callback — a transient
-  // processing screen, not a place to show nav chrome.
-  const isGoogleCalendarCallbackRoute = pathname === "/integrations/google-calendar/callback"
-  const isChromeless = isPauseRoute || isConsentRoute || isGoogleCalendarCallbackRoute
+  const isChromeless = isPauseRoute || isConsentRoute
   const fullBleed = isChatRoute || isChromeless
   // Calendar is a primary planning workspace rather than a document page. It
   // keeps the normal Hengo navigation chrome but owns every remaining pixel,

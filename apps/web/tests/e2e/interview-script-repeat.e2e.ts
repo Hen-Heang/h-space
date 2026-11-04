@@ -7,7 +7,8 @@ import { expect, test, type Page } from "@playwright/test"
 const USER_ID = "11111111-1111-4111-8111-111111111111"
 const JWT =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTEiLCJleHAiOjIwMDAwMDAwMDB9.signature"
-// The learner's own (saved) opening, which must win over the drafted script.
+// The learner's own (saved) first section, the self-introduction, which must
+// win over the drafted script.
 const SAVED_OPENING = "안녕하세요. 저는 헨리입니다."
 
 async function installMocks(page: Page) {
@@ -49,7 +50,7 @@ async function installMocks(page: Page) {
 
   const scriptRow = {
     topic_id: "weather",
-    sections: { opening: SAVED_OPENING },
+    sections: { "self-intro": SAVED_OPENING },
     updated_at: new Date().toISOString(),
   }
   await page.route("**/rest/v1/**", async (route) => {

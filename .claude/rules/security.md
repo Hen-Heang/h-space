@@ -9,13 +9,11 @@
 ## This project
 
 - Anything prefixed `NEXT_PUBLIC_` ships to the browser. Server secrets
-  (`OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
-  `GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY`, model overrides) must never get
+  (`OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, model overrides) must never get
   that prefix or be imported from client components.
-- The service-role key is used in exactly one place,
-  `apps/web/lib/server/google-calendar-store.ts`, for a documented reason.
-  Don't add a second use; new server code goes through `requireUser`'s
-  RLS-scoped client.
+- No app code uses the service-role key (its one use left with the Google
+  Calendar integration on 2026-11-04). Don't add one; server code goes
+  through `requireUser`'s RLS-scoped client.
 - The client-side route guard is UX, not security. Authorization lives in
   Supabase RLS, h-space-api, and server-side checks in `app/api/*`.
 - Supabase is the **live database shared with Orbit**. Never apply,

@@ -165,7 +165,7 @@ export function CreateHabitForm({
               />
               <p
                 className={cn(
-                  "mt-1.5 text-[10px] font-medium",
+                  "mt-1.5 text-xs font-medium",
                   index === step ? "text-foreground" : "text-muted-foreground",
                 )}
               >

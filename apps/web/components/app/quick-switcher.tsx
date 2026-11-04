@@ -309,7 +309,7 @@ export function QuickSwitcher({
           {!compact && (
             <>
               <span className="flex-1 text-left">Jump to…</span>
-              <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium">
+              <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs font-medium">
                 ⌘K
               </kbd>
             </>
@@ -344,7 +344,7 @@ export function QuickSwitcher({
               aria-controls="quick-switcher-results"
               className="h-14 border-0 bg-transparent px-0 shadow-none focus-visible:bg-transparent focus-visible:ring-0"
             />
-            <kbd className="rounded border border-border bg-muted px-2 py-1 font-mono text-[10px] text-muted-foreground">
+            <kbd className="rounded border border-border bg-muted px-2 py-1 font-mono text-xs text-muted-foreground">
               ESC
             </kbd>
           </div>
@@ -359,7 +359,7 @@ export function QuickSwitcher({
             {groups.length > 0 ? (
               groups.map((group) => (
                 <div key={group.id} className="pb-1">
-                  <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  <p className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                     {group.label}
                   </p>
                   {group.entries.map((entry) => {
@@ -430,7 +430,7 @@ export function QuickSwitcher({
             )}
           </div>
 
-          <div className="flex items-center justify-between border-t border-border bg-muted/40 px-4 py-2 text-[11px] text-muted-foreground">
+          <div className="flex items-center justify-between border-t border-border bg-muted/40 px-4 py-2 text-xs text-muted-foreground">
             <span>↑↓ navigate · Enter open</span>
             <span>/ opens from anywhere</span>
           </div>

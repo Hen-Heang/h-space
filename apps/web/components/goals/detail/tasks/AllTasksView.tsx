@@ -150,7 +150,7 @@ export function AllTasksView({
           value={sort}
           onChange={(e) => onSortChange(e.target.value as TaskSort)}
           aria-label="Sort tasks"
-          className="h-11 shrink-0 rounded-xl border border-border bg-background px-2.5 text-xs font-semibold outline-none focus:border-primary/40"
+          className="h-11 shrink-0 rounded-xl border border-border bg-background px-2.5 text-base font-medium outline-none focus:border-primary/40"
         >
           {TASK_SORTS.map((s) => (
             <option key={s.value} value={s.value}>

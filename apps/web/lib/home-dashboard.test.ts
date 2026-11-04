@@ -1,13 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import type { ExternalCalendarEvent } from "@/lib/external-calendar"
 import type { Goal } from "@/lib/goals"
 import {
   goalTaskProgress,
   resolveRecentDestinations,
   selectActiveGoals,
-  selectUpcomingEvents,
-  upcomingEventsWindow,
 } from "@/lib/home-dashboard"
 
 const goal = (overrides: Partial<Goal>): Goal =>
@@ -25,17 +22,6 @@ const goal = (overrides: Partial<Goal>): Goal =>
     health_status: "not_started",
     ...overrides,
   }) as Goal
-
-const event = (id: string, start: string, end: string): ExternalCalendarEvent => ({
-  id,
-  source: "google",
-  calendarId: "primary",
-  title: id,
-  start,
-  end,
-  allDay: false,
-  readOnly: true,
-})
 
 describe("selectActiveGoals", () => {
   it("drops completed and archived goals", () => {
@@ -84,38 +70,6 @@ describe("goalTaskProgress", () => {
     expect(
       goalTaskProgress(goal({ taskCounts: { total: 3, completed: 1, incomplete: 2 } })),
     ).toEqual({ completed: 1, total: 3, pct: 33 })
-  })
-})
-
-describe("upcomingEventsWindow", () => {
-  it("spans local midnight today to the end of tomorrow", () => {
-    const now = new Date(2026, 9, 22, 15, 30)
-    const { timeMin, timeMax } = upcomingEventsWindow(now)
-    expect(new Date(timeMin)).toEqual(new Date(2026, 9, 22, 0, 0, 0, 0))
-    expect(new Date(timeMax)).toEqual(new Date(2026, 9, 23, 23, 59, 59, 999))
-  })
-})
-
-describe("selectUpcomingEvents", () => {
-  const now = new Date("2026-10-22T10:00:00Z")
-
-  it("drops ended events and sorts by start", () => {
-    const result = selectUpcomingEvents(
-      [
-        event("later", "2026-10-22T15:00:00Z", "2026-10-22T16:00:00Z"),
-        event("ended", "2026-10-22T08:00:00Z", "2026-10-22T09:00:00Z"),
-        event("ongoing", "2026-10-22T09:30:00Z", "2026-10-22T10:30:00Z"),
-      ],
-      now,
-    )
-    expect(result.map((e) => e.id)).toEqual(["ongoing", "later"])
-  })
-
-  it("respects the limit", () => {
-    const events = [1, 2, 3].map((h) =>
-      event(`e${h}`, `2026-10-22T1${h}:00:00Z`, `2026-10-22T1${h}:30:00Z`),
-    )
-    expect(selectUpcomingEvents(events, now, 2)).toHaveLength(2)
   })
 })
 
