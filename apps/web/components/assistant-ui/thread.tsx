@@ -242,7 +242,7 @@ const Composer: FC = () => {
           <ComposerAction />
         </div>
       </ComposerPrimitive.Root>
-      <p className="aui-composer-disclaimer text-muted-foreground/70 text-center text-[10px] font-medium sm:text-[11px]">
+      <p className="aui-composer-disclaimer text-muted-foreground text-center text-xs font-medium">
         Tap Korean words for meaning · Hengo can make mistakes.
       </p>
     </div>
@@ -266,7 +266,7 @@ const ComposerAction: FC = () => {
               type="button"
               variant="default"
               size="icon"
-              className="aui-composer-send size-9 rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500"
+              className="aui-composer-send size-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 [@media(pointer:coarse)]:size-11"
               aria-label="Send message"
             >
               <ArrowUpIcon className="aui-composer-send-icon size-4.5" />
@@ -279,7 +279,7 @@ const ComposerAction: FC = () => {
               type="button"
               variant="default"
               size="icon"
-              className="aui-composer-cancel size-9 rounded-full bg-blue-600 text-white hover:bg-blue-500"
+              className="aui-composer-cancel size-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 [@media(pointer:coarse)]:size-11"
               aria-label="Stop generating"
             >
               <SquareIcon className="aui-composer-cancel-icon size-3.5 fill-current" />
@@ -307,7 +307,7 @@ const CorrectionCard: FC = () => {
     <div className="fade-in slide-in-from-bottom-1 animate-in mt-3 overflow-hidden rounded-2xl border border-amber-500/20 bg-amber-500/[0.03] shadow-sm duration-200">
       <div className="flex items-center gap-2 border-b border-amber-500/10 bg-amber-500/5 px-4 py-2.5">
         <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400" strokeWidth={2.5} />
-        <p className="text-[12px] font-bold tracking-wide text-amber-700 uppercase dark:text-amber-300">
+        <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">
           Suggested Improvement
         </p>
       </div>
@@ -374,24 +374,20 @@ const AssistantText: FC<{ text: string }> = ({ text }) => {
         <div className="space-y-1 rounded-xl border border-border/50 bg-muted/40 px-3.5 py-2.5">
           {subtitles.en && (
             <p className="text-[13px] font-medium leading-snug text-muted-foreground">
-              <span className="mr-1.5 rounded bg-blue-500/10 px-1 py-px text-[9px] font-bold uppercase tracking-wider text-blue-700 align-[2px] dark:text-blue-300">
+              <span className="mr-1.5 rounded bg-primary/10 px-1 py-px text-xs font-semibold text-primary align-[1px]">
                 EN
               </span>
               {subtitles.en}
             </p>
           )}
           {subtitles.rr && (
-            <p className="text-[12px] italic leading-snug text-muted-foreground/70">
-              {subtitles.rr}
-            </p>
+            <p className="text-xs italic leading-snug text-muted-foreground">{subtitles.rr}</p>
           )}
         </div>
       )}
       {subtitles.fix && (
         <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-3.5 py-2.5">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-            More natural
-          </p>
+          <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">More natural</p>
           <p className="mt-0.5 text-[13px] font-medium leading-snug text-foreground/90">
             {subtitles.fix}
           </p>
@@ -423,8 +419,8 @@ const AssistantMessage: FC = () => {
       </div>
       <div className="min-w-0 flex-1">
         <div className="mb-1.5 flex items-center gap-2">
-          <span className="text-[11px] font-bold text-foreground/80">Hengo</span>
-          <span className="rounded-full bg-blue-500/[0.08] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-blue-700 dark:text-blue-300">
+          <span className="text-xs font-semibold text-foreground/80">Hengo</span>
+          <span className="rounded-full bg-primary/[0.08] px-1.5 py-0.5 text-xs font-semibold text-primary">
             AI Coach
           </span>
         </div>
@@ -559,7 +555,7 @@ const UserMessage: FC = () => {
       data-role="user"
     >
       <div className="aui-user-message-content-wrapper relative col-start-2 min-w-0">
-        <div className="aui-user-message-content peer bg-blue-600 text-white rounded-2xl rounded-br-md px-4 py-2.5 wrap-break-word shadow-sm shadow-blue-600/10 empty:hidden">
+        <div className="aui-user-message-content peer bg-primary text-primary-foreground rounded-2xl rounded-br-md px-4 py-2.5 wrap-break-word empty:hidden">
           <MessagePrimitive.Parts />
         </div>
         <CorrectionCard />
@@ -586,12 +582,16 @@ const EditComposer: FC = () => {
         />
         <div className="aui-edit-composer-footer mx-2.5 mb-2.5 flex items-center gap-1.5 self-end">
           <ComposerPrimitive.Cancel asChild>
-            <Button variant="ghost" size="sm" className="h-8 rounded-full px-3.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 rounded-full px-3.5 [@media(pointer:coarse)]:h-11"
+            >
               Cancel
             </Button>
           </ComposerPrimitive.Cancel>
           <ComposerPrimitive.Send asChild>
-            <Button size="sm" className="h-8 rounded-full px-3.5">
+            <Button size="sm" className="h-8 rounded-full px-3.5 [@media(pointer:coarse)]:h-11">
               Update
             </Button>
           </ComposerPrimitive.Send>

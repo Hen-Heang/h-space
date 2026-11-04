@@ -26,7 +26,7 @@ export default function RecoveryInsightsPage() {
       <BackLink href="/growth/recovery" label="Recovery" />
       <div>
         <p className="app-kicker">Progress & insights</p>
-        <h1 className="mt-1 text-2xl font-semibold">Understand patterns without judgment</h1>
+        <h2 className="mt-1 text-2xl font-semibold">Understand patterns without judgment</h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
           All calculations are deterministic and based only on records you chose to save.
         </p>

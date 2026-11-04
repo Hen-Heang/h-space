@@ -89,7 +89,7 @@ function KoreanCoachDashboard() {
   return (
     <div className="mx-auto max-w-2xl space-y-5 pb-14">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-lg font-bold text-foreground">Korean Coach</h1>
+        <h2 className="text-lg font-bold text-foreground">Korean Coach</h2>
         <Link
           href="/korean-coach/preferences"
           aria-label="Korean Coach preferences"

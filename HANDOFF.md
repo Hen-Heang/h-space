@@ -3,24 +3,28 @@
 ## Snapshot
 
 - **Updated:** 2026-11-04
-- **Task:** Fix PR #72, Glass tab bar on mobile and a calmer Exam Prep script page.
-- **Branch / PR head inspected:** `fix/iphone15-typography-audit`, `4c65ba8`. No inline GitHub review findings; Codex review reported no findings. CodeRabbit skipped automatic review.
-- **Local fixes (uncommitted):**
-  - `MobileBottomNav.tsx` and `/interview/script/page.tsx` use a scoped `mobile-glass` fallback in `globals.css`. Reduced transparency makes the mobile bar and section-jump menu opaque in both themes, preserving intentionally forced-dark surfaces elsewhere.
-  - Decorative lens is an aria-hidden list item, making the navigation list valid markup.
-  - `interview-audit.e2e.ts` checks computed background and blur in both themes at 430x932, plus five accessible navigation list items.
-- **Checks:**
-  - `pnpm lint`: passes, five existing unrelated warnings. Targeted eslint and Prettier pass.
-  - `pnpm test`: 141 files / 1643 tests pass.
-  - `pnpm build`: passes, including TypeScript and static generation.
-  - Playwright: 18 passed / 2 failed across interview-audit, shell-sticky and interview-script-repeat. Both new reduced-transparency tests pass. Dark mode reproduced a 55%-opaque background before the fix.
-  - Remaining failures: Listen & Repeat expects the old opening first, while concurrent `lib/interview.ts` edits insert a self-introduction; calendar expects overflow hidden/hidden, while this Chrome computes clip/hidden. These expectations were left unchanged.
-- **Preservation:** Extensive staged deletions and unstaged edits predated this task (Google Calendar removal, typography, calendar and interview content). Preserve all of them. No staging, commit, push, merge, deployment or database changes performed.
-- **Browser environment:** Used installed Chrome with `PLAYWRIGHT_EXECUTABLE_PATH`, existing server via `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000`, and `--output test-results/pr72`. Bundled Chromium is absent. The automatic server command passes an extra `--` to Next; the existing server was reused. No physical iPhone or real-account verification.
-- **Graph:** h-space generation 2026-10-21T08:40:53Z has changed metadata; e2e tests are excluded. Current source reads and executed tests provided verification.
+- **On `main` and in production:** UI redesign Phases 1–4 (#64–#67), PR #72 (iPhone 15 typography audit), and PR #71 (full 제6회 interview script). The previous snapshot is the top entry of `HANDOFF_HISTORY.md`.
+- **Exam Prep script (#71):**
+  - `lib/interview.ts` seeds the full 2026-09-30 Notion script ("한국에 온 후 새로 생긴 습관/취미") and adds a first outline section, `self-intro` (자기소개). `opening` is now only the topic intro.
+  - The home station is kept out of the public seed on purpose (`lib/interview-content.test.ts` checks this).
+  - Migration `20261104120000_reseed_habits_full_script` was **applied to the live database** on 2026-11-04, after production had deployed #71. Each `weather` draft was first saved as the version "Before full-script reseed (2026-11-04)"; then only the outline keys were cleared, so `/interview/script` refills them from the seed. Roll back from the page's Versions list.
+  - Not verified: the owner's real account after the reseed (an agent can't read the live table). Open `/interview/script` and confirm 자기소개 comes first.
+- **In review:** branch `chore/remove-google-calendar` holds the work that was left uncommitted after #72 merged, with `main` merged in:
+  - Google Calendar integration removed: routes, callback and settings pages, hooks, `lib/server/google-calendar-*`, `UpcomingEventsCard` and `CalendarSourceFilter`. The `kori_google_calendar_integrations` table stays in the database.
+  - The mobile glass fallback under reduced transparency (bottom nav and the Exam Prep section-jump menu), with `interview-audit.e2e.ts` checks.
+  - Calendar/task UI tweaks, `apps/web/scripts/ui-sweep-report.mjs`, and AGENTS/security-rule updates.
+  - Merge conflicts (HANDOFF files, `roadmap/page.tsx`, `ChatWindow.tsx`) were resolved to `main`'s side; those were typography and contrast lines `main` had already reviewed.
+  - `interview-script-repeat.e2e.ts` now saves the `self-intro` section, the new first section, instead of `opening`.
+- **Verification (this branch):** `tsc --noEmit` clean; unit tests 141 files / 1643 pass; `interview-script-repeat.e2e.ts` 3/3 pass against `next dev` on :3000.
+  - Not run: the full e2e suite. An earlier session saw the calendar sticky-shell test expect `overflow: hidden/hidden` while Chrome computes `clip/hidden`; it was left unchanged.
+- **Tracked test artifact:** `apps/web/test-results/playwright/.last-run.json` changes on every e2e run. Don't stage it.
 
-## Next steps
+## Current focus
 
-1. Review the four implementation/test files and handoff changes. Commit/push only when explicitly requested. Rollback: remove these scoped local changes while preserving earlier work.
-2. Resolve the two broader browser expectations alongside the concurrent content/calendar work before claiming a fully green browser suite.
-3. Earlier Planner Phase 3b context and its worktree are preserved in the newest HANDOFF_HISTORY.md entry; consult it before resuming the redesign roadmap.
+1. The owner reviews and merges the `chore/remove-google-calendar` PR.
+2. The owner checks `/interview/script` on production after the reseed.
+3. Then **Phase 5** of the UI redesign: Learning, AI, Notes and Growth. The plan is in the history entry above and in the "Phase 5" section of `apps/web/docs/ui-redesign-audit.md`.
+
+## Running the sweep
+
+The command is in `apps/web/docs/design-system.md` §8. Use `UI_SWEEP_ROUTES=goals/overview,inbox` without a leading slash. A git worktree has no `.env.local`, so run its dev server with dummy local values for `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `NEXT_PUBLIC_AUTH_API_URL`; the sweep mocks everything else.

@@ -24,7 +24,7 @@ export function EveningReviewView({
   return (
     <div className="space-y-4">
       <motion.div variants={itemVariants}>
-        <h1 className="text-xl font-semibold text-foreground">{summary.dateLabel}</h1>
+        <h2 className="text-xl font-semibold text-foreground">{summary.dateLabel}</h2>
         <p className="mt-1 text-sm text-muted-foreground">How today went.</p>
       </motion.div>
 

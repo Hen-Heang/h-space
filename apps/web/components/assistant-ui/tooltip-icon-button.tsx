@@ -22,7 +22,12 @@ export const TooltipIconButton = forwardRef<HTMLButtonElement, TooltipIconButton
               variant="ghost"
               size="icon"
               {...rest}
-              className={cn("aui-button-icon size-6 p-1 active:scale-90", className)}
+              // 24px to look at, 44px to tap: the after: layer grows the hit area
+              // without changing the action bar's layout.
+              className={cn(
+                "aui-button-icon relative size-6 p-1 after:absolute after:-inset-2.5 after:content-[''] active:scale-90",
+                className,
+              )}
               ref={ref}
             >
               <Slot.Slottable>{children}</Slot.Slottable>

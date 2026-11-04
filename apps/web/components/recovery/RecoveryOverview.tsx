@@ -85,16 +85,16 @@ export function RecoveryOverview({
 
           {neverLogged ? (
             <>
-              <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
+              <h2 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
                 Ready when you are
-              </h1>
+              </h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 Log a moment whenever something comes up — there&apos;s nothing to catch up on.
               </p>
             </>
           ) : isQuietGap ? (
             <>
-              <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">Welcome back</h1>
+              <h2 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">Welcome back</h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 Nothing to catch up on — just log where you are now.
               </p>
@@ -149,22 +149,27 @@ export function RecoveryOverview({
               href={href}
               className="group relative flex flex-col gap-2 rounded-2xl border border-border bg-card p-3.5 outline-none transition-all hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring/70 active:scale-[0.98]"
             >
-              {due != null && due > 0 && (
-                <span className="absolute right-2.5 top-2.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
-                  {due} due
-                </span>
-              )}
-              <Icon
-                size={16}
-                strokeWidth={2}
-                className="text-muted-foreground/70 transition-transform group-hover:scale-110"
-              />
+              {/* The "due" badge sits in the row beside the icon; absolutely
+                  positioned, it overlapped the count on narrow cards. */}
+              <div className="flex min-h-5 items-center justify-between gap-1">
+                <Icon
+                  size={16}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                  className="shrink-0 text-muted-foreground transition-transform group-hover:scale-110"
+                />
+                {due != null && due > 0 && (
+                  <span className="truncate rounded-full bg-amber-500/15 px-1.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                    {due} due
+                  </span>
+                )}
+              </div>
               <div>
                 <NumberTicker
                   value={count}
                   className="text-lg font-bold tracking-normal text-foreground"
                 />
-                <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
+                <p className="text-xs font-medium text-muted-foreground">{label}</p>
               </div>
             </Link>
           ))}

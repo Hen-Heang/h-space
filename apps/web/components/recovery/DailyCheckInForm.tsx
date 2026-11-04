@@ -102,7 +102,7 @@ export function DailyCheckInForm({
         <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Check size={24} />
         </span>
-        <h1 className="mt-5 text-xl font-semibold">Check-in saved</h1>
+        <h2 className="mt-5 text-xl font-semibold">Check-in saved</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Showing up honestly builds recovery momentum.
         </p>
@@ -119,7 +119,7 @@ export function DailyCheckInForm({
     >
       <div className="border-b border-border px-5 py-5 sm:px-7">
         <p className="app-kicker">Under 30 seconds</p>
-        <h1 className="mt-1 text-xl font-semibold">Daily check-in</h1>
+        <h2 className="mt-1 text-xl font-semibold">Daily check-in</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Every field is optional. A minimal check-in is enough.
         </p>
