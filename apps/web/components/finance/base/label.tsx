@@ -1,6 +1,6 @@
-import * as React from "react";
+import * as React from "react"
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 
 function Label({ className, ...props }: React.ComponentProps<"label">) {
   return (
@@ -8,11 +8,11 @@ function Label({ className, ...props }: React.ComponentProps<"label">) {
       data-slot="label"
       className={cn(
         "text-sm leading-none font-medium select-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-        className
+        className,
       )}
       {...props}
     />
-  );
+  )
 }
 
-export { Label };
+export { Label }

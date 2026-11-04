@@ -1,18 +1,25 @@
-"use client";
+"use client"
 
-import { useState, type FormEvent } from "react";
-import { Loader2, Save } from "lucide-react";
-import { Button } from "@/components/finance/base/button";
-import { Input } from "@/components/finance/base/input";
-import { Label } from "@/components/finance/base/label";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/finance/base/sheet";
-import { Textarea } from "@/components/finance/base/textarea";
-import { cn } from "@/lib/utils";
-import type { CreateSavingsGoalInput, UpdateSavingsGoalInput } from "@/lib/validation/finance";
-import type { SavingsGoal, SavingsGoalPurpose } from "@/types/finance";
+import { useState, type FormEvent } from "react"
+import { Loader2, Save } from "lucide-react"
+import { Button } from "@/components/finance/base/button"
+import { Input } from "@/components/finance/base/input"
+import { Label } from "@/components/finance/base/label"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/finance/base/sheet"
+import { Textarea } from "@/components/finance/base/textarea"
+import { cn } from "@/lib/utils"
+import type { CreateSavingsGoalInput, UpdateSavingsGoalInput } from "@/lib/validation/finance"
+import type { SavingsGoal, SavingsGoalPurpose } from "@/types/finance"
 
-const ICONS = ["💰", "✈️", "🏠", "🚗", "🎓", "💻", "🎁", "🏖️"];
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+const ICONS = ["💰", "✈️", "🏠", "🚗", "🎓", "💻", "🎁", "🏖️"]
+const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
 
 // Purely descriptive — see AGENTS.md's Financial Health spec, section 15/16.
 // A goal's purpose never changes how it's tracked (still USD target/current
@@ -24,8 +31,14 @@ export const SAVINGS_PURPOSE_LABELS: Record<SavingsGoalPurpose, string> = {
   goal: "Goal",
   investment: "Investment",
   other: "Other",
-};
-const PURPOSE_ORDER: SavingsGoalPurpose[] = ["emergency_fund", "sinking_fund", "goal", "investment", "other"];
+}
+const PURPOSE_ORDER: SavingsGoalPurpose[] = [
+  "emergency_fund",
+  "sinking_fund",
+  "goal",
+  "investment",
+  "other",
+]
 
 export function SavingsGoalSheet({
   mode,
@@ -34,11 +47,11 @@ export function SavingsGoalSheet({
   onOpenChange,
   onSave,
 }: {
-  mode: "create" | "edit";
-  goal?: SavingsGoal;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (input: CreateSavingsGoalInput & UpdateSavingsGoalInput) => Promise<void>;
+  mode: "create" | "edit"
+  goal?: SavingsGoal
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSave: (input: CreateSavingsGoalInput & UpdateSavingsGoalInput) => Promise<void>
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -46,7 +59,9 @@ export function SavingsGoalSheet({
         <SheetHeader>
           <SheetTitle>{mode === "create" ? "New savings goal" : "Edit savings goal"}</SheetTitle>
           <SheetDescription>
-            {mode === "create" ? "Set a target and start tracking progress." : "Update this goal's details."}
+            {mode === "create"
+              ? "Set a target and start tracking progress."
+              : "Update this goal's details."}
           </SheetDescription>
         </SheetHeader>
         {open && (
@@ -60,7 +75,7 @@ export function SavingsGoalSheet({
         )}
       </SheetContent>
     </Sheet>
-  );
+  )
 }
 
 function SavingsGoalSheetFields({
@@ -69,35 +84,35 @@ function SavingsGoalSheetFields({
   onSave,
   onOpenChange,
 }: {
-  mode: "create" | "edit";
-  goal?: SavingsGoal;
-  onSave: (input: CreateSavingsGoalInput & UpdateSavingsGoalInput) => Promise<void>;
-  onOpenChange: (open: boolean) => void;
+  mode: "create" | "edit"
+  goal?: SavingsGoal
+  onSave: (input: CreateSavingsGoalInput & UpdateSavingsGoalInput) => Promise<void>
+  onOpenChange: (open: boolean) => void
 }) {
-  const [name, setName] = useState(goal?.name ?? "");
-  const [icon, setIcon] = useState(goal?.icon ?? ICONS[0]);
-  const [color, setColor] = useState(goal?.color ?? COLORS[0]);
-  const [targetUsd, setTargetUsd] = useState(goal ? String(goal.targetUsd) : "");
-  const [deadline, setDeadline] = useState(goal?.deadline ?? "");
-  const [note, setNote] = useState(goal?.note ?? "");
-  const [purpose, setPurpose] = useState<SavingsGoalPurpose | null>(goal?.purpose ?? null);
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [name, setName] = useState(goal?.name ?? "")
+  const [icon, setIcon] = useState(goal?.icon ?? ICONS[0])
+  const [color, setColor] = useState(goal?.color ?? COLORS[0])
+  const [targetUsd, setTargetUsd] = useState(goal ? String(goal.targetUsd) : "")
+  const [deadline, setDeadline] = useState(goal?.deadline ?? "")
+  const [note, setNote] = useState(goal?.note ?? "")
+  const [purpose, setPurpose] = useState<SavingsGoalPurpose | null>(goal?.purpose ?? null)
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    const target = Number(targetUsd);
+    event.preventDefault()
+    const target = Number(targetUsd)
     if (!Number.isFinite(target) || target < 0) {
-      setError("Enter a valid target amount.");
-      return;
+      setError("Enter a valid target amount.")
+      return
     }
     if (name.trim().length === 0) {
-      setError("Name is required.");
-      return;
+      setError("Name is required.")
+      return
     }
 
-    setPending(true);
-    setError(null);
+    setPending(true)
+    setError(null)
     try {
       await onSave({
         name: name.trim(),
@@ -108,12 +123,12 @@ function SavingsGoalSheetFields({
         deadline: deadline || null,
         note: note.trim() || null,
         purpose,
-      });
-      onOpenChange(false);
+      })
+      onOpenChange(false)
     } catch {
-      setError("Couldn't save the goal. Try again.");
+      setError("Couldn't save the goal. Try again.")
     } finally {
-      setPending(false);
+      setPending(false)
     }
   }
 
@@ -144,7 +159,9 @@ function SavingsGoalSheetFields({
                 aria-label={`Icon ${option}`}
                 className={cn(
                   "flex size-11 items-center justify-center rounded-xl border text-lg transition-colors active:scale-[0.95]",
-                  icon === option ? "border-primary/40 bg-primary/10" : "border-border bg-background hover:bg-secondary active:bg-secondary"
+                  icon === option
+                    ? "border-primary/40 bg-primary/10"
+                    : "border-border bg-background hover:bg-secondary active:bg-secondary",
                 )}
               >
                 {option}
@@ -164,7 +181,11 @@ function SavingsGoalSheetFields({
                 aria-pressed={color === option}
                 aria-label={`Color ${option}`}
                 className="flex size-11 items-center justify-center rounded-xl transition-transform active:scale-[0.95]"
-                style={{ backgroundColor: option, outline: color === option ? "2px solid var(--foreground)" : "none", outlineOffset: 2 }}
+                style={{
+                  backgroundColor: option,
+                  outline: color === option ? "2px solid var(--foreground)" : "none",
+                  outlineOffset: 2,
+                }}
               />
             ))}
           </div>
@@ -183,7 +204,7 @@ function SavingsGoalSheetFields({
                   "min-h-11 rounded-full border px-4 py-2 text-xs font-bold transition-all active:scale-95",
                   purpose === option
                     ? "border-primary/40 bg-primary text-primary-foreground shadow-md"
-                    : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
+                    : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
                 )}
               >
                 {SAVINGS_PURPOSE_LABELS[option]}
@@ -208,24 +229,43 @@ function SavingsGoalSheetFields({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="goal-deadline">Target date (optional)</Label>
-            <Input id="goal-deadline" type="date" value={deadline} onChange={(event) => setDeadline(event.target.value)} />
+            <Input
+              id="goal-deadline"
+              type="date"
+              value={deadline}
+              onChange={(event) => setDeadline(event.target.value)}
+            />
           </div>
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="goal-note">Note (optional)</Label>
-          <Textarea id="goal-note" value={note} onChange={(event) => setNote(event.target.value)} rows={2} />
+          <Textarea
+            id="goal-note"
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            rows={2}
+          />
         </div>
 
         {error && (
-          <p className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">
+          <p
+            className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+            role="alert"
+          >
             {error}
           </p>
         )}
       </div>
 
       <SheetFooter>
-        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending} className="min-h-11 flex-1">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          disabled={pending}
+          className="min-h-11 flex-1"
+        >
           Cancel
         </Button>
         <Button type="submit" disabled={pending} className="min-h-11 flex-1">
@@ -234,5 +274,5 @@ function SavingsGoalSheetFields({
         </Button>
       </SheetFooter>
     </form>
-  );
+  )
 }

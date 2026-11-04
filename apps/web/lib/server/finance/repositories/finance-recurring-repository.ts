@@ -1,28 +1,28 @@
-import "server-only";
-import { sql } from "@/lib/server/finance/db";
-import type { Currency, RecurringFrequency, RecurringRule, TransactionType } from "@/types/finance";
+import "server-only"
+import { sql } from "@/lib/server/finance/db"
+import type { Currency, RecurringFrequency, RecurringRule, TransactionType } from "@/types/finance"
 
 interface RecurringRow {
-  id: string;
-  user_id: string;
-  type: string;
-  description: string;
-  currency: string;
-  amount_krw: string;
-  amount_usd: string | null;
-  category_id: string | null;
-  category_name: string | null;
-  category_icon: string | null;
-  category_color: string | null;
-  payment_method_id: string | null;
-  payment_method_name: string | null;
-  note: string | null;
-  frequency: string;
-  anchor_day: number;
-  next_date: string;
-  last_applied: string | null;
-  is_active: boolean;
-  created_at: string;
+  id: string
+  user_id: string
+  type: string
+  description: string
+  currency: string
+  amount_krw: string
+  amount_usd: string | null
+  category_id: string | null
+  category_name: string | null
+  category_icon: string | null
+  category_color: string | null
+  payment_method_id: string | null
+  payment_method_name: string | null
+  note: string | null
+  frequency: string
+  anchor_day: number
+  next_date: string
+  last_applied: string | null
+  is_active: boolean
+  created_at: string
 }
 
 function toRule(row: RecurringRow): RecurringRule {
@@ -46,7 +46,7 @@ function toRule(row: RecurringRow): RecurringRule {
     lastApplied: row.last_applied,
     isActive: row.is_active,
     createdAt: row.created_at,
-  };
+  }
 }
 
 const RULE_SELECT = `
@@ -55,47 +55,50 @@ const RULE_SELECT = `
   r.payment_method_id, pm.name as payment_method_name, r.note, r.frequency, r.anchor_day,
   to_char(r.next_date, 'YYYY-MM-DD') as next_date, to_char(r.last_applied, 'YYYY-MM-DD') as last_applied,
   r.is_active, r.created_at
-`;
+`
 const RULE_FROM = `
   from finance_recurring_transactions r
   left join finance_categories c on c.id = r.category_id
   left join finance_payment_methods pm on pm.id = r.payment_method_id
-`;
+`
 
 /** A rule's stored fields, already resolved: KRW computed for a USD rule. */
 export interface RecurringRuleWrite {
-  type: TransactionType;
-  description: string;
-  currency: Currency;
-  amountKrw: number;
-  originalAmount: number | null;
-  exchangeRate: number | null;
-  categoryId: string | null;
-  paymentMethodId: string | null;
-  note: string | null;
-  frequency: RecurringFrequency;
-  anchorDay: number;
-  nextDate: string;
-  isActive: boolean;
+  type: TransactionType
+  description: string
+  currency: Currency
+  amountKrw: number
+  originalAmount: number | null
+  exchangeRate: number | null
+  categoryId: string | null
+  paymentMethodId: string | null
+  note: string | null
+  frequency: RecurringFrequency
+  anchorDay: number
+  nextDate: string
+  isActive: boolean
 }
 
 export async function findRulesByUser(userId: string): Promise<RecurringRule[]> {
   const rows = (await sql.query(
     `select ${RULE_SELECT} ${RULE_FROM} where r.user_id = $1 order by r.is_active desc, r.next_date asc, r.created_at asc`,
-    [userId]
-  )) as RecurringRow[];
-  return rows.map(toRule);
+    [userId],
+  )) as RecurringRow[]
+  return rows.map(toRule)
 }
 
 export async function findRuleById(id: string, userId: string): Promise<RecurringRule | null> {
-  const rows = (await sql.query(`select ${RULE_SELECT} ${RULE_FROM} where r.id = $1 and r.user_id = $2`, [
-    id,
-    userId,
-  ])) as RecurringRow[];
-  return rows[0] ? toRule(rows[0]) : null;
+  const rows = (await sql.query(
+    `select ${RULE_SELECT} ${RULE_FROM} where r.id = $1 and r.user_id = $2`,
+    [id, userId],
+  )) as RecurringRow[]
+  return rows[0] ? toRule(rows[0]) : null
 }
 
-export async function createRule(userId: string, input: RecurringRuleWrite): Promise<RecurringRule> {
+export async function createRule(
+  userId: string,
+  input: RecurringRuleWrite,
+): Promise<RecurringRule> {
   const rows = (await sql`
     insert into finance_recurring_transactions (
       user_id, type, description, currency, amount_krw, amount_usd, exchange_rate,
@@ -107,14 +110,18 @@ export async function createRule(userId: string, input: RecurringRuleWrite): Pro
       ${input.note}, ${input.frequency}, ${input.anchorDay}, ${input.nextDate}, ${input.isActive}
     )
     returning id
-  `) as { id: string }[];
+  `) as { id: string }[]
 
-  const created = await findRuleById(rows[0].id, userId);
-  if (!created) throw new Error("Failed to load the recurring rule just created");
-  return created;
+  const created = await findRuleById(rows[0].id, userId)
+  if (!created) throw new Error("Failed to load the recurring rule just created")
+  return created
 }
 
-export async function updateRule(id: string, userId: string, input: RecurringRuleWrite): Promise<RecurringRule | null> {
+export async function updateRule(
+  id: string,
+  userId: string,
+  input: RecurringRuleWrite,
+): Promise<RecurringRule | null> {
   const rows = (await sql`
     update finance_recurring_transactions set
       type = ${input.type},
@@ -132,35 +139,38 @@ export async function updateRule(id: string, userId: string, input: RecurringRul
       is_active = ${input.isActive}
     where id = ${id} and user_id = ${userId}
     returning id
-  `) as { id: string }[];
+  `) as { id: string }[]
 
-  if (!rows[0]) return null;
-  return findRuleById(id, userId);
+  if (!rows[0]) return null
+  return findRuleById(id, userId)
 }
 
 /** Transactions the rule already created keep existing (recurring_id → NULL, see 014). */
 export async function deleteRule(id: string, userId: string): Promise<boolean> {
   const rows = (await sql`
     delete from finance_recurring_transactions where id = ${id} and user_id = ${userId} returning id
-  `) as { id: string }[];
-  return rows.length > 0;
+  `) as { id: string }[]
+  return rows.length > 0
 }
 
 /** Active rules due on or before `today`, for one user or (cron) for everyone. */
-export async function findDueRules(today: string, userId?: string): Promise<(RecurringRule & { userId: string })[]> {
+export async function findDueRules(
+  today: string,
+  userId?: string,
+): Promise<(RecurringRule & { userId: string })[]> {
   const rows = (await sql.query(
     `select ${RULE_SELECT} ${RULE_FROM}
      where r.is_active and r.next_date <= $1 ${userId ? "and r.user_id = $2" : ""}
      order by r.user_id, r.next_date`,
-    userId ? [today, userId] : [today]
-  )) as RecurringRow[];
-  return rows.map((row) => ({ ...toRule(row), userId: row.user_id }));
+    userId ? [today, userId] : [today],
+  )) as RecurringRow[]
+  return rows.map((row) => ({ ...toRule(row), userId: row.user_id }))
 }
 
 export interface OccurrenceAmounts {
-  amountKrw: number;
-  originalAmount: number | null;
-  exchangeRate: number | null;
+  amountKrw: number
+  originalAmount: number | null
+  exchangeRate: number | null
 }
 
 /**
@@ -177,9 +187,9 @@ export interface OccurrenceAmounts {
 export async function applyOccurrences(
   rule: RecurringRule & { userId: string },
   occurrences: { date: string; amounts: OccurrenceAmounts }[],
-  newNextDate: string
+  newNextDate: string,
 ): Promise<string[]> {
-  if (occurrences.length === 0) return [];
+  if (occurrences.length === 0) return []
 
   const results = (await sql.transaction([
     ...occurrences.map(
@@ -195,14 +205,14 @@ export async function applyOccurrences(
         )
         on conflict (recurring_id, date) where recurring_id is not null do nothing
         returning to_char(date, 'YYYY-MM-DD') as date
-      `
+      `,
     ),
     sql`
       update finance_recurring_transactions
       set next_date = ${newNextDate}, last_applied = ${occurrences[occurrences.length - 1].date}
       where id = ${rule.id} and next_date = ${rule.nextDate}
     `,
-  ])) as { date: string }[][];
+  ])) as { date: string }[][]
 
-  return results.slice(0, occurrences.length).flatMap((rows) => rows.map((row) => row.date));
+  return results.slice(0, occurrences.length).flatMap((rows) => rows.map((row) => row.date))
 }

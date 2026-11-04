@@ -5,7 +5,10 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 // contributions) can only be reached through that user's own goal id.
 
 vi.mock("server-only", () => ({}))
-vi.mock("@/lib/server/finance/db", () => ({ sql: vi.fn(), isFinanceDatabaseConfigured: () => true }))
+vi.mock("@/lib/server/finance/db", () => ({
+  sql: vi.fn(),
+  isFinanceDatabaseConfigured: () => true,
+}))
 const requireFinanceUserId = vi.fn()
 vi.mock("@/lib/server/finance/auth", () => ({
   requireFinanceUserId: (req: Request) => requireFinanceUserId(req),
@@ -58,7 +61,10 @@ describe("savings routes — denial", () => {
       updateGoal(new NextRequest(url(`/${GOAL}`), json("PATCH", { name: "y" })), params(GOAL)),
       deleteGoal(new NextRequest(url(`/${GOAL}`), { method: "DELETE" }), params(GOAL)),
       listContribs(new NextRequest(url(`/${GOAL}/contributions`)), params(GOAL)),
-      addContrib(new NextRequest(url(`/${GOAL}/contributions`), json("POST", { amountUsd: 10 })), params(GOAL)),
+      addContrib(
+        new NextRequest(url(`/${GOAL}/contributions`), json("POST", { amountUsd: 10 })),
+        params(GOAL),
+      ),
     ])
     for (const response of responses) expect(response.status).toBe(401)
     for (const fn of Object.values(repo)) expect(fn).not.toHaveBeenCalled()
@@ -88,7 +94,10 @@ describe("savings routes — ownership", () => {
   it("won't list contributions of a goal the user doesn't own", async () => {
     requireFinanceUserId.mockResolvedValue(LINKED)
     repo.findSavingsGoalById.mockResolvedValue(null)
-    const response = await listContribs(new NextRequest(url(`/${GOAL}/contributions`)), params(GOAL))
+    const response = await listContribs(
+      new NextRequest(url(`/${GOAL}/contributions`)),
+      params(GOAL),
+    )
     expect(response.status).toBe(404)
     expect(repo.findContributionsByGoal).not.toHaveBeenCalled()
   })
@@ -96,7 +105,10 @@ describe("savings routes — ownership", () => {
   it("deletes through the linked id and reports 404 for someone else's goal", async () => {
     requireFinanceUserId.mockResolvedValue(LINKED)
     repo.deleteSavingsGoal.mockResolvedValue(false)
-    const response = await deleteGoal(new NextRequest(url(`/${GOAL}`), { method: "DELETE" }), params(GOAL))
+    const response = await deleteGoal(
+      new NextRequest(url(`/${GOAL}`), { method: "DELETE" }),
+      params(GOAL),
+    )
     expect(response.status).toBe(404)
     expect(repo.deleteSavingsGoal).toHaveBeenCalledWith(GOAL, LINKED)
   })

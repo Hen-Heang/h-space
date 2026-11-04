@@ -1,44 +1,49 @@
-"use client";
+"use client"
 
-import { useRef, useState, type PointerEvent } from "react";
-import { krw } from "@/lib/finance-format";
-import type { DailyFlowPoint } from "@/types/finance";
+import { useRef, useState, type PointerEvent } from "react"
+import { krw } from "@/lib/finance-format"
+import type { DailyFlowPoint } from "@/types/finance"
 
-const WIDTH = 640;
-const HEIGHT = 200;
-const PLOT_HEIGHT = HEIGHT - 20;
+const WIDTH = 640
+const HEIGHT = 200
+const PLOT_HEIGHT = HEIGHT - 20
 
 function point(index: number, amountKrw: number, max: number, stepX: number) {
-  return { x: index * stepX, y: PLOT_HEIGHT - (amountKrw / max) * (PLOT_HEIGHT - 8) };
+  return { x: index * stepX, y: PLOT_HEIGHT - (amountKrw / max) * (PLOT_HEIGHT - 8) }
 }
 
 function pathFor(points: { x: number; y: number }[]): string {
-  return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(" ");
+  return points
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+    .join(" ")
 }
 
 export function CashFlowTrendChart({ data }: { data: DailyFlowPoint[] }) {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null)
 
-  const max = Math.max(1, ...data.map((d) => Math.max(d.incomeKrw, d.expenseKrw)));
-  const stepX = data.length > 1 ? WIDTH / (data.length - 1) : 0;
-  const incomePoints = data.map((d, i) => point(i, d.incomeKrw, max, stepX));
-  const expensePoints = data.map((d, i) => point(i, d.expenseKrw, max, stepX));
+  const max = Math.max(1, ...data.map((d) => Math.max(d.incomeKrw, d.expenseKrw)))
+  const stepX = data.length > 1 ? WIDTH / (data.length - 1) : 0
+  const incomePoints = data.map((d, i) => point(i, d.incomeKrw, max, stepX))
+  const expensePoints = data.map((d, i) => point(i, d.expenseKrw, max, stepX))
 
-  const totalIncome = data.reduce((sum, d) => sum + d.incomeKrw, 0);
-  const totalExpense = data.reduce((sum, d) => sum + d.expenseKrw, 0);
-  const hovered = hoverIndex !== null ? data[hoverIndex] : null;
+  const totalIncome = data.reduce((sum, d) => sum + d.incomeKrw, 0)
+  const totalExpense = data.reduce((sum, d) => sum + d.expenseKrw, 0)
+  const hovered = hoverIndex !== null ? data[hoverIndex] : null
   const hoveredLabel = hovered
-    ? new Date(`${hovered.date}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-    : null;
+    ? new Date(`${hovered.date}T00:00:00`).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })
+    : null
 
   function handleMove(event: PointerEvent<SVGSVGElement>) {
-    const svg = svgRef.current;
-    if (!svg || data.length === 0) return;
-    const rect = svg.getBoundingClientRect();
-    const relativeX = ((event.clientX - rect.left) / rect.width) * WIDTH;
-    const index = data.length > 1 ? Math.round(relativeX / stepX) : 0;
-    setHoverIndex(Math.min(Math.max(index, 0), data.length - 1));
+    const svg = svgRef.current
+    if (!svg || data.length === 0) return
+    const rect = svg.getBoundingClientRect()
+    const relativeX = ((event.clientX - rect.left) / rect.width) * WIDTH
+    const index = data.length > 1 ? Math.round(relativeX / stepX) : 0
+    setHoverIndex(Math.min(Math.max(index, 0), data.length - 1))
   }
 
   return (
@@ -83,8 +88,24 @@ export function CashFlowTrendChart({ data }: { data: DailyFlowPoint[] }) {
               vectorEffect="non-scaling-stroke"
             />
           ))}
-          <path d={pathFor(expensePoints)} fill="none" stroke="var(--destructive)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-          <path d={pathFor(incomePoints)} fill="none" stroke="var(--success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          <path
+            d={pathFor(expensePoints)}
+            fill="none"
+            stroke="var(--destructive)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+          <path
+            d={pathFor(incomePoints)}
+            fill="none"
+            stroke="var(--success)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
           {hoverIndex !== null && (
             <>
               <line
@@ -96,8 +117,18 @@ export function CashFlowTrendChart({ data }: { data: DailyFlowPoint[] }) {
                 strokeWidth="1"
                 vectorEffect="non-scaling-stroke"
               />
-              <circle cx={incomePoints[hoverIndex].x} cy={incomePoints[hoverIndex].y} r="4" fill="var(--success)" />
-              <circle cx={expensePoints[hoverIndex].x} cy={expensePoints[hoverIndex].y} r="4" fill="var(--destructive)" />
+              <circle
+                cx={incomePoints[hoverIndex].x}
+                cy={incomePoints[hoverIndex].y}
+                r="4"
+                fill="var(--success)"
+              />
+              <circle
+                cx={expensePoints[hoverIndex].x}
+                cy={expensePoints[hoverIndex].y}
+                r="4"
+                fill="var(--destructive)"
+              />
             </>
           )}
         </svg>
@@ -127,5 +158,5 @@ export function CashFlowTrendChart({ data }: { data: DailyFlowPoint[] }) {
         <span>Day {data.length}</span>
       </div>
     </div>
-  );
+  )
 }

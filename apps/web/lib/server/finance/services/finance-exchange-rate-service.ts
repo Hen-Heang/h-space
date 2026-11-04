@@ -1,24 +1,33 @@
-import "server-only";
-import { findLatestRate, findRecentRate, insertRate } from "@/lib/server/finance/repositories/finance-exchange-rate-repository";
+import "server-only"
+import {
+  findLatestRate,
+  findRecentRate,
+  insertRate,
+} from "@/lib/server/finance/repositories/finance-exchange-rate-repository"
 
 // Matches the rate historically migrated from Money Flow (see
 // finance_recurring_transactions.exchange_rate's default in 004_finance.sql)
 // — used only when no stored rate exists and no live rate can be fetched.
-const FALLBACK_USD_KRW_RATE = 1370;
-const CACHE_MINUTES = 60;
+const FALLBACK_USD_KRW_RATE = 1370
+const CACHE_MINUTES = 60
 // Upper bound on the live provider call. The overview and transaction sheet
 // both wait on this, so a hung provider must not hang the dashboard.
-const LIVE_FETCH_TIMEOUT_MS = 3000;
+const LIVE_FETCH_TIMEOUT_MS = 3000
 
 export interface ExchangeRateResult {
-  rate: number;
-  fetchedAt: string;
-  cached: boolean;
-  fallback: boolean;
+  rate: number
+  fetchedAt: string
+  cached: boolean
+  fallback: boolean
 }
 
 function hardcodedFallback(): ExchangeRateResult {
-  return { rate: FALLBACK_USD_KRW_RATE, fetchedAt: new Date().toISOString(), cached: false, fallback: true };
+  return {
+    rate: FALLBACK_USD_KRW_RATE,
+    fetchedAt: new Date().toISOString(),
+    cached: false,
+    fallback: true,
+  }
 }
 
 // Last stored rate of any age, then the hardcoded rate. A stale real rate is
@@ -26,12 +35,13 @@ function hardcodedFallback(): ExchangeRateResult {
 // `fallback` so the UI can prompt the user to confirm it.
 async function staleOrHardcodedFallback(): Promise<ExchangeRateResult> {
   try {
-    const latest = await findLatestRate("USD", "KRW");
-    if (latest) return { rate: latest.rate, fetchedAt: latest.fetchedAt, cached: true, fallback: true };
+    const latest = await findLatestRate("USD", "KRW")
+    if (latest)
+      return { rate: latest.rate, fetchedAt: latest.fetchedAt, cached: true, fallback: true }
   } catch (error) {
-    console.error("[finance] stored exchange rate lookup failed, using hardcoded fallback", error);
+    console.error("[finance] stored exchange rate lookup failed, using hardcoded fallback", error)
   }
-  return hardcodedFallback();
+  return hardcodedFallback()
 }
 
 // With a key: ExchangeRate-API's keyed pair endpoint (higher limits, more
@@ -43,21 +53,33 @@ async function staleOrHardcodedFallback(): Promise<ExchangeRateResult> {
 async function fetchLiveRate(apiKey: string | undefined): Promise<number> {
   const url = apiKey
     ? `https://v6.exchangerate-api.com/v6/${apiKey}/pair/USD/KRW`
-    : "https://open.er-api.com/v6/latest/USD";
-  const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(LIVE_FETCH_TIMEOUT_MS) });
-  if (!response.ok) throw new Error(`Exchange rate API responded with ${response.status}`);
+    : "https://open.er-api.com/v6/latest/USD"
+  const response = await fetch(url, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(LIVE_FETCH_TIMEOUT_MS),
+  })
+  if (!response.ok) throw new Error(`Exchange rate API responded with ${response.status}`)
 
   const data = (await response.json()) as {
-    result?: string;
-    conversion_rate?: number;
-    base_code?: string;
-    rates?: Record<string, number>;
-  };
-  const rate = apiKey ? data.conversion_rate : data.base_code === "USD" ? data.rates?.KRW : undefined;
-  if (data.result !== "success" || typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0) {
-    throw new Error("Unexpected exchange rate API response shape");
+    result?: string
+    conversion_rate?: number
+    base_code?: string
+    rates?: Record<string, number>
   }
-  return rate;
+  const rate = apiKey
+    ? data.conversion_rate
+    : data.base_code === "USD"
+      ? data.rates?.KRW
+      : undefined
+  if (
+    data.result !== "success" ||
+    typeof rate !== "number" ||
+    !Number.isFinite(rate) ||
+    rate <= 0
+  ) {
+    throw new Error("Unexpected exchange rate API response shape")
+  }
+  return rate
 }
 
 // Server-side only, cached in finance_exchange_rates so a rate is fetched at
@@ -69,29 +91,30 @@ async function fetchLiveRate(apiKey: string | undefined): Promise<number> {
 // transaction data when the provider or the rate table is unavailable.
 export async function getUsdToKrwRate(): Promise<ExchangeRateResult> {
   try {
-    const cached = await findRecentRate("USD", "KRW", CACHE_MINUTES);
-    if (cached) return { rate: cached.rate, fetchedAt: cached.fetchedAt, cached: true, fallback: false };
+    const cached = await findRecentRate("USD", "KRW", CACHE_MINUTES)
+    if (cached)
+      return { rate: cached.rate, fetchedAt: cached.fetchedAt, cached: true, fallback: false }
   } catch (error) {
-    console.error("[finance] cached exchange rate lookup failed", error);
-    return hardcodedFallback();
+    console.error("[finance] cached exchange rate lookup failed", error)
+    return hardcodedFallback()
   }
 
-  let rate: number;
+  let rate: number
   try {
-    rate = await fetchLiveRate(process.env.EXCHANGE_RATE_API_KEY || undefined);
+    rate = await fetchLiveRate(process.env.EXCHANGE_RATE_API_KEY || undefined)
   } catch (error) {
     // Error objects here carry only the status/shape/abort reason — never the
     // request URL, so the key stays out of the logs.
-    console.error("[finance] live exchange rate fetch failed, using fallback", error);
-    return staleOrHardcodedFallback();
+    console.error("[finance] live exchange rate fetch failed, using fallback", error)
+    return staleOrHardcodedFallback()
   }
 
-  const fetchedAt = new Date().toISOString();
+  const fetchedAt = new Date().toISOString()
   try {
-    await insertRate("USD", "KRW", rate, fetchedAt);
+    await insertRate("USD", "KRW", rate, fetchedAt)
   } catch (error) {
     // The live rate is still correct; only the cache write failed.
-    console.error("[finance] failed to store fetched exchange rate", error);
+    console.error("[finance] failed to store fetched exchange rate", error)
   }
-  return { rate, fetchedAt, cached: false, fallback: false };
+  return { rate, fetchedAt, cached: false, fallback: false }
 }

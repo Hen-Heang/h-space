@@ -1,28 +1,28 @@
-"use client";
+"use client"
 
-import { CircleAlert, MoreHorizontal, Pencil } from "lucide-react";
+import { CircleAlert, MoreHorizontal, Pencil } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/finance/base/dropdown-menu";
-import { CategoryIcon, FinanceProgress } from "@/components/finance/ui/finance-primitives";
-import { BUDGET_STATUS_META, BUDGET_STATUS_TEXT_CLASS } from "@/components/finance/ui/budget-status";
-import { krw } from "@/lib/finance-format";
-import type { BudgetPerformance } from "@/types/finance";
+} from "@/components/finance/base/dropdown-menu"
+import { CategoryIcon, FinanceProgress } from "@/components/finance/ui/finance-primitives"
+import { BUDGET_STATUS_META, BUDGET_STATUS_TEXT_CLASS } from "@/components/finance/ui/budget-status"
+import { krw } from "@/lib/finance-format"
+import type { BudgetPerformance } from "@/types/finance"
 
 export function BudgetCard({
   budget,
   onEdit,
   onRemoveRequest,
 }: {
-  budget: BudgetPerformance;
-  onEdit: (budget: BudgetPerformance) => void;
-  onRemoveRequest: (budget: BudgetPerformance) => void;
+  budget: BudgetPerformance
+  onEdit: (budget: BudgetPerformance) => void
+  onRemoveRequest: (budget: BudgetPerformance) => void
 }) {
-  const status = BUDGET_STATUS_META[budget.status];
-  const StatusIcon = status.icon;
+  const status = BUDGET_STATUS_META[budget.status]
+  const StatusIcon = status.icon
 
   return (
     <div className="rounded-2xl border bg-card p-4">
@@ -57,14 +57,20 @@ export function BudgetCard({
         <p className="min-w-0 [overflow-wrap:anywhere] font-mono text-xs text-muted-foreground tabular-nums">
           {krw.format(budget.spentKrw)} of {krw.format(budget.budgetKrw)}
         </p>
-        <span className={`flex items-center gap-1 text-xs font-semibold ${BUDGET_STATUS_TEXT_CLASS[budget.status]}`}>
+        <span
+          className={`flex items-center gap-1 text-xs font-semibold ${BUDGET_STATUS_TEXT_CLASS[budget.status]}`}
+        >
           <StatusIcon className="size-3.5" aria-hidden="true" />
           {status.label}
         </span>
       </div>
 
       <div className="mt-3">
-        <FinanceProgress value={budget.usagePct} label={`${budget.categoryName} budget ${budget.usagePct}% used`} tone={status.tone} />
+        <FinanceProgress
+          value={budget.usagePct}
+          label={`${budget.categoryName} budget ${budget.usagePct}% used`}
+          tone={status.tone}
+        />
       </div>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-muted-foreground">
         <span>{budget.usagePct}% used</span>
@@ -75,5 +81,5 @@ export function BudgetCard({
         </span>
       </div>
     </div>
-  );
+  )
 }

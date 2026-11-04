@@ -1,26 +1,33 @@
-import "server-only";
-import { sql } from "@/lib/server/finance/db";
-import type { CategoryAmount, Currency, PaymentMethodAmount, SpendingClass, Transaction, TransactionType } from "@/types/finance";
-import type { TransactionSort } from "@/lib/validation/finance";
+import "server-only"
+import { sql } from "@/lib/server/finance/db"
+import type {
+  CategoryAmount,
+  Currency,
+  PaymentMethodAmount,
+  SpendingClass,
+  Transaction,
+  TransactionType,
+} from "@/types/finance"
+import type { TransactionSort } from "@/lib/validation/finance"
 
 interface TransactionRow {
-  id: string;
-  date: string;
-  type: string;
-  category_id: string | null;
-  category_name: string | null;
-  category_icon: string | null;
-  category_color: string | null;
-  description: string;
-  amount_krw: string;
-  currency: string;
-  amount_usd: string | null;
-  exchange_rate: string | null;
-  payment_method_id: string | null;
-  payment_method_name: string | null;
-  note: string | null;
-  created_at: string;
-  updated_at: string;
+  id: string
+  date: string
+  type: string
+  category_id: string | null
+  category_name: string | null
+  category_icon: string | null
+  category_color: string | null
+  description: string
+  amount_krw: string
+  currency: string
+  amount_usd: string | null
+  exchange_rate: string | null
+  payment_method_id: string | null
+  payment_method_name: string | null
+  note: string | null
+  created_at: string
+  updated_at: string
 }
 
 function toTransaction(row: TransactionRow): Transaction {
@@ -42,23 +49,23 @@ function toTransaction(row: TransactionRow): Transaction {
     note: row.note,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-  };
+  }
 }
 
 // This resolved shape is what the repository writes — the canonical amountKrw
 // (and, for a USD entry, originalAmount/exchangeRate) are computed once in
 // finance-transaction-service.ts, never here and never trusted from the client.
 export interface ResolvedTransactionInput {
-  date: string;
-  type: TransactionType;
-  categoryId?: string | null;
-  description: string;
-  amountKrw: number;
-  currency: Currency;
-  originalAmount: number | null;
-  exchangeRate: number | null;
-  paymentMethodId?: string | null;
-  note?: string | null;
+  date: string
+  type: TransactionType
+  categoryId?: string | null
+  description: string
+  amountKrw: number
+  currency: Currency
+  originalAmount: number | null
+  exchangeRate: number | null
+  paymentMethodId?: string | null
+  note?: string | null
 }
 
 // date is cast to text explicitly, same reasoning as goals.target_date: the
@@ -70,106 +77,106 @@ const TRANSACTION_SELECT = `
   t.description, t.amount_krw, t.currency, t.amount_usd, t.exchange_rate,
   t.payment_method_id, pm.name as payment_method_name, t.note,
   t.created_at, t.updated_at
-`;
+`
 const TRANSACTION_JOINS = `
   left join finance_categories c on c.id = t.category_id
   left join finance_payment_methods pm on pm.id = t.payment_method_id
-`;
-const TRANSACTION_FROM = `from finance_transactions t ${TRANSACTION_JOINS}`;
+`
+const TRANSACTION_FROM = `from finance_transactions t ${TRANSACTION_JOINS}`
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 20
 
 const SORT_CLAUSES: Record<TransactionSort, string> = {
   date_desc: "t.date desc, t.created_at desc",
   date_asc: "t.date asc, t.created_at asc",
   amount_desc: "t.amount_krw desc, t.date desc",
   amount_asc: "t.amount_krw asc, t.date desc",
-};
+}
 
 export interface TransactionQuery {
-  start: string;
-  end: string;
-  type?: TransactionType;
-  categoryId?: string;
-  paymentMethodId?: string;
-  amountMin?: number;
-  amountMax?: number;
-  search?: string;
-  sort?: TransactionSort;
-  page: number;
+  start: string
+  end: string
+  type?: TransactionType
+  categoryId?: string
+  paymentMethodId?: string
+  amountMin?: number
+  amountMax?: number
+  search?: string
+  sort?: TransactionSort
+  page: number
 }
 
 export async function findTransactionsByUser(
   userId: string,
-  query: TransactionQuery
+  query: TransactionQuery,
 ): Promise<{ transactions: Transaction[]; hasMore: boolean }> {
-  const conditions = ["t.user_id = $1", "t.date >= $2", "t.date < $3"];
-  const params: unknown[] = [userId, query.start, query.end];
+  const conditions = ["t.user_id = $1", "t.date >= $2", "t.date < $3"]
+  const params: unknown[] = [userId, query.start, query.end]
 
   if (query.type) {
-    params.push(query.type);
-    conditions.push(`t.type = $${params.length}`);
+    params.push(query.type)
+    conditions.push(`t.type = $${params.length}`)
   }
   if (query.categoryId) {
-    params.push(query.categoryId);
-    conditions.push(`t.category_id = $${params.length}`);
+    params.push(query.categoryId)
+    conditions.push(`t.category_id = $${params.length}`)
   }
   if (query.paymentMethodId) {
-    params.push(query.paymentMethodId);
-    conditions.push(`t.payment_method_id = $${params.length}`);
+    params.push(query.paymentMethodId)
+    conditions.push(`t.payment_method_id = $${params.length}`)
   }
   if (query.amountMin !== undefined) {
-    params.push(query.amountMin);
-    conditions.push(`t.amount_krw >= $${params.length}`);
+    params.push(query.amountMin)
+    conditions.push(`t.amount_krw >= $${params.length}`)
   }
   if (query.amountMax !== undefined) {
-    params.push(query.amountMax);
-    conditions.push(`t.amount_krw <= $${params.length}`);
+    params.push(query.amountMax)
+    conditions.push(`t.amount_krw <= $${params.length}`)
   }
   if (query.search) {
-    params.push(`%${query.search}%`);
-    conditions.push(`t.description ilike $${params.length}`);
+    params.push(`%${query.search}%`)
+    conditions.push(`t.description ilike $${params.length}`)
   }
 
-  const orderBy = SORT_CLAUSES[query.sort ?? "date_desc"];
-  params.push(PAGE_SIZE + 1, query.page * PAGE_SIZE);
+  const orderBy = SORT_CLAUSES[query.sort ?? "date_desc"]
+  params.push(PAGE_SIZE + 1, query.page * PAGE_SIZE)
 
   const rows = (await sql.query(
     `select ${TRANSACTION_SELECT} ${TRANSACTION_FROM}
      where ${conditions.join(" and ")}
      order by ${orderBy}
      limit $${params.length - 1} offset $${params.length}`,
-    params
-  )) as TransactionRow[];
+    params,
+  )) as TransactionRow[]
 
-  const hasMore = rows.length > PAGE_SIZE;
-  return { transactions: rows.slice(0, PAGE_SIZE).map(toTransaction), hasMore };
+  const hasMore = rows.length > PAGE_SIZE
+  return { transactions: rows.slice(0, PAGE_SIZE).map(toTransaction), hasMore }
 }
 
 export async function findTransactionById(id: string, userId: string): Promise<Transaction | null> {
   const rows = (await sql`
     select ${sql.unsafe(TRANSACTION_SELECT)} ${sql.unsafe(TRANSACTION_FROM)}
     where t.id = ${id} and t.user_id = ${userId}
-  `) as TransactionRow[];
+  `) as TransactionRow[]
 
-  return rows[0] ? toTransaction(rows[0]) : null;
+  return rows[0] ? toTransaction(rows[0]) : null
 }
 
 export async function findRecentTransactionsByUser(
   userId: string,
   start: string,
   end: string,
-  limit = 6
+  limit = 6,
 ): Promise<Transaction[]> {
   const rows = (await sql.query(
     `select ${TRANSACTION_SELECT} ${TRANSACTION_FROM}
      where t.user_id = $1 and t.date >= $2 and t.date < $3
      order by t.date desc, t.created_at desc
      limit $4`,
-    [userId, start, end, limit]
-  )) as TransactionRow[];
+    [userId, start, end, limit],
+  )) as TransactionRow[]
 
-  return rows.map(toTransaction);
+  return rows.map(toTransaction)
 }
 
 // Unbounded, all-time fetch for data export — a personal finance app's full
@@ -179,16 +186,19 @@ export async function findAllTransactionsForExport(userId: string): Promise<Tran
     select ${sql.unsafe(TRANSACTION_SELECT)} ${sql.unsafe(TRANSACTION_FROM)}
     where t.user_id = ${userId}
     order by t.date desc, t.created_at desc
-  `) as TransactionRow[];
+  `) as TransactionRow[]
 
-  return rows.map(toTransaction);
+  return rows.map(toTransaction)
 }
 
 // Writes return the joined row from the same statement — the data-modifying
 // CTE is named `t`, so TRANSACTION_SELECT and TRANSACTION_JOINS apply to it
 // unchanged. One statement instead of write-then-read saves a full Neon round
 // trip (~200ms from icn1 to us-east-2) on every save.
-export async function createTransaction(userId: string, input: ResolvedTransactionInput): Promise<Transaction> {
+export async function createTransaction(
+  userId: string,
+  input: ResolvedTransactionInput,
+): Promise<Transaction> {
   const rows = (await sql`
     with t as (
       insert into finance_transactions (
@@ -203,16 +213,16 @@ export async function createTransaction(userId: string, input: ResolvedTransacti
       returning *
     )
     select ${sql.unsafe(TRANSACTION_SELECT)} from t ${sql.unsafe(TRANSACTION_JOINS)}
-  `) as TransactionRow[];
+  `) as TransactionRow[]
 
-  if (!rows[0]) throw new Error("Failed to load the transaction just created");
-  return toTransaction(rows[0]);
+  if (!rows[0]) throw new Error("Failed to load the transaction just created")
+  return toTransaction(rows[0])
 }
 
 export async function updateTransaction(
   id: string,
   userId: string,
-  input: ResolvedTransactionInput
+  input: ResolvedTransactionInput,
 ): Promise<Transaction | null> {
   const rows = (await sql`
     with t as (
@@ -232,52 +242,59 @@ export async function updateTransaction(
       returning *
     )
     select ${sql.unsafe(TRANSACTION_SELECT)} from t ${sql.unsafe(TRANSACTION_JOINS)}
-  `) as TransactionRow[];
+  `) as TransactionRow[]
 
-  return rows[0] ? toTransaction(rows[0]) : null;
+  return rows[0] ? toTransaction(rows[0]) : null
 }
 
 export async function deleteTransaction(id: string, userId: string): Promise<boolean> {
   const rows = (await sql`
     delete from finance_transactions where id = ${id} and user_id = ${userId} returning id
-  `) as { id: string }[];
+  `) as { id: string }[]
 
-  return rows.length > 0;
+  return rows.length > 0
 }
 
 // Bulk actions. Every statement is scoped by user_id, so ids belonging to
 // someone else (or already gone) are simply not matched; the returned count
 // is what actually changed.
 
-export async function findTransactionTypesByIds(userId: string, ids: string[]): Promise<TransactionType[]> {
+export async function findTransactionTypesByIds(
+  userId: string,
+  ids: string[],
+): Promise<TransactionType[]> {
   const rows = (await sql`
     select distinct type from finance_transactions where user_id = ${userId} and id = any(${ids}::uuid[])
-  `) as { type: string }[];
-  return rows.map((row) => row.type as TransactionType);
+  `) as { type: string }[]
+  return rows.map((row) => row.type as TransactionType)
 }
 
 export async function deleteTransactionsByIds(userId: string, ids: string[]): Promise<number> {
   const rows = (await sql`
     delete from finance_transactions where user_id = ${userId} and id = any(${ids}::uuid[]) returning id
-  `) as { id: string }[];
-  return rows.length;
+  `) as { id: string }[]
+  return rows.length
 }
 
-export async function setCategoryForTransactions(userId: string, ids: string[], categoryId: string | null): Promise<number> {
+export async function setCategoryForTransactions(
+  userId: string,
+  ids: string[],
+  categoryId: string | null,
+): Promise<number> {
   const rows = (await sql`
     update finance_transactions set category_id = ${categoryId}, updated_at = now()
     where user_id = ${userId} and id = any(${ids}::uuid[])
     returning id
-  `) as { id: string }[];
-  return rows.length;
+  `) as { id: string }[]
+  return rows.length
 }
 
 export interface DescriptionSuggestionRow {
-  description: string;
-  type: TransactionType;
-  categoryId: string | null;
-  paymentMethodId: string | null;
-  uses: number;
+  description: string
+  type: TransactionType
+  categoryId: string | null
+  paymentMethodId: string | null
+  uses: number
 }
 
 /**
@@ -292,9 +309,9 @@ export async function findDescriptionSuggestions(
   userId: string,
   query: string,
   type: TransactionType | undefined,
-  limit: number
+  limit: number,
 ): Promise<DescriptionSuggestionRow[]> {
-  const escaped = query.replace(/[\\%_]/g, (char) => `\\${char}`);
+  const escaped = query.replace(/[\\%_]/g, (char) => `\\${char}`)
   const rows = (await sql`
     select description,
       (array_agg(type order by date desc, created_at desc))[1] as type,
@@ -310,7 +327,13 @@ export async function findDescriptionSuggestions(
     order by count(*) * (case when bool_or(description ilike ${`${escaped}%`}) then 3 else 1 end) desc,
       max(date) desc
     limit ${limit}
-  `) as { description: string; type: string; category_id: string | null; payment_method_id: string | null; uses: number }[];
+  `) as {
+    description: string
+    type: string
+    category_id: string | null
+    payment_method_id: string | null
+    uses: number
+  }[]
 
   return rows.map((row) => ({
     description: row.description,
@@ -318,19 +341,19 @@ export async function findDescriptionSuggestions(
     categoryId: row.category_id,
     paymentMethodId: row.payment_method_id,
     uses: row.uses,
-  }));
+  }))
 }
 
 export async function sumTotalsForRange(
   userId: string,
   start: string,
-  end: string
+  end: string,
 ): Promise<{
-  incomeKrw: number;
-  expenseKrw: number;
-  count: number;
-  incomeCount: number;
-  expenseCount: number;
+  incomeKrw: number
+  expenseKrw: number
+  count: number
+  incomeCount: number
+  expenseCount: number
 }> {
   const rows = (await sql`
     select
@@ -342,24 +365,28 @@ export async function sumTotalsForRange(
     from finance_transactions
     where user_id = ${userId} and date >= ${start} and date < ${end}
   `) as {
-    income_krw: string;
-    expense_krw: string;
-    count: number;
-    income_count: number;
-    expense_count: number;
-  }[];
+    income_krw: string
+    expense_krw: string
+    count: number
+    income_count: number
+    expense_count: number
+  }[]
 
-  const row = rows[0];
+  const row = rows[0]
   return {
     incomeKrw: Number(row.income_krw),
     expenseKrw: Number(row.expense_krw),
     count: row.count,
     incomeCount: row.income_count,
     expenseCount: row.expense_count,
-  };
+  }
 }
 
-export async function sumExpenseByCategoryForRange(userId: string, start: string, end: string): Promise<CategoryAmount[]> {
+export async function sumExpenseByCategoryForRange(
+  userId: string,
+  start: string,
+  end: string,
+): Promise<CategoryAmount[]> {
   const rows = (await sql`
     select t.category_id, coalesce(c.name, 'Uncategorized') as category_name,
       c.icon as category_icon, c.color as category_color, c.spending_class,
@@ -370,13 +397,13 @@ export async function sumExpenseByCategoryForRange(userId: string, start: string
     group by t.category_id, c.name, c.icon, c.color, c.spending_class
     order by amount_krw desc
   `) as {
-    category_id: string | null;
-    category_name: string;
-    category_icon: string | null;
-    category_color: string | null;
-    spending_class: string | null;
-    amount_krw: string;
-  }[];
+    category_id: string | null
+    category_name: string
+    category_icon: string | null
+    category_color: string | null
+    spending_class: string | null
+    amount_krw: string
+  }[]
 
   return rows.map((r) => ({
     categoryId: r.category_id,
@@ -385,13 +412,13 @@ export async function sumExpenseByCategoryForRange(userId: string, start: string
     categoryColor: r.category_color,
     spendingClass: r.spending_class as SpendingClass | null,
     amountKrw: Number(r.amount_krw),
-  }));
+  }))
 }
 
 export async function sumExpenseByPaymentMethodForRange(
   userId: string,
   start: string,
-  end: string
+  end: string,
 ): Promise<PaymentMethodAmount[]> {
   const rows = (await sql`
     select t.payment_method_id, coalesce(pm.name, 'No payment method') as payment_method_name,
@@ -401,19 +428,19 @@ export async function sumExpenseByPaymentMethodForRange(
     where t.user_id = ${userId} and t.type = 'expense' and t.date >= ${start} and t.date < ${end}
     group by t.payment_method_id, pm.name
     order by amount_krw desc
-  `) as { payment_method_id: string | null; payment_method_name: string; amount_krw: string }[];
+  `) as { payment_method_id: string | null; payment_method_name: string; amount_krw: string }[]
 
   return rows.map((r) => ({
     paymentMethodId: r.payment_method_id,
     paymentMethodName: r.payment_method_name,
     amountKrw: Number(r.amount_krw),
-  }));
+  }))
 }
 
 export async function sumByDayForRange(
   userId: string,
   start: string,
-  end: string
+  end: string,
 ): Promise<{ date: string; incomeKrw: number; expenseKrw: number }[]> {
   const rows = (await sql`
     select to_char(date, 'YYYY-MM-DD') as date,
@@ -423,15 +450,19 @@ export async function sumByDayForRange(
     where user_id = ${userId} and date >= ${start} and date < ${end}
     group by date
     order by date
-  `) as { date: string; income_krw: string; expense_krw: string }[];
+  `) as { date: string; income_krw: string; expense_krw: string }[]
 
-  return rows.map((row) => ({ date: row.date, incomeKrw: Number(row.income_krw), expenseKrw: Number(row.expense_krw) }));
+  return rows.map((row) => ({
+    date: row.date,
+    incomeKrw: Number(row.income_krw),
+    expenseKrw: Number(row.expense_krw),
+  }))
 }
 
 export async function sumExpenseByDayForRange(
   userId: string,
   start: string,
-  end: string
+  end: string,
 ): Promise<{ date: string; amountKrw: number }[]> {
   const rows = (await sql`
     select to_char(date, 'YYYY-MM-DD') as date, sum(amount_krw)::numeric as amount_krw
@@ -439,9 +470,9 @@ export async function sumExpenseByDayForRange(
     where user_id = ${userId} and type = 'expense' and date >= ${start} and date < ${end}
     group by date
     order by date
-  `) as { date: string; amount_krw: string }[];
+  `) as { date: string; amount_krw: string }[]
 
-  return rows.map((row) => ({ date: row.date, amountKrw: Number(row.amount_krw) }));
+  return rows.map((row) => ({ date: row.date, amountKrw: Number(row.amount_krw) }))
 }
 
 // Recurring-expense grouping for subscription detection lives in

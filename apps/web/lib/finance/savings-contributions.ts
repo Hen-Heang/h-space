@@ -1,6 +1,6 @@
 export interface ContributionRecord {
-  amountUsd: number;
-  contributionMonth: string; // YYYY-MM
+  amountUsd: number
+  contributionMonth: string // YYYY-MM
 }
 
 /**
@@ -14,8 +14,11 @@ export interface ContributionRecord {
  * filtered to the target month before being added to anything, which is
  * exactly what this function does and nothing more.
  */
-export function sumContributionsForMonth(contributions: ContributionRecord[], month: string): number {
+export function sumContributionsForMonth(
+  contributions: ContributionRecord[],
+  month: string,
+): number {
   return contributions
     .filter((contribution) => contribution.contributionMonth === month)
-    .reduce((sum, contribution) => sum + contribution.amountUsd, 0);
+    .reduce((sum, contribution) => sum + contribution.amountUsd, 0)
 }

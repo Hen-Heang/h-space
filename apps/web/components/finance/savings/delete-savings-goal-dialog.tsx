@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogContent,
@@ -8,8 +8,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/finance/base/alert-dialog";
-import { Button } from "@/components/finance/base/button";
+} from "@/components/finance/base/alert-dialog"
+import { Button } from "@/components/finance/base/button"
 
 export function DeleteSavingsGoalDialog({
   isOpen,
@@ -19,12 +19,12 @@ export function DeleteSavingsGoalDialog({
   onCancel,
   onConfirm,
 }: {
-  isOpen: boolean;
-  isDeleting: boolean;
-  goalName: string;
-  error?: string | null;
-  onCancel: () => void;
-  onConfirm: () => void | Promise<void>;
+  isOpen: boolean
+  isDeleting: boolean
+  goalName: string
+  error?: string | null
+  onCancel: () => void
+  onConfirm: () => void | Promise<void>
 }) {
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
@@ -36,7 +36,10 @@ export function DeleteSavingsGoalDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         {error && (
-          <p className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">
+          <p
+            className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+            role="alert"
+          >
             {error}
           </p>
         )}
@@ -56,5 +59,5 @@ export function DeleteSavingsGoalDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
+  )
 }

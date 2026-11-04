@@ -1,17 +1,23 @@
-"use client";
+"use client"
 
-import { useState, type FormEvent } from "react";
-import { Loader2, Save } from "lucide-react";
-import { Button } from "@/components/finance/base/button";
-import { Label } from "@/components/finance/base/label";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/finance/base/sheet";
-import { AmountField, CategoryIcon } from "@/components/finance/ui/finance-primitives";
-import { cn } from "@/lib/utils";
-import type { BudgetPerformance, Category } from "@/types/finance";
+import { useState, type FormEvent } from "react"
+import { Loader2, Save } from "lucide-react"
+import { Button } from "@/components/finance/base/button"
+import { Label } from "@/components/finance/base/label"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/finance/base/sheet"
+import { AmountField, CategoryIcon } from "@/components/finance/ui/finance-primitives"
+import { cn } from "@/lib/utils"
+import type { BudgetPerformance, Category } from "@/types/finance"
 
 type BudgetSheetTarget =
-  | { mode: "create"; unbudgetedCategories: Category[] }
-  | { mode: "edit"; budget: BudgetPerformance };
+  { mode: "create"; unbudgetedCategories: Category[] } | { mode: "edit"; budget: BudgetPerformance }
 
 export function BudgetSheet({
   target,
@@ -19,10 +25,10 @@ export function BudgetSheet({
   onOpenChange,
   onSave,
 }: {
-  target: BudgetSheetTarget | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (categoryId: string, amountKrw: number) => Promise<void>;
+  target: BudgetSheetTarget | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSave: (categoryId: string, amountKrw: number) => Promise<void>
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -45,7 +51,7 @@ export function BudgetSheet({
         )}
       </SheetContent>
     </Sheet>
-  );
+  )
 }
 
 function BudgetSheetFields({
@@ -53,36 +59,40 @@ function BudgetSheetFields({
   onSave,
   onOpenChange,
 }: {
-  target: BudgetSheetTarget;
-  onSave: (categoryId: string, amountKrw: number) => Promise<void>;
-  onOpenChange: (open: boolean) => void;
+  target: BudgetSheetTarget
+  onSave: (categoryId: string, amountKrw: number) => Promise<void>
+  onOpenChange: (open: boolean) => void
 }) {
-  const [categoryId, setCategoryId] = useState(target.mode === "edit" ? target.budget.categoryId : "");
-  const [amount, setAmount] = useState(target.mode === "edit" ? String(target.budget.budgetKrw) : "");
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [categoryId, setCategoryId] = useState(
+    target.mode === "edit" ? target.budget.categoryId : "",
+  )
+  const [amount, setAmount] = useState(
+    target.mode === "edit" ? String(target.budget.budgetKrw) : "",
+  )
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
+    event.preventDefault()
     if (!categoryId) {
-      setError("Choose a category.");
-      return;
+      setError("Choose a category.")
+      return
     }
-    const parsedAmount = Number(amount);
+    const parsedAmount = Number(amount)
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      setError("Enter an amount greater than 0.");
-      return;
+      setError("Enter an amount greater than 0.")
+      return
     }
 
-    setPending(true);
-    setError(null);
+    setPending(true)
+    setError(null)
     try {
-      await onSave(categoryId, parsedAmount);
-      onOpenChange(false);
+      await onSave(categoryId, parsedAmount)
+      onOpenChange(false)
     } catch {
-      setError("Couldn't save the budget. Try again.");
+      setError("Couldn't save the budget. Try again.")
     } finally {
-      setPending(false);
+      setPending(false)
     }
   }
 
@@ -98,7 +108,9 @@ function BudgetSheetFields({
           <div className="space-y-1.5">
             <Label>Category</Label>
             {target.unbudgetedCategories.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Every expense category already has a budget.</p>
+              <p className="text-xs text-muted-foreground">
+                Every expense category already has a budget.
+              </p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {target.unbudgetedCategories.map((category) => (
@@ -110,10 +122,14 @@ function BudgetSheetFields({
                       "flex min-h-11 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors active:scale-[0.98]",
                       categoryId === category.id
                         ? "border-primary/40 bg-primary text-primary-foreground shadow-sm"
-                        : "border-border bg-background text-muted-foreground hover:bg-secondary active:bg-secondary hover:text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:bg-secondary active:bg-secondary hover:text-foreground",
                     )}
                   >
-                    <CategoryIcon icon={category.icon} color={categoryId === category.id ? null : category.color} className="size-6 text-sm" />
+                    <CategoryIcon
+                      icon={category.icon}
+                      color={categoryId === category.id ? null : category.color}
+                      className="size-6 text-sm"
+                    />
                     {category.name}
                   </button>
                 ))}
@@ -139,14 +155,23 @@ function BudgetSheetFields({
         </div>
 
         {error && (
-          <p className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">
+          <p
+            className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+            role="alert"
+          >
             {error}
           </p>
         )}
       </div>
 
       <SheetFooter>
-        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending} className="min-h-11 flex-1">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          disabled={pending}
+          className="min-h-11 flex-1"
+        >
           Cancel
         </Button>
         <Button type="submit" disabled={pending} className="min-h-11 flex-1">
@@ -155,5 +180,5 @@ function BudgetSheetFields({
         </Button>
       </SheetFooter>
     </form>
-  );
+  )
 }

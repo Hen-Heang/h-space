@@ -1,15 +1,15 @@
-"use client";
+"use client"
 
-import { Landmark, ReceiptText, Scale, TriangleAlert } from "lucide-react";
-import { FinanceMetricCard, FinanceMetricGrid } from "@/components/finance/ui/finance-primitives";
-import { krw } from "@/lib/finance-format";
-import type { BudgetPerformance } from "@/types/finance";
+import { Landmark, ReceiptText, Scale, TriangleAlert } from "lucide-react"
+import { FinanceMetricCard, FinanceMetricGrid } from "@/components/finance/ui/finance-primitives"
+import { krw } from "@/lib/finance-format"
+import type { BudgetPerformance } from "@/types/finance"
 
 export function BudgetSummary({ performance }: { performance: BudgetPerformance[] }) {
-  const totalBudgetKrw = performance.reduce((sum, budget) => sum + budget.budgetKrw, 0);
-  const totalSpentKrw = performance.reduce((sum, budget) => sum + budget.spentKrw, 0);
-  const remainingKrw = totalBudgetKrw - totalSpentKrw;
-  const attentionCount = performance.filter((budget) => budget.status !== "ok").length;
+  const totalBudgetKrw = performance.reduce((sum, budget) => sum + budget.budgetKrw, 0)
+  const totalSpentKrw = performance.reduce((sum, budget) => sum + budget.spentKrw, 0)
+  const remainingKrw = totalBudgetKrw - totalSpentKrw
+  const attentionCount = performance.filter((budget) => budget.status !== "ok").length
 
   return (
     <FinanceMetricGrid>
@@ -41,5 +41,5 @@ export function BudgetSummary({ performance }: { performance: BudgetPerformance[
         tone={attentionCount > 0 ? "warning" : "positive"}
       />
     </FinanceMetricGrid>
-  );
+  )
 }

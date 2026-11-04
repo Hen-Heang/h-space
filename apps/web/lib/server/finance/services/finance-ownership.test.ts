@@ -22,7 +22,9 @@ describe("assertOwnedReferences", () => {
   it("passes when both references belong to the user, checking with the user's id", async () => {
     findCategoryById.mockResolvedValue({ id: CATEGORY })
     findPaymentMethodById.mockResolvedValue({ id: METHOD })
-    await expect(assertOwnedReferences(USER, { categoryId: CATEGORY, paymentMethodId: METHOD })).resolves.toBeUndefined()
+    await expect(
+      assertOwnedReferences(USER, { categoryId: CATEGORY, paymentMethodId: METHOD }),
+    ).resolves.toBeUndefined()
     expect(findCategoryById).toHaveBeenCalledWith(CATEGORY, USER)
     expect(findPaymentMethodById).toHaveBeenCalledWith(METHOD, USER)
   })
@@ -35,14 +37,18 @@ describe("assertOwnedReferences", () => {
 
   it("rejects another user's category with 422", async () => {
     findCategoryById.mockResolvedValue(null)
-    const error = await assertOwnedReferences(USER, { categoryId: CATEGORY }).catch((e: unknown) => e)
+    const error = await assertOwnedReferences(USER, { categoryId: CATEGORY }).catch(
+      (e: unknown) => e,
+    )
     expect(error).toBeInstanceOf(AppError)
     expect((error as AppError).status).toBe(422)
   })
 
   it("rejects another user's payment method with 422", async () => {
     findPaymentMethodById.mockResolvedValue(null)
-    const error = await assertOwnedReferences(USER, { paymentMethodId: METHOD }).catch((e: unknown) => e)
+    const error = await assertOwnedReferences(USER, { paymentMethodId: METHOD }).catch(
+      (e: unknown) => e,
+    )
     expect((error as AppError).status).toBe(422)
   })
 })

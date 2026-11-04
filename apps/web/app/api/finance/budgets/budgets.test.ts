@@ -21,7 +21,10 @@ vi.mock("@/lib/server/finance/repositories/finance-budget-repository", async (im
   upsertBudget: (...args: unknown[]) => upsertBudgetRepo(...args),
   deleteBudget: (...args: unknown[]) => deleteBudgetRepo(...args),
 }))
-vi.mock("@/lib/server/finance/db", () => ({ sql: vi.fn(), isFinanceDatabaseConfigured: () => true }))
+vi.mock("@/lib/server/finance/db", () => ({
+  sql: vi.fn(),
+  isFinanceDatabaseConfigured: () => true,
+}))
 
 import { Errors } from "@/lib/server/finance/errors"
 import { PUT } from "./route"
@@ -32,7 +35,12 @@ const LINKED = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 const CATEGORY = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
 
 const put = (body: unknown) =>
-  PUT(new NextRequest("http://localhost/api/finance/budgets", { method: "PUT", body: JSON.stringify(body) }))
+  PUT(
+    new NextRequest("http://localhost/api/finance/budgets", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  )
 const del = (id: string) =>
   DELETE(new NextRequest(`http://localhost/api/finance/budgets/${id}`, { method: "DELETE" }), {
     params: Promise.resolve({ categoryId: id }),

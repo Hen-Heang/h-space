@@ -1,20 +1,21 @@
-import "server-only";
-import { sql } from "@/lib/server/finance/db";
-import type { SavingsContribution, SavingsGoal, SavingsGoalPurpose } from "@/types/finance";
-import type { CreateSavingsGoalInput, UpdateSavingsGoalInput } from "@/lib/validation/finance";
+import "server-only"
+import { sql } from "@/lib/server/finance/db"
+import { Errors } from "@/lib/server/finance/errors"
+import type { SavingsContribution, SavingsGoal, SavingsGoalPurpose } from "@/types/finance"
+import type { CreateSavingsGoalInput, UpdateSavingsGoalInput } from "@/lib/validation/finance"
 
 interface SavingsGoalRow {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-  target_usd: string;
-  current_usd: string;
-  deadline: string | null;
-  note: string | null;
-  purpose: string | null;
-  created_at: string;
-  updated_at: string;
+  id: string
+  name: string
+  icon: string
+  color: string
+  target_usd: string
+  current_usd: string
+  deadline: string | null
+  note: string | null
+  purpose: string | null
+  created_at: string
+  updated_at: string
 }
 
 function toSavingsGoal(row: SavingsGoalRow): SavingsGoal {
@@ -30,31 +31,34 @@ function toSavingsGoal(row: SavingsGoalRow): SavingsGoal {
     purpose: row.purpose as SavingsGoalPurpose | null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-  };
+  }
 }
 
-const SAVINGS_COLUMNS = `id, name, icon, color, target_usd, current_usd, to_char(deadline, 'YYYY-MM-DD') as deadline, note, purpose, created_at, updated_at`;
+const SAVINGS_COLUMNS = `id, name, icon, color, target_usd, current_usd, to_char(deadline, 'YYYY-MM-DD') as deadline, note, purpose, created_at, updated_at`
 
 export async function findSavingsGoalsByUser(userId: string): Promise<SavingsGoal[]> {
   const rows = (await sql`
     select ${sql.unsafe(SAVINGS_COLUMNS)} from finance_savings_goals
     where user_id = ${userId}
     order by created_at desc
-  `) as SavingsGoalRow[];
+  `) as SavingsGoalRow[]
 
-  return rows.map(toSavingsGoal);
+  return rows.map(toSavingsGoal)
 }
 
 export async function findSavingsGoalById(id: string, userId: string): Promise<SavingsGoal | null> {
   const rows = (await sql`
     select ${sql.unsafe(SAVINGS_COLUMNS)} from finance_savings_goals
     where id = ${id} and user_id = ${userId}
-  `) as SavingsGoalRow[];
+  `) as SavingsGoalRow[]
 
-  return rows[0] ? toSavingsGoal(rows[0]) : null;
+  return rows[0] ? toSavingsGoal(rows[0]) : null
 }
 
-export async function createSavingsGoal(userId: string, input: CreateSavingsGoalInput): Promise<SavingsGoal> {
+export async function createSavingsGoal(
+  userId: string,
+  input: CreateSavingsGoalInput,
+): Promise<SavingsGoal> {
   const rows = (await sql`
     insert into finance_savings_goals (user_id, name, icon, color, target_usd, current_usd, deadline, note, purpose)
     values (
@@ -62,56 +66,56 @@ export async function createSavingsGoal(userId: string, input: CreateSavingsGoal
       ${input.targetUsd}, ${input.currentUsd}, ${input.deadline ?? null}, ${input.note ?? null}, ${input.purpose ?? null}
     )
     returning ${sql.unsafe(SAVINGS_COLUMNS)}
-  `) as SavingsGoalRow[];
+  `) as SavingsGoalRow[]
 
-  return toSavingsGoal(rows[0]);
+  return toSavingsGoal(rows[0])
 }
 
 export async function updateSavingsGoal(
   id: string,
   userId: string,
-  input: UpdateSavingsGoalInput
+  input: UpdateSavingsGoalInput,
 ): Promise<SavingsGoal | null> {
-  const sets: string[] = [];
-  const params: unknown[] = [id, userId];
+  const sets: string[] = []
+  const params: unknown[] = [id, userId]
   const set = (column: string, value: unknown) => {
-    params.push(value);
-    sets.push(`${column} = $${params.length}`);
-  };
+    params.push(value)
+    sets.push(`${column} = $${params.length}`)
+  }
 
-  if (input.name !== undefined) set("name", input.name);
-  if (input.icon !== undefined) set("icon", input.icon);
-  if (input.color !== undefined) set("color", input.color);
-  if (input.targetUsd !== undefined) set("target_usd", input.targetUsd);
-  if (input.deadline !== undefined) set("deadline", input.deadline);
-  if (input.note !== undefined) set("note", input.note);
-  if (input.purpose !== undefined) set("purpose", input.purpose);
-  sets.push("updated_at = now()");
+  if (input.name !== undefined) set("name", input.name)
+  if (input.icon !== undefined) set("icon", input.icon)
+  if (input.color !== undefined) set("color", input.color)
+  if (input.targetUsd !== undefined) set("target_usd", input.targetUsd)
+  if (input.deadline !== undefined) set("deadline", input.deadline)
+  if (input.note !== undefined) set("note", input.note)
+  if (input.purpose !== undefined) set("purpose", input.purpose)
+  sets.push("updated_at = now()")
 
   const rows = (await sql.query(
     `update finance_savings_goals set ${sets.join(", ")}
      where id = $1 and user_id = $2
      returning ${SAVINGS_COLUMNS}`,
-    params
-  )) as SavingsGoalRow[];
+    params,
+  )) as SavingsGoalRow[]
 
-  return rows[0] ? toSavingsGoal(rows[0]) : null;
+  return rows[0] ? toSavingsGoal(rows[0]) : null
 }
 
 export async function deleteSavingsGoal(id: string, userId: string): Promise<boolean> {
   const rows = (await sql`
     delete from finance_savings_goals where id = ${id} and user_id = ${userId} returning id
-  `) as { id: string }[];
+  `) as { id: string }[]
 
-  return rows.length > 0;
+  return rows.length > 0
 }
 
 function toContribution(row: {
-  id: string;
-  goal_id: string;
-  amount_usd: string;
-  contribution_month: string;
-  created_at: string;
+  id: string
+  goal_id: string
+  amount_usd: string
+  contribution_month: string
+  created_at: string
 }): SavingsContribution {
   return {
     id: row.id,
@@ -119,17 +123,26 @@ function toContribution(row: {
     amountUsd: Number(row.amount_usd),
     contributionMonth: row.contribution_month,
     createdAt: row.created_at,
-  };
+  }
 }
 
-export async function findContributionsByGoal(goalId: string, userId: string): Promise<SavingsContribution[]> {
+export async function findContributionsByGoal(
+  goalId: string,
+  userId: string,
+): Promise<SavingsContribution[]> {
   const rows = (await sql`
     select id, goal_id, amount_usd, contribution_month, created_at from finance_savings_contributions
     where goal_id = ${goalId} and user_id = ${userId}
     order by created_at desc
-  `) as { id: string; goal_id: string; amount_usd: string; contribution_month: string; created_at: string }[];
+  `) as {
+    id: string
+    goal_id: string
+    amount_usd: string
+    contribution_month: string
+    created_at: string
+  }[]
 
-  return rows.map(toContribution);
+  return rows.map(toContribution)
 }
 
 // Across every goal, unfiltered by month — a personal finance app's full
@@ -138,28 +151,48 @@ export async function findContributionsByGoal(goalId: string, userId: string): P
 // lib/finance/savings-contributions.ts's sumContributionsForMonth rather
 // than adding a date-range query here, so that month-scoping logic stays
 // pure, unit-tested, and identical everywhere it's used.
-export async function findContributionsForUser(userId: string): Promise<{ amountUsd: number; contributionMonth: string }[]> {
+export async function findContributionsForUser(
+  userId: string,
+): Promise<{ amountUsd: number; contributionMonth: string }[]> {
   const rows = (await sql`
     select amount_usd, contribution_month from finance_savings_contributions where user_id = ${userId}
-  `) as { amount_usd: string; contribution_month: string }[];
+  `) as { amount_usd: string; contribution_month: string }[]
 
-  return rows.map((row) => ({ amountUsd: Number(row.amount_usd), contributionMonth: row.contribution_month }));
+  return rows.map((row) => ({
+    amountUsd: Number(row.amount_usd),
+    contributionMonth: row.contribution_month,
+  }))
 }
 
 // Records the contribution and adds it to the goal's running total in one
 // call — callers never update current_usd directly.
-export async function addContribution(goalId: string, userId: string, amountUsd: number): Promise<SavingsContribution> {
-  const month = new Date().toISOString().slice(0, 7);
-  const rows = (await sql`
+export async function addContribution(
+  goalId: string,
+  userId: string,
+  amountUsd: number,
+): Promise<SavingsContribution> {
+  const month = new Date().toISOString().slice(0, 7)
+  const [rows] = (await sql.transaction([
+    sql`
     insert into finance_savings_contributions (goal_id, user_id, amount_usd, contribution_month, source)
-    values (${goalId}, ${userId}, ${amountUsd}, ${month}, 'manual')
+    select id, ${userId}, ${amountUsd}, ${month}, 'manual'
+    from finance_savings_goals
+    where id = ${goalId} and user_id = ${userId}
+    for update
     returning id, goal_id, amount_usd, contribution_month, created_at
-  `) as { id: string; goal_id: string; amount_usd: string; contribution_month: string; created_at: string }[];
-
-  await sql`
+    `,
+    sql`
     update finance_savings_goals set current_usd = current_usd + ${amountUsd}, updated_at = now()
     where id = ${goalId} and user_id = ${userId}
-  `;
+    `,
+  ])) as {
+    id: string
+    goal_id: string
+    amount_usd: string
+    contribution_month: string
+    created_at: string
+  }[][]
 
-  return toContribution(rows[0]);
+  if (!rows[0]) throw Errors.notFound("Savings goal")
+  return toContribution(rows[0])
 }

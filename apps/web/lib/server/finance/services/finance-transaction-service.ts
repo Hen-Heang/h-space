@@ -1,7 +1,7 @@
-import "server-only";
-import { assertOwnedReferences } from "@/lib/server/finance/services/finance-ownership";
-import { Errors } from "@/lib/server/finance/errors";
-import { findCategoryById } from "@/lib/server/finance/repositories/finance-lookup-repository";
+import "server-only"
+import { assertOwnedReferences } from "@/lib/server/finance/services/finance-ownership"
+import { Errors } from "@/lib/server/finance/errors"
+import { findCategoryById } from "@/lib/server/finance/repositories/finance-lookup-repository"
 import {
   createTransaction as createTransactionRepo,
   deleteTransaction as deleteTransactionRepo,
@@ -14,48 +14,65 @@ import {
   type DescriptionSuggestionRow,
   type ResolvedTransactionInput,
   type TransactionQuery,
-} from "@/lib/server/finance/repositories/finance-transaction-repository";
-import type { BulkTransactionActionInput, CreateTransactionInput, UpdateTransactionInput } from "@/lib/validation/finance";
-import type { Transaction, TransactionType } from "@/types/finance";
+} from "@/lib/server/finance/repositories/finance-transaction-repository"
+import type {
+  BulkTransactionActionInput,
+  CreateTransactionInput,
+  UpdateTransactionInput,
+} from "@/lib/validation/finance"
+import type { Transaction, TransactionType } from "@/types/finance"
 
 // The one place amountKrw is computed for a foreign-currency entry — never
 // trust a client-sent KRW figure for a USD transaction, and always round to
 // the nearest whole won (KRW has no minor unit).
-function resolveAmounts(input: CreateTransactionInput): { amountKrw: number; originalAmount: number | null; exchangeRate: number | null } {
+function resolveAmounts(input: CreateTransactionInput): {
+  amountKrw: number
+  originalAmount: number | null
+  exchangeRate: number | null
+} {
   if (input.currency === "USD") {
-    const originalAmount = input.originalAmount as number;
-    const exchangeRate = input.exchangeRate as number;
-    return { amountKrw: Math.round(originalAmount * exchangeRate), originalAmount, exchangeRate };
+    const originalAmount = input.originalAmount as number
+    const exchangeRate = input.exchangeRate as number
+    return { amountKrw: Math.round(originalAmount * exchangeRate), originalAmount, exchangeRate }
   }
-  return { amountKrw: input.amountKrw as number, originalAmount: null, exchangeRate: null };
+  return { amountKrw: input.amountKrw as number, originalAmount: null, exchangeRate: null }
 }
 
-function toResolvedInput(input: CreateTransactionInput | UpdateTransactionInput): ResolvedTransactionInput {
-  return { ...input, ...resolveAmounts(input) };
+function toResolvedInput(
+  input: CreateTransactionInput | UpdateTransactionInput,
+): ResolvedTransactionInput {
+  return { ...input, ...resolveAmounts(input) }
 }
 
 export async function listTransactions(
   userId: string,
-  query: TransactionQuery
+  query: TransactionQuery,
 ): Promise<{ transactions: Transaction[]; hasMore: boolean }> {
-  return findTransactionsByUser(userId, query);
+  return findTransactionsByUser(userId, query)
 }
 
-export async function addTransaction(userId: string, input: CreateTransactionInput): Promise<Transaction> {
-  await assertOwnedReferences(userId, input);
-  return createTransactionRepo(userId, toResolvedInput(input));
+export async function addTransaction(
+  userId: string,
+  input: CreateTransactionInput,
+): Promise<Transaction> {
+  await assertOwnedReferences(userId, input)
+  return createTransactionRepo(userId, toResolvedInput(input))
 }
 
-export async function editTransaction(userId: string, id: string, input: UpdateTransactionInput): Promise<Transaction> {
-  await assertOwnedReferences(userId, input);
-  const transaction = await updateTransactionRepo(id, userId, toResolvedInput(input));
-  if (!transaction) throw Errors.notFound("Transaction");
-  return transaction;
+export async function editTransaction(
+  userId: string,
+  id: string,
+  input: UpdateTransactionInput,
+): Promise<Transaction> {
+  await assertOwnedReferences(userId, input)
+  const transaction = await updateTransactionRepo(id, userId, toResolvedInput(input))
+  if (!transaction) throw Errors.notFound("Transaction")
+  return transaction
 }
 
 export async function removeTransaction(userId: string, id: string): Promise<void> {
-  const deleted = await deleteTransactionRepo(id, userId);
-  if (!deleted) throw Errors.notFound("Transaction");
+  const deleted = await deleteTransactionRepo(id, userId)
+  if (!deleted) throw Errors.notFound("Transaction")
 }
 
 /**
@@ -66,34 +83,34 @@ export async function removeTransaction(userId: string, id: string): Promise<voi
  */
 export async function applyBulkTransactionAction(
   userId: string,
-  input: BulkTransactionActionInput
+  input: BulkTransactionActionInput,
 ): Promise<{ affected: number }> {
   if (input.action === "delete") {
-    return { affected: await deleteTransactionsByIds(userId, input.ids) };
+    return { affected: await deleteTransactionsByIds(userId, input.ids) }
   }
 
   if (input.categoryId !== null) {
-    const category = await findCategoryById(input.categoryId, userId);
-    if (!category) throw Errors.notFound("Category");
+    const category = await findCategoryById(input.categoryId, userId)
+    if (!category) throw Errors.notFound("Category")
     if (category.type !== "both") {
-      const types = await findTransactionTypesByIds(userId, input.ids);
+      const types = await findTransactionTypesByIds(userId, input.ids)
       if (types.some((type) => type !== category.type)) {
         throw Errors.validation(
-          `${category.name} is an ${category.type} category, but the selection includes ${category.type === "expense" ? "income" : "expenses"}.`
-        );
+          `${category.name} is an ${category.type} category, but the selection includes ${category.type === "expense" ? "income" : "expenses"}.`,
+        )
       }
     }
   }
 
-  return { affected: await setCategoryForTransactions(userId, input.ids, input.categoryId) };
+  return { affected: await setCategoryForTransactions(userId, input.ids, input.categoryId) }
 }
 
-const SUGGESTION_LIMIT = 6;
+const SUGGESTION_LIMIT = 6
 
 export async function suggestDescriptions(
   userId: string,
   query: string,
-  type?: TransactionType
+  type?: TransactionType,
 ): Promise<DescriptionSuggestionRow[]> {
-  return findDescriptionSuggestions(userId, query, type, SUGGESTION_LIMIT);
+  return findDescriptionSuggestions(userId, query, type, SUGGESTION_LIMIT)
 }

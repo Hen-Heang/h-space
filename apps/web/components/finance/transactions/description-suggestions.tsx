@@ -1,12 +1,12 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { History } from "lucide-react";
-import type { DescriptionSuggestion } from "@/lib/api/finance";
-import { useDescriptionSuggestions } from "@/lib/query/finance-queries";
-import type { Category, TransactionType } from "@/types/finance";
+import { useEffect, useState } from "react"
+import { History } from "lucide-react"
+import type { DescriptionSuggestion } from "@/lib/api/finance"
+import { useDescriptionSuggestions } from "@/lib/query/finance-queries"
+import type { Category, TransactionType } from "@/types/finance"
 
-const DEBOUNCE_MS = 200;
+const DEBOUNCE_MS = 200
 
 /**
  * Past descriptions matching what's being typed, as tappable chips under the
@@ -20,32 +20,34 @@ export function DescriptionSuggestions({
   categories,
   onPick,
 }: {
-  query: string;
-  type: TransactionType;
-  open: boolean;
-  categories: Category[];
-  onPick: (suggestion: DescriptionSuggestion) => void;
+  query: string
+  type: TransactionType
+  open: boolean
+  categories: Category[]
+  onPick: (suggestion: DescriptionSuggestion) => void
 }) {
-  const [debounced, setDebounced] = useState(query);
+  const [debounced, setDebounced] = useState(query)
 
   useEffect(() => {
-    const timeout = setTimeout(() => setDebounced(query), DEBOUNCE_MS);
-    return () => clearTimeout(timeout);
-  }, [query]);
+    const timeout = setTimeout(() => setDebounced(query), DEBOUNCE_MS)
+    return () => clearTimeout(timeout)
+  }, [query])
 
-  const { data } = useDescriptionSuggestions(debounced, type, open);
-  const typed = query.trim().toLowerCase();
+  const { data } = useDescriptionSuggestions(debounced, type, open)
+  const typed = query.trim().toLowerCase()
   // Hide a chip identical to what's already typed — picking it would change nothing.
-  const suggestions = (data ?? []).filter((suggestion) => suggestion.description.trim().toLowerCase() !== typed);
+  const suggestions = (data ?? []).filter(
+    (suggestion) => suggestion.description.trim().toLowerCase() !== typed,
+  )
 
-  if (!open || typed.length === 0 || suggestions.length === 0) return null;
+  if (!open || typed.length === 0 || suggestions.length === 0) return null
 
-  const categoryName = new Map(categories.map((category) => [category.id, category.name]));
+  const categoryName = new Map(categories.map((category) => [category.id, category.name]))
 
   return (
     <div className="flex flex-wrap gap-1.5" role="group" aria-label="Previous descriptions">
       {suggestions.map((suggestion) => {
-        const category = suggestion.categoryId ? categoryName.get(suggestion.categoryId) : undefined;
+        const category = suggestion.categoryId ? categoryName.get(suggestion.categoryId) : undefined
         return (
           <button
             key={suggestion.description}
@@ -59,8 +61,8 @@ export function DescriptionSuggestions({
             <span className="truncate">{suggestion.description}</span>
             {category && <span className="shrink-0 text-muted-foreground">· {category}</span>}
           </button>
-        );
+        )
       })}
     </div>
-  );
+  )
 }

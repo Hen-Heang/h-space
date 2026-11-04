@@ -21,10 +21,15 @@ export type FinanceAccountLinks = ReadonlyMap<string, string>
  * entry is malformed — a half-valid config fails closed rather than silently
  * dropping an entry. An H-Space id may appear only once.
  */
-export function parseFinanceAccountLinks(raw: string | undefined | null): FinanceAccountLinks | null {
+export function parseFinanceAccountLinks(
+  raw: string | undefined | null,
+): FinanceAccountLinks | null {
   // Vercel stores a value exactly as typed, so `"a=b"` pasted from an
   // .env.local line arrives with its quotes. Strip one matching pair.
-  const value = raw?.trim().replace(/^(["'])([\s\S]*)\1$/, "$2").trim()
+  const value = raw
+    ?.trim()
+    .replace(/^(["'])([\s\S]*)\1$/, "$2")
+    .trim()
   if (!value) return null
   const links = new Map<string, string>()
   for (const entry of value.split(",")) {
@@ -40,6 +45,9 @@ export function parseFinanceAccountLinks(raw: string | undefined | null): Financ
 }
 
 /** The linked Luyra user id for this H-Space user, or null if none. */
-export function resolveLuyraUserId(links: FinanceAccountLinks, hspaceUserId: string): string | null {
+export function resolveLuyraUserId(
+  links: FinanceAccountLinks,
+  hspaceUserId: string,
+): string | null {
   return links.get(hspaceUserId.toLowerCase()) ?? null
 }

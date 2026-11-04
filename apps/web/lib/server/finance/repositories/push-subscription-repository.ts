@@ -1,18 +1,18 @@
-import "server-only";
-import { sql } from "@/lib/server/finance/db";
+import "server-only"
+import { sql } from "@/lib/server/finance/db"
 
 export interface StoredPushSubscription {
-  endpoint: string;
-  p256dh: string;
-  auth: string;
+  endpoint: string
+  p256dh: string
+  auth: string
 }
 
-export type PushBudgetAlertStatus = "watch" | "near_limit" | "exceeded";
+export type PushBudgetAlertStatus = "watch" | "near_limit" | "exceeded"
 
 export async function upsertPushSubscription(
   userId: string,
   subscription: StoredPushSubscription,
-  userAgent: string | null
+  userAgent: string | null,
 ): Promise<void> {
   await sql`
     insert into push_subscriptions (user_id, endpoint, p256dh, auth, user_agent)
@@ -23,30 +23,32 @@ export async function upsertPushSubscription(
       auth = excluded.auth,
       user_agent = excluded.user_agent,
       updated_at = now()
-  `;
+  `
 }
 
 export async function deletePushSubscription(userId: string, endpoint: string): Promise<void> {
   await sql`
     delete from push_subscriptions
     where user_id = ${userId} and endpoint = ${endpoint}
-  `;
+  `
 }
 
 /** Server-internal cleanup for endpoints that the push service reports as gone. */
 export async function deletePushSubscriptionByEndpoint(endpoint: string): Promise<void> {
-  await sql`delete from push_subscriptions where endpoint = ${endpoint}`;
+  await sql`delete from push_subscriptions where endpoint = ${endpoint}`
 }
 
-export async function listPushSubscriptionsForUser(userId: string): Promise<StoredPushSubscription[]> {
+export async function listPushSubscriptionsForUser(
+  userId: string,
+): Promise<StoredPushSubscription[]> {
   const rows = (await sql`
     select endpoint, p256dh, auth
     from push_subscriptions
     where user_id = ${userId}
     order by created_at asc
-  `) as { endpoint: string; p256dh: string; auth: string }[];
+  `) as { endpoint: string; p256dh: string; auth: string }[]
 
-  return rows;
+  return rows
 }
 
 export async function listUsersWithPushSubscriptions(): Promise<string[]> {
@@ -54,15 +56,15 @@ export async function listUsersWithPushSubscriptions(): Promise<string[]> {
     select distinct user_id
     from push_subscriptions
     order by user_id
-  `) as { user_id: string }[];
+  `) as { user_id: string }[]
 
-  return rows.map((row) => row.user_id);
+  return rows.map((row) => row.user_id)
 }
 
 export async function findPushBudgetAlertStatus(
   userId: string,
   categoryId: string,
-  monthKey: string
+  monthKey: string,
 ): Promise<PushBudgetAlertStatus | null> {
   const rows = (await sql`
     select last_status
@@ -71,16 +73,16 @@ export async function findPushBudgetAlertStatus(
       and category_id = ${categoryId}
       and month_key = ${monthKey}
     limit 1
-  `) as { last_status: PushBudgetAlertStatus }[];
+  `) as { last_status: PushBudgetAlertStatus }[]
 
-  return rows[0]?.last_status ?? null;
+  return rows[0]?.last_status ?? null
 }
 
 export async function upsertPushBudgetAlertStatus(
   userId: string,
   categoryId: string,
   monthKey: string,
-  status: PushBudgetAlertStatus
+  status: PushBudgetAlertStatus,
 ): Promise<void> {
   await sql`
     insert into finance_push_budget_alerts (user_id, category_id, month_key, last_status, sent_at)
@@ -88,5 +90,5 @@ export async function upsertPushBudgetAlertStatus(
     on conflict (user_id, category_id, month_key) do update set
       last_status = excluded.last_status,
       sent_at = excluded.sent_at
-  `;
+  `
 }

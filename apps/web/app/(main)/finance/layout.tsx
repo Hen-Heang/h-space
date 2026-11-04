@@ -1,4 +1,5 @@
 import { FinanceNav } from "@/components/finance/finance-nav"
+import { FinanceSessionBoundary } from "@/components/finance/finance-session-boundary"
 import "./luyra-theme.css"
 
 // Finance, moving in from Luyra (docs/LUYRA_MIGRATION.md). The `luyra` class
@@ -8,8 +9,10 @@ import "./luyra-theme.css"
 export default function FinanceLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="luyra mx-auto flex w-full max-w-4xl flex-col gap-6">
-      <FinanceNav />
-      {children}
+      <FinanceSessionBoundary>
+        <FinanceNav />
+        {children}
+      </FinanceSessionBoundary>
     </div>
   )
 }

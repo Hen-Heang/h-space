@@ -1,6 +1,6 @@
-import "server-only";
-import { sql } from "@/lib/server/finance/db";
-import type { MerchantAlias, MerchantExpense } from "@/lib/finance/merchant-names";
+import "server-only"
+import { sql } from "@/lib/server/finance/db"
+import type { MerchantAlias, MerchantExpense } from "@/lib/finance/merchant-names"
 
 // finance_transaction_description_aliases (004_finance.sql): one row per
 // merged variant, mapping its normalized key to the confirmed canonical name.
@@ -8,7 +8,7 @@ import type { MerchantAlias, MerchantExpense } from "@/lib/finance/merchant-name
 
 export interface StoredMerchantAlias extends MerchantAlias {
   /** The spelling recorded for this variant when it was merged. */
-  variantDescription: string;
+  variantDescription: string
 }
 
 export async function findMerchantAliases(userId: string): Promise<StoredMerchantAlias[]> {
@@ -17,12 +17,12 @@ export async function findMerchantAliases(userId: string): Promise<StoredMerchan
     from finance_transaction_description_aliases
     where user_id = ${userId}
     order by canonical_description, normalized_key
-  `) as { normalized_key: string; canonical_description: string; variant_description: string }[];
+  `) as { normalized_key: string; canonical_description: string; variant_description: string }[]
   return rows.map((row) => ({
     normalizedKey: row.normalized_key,
     canonicalDescription: row.canonical_description,
     variantDescription: row.variant_description,
-  }));
+  }))
 }
 
 /**
@@ -33,9 +33,9 @@ export async function findMerchantAliases(userId: string): Promise<StoredMerchan
 export async function saveMerchantMerge(
   userId: string,
   canonical: string,
-  members: { normalizedKey: string; sample: string }[]
+  members: { normalizedKey: string; sample: string }[],
 ): Promise<void> {
-  const keys = members.map((member) => member.normalizedKey);
+  const keys = members.map((member) => member.normalizedKey)
   await sql.transaction([
     sql`
       delete from finance_transaction_description_aliases
@@ -45,9 +45,9 @@ export async function saveMerchantMerge(
       (member) => sql`
         insert into finance_transaction_description_aliases (user_id, canonical_description, variant_description, normalized_key)
         values (${userId}, ${canonical}, ${member.sample}, ${member.normalizedKey})
-      `
+      `,
     ),
-  ]);
+  ])
 }
 
 /** Undoes a merge: its variants go back to being grouped on their own. */
@@ -56,8 +56,8 @@ export async function deleteMerchantMerge(userId: string, canonical: string): Pr
     delete from finance_transaction_description_aliases
     where user_id = ${userId} and canonical_description = ${canonical}
     returning id
-  `) as { id: string }[];
-  return rows.length;
+  `) as { id: string }[]
+  return rows.length
 }
 
 /** Expenses since `since`, newest first — the input to merchant grouping and suggestions. */
@@ -68,11 +68,11 @@ export async function findExpensesSince(userId: string, since: string): Promise<
     where user_id = ${userId} and type = 'expense' and date >= ${since}
       and description is not null and trim(description) <> ''
     order by date desc, created_at desc
-  `) as { description: string; category_id: string | null; date: string; amount_krw: string }[];
+  `) as { description: string; category_id: string | null; date: string; amount_krw: string }[]
   return rows.map((row) => ({
     description: row.description,
     categoryId: row.category_id,
     date: row.date,
     amountKrw: Number(row.amount_krw),
-  }));
+  }))
 }

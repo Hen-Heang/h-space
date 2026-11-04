@@ -8,13 +8,17 @@ import { AppError, Errors } from "@/lib/server/finance/errors"
  * Why finance is unavailable, by setting NAME only — never a value. Returned
  * for the server log; the HTTP response stays generic.
  */
-export function financeConfigProblems(env: Record<string, string | undefined> = process.env): string[] {
+export function financeConfigProblems(
+  env: Record<string, string | undefined> = process.env,
+): string[] {
   const problems: string[] = []
   if (!env.FINANCE_DATABASE_URL) problems.push("FINANCE_DATABASE_URL is not set")
   if (!env.FINANCE_ACCOUNT_LINKS?.trim()) {
     problems.push("FINANCE_ACCOUNT_LINKS is not set")
   } else if (!parseFinanceAccountLinks(env.FINANCE_ACCOUNT_LINKS)) {
-    problems.push("FINANCE_ACCOUNT_LINKS is malformed (expected <h-space-user-uuid>=<luyra-user-uuid>)")
+    problems.push(
+      "FINANCE_ACCOUNT_LINKS is malformed (expected <h-space-user-uuid>=<luyra-user-uuid>)",
+    )
   }
   return problems
 }

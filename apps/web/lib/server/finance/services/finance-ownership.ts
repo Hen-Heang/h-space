@@ -1,6 +1,9 @@
-import "server-only";
-import { Errors } from "@/lib/server/finance/errors";
-import { findCategoryById, findPaymentMethodById } from "@/lib/server/finance/repositories/finance-lookup-repository";
+import "server-only"
+import { Errors } from "@/lib/server/finance/errors"
+import {
+  findCategoryById,
+  findPaymentMethodById,
+} from "@/lib/server/finance/repositories/finance-lookup-repository"
 
 // Added in H-Space (not in Luyra): every write that stores a category or
 // payment-method id must prove the id belongs to the same user. Without this
@@ -9,12 +12,14 @@ import { findCategoryById, findPaymentMethodById } from "@/lib/server/finance/re
 // name. Bulk recategorize already checked categories; this covers the rest.
 export async function assertOwnedReferences(
   userId: string,
-  refs: { categoryId?: string | null; paymentMethodId?: string | null }
+  refs: { categoryId?: string | null; paymentMethodId?: string | null },
 ): Promise<void> {
   const [category, paymentMethod] = await Promise.all([
     refs.categoryId ? findCategoryById(refs.categoryId, userId) : Promise.resolve(undefined),
-    refs.paymentMethodId ? findPaymentMethodById(refs.paymentMethodId, userId) : Promise.resolve(undefined),
-  ]);
-  if (category === null) throw Errors.validation("Choose one of your categories");
-  if (paymentMethod === null) throw Errors.validation("Choose one of your payment methods");
+    refs.paymentMethodId
+      ? findPaymentMethodById(refs.paymentMethodId, userId)
+      : Promise.resolve(undefined),
+  ])
+  if (category === null) throw Errors.validation("Choose one of your categories")
+  if (paymentMethod === null) throw Errors.validation("Choose one of your payment methods")
 }

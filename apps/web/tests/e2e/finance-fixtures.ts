@@ -27,24 +27,99 @@ const totals = (income: number, expense: number, count: number): MonthTotals => 
 })
 
 const categories: CategoryAmount[] = [
-  { categoryId: "c-food", categoryName: "Food & dining", categoryIcon: null, categoryColor: "#eb6834", spendingClass: "essential", amountKrw: 612000 },
-  { categoryId: "c-rent", categoryName: "Housing", categoryIcon: null, categoryColor: "#2a78d6", spendingClass: "essential", amountKrw: 850000 },
-  { categoryId: "c-transit", categoryName: "Transport", categoryIcon: null, categoryColor: "#1baf7a", spendingClass: "essential", amountKrw: 98000 },
-  { categoryId: "c-fun", categoryName: "Entertainment and weekend outings", categoryIcon: null, categoryColor: "#e87ba4", spendingClass: "flexible", amountKrw: 143500 },
-  { categoryId: "c-books", categoryName: "Books", categoryIcon: null, categoryColor: "#008300", spendingClass: "growth", amountKrw: 54000 },
+  {
+    categoryId: "c-food",
+    categoryName: "Food & dining",
+    categoryIcon: null,
+    categoryColor: "#eb6834",
+    spendingClass: "essential",
+    amountKrw: 612000,
+  },
+  {
+    categoryId: "c-rent",
+    categoryName: "Housing",
+    categoryIcon: null,
+    categoryColor: "#2a78d6",
+    spendingClass: "essential",
+    amountKrw: 850000,
+  },
+  {
+    categoryId: "c-transit",
+    categoryName: "Transport",
+    categoryIcon: null,
+    categoryColor: "#1baf7a",
+    spendingClass: "essential",
+    amountKrw: 98000,
+  },
+  {
+    categoryId: "c-fun",
+    categoryName: "Entertainment and weekend outings",
+    categoryIcon: null,
+    categoryColor: "#e87ba4",
+    spendingClass: "flexible",
+    amountKrw: 143500,
+  },
+  {
+    categoryId: "c-books",
+    categoryName: "Books",
+    categoryIcon: null,
+    categoryColor: "#008300",
+    spendingClass: "growth",
+    amountKrw: 54000,
+  },
 ]
 
 const performance: BudgetPerformance[] = [
-  { categoryId: "c-food", categoryName: "Food & dining", categoryIcon: null, categoryColor: "#eb6834", budgetKrw: 600000, spentKrw: 612000, remainingKrw: -12000, usagePct: 102, overBudget: true, status: "exceeded" },
-  { categoryId: "c-transit", categoryName: "Transport", categoryIcon: null, categoryColor: "#1baf7a", budgetKrw: 120000, spentKrw: 98000, remainingKrw: 22000, usagePct: 82, overBudget: false, status: "watch" },
-  { categoryId: "c-fun", categoryName: "Entertainment and weekend outings", categoryIcon: null, categoryColor: "#e87ba4", budgetKrw: 300000, spentKrw: 143500, remainingKrw: 156500, usagePct: 48, overBudget: false, status: "ok" },
+  {
+    categoryId: "c-food",
+    categoryName: "Food & dining",
+    categoryIcon: null,
+    categoryColor: "#eb6834",
+    budgetKrw: 600000,
+    spentKrw: 612000,
+    remainingKrw: -12000,
+    usagePct: 102,
+    overBudget: true,
+    status: "exceeded",
+  },
+  {
+    categoryId: "c-transit",
+    categoryName: "Transport",
+    categoryIcon: null,
+    categoryColor: "#1baf7a",
+    budgetKrw: 120000,
+    spentKrw: 98000,
+    remainingKrw: 22000,
+    usagePct: 82,
+    overBudget: false,
+    status: "watch",
+  },
+  {
+    categoryId: "c-fun",
+    categoryName: "Entertainment and weekend outings",
+    categoryIcon: null,
+    categoryColor: "#e87ba4",
+    budgetKrw: 300000,
+    spentKrw: 143500,
+    remainingKrw: 156500,
+    usagePct: 48,
+    overBudget: false,
+    status: "ok",
+  },
 ]
 
 function transactions(month: string): Transaction[] {
   const rows: Array<[number, "income" | "expense", string, string, number, "KRW" | "USD"]> = [
     [2, "income", "c-salary", "Monthly salary — synthetic employer", 3200000, "KRW"],
     [3, "expense", "c-rent", "Rent", 850000, "KRW"],
-    [5, "expense", "c-food", "Groceries at a very long store name that should truncate", 84300, "KRW"],
+    [
+      5,
+      "expense",
+      "c-food",
+      "Groceries at a very long store name that should truncate",
+      84300,
+      "KRW",
+    ],
     [7, "expense", "c-books", "Online course", 54000, "USD"],
     [8, "expense", "c-transit", "Transit card top-up", 50000, "KRW"],
     [9, "expense", "c-fun", "Cinema", 28000, "KRW"],
@@ -81,12 +156,40 @@ function overview(month: string): FinanceOverviewSummary {
     month,
     totals: monthTotals,
     savingsHealth: { targetRatePct: 20, deltaPct: 31.2, status: "above" },
-    budgetHealth: { totalBudgetKrw: 1020000, totalSpentKrw: 853500, remainingKrw: 166500, usagePct: 84, status: "watch", attentionCount: 2 },
+    budgetHealth: {
+      totalBudgetKrw: 1020000,
+      totalSpentKrw: 853500,
+      remainingKrw: 166500,
+      usagePct: 84,
+      status: "watch",
+      attentionCount: 2,
+    },
     financialHealth: {
       month,
-      essential: { bucket: "essential", amountKrw: 1560000, percentageOfIncome: 43, targetPercentage: 50, direction: "maximum", status: "healthy" },
-      lifestyle: { bucket: "lifestyle", amountKrw: 143500, percentageOfIncome: 4, targetPercentage: 30, direction: "maximum", status: "healthy" },
-      future: { bucket: "future", amountKrw: 54000, percentageOfIncome: 1.5, targetPercentage: 20, direction: "minimum", status: "below" },
+      essential: {
+        bucket: "essential",
+        amountKrw: 1560000,
+        percentageOfIncome: 43,
+        targetPercentage: 50,
+        direction: "maximum",
+        status: "healthy",
+      },
+      lifestyle: {
+        bucket: "lifestyle",
+        amountKrw: 143500,
+        percentageOfIncome: 4,
+        targetPercentage: 30,
+        direction: "maximum",
+        status: "healthy",
+      },
+      future: {
+        bucket: "future",
+        amountKrw: 54000,
+        percentageOfIncome: 1.5,
+        targetPercentage: 20,
+        direction: "minimum",
+        status: "below",
+      },
       futureBreakdown: { growthCategoryKrw: 54000, contributionsKrw: 0 },
       unclassifiedKrw: 0,
       totalIncomeKrw: 3600000,
@@ -97,8 +200,18 @@ function overview(month: string): FinanceOverviewSummary {
       recommendations: ["Move part of what's left this month into savings."],
     },
     categories,
-    dailySpending: Array.from({ length: 10 }, (_, i) => ({ date: `${month}-${pad(i + 1)}`, amountKrw: (i % 4) * 42000 })),
-    dailyBudget: { totalBudgetKrw: 1020000, spentTodayKrw: 28000, availablePerDayKrw: 8325, monthlyRemainingKrw: 166500, daysRemaining: 20, status: "watch" },
+    dailySpending: Array.from({ length: 10 }, (_, i) => ({
+      date: `${month}-${pad(i + 1)}`,
+      amountKrw: (i % 4) * 42000,
+    })),
+    dailyBudget: {
+      totalBudgetKrw: 1020000,
+      spentTodayKrw: 28000,
+      availablePerDayKrw: 8325,
+      monthlyRemainingKrw: 166500,
+      daysRemaining: 20,
+      status: "watch",
+    },
     budgetPerformance: performance,
     recentTransactions: transactions(month).slice(0, 5),
   }
@@ -149,7 +262,10 @@ export function financeFixture(url: URL): unknown {
     case "analytics":
       return analytics(month, previous)
     case "transactions":
-      return { transactions: transactions((url.searchParams.get("start") ?? `${month}-01`).slice(0, 7)), hasMore: false }
+      return {
+        transactions: transactions((url.searchParams.get("start") ?? `${month}-01`).slice(0, 7)),
+        hasMore: false,
+      }
     case "transactions/suggestions":
       return []
     case "categories":
@@ -162,7 +278,14 @@ export function financeFixture(url: URL): unknown {
           type: "expense",
           spendingClass,
         })),
-        { id: "c-salary", name: "Salary", icon: null, color: "#047857", type: "income", spendingClass: null },
+        {
+          id: "c-salary",
+          name: "Salary",
+          icon: null,
+          color: "#047857",
+          type: "income",
+          spendingClass: null,
+        },
       ]
     case "payment-methods":
       return [
@@ -171,14 +294,16 @@ export function financeFixture(url: URL): unknown {
       ]
     case "budgets":
       return {
-        categories: categories.map(({ categoryId, categoryName, categoryColor, spendingClass }) => ({
-          id: categoryId,
-          name: categoryName,
-          icon: null,
-          color: categoryColor,
-          type: "expense",
-          spendingClass,
-        })),
+        categories: categories.map(
+          ({ categoryId, categoryName, categoryColor, spendingClass }) => ({
+            id: categoryId,
+            name: categoryName,
+            icon: null,
+            color: categoryColor,
+            type: "expense",
+            spendingClass,
+          }),
+        ),
         budgets: performance.map(({ categoryId, categoryName, categoryColor, budgetKrw }) => ({
           categoryId,
           categoryName,
@@ -191,9 +316,45 @@ export function financeFixture(url: URL): unknown {
       }
     case "savings":
       return [
-        { id: "00000000-0000-4000-8000-0000000000a1", name: "Emergency fund", icon: "💰", color: "#047857", targetUsd: 5000, currentUsd: 3250, deadline: null, note: null, purpose: "emergency_fund", createdAt: `${month}-01T00:00:00.000Z`, updatedAt: `${month}-01T00:00:00.000Z` },
-        { id: "00000000-0000-4000-8000-0000000000a2", name: "A very long trip name to Jeju Island next spring", icon: "✈️", color: "#2a78d6", targetUsd: 1800, currentUsd: 420.5, deadline: `${Number(month.slice(0, 4)) + 1}-04-01`, note: "Flights and two nights", purpose: "sinking_fund", createdAt: `${month}-01T00:00:00.000Z`, updatedAt: `${month}-01T00:00:00.000Z` },
-        { id: "00000000-0000-4000-8000-0000000000a3", name: "New laptop", icon: "💻", color: "#eb6834", targetUsd: 1200, currentUsd: 1200, deadline: null, note: null, purpose: "goal", createdAt: `${month}-01T00:00:00.000Z`, updatedAt: `${month}-01T00:00:00.000Z` },
+        {
+          id: "00000000-0000-4000-8000-0000000000a1",
+          name: "Emergency fund",
+          icon: "💰",
+          color: "#047857",
+          targetUsd: 5000,
+          currentUsd: 3250,
+          deadline: null,
+          note: null,
+          purpose: "emergency_fund",
+          createdAt: `${month}-01T00:00:00.000Z`,
+          updatedAt: `${month}-01T00:00:00.000Z`,
+        },
+        {
+          id: "00000000-0000-4000-8000-0000000000a2",
+          name: "A very long trip name to Jeju Island next spring",
+          icon: "✈️",
+          color: "#2a78d6",
+          targetUsd: 1800,
+          currentUsd: 420.5,
+          deadline: `${Number(month.slice(0, 4)) + 1}-04-01`,
+          note: "Flights and two nights",
+          purpose: "sinking_fund",
+          createdAt: `${month}-01T00:00:00.000Z`,
+          updatedAt: `${month}-01T00:00:00.000Z`,
+        },
+        {
+          id: "00000000-0000-4000-8000-0000000000a3",
+          name: "New laptop",
+          icon: "💻",
+          color: "#eb6834",
+          targetUsd: 1200,
+          currentUsd: 1200,
+          deadline: null,
+          note: null,
+          purpose: "goal",
+          createdAt: `${month}-01T00:00:00.000Z`,
+          updatedAt: `${month}-01T00:00:00.000Z`,
+        },
       ]
     case "templates":
     case "recurring":
@@ -207,8 +368,20 @@ export function financeFixture(url: URL): unknown {
       if (/^savings\/[^/]+\/contributions$/.test(path)) {
         const goalId = path.split("/")[1]!
         return [
-          { id: "00000000-0000-4000-8000-0000000000c1", goalId, amountUsd: 250, contributionMonth: month, createdAt: `${month}-02T00:00:00.000Z` },
-          { id: "00000000-0000-4000-8000-0000000000c2", goalId, amountUsd: 170.5, contributionMonth: month, createdAt: `${month}-01T00:00:00.000Z` },
+          {
+            id: "00000000-0000-4000-8000-0000000000c1",
+            goalId,
+            amountUsd: 250,
+            contributionMonth: month,
+            createdAt: `${month}-02T00:00:00.000Z`,
+          },
+          {
+            id: "00000000-0000-4000-8000-0000000000c2",
+            goalId,
+            amountUsd: 170.5,
+            contributionMonth: month,
+            createdAt: `${month}-01T00:00:00.000Z`,
+          },
         ]
       }
       return undefined

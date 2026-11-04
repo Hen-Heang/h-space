@@ -1,17 +1,17 @@
-import "server-only";
-import { sql } from "@/lib/server/finance/db";
-import type { FinancePreferences } from "@/types/finance";
+import "server-only"
+import { sql } from "@/lib/server/finance/db"
+import type { FinancePreferences } from "@/types/finance"
 
 interface BudgetWarningThresholdsRow {
-  first?: number;
-  strong?: number;
-  over?: number;
+  first?: number
+  strong?: number
+  over?: number
 }
 
 interface QuietHoursRow {
-  enabled?: boolean;
-  start?: string;
-  end?: string;
+  enabled?: boolean
+  start?: string
+  end?: string
 }
 
 // What the scheduled jobs need, which is not the same set the Settings screen
@@ -20,16 +20,16 @@ interface QuietHoursRow {
 // FinancePreferences so the client-facing type doesn't grow fields the client
 // has no use for.
 export interface CronPreferences {
-  budgetWatchThresholdPct: number;
-  budgetNearLimitThresholdPct: number;
-  quietHoursEnabled: boolean;
-  quietHoursStart: string;
-  quietHoursEnd: string;
-  weeklyReviewEnabled: boolean;
-  monthlyReviewEnabled: boolean;
-  monthlyReportChannelTelegram: boolean;
-  weeklyReportLastSentWeek: string | null;
-  monthlyReportLastSentMonth: string | null;
+  budgetWatchThresholdPct: number
+  budgetNearLimitThresholdPct: number
+  quietHoursEnabled: boolean
+  quietHoursStart: string
+  quietHoursEnd: string
+  weeklyReviewEnabled: boolean
+  monthlyReviewEnabled: boolean
+  monthlyReportChannelTelegram: boolean
+  weeklyReportLastSentWeek: string | null
+  monthlyReportLastSentMonth: string | null
 }
 
 const DEFAULT_CRON_PREFERENCES: CronPreferences = {
@@ -43,7 +43,7 @@ const DEFAULT_CRON_PREFERENCES: CronPreferences = {
   monthlyReportChannelTelegram: true,
   weeklyReportLastSentWeek: null,
   monthlyReportLastSentMonth: null,
-};
+}
 
 export async function findCronPreferences(userId: string): Promise<CronPreferences> {
   const rows = (await sql`
@@ -51,22 +51,24 @@ export async function findCronPreferences(userId: string): Promise<CronPreferenc
       monthly_report_channel_telegram, weekly_report_last_sent_week, monthly_report_last_sent_month
     from finance_preferences where user_id = ${userId}
   `) as {
-    budget_warning_thresholds: BudgetWarningThresholdsRow | null;
-    quiet_hours: QuietHoursRow | null;
-    weekly_review_enabled: boolean;
-    monthly_review_enabled: boolean;
-    monthly_report_channel_telegram: boolean;
-    weekly_report_last_sent_week: string | null;
-    monthly_report_last_sent_month: string | null;
-  }[];
+    budget_warning_thresholds: BudgetWarningThresholdsRow | null
+    quiet_hours: QuietHoursRow | null
+    weekly_review_enabled: boolean
+    monthly_review_enabled: boolean
+    monthly_report_channel_telegram: boolean
+    weekly_report_last_sent_week: string | null
+    monthly_report_last_sent_month: string | null
+  }[]
 
-  const row = rows[0];
-  if (!row) return DEFAULT_CRON_PREFERENCES;
+  const row = rows[0]
+  if (!row) return DEFAULT_CRON_PREFERENCES
 
   return {
-    budgetWatchThresholdPct: Number(row.budget_warning_thresholds?.first ?? DEFAULT_CRON_PREFERENCES.budgetWatchThresholdPct),
+    budgetWatchThresholdPct: Number(
+      row.budget_warning_thresholds?.first ?? DEFAULT_CRON_PREFERENCES.budgetWatchThresholdPct,
+    ),
     budgetNearLimitThresholdPct: Number(
-      row.budget_warning_thresholds?.strong ?? DEFAULT_CRON_PREFERENCES.budgetNearLimitThresholdPct
+      row.budget_warning_thresholds?.strong ?? DEFAULT_CRON_PREFERENCES.budgetNearLimitThresholdPct,
     ),
     quietHoursEnabled: row.quiet_hours?.enabled ?? DEFAULT_CRON_PREFERENCES.quietHoursEnabled,
     quietHoursStart: row.quiet_hours?.start ?? DEFAULT_CRON_PREFERENCES.quietHoursStart,
@@ -76,11 +78,11 @@ export async function findCronPreferences(userId: string): Promise<CronPreferenc
     monthlyReportChannelTelegram: row.monthly_report_channel_telegram,
     weeklyReportLastSentWeek: row.weekly_report_last_sent_week,
     monthlyReportLastSentMonth: row.monthly_report_last_sent_month,
-  };
+  }
 }
 
-export type ReportType = "weekly" | "monthly";
-export type ReportChannel = "telegram" | "email";
+export type ReportType = "weekly" | "monthly"
+export type ReportChannel = "telegram" | "email"
 
 // The two pre-011 columns are the Telegram markers — every value ever written
 // to them came from a Telegram send. See 011_finance_report_email_delivery.sql
@@ -94,7 +96,7 @@ const MARKER_COLUMNS: Record<ReportType, Record<ReportChannel, string>> = {
     telegram: "monthly_report_last_sent_month",
     email: "monthly_report_email_last_sent_month",
   },
-};
+}
 
 /**
  * Records that one report type reached one channel for one period.
@@ -111,33 +113,33 @@ export async function markReportSent(
   userId: string,
   type: ReportType,
   channel: ReportChannel,
-  period: string
+  period: string,
 ): Promise<void> {
-  const column = MARKER_COLUMNS[type][channel];
+  const column = MARKER_COLUMNS[type][channel]
   await sql.query(
     `insert into finance_preferences (user_id, ${column})
      values ($1, $2)
      on conflict (user_id) do update set ${column} = $2, updated_at = now()`,
-    [userId, period]
-  );
+    [userId, period],
+  )
 }
 
 /** One row per user who could receive a scheduled report on some channel. */
 export interface ReportRecipient {
-  userId: string;
+  userId: string
   /** Supabase account email from Neon `users`; the fallback recipient. */
-  accountEmail: string;
+  accountEmail: string
   /** null when Telegram was never linked. */
-  chatId: string | null;
-  weeklyEnabled: boolean;
-  monthlyEnabled: boolean;
-  monthlyTelegramEnabled: boolean;
-  weeklyEmailEnabled: boolean;
-  monthlyEmailEnabled: boolean;
-  weeklyTelegramSentWeek: string | null;
-  weeklyEmailSentWeek: string | null;
-  monthlyTelegramSentMonth: string | null;
-  monthlyEmailSentMonth: string | null;
+  chatId: string | null
+  weeklyEnabled: boolean
+  monthlyEnabled: boolean
+  monthlyTelegramEnabled: boolean
+  weeklyEmailEnabled: boolean
+  monthlyEmailEnabled: boolean
+  weeklyTelegramSentWeek: string | null
+  weeklyEmailSentWeek: string | null
+  monthlyTelegramSentMonth: string | null
+  monthlyEmailSentMonth: string | null
 }
 
 /**
@@ -171,19 +173,19 @@ export async function findReportRecipients(): Promise<ReportRecipient[]> {
     where t.chat_id is not null or p.user_id is not null
     order by u.id
   `) as {
-    user_id: string;
-    account_email: string;
-    chat_id: string | null;
-    weekly_enabled: boolean;
-    monthly_enabled: boolean;
-    monthly_telegram_enabled: boolean;
-    weekly_email_enabled: boolean;
-    monthly_email_enabled: boolean;
-    weekly_report_last_sent_week: string | null;
-    weekly_report_email_last_sent_week: string | null;
-    monthly_report_last_sent_month: string | null;
-    monthly_report_email_last_sent_month: string | null;
-  }[];
+    user_id: string
+    account_email: string
+    chat_id: string | null
+    weekly_enabled: boolean
+    monthly_enabled: boolean
+    monthly_telegram_enabled: boolean
+    weekly_email_enabled: boolean
+    monthly_email_enabled: boolean
+    weekly_report_last_sent_week: string | null
+    weekly_report_email_last_sent_week: string | null
+    monthly_report_last_sent_month: string | null
+    monthly_report_email_last_sent_month: string | null
+  }[]
 
   return rows.map((row) => ({
     userId: row.user_id,
@@ -198,7 +200,7 @@ export async function findReportRecipients(): Promise<ReportRecipient[]> {
     weeklyEmailSentWeek: row.weekly_report_email_last_sent_week,
     monthlyTelegramSentMonth: row.monthly_report_last_sent_month,
     monthlyEmailSentMonth: row.monthly_report_email_last_sent_month,
-  }));
+  }))
 }
 
 const DEFAULT_PREFERENCES: FinancePreferences = {
@@ -211,7 +213,7 @@ const DEFAULT_PREFERENCES: FinancePreferences = {
   financeReportEmail: null,
   weeklyReportEmailEnabled: false,
   monthlyReportEmailEnabled: false,
-};
+}
 
 export async function findPreferences(userId: string): Promise<FinancePreferences> {
   const rows = (await sql`
@@ -219,78 +221,98 @@ export async function findPreferences(userId: string): Promise<FinancePreference
       monthly_review_enabled, finance_report_email, weekly_report_channel_email, monthly_report_channel_email
     from finance_preferences where user_id = ${userId}
   `) as {
-    monthly_spending_limit_krw: string | null;
-    target_savings_rate: string;
-    essential_target_pct: string;
-    budget_warning_thresholds: BudgetWarningThresholdsRow | null;
-    monthly_review_enabled: boolean;
-    finance_report_email: string | null;
-    weekly_report_channel_email: boolean;
-    monthly_report_channel_email: boolean;
-  }[];
+    monthly_spending_limit_krw: string | null
+    target_savings_rate: string
+    essential_target_pct: string
+    budget_warning_thresholds: BudgetWarningThresholdsRow | null
+    monthly_review_enabled: boolean
+    finance_report_email: string | null
+    weekly_report_channel_email: boolean
+    monthly_report_channel_email: boolean
+  }[]
 
-  if (!rows[0]) return DEFAULT_PREFERENCES;
+  if (!rows[0]) return DEFAULT_PREFERENCES
 
-  const thresholds = rows[0].budget_warning_thresholds;
+  const thresholds = rows[0].budget_warning_thresholds
   return {
-    monthlySpendingLimitKrw: rows[0].monthly_spending_limit_krw !== null ? Number(rows[0].monthly_spending_limit_krw) : null,
+    monthlySpendingLimitKrw:
+      rows[0].monthly_spending_limit_krw !== null
+        ? Number(rows[0].monthly_spending_limit_krw)
+        : null,
     targetSavingsRate: Number(rows[0].target_savings_rate),
     essentialTargetPct: Number(rows[0].essential_target_pct),
-    budgetWatchThresholdPct: Number(thresholds?.first ?? DEFAULT_PREFERENCES.budgetWatchThresholdPct),
-    budgetNearLimitThresholdPct: Number(thresholds?.strong ?? DEFAULT_PREFERENCES.budgetNearLimitThresholdPct),
+    budgetWatchThresholdPct: Number(
+      thresholds?.first ?? DEFAULT_PREFERENCES.budgetWatchThresholdPct,
+    ),
+    budgetNearLimitThresholdPct: Number(
+      thresholds?.strong ?? DEFAULT_PREFERENCES.budgetNearLimitThresholdPct,
+    ),
     monthlyReviewEnabled: rows[0].monthly_review_enabled,
     financeReportEmail: rows[0].finance_report_email,
     weeklyReportEmailEnabled: rows[0].weekly_report_channel_email,
     monthlyReportEmailEnabled: rows[0].monthly_report_channel_email,
-  };
+  }
 }
 
 export async function upsertPreferences(
   userId: string,
   input: {
-    monthlySpendingLimitKrw?: number | null;
-    targetSavingsRate?: number;
-    essentialTargetPct?: number;
-    budgetWatchThresholdPct?: number;
-    budgetNearLimitThresholdPct?: number;
-    monthlyReviewEnabled?: boolean;
-    financeReportEmail?: string | null;
-    weeklyReportEmailEnabled?: boolean;
-    monthlyReportEmailEnabled?: boolean;
-  }
+    monthlySpendingLimitKrw?: number | null
+    targetSavingsRate?: number
+    essentialTargetPct?: number
+    budgetWatchThresholdPct?: number
+    budgetNearLimitThresholdPct?: number
+    monthlyReviewEnabled?: boolean
+    financeReportEmail?: string | null
+    weeklyReportEmailEnabled?: boolean
+    monthlyReportEmailEnabled?: boolean
+  },
 ): Promise<FinancePreferences> {
   const existing = (await sql`
     select budget_warning_thresholds from finance_preferences where user_id = ${userId}
-  `) as { budget_warning_thresholds: BudgetWarningThresholdsRow | null }[];
+  `) as { budget_warning_thresholds: BudgetWarningThresholdsRow | null }[]
 
-  const needsThresholdUpdate = input.budgetWatchThresholdPct !== undefined || input.budgetNearLimitThresholdPct !== undefined;
-  const currentThresholds = existing[0]?.budget_warning_thresholds;
+  const needsThresholdUpdate =
+    input.budgetWatchThresholdPct !== undefined || input.budgetNearLimitThresholdPct !== undefined
+  const currentThresholds = existing[0]?.budget_warning_thresholds
   const nextThresholds = needsThresholdUpdate
     ? {
-        first: input.budgetWatchThresholdPct ?? currentThresholds?.first ?? DEFAULT_PREFERENCES.budgetWatchThresholdPct,
-        strong: input.budgetNearLimitThresholdPct ?? currentThresholds?.strong ?? DEFAULT_PREFERENCES.budgetNearLimitThresholdPct,
+        first:
+          input.budgetWatchThresholdPct ??
+          currentThresholds?.first ??
+          DEFAULT_PREFERENCES.budgetWatchThresholdPct,
+        strong:
+          input.budgetNearLimitThresholdPct ??
+          currentThresholds?.strong ??
+          DEFAULT_PREFERENCES.budgetNearLimitThresholdPct,
         over: 100,
       }
-    : undefined;
+    : undefined
 
   if (existing.length > 0) {
-    const sets: string[] = [];
-    const params: unknown[] = [userId];
+    const sets: string[] = []
+    const params: unknown[] = [userId]
     const set = (column: string, value: unknown) => {
-      params.push(value);
-      sets.push(`${column} = $${params.length}`);
-    };
-    if (input.monthlySpendingLimitKrw !== undefined) set("monthly_spending_limit_krw", input.monthlySpendingLimitKrw);
-    if (input.targetSavingsRate !== undefined) set("target_savings_rate", input.targetSavingsRate);
-    if (input.essentialTargetPct !== undefined) set("essential_target_pct", input.essentialTargetPct);
-    if (nextThresholds) set("budget_warning_thresholds", JSON.stringify(nextThresholds));
-    if (input.monthlyReviewEnabled !== undefined) set("monthly_review_enabled", input.monthlyReviewEnabled);
-    if (input.financeReportEmail !== undefined) set("finance_report_email", input.financeReportEmail);
-    if (input.weeklyReportEmailEnabled !== undefined) set("weekly_report_channel_email", input.weeklyReportEmailEnabled);
-    if (input.monthlyReportEmailEnabled !== undefined) set("monthly_report_channel_email", input.monthlyReportEmailEnabled);
-    sets.push("updated_at = now()");
+      params.push(value)
+      sets.push(`${column} = $${params.length}`)
+    }
+    if (input.monthlySpendingLimitKrw !== undefined)
+      set("monthly_spending_limit_krw", input.monthlySpendingLimitKrw)
+    if (input.targetSavingsRate !== undefined) set("target_savings_rate", input.targetSavingsRate)
+    if (input.essentialTargetPct !== undefined)
+      set("essential_target_pct", input.essentialTargetPct)
+    if (nextThresholds) set("budget_warning_thresholds", JSON.stringify(nextThresholds))
+    if (input.monthlyReviewEnabled !== undefined)
+      set("monthly_review_enabled", input.monthlyReviewEnabled)
+    if (input.financeReportEmail !== undefined)
+      set("finance_report_email", input.financeReportEmail)
+    if (input.weeklyReportEmailEnabled !== undefined)
+      set("weekly_report_channel_email", input.weeklyReportEmailEnabled)
+    if (input.monthlyReportEmailEnabled !== undefined)
+      set("monthly_report_channel_email", input.monthlyReportEmailEnabled)
+    sets.push("updated_at = now()")
 
-    await sql.query(`update finance_preferences set ${sets.join(", ")} where user_id = $1`, params);
+    await sql.query(`update finance_preferences set ${sets.join(", ")} where user_id = $1`, params)
   } else {
     await sql`
       insert into finance_preferences (
@@ -301,15 +323,19 @@ export async function upsertPreferences(
         ${userId}, ${input.monthlySpendingLimitKrw ?? null}, ${input.targetSavingsRate ?? DEFAULT_PREFERENCES.targetSavingsRate},
         ${input.essentialTargetPct ?? DEFAULT_PREFERENCES.essentialTargetPct},
         ${JSON.stringify(
-          nextThresholds ?? { first: DEFAULT_PREFERENCES.budgetWatchThresholdPct, strong: DEFAULT_PREFERENCES.budgetNearLimitThresholdPct, over: 100 }
+          nextThresholds ?? {
+            first: DEFAULT_PREFERENCES.budgetWatchThresholdPct,
+            strong: DEFAULT_PREFERENCES.budgetNearLimitThresholdPct,
+            over: 100,
+          },
         )},
         ${input.monthlyReviewEnabled ?? DEFAULT_PREFERENCES.monthlyReviewEnabled},
         ${input.financeReportEmail ?? null},
         ${input.weeklyReportEmailEnabled ?? DEFAULT_PREFERENCES.weeklyReportEmailEnabled},
         ${input.monthlyReportEmailEnabled ?? DEFAULT_PREFERENCES.monthlyReportEmailEnabled}
       )
-    `;
+    `
   }
 
-  return findPreferences(userId);
+  return findPreferences(userId)
 }

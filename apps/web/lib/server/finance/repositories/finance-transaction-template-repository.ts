@@ -1,21 +1,21 @@
-import "server-only";
-import { sql } from "@/lib/server/finance/db";
-import type { TransactionTemplate, TransactionType } from "@/types/finance";
-import type { CreateTransactionTemplateInput } from "@/lib/validation/finance";
+import "server-only"
+import { sql } from "@/lib/server/finance/db"
+import type { TransactionTemplate, TransactionType } from "@/types/finance"
+import type { CreateTransactionTemplateInput } from "@/lib/validation/finance"
 
 interface TemplateRow {
-  id: string;
-  type: string;
-  category_id: string | null;
-  category_name: string | null;
-  category_icon: string | null;
-  category_color: string | null;
-  description: string;
-  amount_krw: string;
-  payment_method_id: string | null;
-  payment_method_name: string | null;
-  note: string | null;
-  created_at: string;
+  id: string
+  type: string
+  category_id: string | null
+  category_name: string | null
+  category_icon: string | null
+  category_color: string | null
+  description: string
+  amount_krw: string
+  payment_method_id: string | null
+  payment_method_name: string | null
+  note: string | null
+  created_at: string
 }
 
 function toTemplate(row: TemplateRow): TransactionTemplate {
@@ -32,7 +32,7 @@ function toTemplate(row: TemplateRow): TransactionTemplate {
     paymentMethodName: row.payment_method_name,
     note: row.note,
     createdAt: row.created_at,
-  };
+  }
 }
 
 const TEMPLATE_SELECT = `
@@ -40,32 +40,35 @@ const TEMPLATE_SELECT = `
   c.name as category_name, c.icon as category_icon, c.color as category_color,
   t.description, t.amount_krw,
   t.payment_method_id, pm.name as payment_method_name, t.note, t.created_at
-`;
+`
 const TEMPLATE_FROM = `
   from finance_transaction_templates t
   left join finance_categories c on c.id = t.category_id
   left join finance_payment_methods pm on pm.id = t.payment_method_id
-`;
+`
 
 export async function findTemplatesByUser(userId: string): Promise<TransactionTemplate[]> {
   const rows = (await sql`
     select ${sql.unsafe(TEMPLATE_SELECT)} ${sql.unsafe(TEMPLATE_FROM)}
     where t.user_id = ${userId}
     order by t.created_at desc
-  `) as TemplateRow[];
+  `) as TemplateRow[]
 
-  return rows.map(toTemplate);
+  return rows.map(toTemplate)
 }
 
 export async function countTemplatesByUser(userId: string): Promise<number> {
   const rows = (await sql`
     select count(*)::int as count from finance_transaction_templates where user_id = ${userId}
-  `) as { count: number }[];
+  `) as { count: number }[]
 
-  return rows[0].count;
+  return rows[0].count
 }
 
-export async function createTemplate(userId: string, input: CreateTransactionTemplateInput): Promise<TransactionTemplate> {
+export async function createTemplate(
+  userId: string,
+  input: CreateTransactionTemplateInput,
+): Promise<TransactionTemplate> {
   const rows = (await sql`
     insert into finance_transaction_templates (user_id, type, description, amount_krw, category_id, payment_method_id, note)
     values (
@@ -73,19 +76,19 @@ export async function createTemplate(userId: string, input: CreateTransactionTem
       ${input.categoryId ?? null}, ${input.paymentMethodId ?? null}, ${input.note ?? null}
     )
     returning id
-  `) as { id: string }[];
+  `) as { id: string }[]
 
   const created = (await sql`
     select ${sql.unsafe(TEMPLATE_SELECT)} ${sql.unsafe(TEMPLATE_FROM)} where t.id = ${rows[0].id}
-  `) as TemplateRow[];
+  `) as TemplateRow[]
 
-  return toTemplate(created[0]);
+  return toTemplate(created[0])
 }
 
 export async function deleteTemplate(id: string, userId: string): Promise<boolean> {
   const rows = (await sql`
     delete from finance_transaction_templates where id = ${id} and user_id = ${userId} returning id
-  `) as { id: string }[];
+  `) as { id: string }[]
 
-  return rows.length > 0;
+  return rows.length > 0
 }

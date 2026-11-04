@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Loader2, Tags, Trash2, X } from "lucide-react";
+import { useState } from "react"
+import { Loader2, Tags, Trash2, X } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogContent,
@@ -9,8 +9,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/finance/base/alert-dialog";
-import { Button } from "@/components/finance/base/button";
+} from "@/components/finance/base/alert-dialog"
+import { Button } from "@/components/finance/base/button"
 import {
   Dialog,
   DialogContent,
@@ -18,12 +18,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/finance/base/dialog";
-import { Label } from "@/components/finance/base/label";
-import type { Category, TransactionType } from "@/types/finance";
+} from "@/components/finance/base/dialog"
+import { Label } from "@/components/finance/base/label"
+import type { Category, TransactionType } from "@/types/finance"
 
 function plural(count: number): string {
-  return `${count} ${count === 1 ? "transaction" : "transactions"}`;
+  return `${count} ${count === 1 ? "transaction" : "transactions"}`
 }
 
 /**
@@ -42,25 +42,26 @@ export function BulkActionBar({
   onDelete,
   onRecategorize,
 }: {
-  selectedCount: number;
-  selectedTypes: Set<TransactionType>;
-  visibleCount: number;
-  categories: Category[];
-  busy: boolean;
-  onSelectAll: () => void;
-  onCancel: () => void;
-  onDelete: () => Promise<void>;
-  onRecategorize: (categoryId: string | null) => Promise<void>;
+  selectedCount: number
+  selectedTypes: Set<TransactionType>
+  visibleCount: number
+  categories: Category[]
+  busy: boolean
+  onSelectAll: () => void
+  onCancel: () => void
+  onDelete: () => Promise<void>
+  onRecategorize: (categoryId: string | null) => Promise<void>
 }) {
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [recategorizeOpen, setRecategorizeOpen] = useState(false);
-  const [categoryId, setCategoryId] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [recategorizeOpen, setRecategorizeOpen] = useState(false)
+  const [categoryId, setCategoryId] = useState("")
 
   const compatible = categories.filter(
-    (category) => category.type === "both" || [...selectedTypes].every((type) => type === category.type)
-  );
-  const mixedTypes = selectedTypes.size > 1;
-  const nothingSelected = selectedCount === 0;
+    (category) =>
+      category.type === "both" || [...selectedTypes].every((type) => type === category.type),
+  )
+  const mixedTypes = selectedTypes.size > 1
+  const nothingSelected = selectedCount === 0
 
   return (
     <>
@@ -69,14 +70,26 @@ export function BulkActionBar({
         role="toolbar"
         aria-label="Bulk actions"
       >
-        <Button variant="ghost" size="icon" className="size-11 shrink-0" onClick={onCancel} aria-label="Exit selection">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-11 shrink-0"
+          onClick={onCancel}
+          aria-label="Exit selection"
+        >
           <X className="size-4" aria-hidden="true" />
         </Button>
         <p className="min-w-0 flex-1 text-sm font-semibold" aria-live="polite">
           {nothingSelected ? "Select transactions" : `${selectedCount} selected`}
         </p>
         {selectedCount < visibleCount && (
-          <Button variant="ghost" size="sm" className="min-h-11" onClick={onSelectAll} disabled={busy}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="min-h-11"
+            onClick={onSelectAll}
+            disabled={busy}
+          >
             Select all{visibleCount > 0 ? ` (${visibleCount})` : ""}
           </Button>
         )}
@@ -85,8 +98,8 @@ export function BulkActionBar({
           size="sm"
           className="min-h-11"
           onClick={() => {
-            setCategoryId("");
-            setRecategorizeOpen(true);
+            setCategoryId("")
+            setRecategorizeOpen(true)
           }}
           disabled={nothingSelected || busy}
         >
@@ -106,7 +119,10 @@ export function BulkActionBar({
         </Button>
       </div>
 
-      <AlertDialog open={confirmDelete} onOpenChange={(open) => !open && !busy && setConfirmDelete(false)}>
+      <AlertDialog
+        open={confirmDelete}
+        onOpenChange={(open) => !open && !busy && setConfirmDelete(false)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {plural(selectedCount)}?</AlertDialogTitle>
@@ -122,8 +138,8 @@ export function BulkActionBar({
               variant="destructive"
               disabled={busy}
               onClick={async () => {
-                await onDelete();
-                setConfirmDelete(false);
+                await onDelete()
+                setConfirmDelete(false)
               }}
             >
               {busy ? (
@@ -144,7 +160,8 @@ export function BulkActionBar({
             <DialogTitle>Change category</DialogTitle>
             <DialogDescription>
               Move {plural(selectedCount)} to one category.
-              {mixedTypes && " The selection mixes income and expenses, so only categories used for both are listed."}
+              {mixedTypes &&
+                " The selection mixes income and expenses, so only categories used for both are listed."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
@@ -171,8 +188,8 @@ export function BulkActionBar({
             <Button
               disabled={busy}
               onClick={async () => {
-                await onRecategorize(categoryId || null);
-                setRecategorizeOpen(false);
+                await onRecategorize(categoryId || null)
+                setRecategorizeOpen(false)
               }}
             >
               {busy ? <Loader2 className="size-4 animate-spin" /> : null}
@@ -182,5 +199,5 @@ export function BulkActionBar({
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

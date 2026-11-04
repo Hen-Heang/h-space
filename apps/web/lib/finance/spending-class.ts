@@ -1,4 +1,4 @@
-import type { CategoryAmount, FinanceBucket, SpendingClass } from "@/types/finance";
+import type { CategoryAmount, FinanceBucket, SpendingClass } from "@/types/finance"
 
 // Categories whose name signals a fixed, essential obligation. Any other
 // `commitment` category (the common case: subscriptions) defaults to
@@ -13,11 +13,11 @@ const ESSENTIAL_COMMITMENT_KEYWORDS = [
   "utilities",
   "tuition",
   "installment",
-];
+]
 
 export function isEssentialCommitment(categoryName: string): boolean {
-  const lower = categoryName.toLowerCase();
-  return ESSENTIAL_COMMITMENT_KEYWORDS.some((keyword) => lower.includes(keyword));
+  const lower = categoryName.toLowerCase()
+  return ESSENTIAL_COMMITMENT_KEYWORDS.some((keyword) => lower.includes(keyword))
 }
 
 /**
@@ -28,42 +28,50 @@ export function isEssentialCommitment(categoryName: string): boolean {
  * breakdown until the user classifies it (see suggestDefaultSpendingClass
  * for the deterministic starting suggestion shown in the category editor).
  */
-export function bucketForCategory(spendingClass: SpendingClass | null, categoryName: string): FinanceBucket | null {
+export function bucketForCategory(
+  spendingClass: SpendingClass | null,
+  categoryName: string,
+): FinanceBucket | null {
   switch (spendingClass) {
     case "essential":
-      return "essential";
+      return "essential"
     case "growth":
-      return "future";
+      return "future"
     case "flexible":
     case "avoidable":
-      return "lifestyle";
+      return "lifestyle"
     case "commitment":
-      return isEssentialCommitment(categoryName) ? "essential" : "lifestyle";
+      return isEssentialCommitment(categoryName) ? "essential" : "lifestyle"
     default:
-      return null;
+      return null
   }
 }
 
 export interface BucketTotals {
-  essentialKrw: number;
-  lifestyleKrw: number;
-  futureKrw: number;
-  unclassifiedKrw: number;
+  essentialKrw: number
+  lifestyleKrw: number
+  futureKrw: number
+  unclassifiedKrw: number
 }
 
 /** Sums a month's expense-by-category rows into the three Financial Health buckets. */
 export function sumByBucket(categories: CategoryAmount[]): BucketTotals {
-  const totals: BucketTotals = { essentialKrw: 0, lifestyleKrw: 0, futureKrw: 0, unclassifiedKrw: 0 };
-
-  for (const category of categories) {
-    const bucket = bucketForCategory(category.spendingClass, category.categoryName);
-    if (bucket === "essential") totals.essentialKrw += category.amountKrw;
-    else if (bucket === "lifestyle") totals.lifestyleKrw += category.amountKrw;
-    else if (bucket === "future") totals.futureKrw += category.amountKrw;
-    else totals.unclassifiedKrw += category.amountKrw;
+  const totals: BucketTotals = {
+    essentialKrw: 0,
+    lifestyleKrw: 0,
+    futureKrw: 0,
+    unclassifiedKrw: 0,
   }
 
-  return totals;
+  for (const category of categories) {
+    const bucket = bucketForCategory(category.spendingClass, category.categoryName)
+    if (bucket === "essential") totals.essentialKrw += category.amountKrw
+    else if (bucket === "lifestyle") totals.lifestyleKrw += category.amountKrw
+    else if (bucket === "future") totals.futureKrw += category.amountKrw
+    else totals.unclassifiedKrw += category.amountKrw
+  }
+
+  return totals
 }
 
 // Deterministic starting classification for a category the user hasn't
@@ -104,10 +112,10 @@ const DEFAULT_CLASS_BY_NAME: Record<string, SpendingClass> = {
   tech: "avoidable",
   subscription: "commitment",
   subscriptions: "commitment",
-};
+}
 
 export function suggestDefaultSpendingClass(categoryName: string): SpendingClass | null {
-  return DEFAULT_CLASS_BY_NAME[categoryName.trim().toLowerCase()] ?? null;
+  return DEFAULT_CLASS_BY_NAME[categoryName.trim().toLowerCase()] ?? null
 }
 
 export const SPENDING_CLASS_META: Record<SpendingClass, { label: string; description: string }> = {
@@ -116,6 +124,12 @@ export const SPENDING_CLASS_META: Record<SpendingClass, { label: string; descrip
   flexible: { label: "Flexible", description: "Optional spending you value." },
   avoidable: { label: "Avoidable", description: "Easy to reduce when you want to save more." },
   commitment: { label: "Commitment", description: "A recurring or fixed obligation." },
-};
+}
 
-export const SPENDING_CLASS_ORDER: SpendingClass[] = ["essential", "growth", "flexible", "avoidable", "commitment"];
+export const SPENDING_CLASS_ORDER: SpendingClass[] = [
+  "essential",
+  "growth",
+  "flexible",
+  "avoidable",
+  "commitment",
+]

@@ -1,43 +1,43 @@
-import "server-only";
-import * as webPush from "web-push";
-import type { WebPushError } from "web-push";
+import "server-only"
+import * as webPush from "web-push"
+import type { WebPushError } from "web-push"
 import {
   deletePushSubscriptionByEndpoint,
   type StoredPushSubscription,
-} from "@/lib/server/finance/repositories/push-subscription-repository";
+} from "@/lib/server/finance/repositories/push-subscription-repository"
 
 export interface LuyraPushPayload {
-  title: string;
-  body: string;
-  tag?: string;
+  title: string
+  body: string
+  tag?: string
   data?: {
-    url?: string;
-  };
+    url?: string
+  }
 }
 
-let configured = false;
+let configured = false
 
 function configureWebPush(): void {
-  if (configured) return;
+  if (configured) return
 
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT;
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  const privateKey = process.env.VAPID_PRIVATE_KEY
+  const subject = process.env.VAPID_SUBJECT
 
   if (!publicKey || !privateKey || !subject) {
-    throw new Error("Browser push is not configured. Set the VAPID environment variables.");
+    throw new Error("Browser push is not configured. Set the VAPID environment variables.")
   }
 
-  webPush.setVapidDetails(subject, publicKey, privateKey);
-  configured = true;
+  webPush.setVapidDetails(subject, publicKey, privateKey)
+  configured = true
 }
 
 export function isPushNotificationConfigured(): boolean {
   return Boolean(
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY &&
-      process.env.VAPID_PRIVATE_KEY &&
-      process.env.VAPID_SUBJECT
-  );
+    process.env.VAPID_PRIVATE_KEY &&
+    process.env.VAPID_SUBJECT,
+  )
 }
 
 /**
@@ -50,34 +50,34 @@ export function isPushNotificationConfigured(): boolean {
 export async function sendPushToSubscriptions(
   subscriptions: StoredPushSubscription[],
   payload: LuyraPushPayload,
-  logContext: Record<string, unknown> = {}
+  logContext: Record<string, unknown> = {},
 ): Promise<{ sent: number; staleRemoved: number; failed: number }> {
   const results = await Promise.allSettled(
-    subscriptions.map((subscription) => sendPushNotification(subscription, payload))
-  );
+    subscriptions.map((subscription) => sendPushNotification(subscription, payload)),
+  )
 
-  const totals = { sent: 0, staleRemoved: 0, failed: 0 };
+  const totals = { sent: 0, staleRemoved: 0, failed: 0 }
   for (const result of results) {
     if (result.status === "rejected") {
-      totals.failed += 1;
+      totals.failed += 1
       console.error("Push delivery failed", {
         ...logContext,
         error: result.reason instanceof Error ? result.reason.message : "Unknown push error",
-      });
-      continue;
+      })
+      continue
     }
-    if (result.value.sent) totals.sent += 1;
-    if (result.value.staleRemoved) totals.staleRemoved += 1;
+    if (result.value.sent) totals.sent += 1
+    if (result.value.staleRemoved) totals.staleRemoved += 1
   }
 
-  return totals;
+  return totals
 }
 
 export async function sendPushNotification(
   subscription: StoredPushSubscription,
-  payload: LuyraPushPayload
+  payload: LuyraPushPayload,
 ): Promise<{ sent: boolean; staleRemoved: boolean }> {
-  configureWebPush();
+  configureWebPush()
 
   try {
     await webPush.sendNotification(
@@ -89,17 +89,17 @@ export async function sendPushNotification(
         },
       },
       JSON.stringify(payload),
-      { TTL: 60 * 60 * 6, urgency: "normal" }
-    );
+      { TTL: 60 * 60 * 6, urgency: "normal" },
+    )
 
-    return { sent: true, staleRemoved: false };
+    return { sent: true, staleRemoved: false }
   } catch (error) {
-    const pushError = error as WebPushError;
+    const pushError = error as WebPushError
     if (pushError.statusCode === 404 || pushError.statusCode === 410) {
-      await deletePushSubscriptionByEndpoint(subscription.endpoint);
-      return { sent: false, staleRemoved: true };
+      await deletePushSubscriptionByEndpoint(subscription.endpoint)
+      return { sent: false, staleRemoved: true }
     }
 
-    throw error;
+    throw error
   }
 }

@@ -1,18 +1,18 @@
-"use client";
+"use client"
 
-import { X } from "lucide-react";
-import type { TransactionSort } from "@/lib/validation/finance";
-import type { PaymentMethod } from "@/types/finance";
+import { X } from "lucide-react"
+import type { TransactionSort } from "@/lib/validation/finance"
+import type { PaymentMethod } from "@/types/finance"
 
 const SORT_OPTIONS: { label: string; value: TransactionSort }[] = [
   { label: "Newest first", value: "date_desc" },
   { label: "Oldest first", value: "date_asc" },
   { label: "Amount: high to low", value: "amount_desc" },
   { label: "Amount: low to high", value: "amount_asc" },
-];
+]
 
 const FIELD_CLASS =
-  "h-11 min-w-0 w-full rounded-xl border bg-card px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm";
+  "h-11 min-w-0 w-full rounded-xl border bg-card px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
 
 export function TransactionFilterPanel({
   open,
@@ -28,23 +28,27 @@ export function TransactionFilterPanel({
   activeFilterCount,
   onClear,
 }: {
-  open: boolean;
-  paymentMethods: PaymentMethod[];
-  paymentMethodFilter: string;
-  onPaymentMethodChange: (value: string) => void;
-  amountMin: string;
-  onAmountMinChange: (value: string) => void;
-  amountMax: string;
-  onAmountMaxChange: (value: string) => void;
-  sort: TransactionSort;
-  onSortChange: (value: TransactionSort) => void;
-  activeFilterCount: number;
-  onClear: () => void;
+  open: boolean
+  paymentMethods: PaymentMethod[]
+  paymentMethodFilter: string
+  onPaymentMethodChange: (value: string) => void
+  amountMin: string
+  onAmountMinChange: (value: string) => void
+  amountMax: string
+  onAmountMaxChange: (value: string) => void
+  sort: TransactionSort
+  onSortChange: (value: TransactionSort) => void
+  activeFilterCount: number
+  onClear: () => void
 }) {
-  if (!open) return null;
+  if (!open) return null
 
   return (
-    <div className="space-y-3 rounded-2xl border bg-card p-4" role="group" aria-label="Advanced transaction filters">
+    <div
+      className="space-y-3 rounded-2xl border bg-card p-4"
+      role="group"
+      aria-label="Advanced transaction filters"
+    >
       <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
         <div className="space-y-1.5">
           <label htmlFor="filter-amount-min" className="text-xs font-medium text-muted-foreground">
@@ -80,7 +84,10 @@ export function TransactionFilterPanel({
 
       <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
         <div className="space-y-1.5">
-          <label htmlFor="filter-payment-method" className="text-xs font-medium text-muted-foreground">
+          <label
+            htmlFor="filter-payment-method"
+            className="text-xs font-medium text-muted-foreground"
+          >
             Payment method
           </label>
           <select
@@ -128,5 +135,5 @@ export function TransactionFilterPanel({
         </button>
       )}
     </div>
-  );
+  )
 }

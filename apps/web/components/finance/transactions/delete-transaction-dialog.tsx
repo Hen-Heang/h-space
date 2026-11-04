@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogContent,
@@ -8,8 +8,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/finance/base/alert-dialog";
-import { Button } from "@/components/finance/base/button";
+} from "@/components/finance/base/alert-dialog"
+import { Button } from "@/components/finance/base/button"
 
 export function DeleteTransactionDialog({
   isOpen,
@@ -18,11 +18,11 @@ export function DeleteTransactionDialog({
   onCancel,
   onConfirm,
 }: {
-  isOpen: boolean;
-  isDeleting: boolean;
-  description: string;
-  onCancel: () => void;
-  onConfirm: () => void | Promise<void>;
+  isOpen: boolean
+  isDeleting: boolean
+  description: string
+  onCancel: () => void
+  onConfirm: () => void | Promise<void>
 }) {
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
@@ -49,5 +49,5 @@ export function DeleteTransactionDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
+  )
 }

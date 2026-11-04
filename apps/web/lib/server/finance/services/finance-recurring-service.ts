@@ -1,10 +1,10 @@
-import "server-only";
-import { assertOwnedReferences } from "@/lib/server/finance/services/finance-ownership";
-import { Errors } from "@/lib/server/finance/errors";
-import { appDate } from "@/lib/finance-cron-time";
-import { krw, usd } from "@/lib/finance-format";
-import { dueOccurrences } from "@/lib/finance/recurring-schedule";
-import { findCronPreferences } from "@/lib/server/finance/repositories/finance-preferences-repository";
+import "server-only"
+import { assertOwnedReferences } from "@/lib/server/finance/services/finance-ownership"
+import { Errors } from "@/lib/server/finance/errors"
+import { appDate } from "@/lib/finance-cron-time"
+import { krw, usd } from "@/lib/finance-format"
+import { dueOccurrences } from "@/lib/finance/recurring-schedule"
+import { findCronPreferences } from "@/lib/server/finance/repositories/finance-preferences-repository"
 import {
   applyOccurrences,
   createRule as createRuleRepo,
@@ -15,36 +15,40 @@ import {
   updateRule as updateRuleRepo,
   type OccurrenceAmounts,
   type RecurringRuleWrite,
-} from "@/lib/server/finance/repositories/finance-recurring-repository";
-import { findRateOnOrBefore } from "@/lib/server/finance/repositories/finance-exchange-rate-repository";
-import { findAccountByUserId } from "@/lib/server/finance/repositories/telegram-account-repository";
-import { isWithinQuietHours } from "@/lib/server/finance/services/finance-alert-service";
-import { getUsdToKrwRate } from "@/lib/server/finance/services/finance-exchange-rate-service";
-import type { CronRunResult } from "@/lib/server/finance/cron";
-import { escapeTelegramHtml, isTelegramConfigured, sendTelegramMessage } from "@/lib/server/finance/telegram";
-import type { RecurringRuleInput } from "@/lib/validation/finance";
-import type { RecurringRule } from "@/types/finance";
+} from "@/lib/server/finance/repositories/finance-recurring-repository"
+import { findRateOnOrBefore } from "@/lib/server/finance/repositories/finance-exchange-rate-repository"
+import { findAccountByUserId } from "@/lib/server/finance/repositories/telegram-account-repository"
+import { isWithinQuietHours } from "@/lib/server/finance/services/finance-alert-service"
+import { getUsdToKrwRate } from "@/lib/server/finance/services/finance-exchange-rate-service"
+import type { CronRunResult } from "@/lib/server/finance/cron"
+import {
+  escapeTelegramHtml,
+  isTelegramConfigured,
+  sendTelegramMessage,
+} from "@/lib/server/finance/telegram"
+import type { RecurringRuleInput } from "@/lib/validation/finance"
+import type { RecurringRule } from "@/types/finance"
 
 // A start date further back than this would backfill a long run of entries
 // in one go; older history belongs in Transactions, entered by hand.
-const MAX_BACKFILL_DAYS = 92;
+const MAX_BACKFILL_DAYS = 92
 
 function daysBetween(from: string, to: string): number {
-  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000)
 }
 
 async function toWrite(input: RecurringRuleInput, today: string): Promise<RecurringRuleWrite> {
   if (daysBetween(input.nextDate, today) > MAX_BACKFILL_DAYS) {
-    throw Errors.validation(`The next date can be at most ${MAX_BACKFILL_DAYS} days in the past.`);
+    throw Errors.validation(`The next date can be at most ${MAX_BACKFILL_DAYS} days in the past.`)
   }
 
   // A USD rule is converted at each occurrence's own rate when applied; the
   // KRW figure stored on the rule is only today's estimate, for display.
-  let amountKrw = input.amountKrw as number;
-  let exchangeRate: number | null = null;
+  let amountKrw = input.amountKrw as number
+  let exchangeRate: number | null = null
   if (input.currency === "USD") {
-    exchangeRate = (await getUsdToKrwRate()).rate;
-    amountKrw = Math.round((input.originalAmount as number) * exchangeRate);
+    exchangeRate = (await getUsdToKrwRate()).rate
+    amountKrw = Math.round((input.originalAmount as number) * exchangeRate)
   }
 
   return {
@@ -61,7 +65,7 @@ async function toWrite(input: RecurringRuleInput, today: string): Promise<Recurr
     anchorDay: Number(input.nextDate.slice(8, 10)),
     nextDate: input.nextDate,
     isActive: input.isActive,
-  };
+  }
 }
 
 /**
@@ -71,70 +75,79 @@ async function toWrite(input: RecurringRuleInput, today: string): Promise<Recurr
  * day, falling back to today's when none was recorded that far back.
  */
 function rateLoader(today: string): (date: string) => Promise<number> {
-  const rates = new Map<string, Promise<number>>();
-  const current = () => getUsdToKrwRate().then((result) => result.rate);
+  const rates = new Map<string, Promise<number>>()
+  const current = () => getUsdToKrwRate().then((result) => result.rate)
   return (date) => {
-    let rate = rates.get(date);
+    let rate = rates.get(date)
     if (!rate) {
       rate =
         date >= today
           ? current()
-          : findRateOnOrBefore("USD", "KRW", date).then((stored) => (stored ? stored.rate : current()));
-      rates.set(date, rate);
+          : findRateOnOrBefore("USD", "KRW", date).then((stored) =>
+              stored ? stored.rate : current(),
+            )
+      rates.set(date, rate)
     }
-    return rate;
-  };
+    return rate
+  }
 }
 
 async function amountsFor(
   rule: RecurringRule,
   date: string,
-  usdRate: (date: string) => Promise<number>
+  usdRate: (date: string) => Promise<number>,
 ): Promise<OccurrenceAmounts> {
   if (rule.currency !== "USD" || rule.originalAmount === null) {
-    return { amountKrw: rule.amountKrw, originalAmount: null, exchangeRate: null };
+    return { amountKrw: rule.amountKrw, originalAmount: null, exchangeRate: null }
   }
-  const rate = await usdRate(date);
-  return { amountKrw: Math.round(rule.originalAmount * rate), originalAmount: rule.originalAmount, exchangeRate: rate };
+  const rate = await usdRate(date)
+  return {
+    amountKrw: Math.round(rule.originalAmount * rate),
+    originalAmount: rule.originalAmount,
+    exchangeRate: rate,
+  }
 }
 
 interface AppliedEntry {
-  rule: RecurringRule;
-  dates: string[];
+  rule: RecurringRule
+  dates: string[]
   /** KRW across every inserted occurrence — USD dates may each convert differently. */
-  totalKrw: number;
+  totalKrw: number
 }
 
-async function applyDue(today: string, userId?: string): Promise<{ scanned: number; applied: Map<string, AppliedEntry[]> }> {
-  const due = await findDueRules(today, userId);
-  const usdRate = rateLoader(today);
-  const applied = new Map<string, AppliedEntry[]>();
+async function applyDue(
+  today: string,
+  userId?: string,
+): Promise<{ scanned: number; applied: Map<string, AppliedEntry[]> }> {
+  const due = await findDueRules(today, userId)
+  const usdRate = rateLoader(today)
+  const applied = new Map<string, AppliedEntry[]>()
 
   for (const rule of due) {
-    const { dates, nextDate } = dueOccurrences(rule.nextDate, rule.frequency, rule.anchorDay, today);
+    const { dates, nextDate } = dueOccurrences(rule.nextDate, rule.frequency, rule.anchorDay, today)
     try {
       const occurrences = await Promise.all(
-        dates.map(async (date) => ({ date, amounts: await amountsFor(rule, date, usdRate) }))
-      );
-      const inserted = new Set(await applyOccurrences(rule, occurrences, nextDate));
-      if (inserted.size === 0) continue;
+        dates.map(async (date) => ({ date, amounts: await amountsFor(rule, date, usdRate) })),
+      )
+      const inserted = new Set(await applyOccurrences(rule, occurrences, nextDate))
+      if (inserted.size === 0) continue
       const totalKrw = occurrences
         .filter((occurrence) => inserted.has(occurrence.date))
-        .reduce((sum, occurrence) => sum + occurrence.amounts.amountKrw, 0);
-      const list = applied.get(rule.userId) ?? [];
-      list.push({ rule, dates: [...inserted], totalKrw });
-      applied.set(rule.userId, list);
+        .reduce((sum, occurrence) => sum + occurrence.amounts.amountKrw, 0)
+      const list = applied.get(rule.userId) ?? []
+      list.push({ rule, dates: [...inserted], totalKrw })
+      applied.set(rule.userId, list)
     } catch (error) {
       // One bad rule must not stop everyone else's from applying.
-      console.error(`[finance] recurring rule ${rule.id} failed to apply`, error);
+      console.error(`[finance] recurring rule ${rule.id} failed to apply`, error)
     }
   }
 
-  return { scanned: due.length, applied };
+  return { scanned: due.length, applied }
 }
 
 export async function listRecurringRules(userId: string): Promise<RecurringRule[]> {
-  return findRulesByUser(userId);
+  return findRulesByUser(userId)
 }
 
 /**
@@ -144,55 +157,61 @@ export async function listRecurringRules(userId: string): Promise<RecurringRule[
  */
 export async function createRecurringRule(
   userId: string,
-  input: RecurringRuleInput
+  input: RecurringRuleInput,
 ): Promise<{ rule: RecurringRule; appliedCount: number }> {
-  await assertOwnedReferences(userId, input);
-  const today = appDate();
-  const created = await createRuleRepo(userId, await toWrite(input, today));
-  const { applied } = await applyDue(today, userId);
-  const appliedCount = (applied.get(userId) ?? []).reduce((sum, entry) => sum + entry.dates.length, 0);
-  return { rule: (await findRuleById(created.id, userId)) ?? created, appliedCount };
+  await assertOwnedReferences(userId, input)
+  const today = appDate()
+  const created = await createRuleRepo(userId, await toWrite(input, today))
+  const { applied } = await applyDue(today, userId)
+  const appliedCount = (applied.get(userId) ?? []).reduce(
+    (sum, entry) => sum + entry.dates.length,
+    0,
+  )
+  return { rule: (await findRuleById(created.id, userId)) ?? created, appliedCount }
 }
 
 export async function updateRecurringRule(
   userId: string,
   id: string,
-  input: RecurringRuleInput
+  input: RecurringRuleInput,
 ): Promise<{ rule: RecurringRule; appliedCount: number }> {
-  const today = appDate();
-  const existing = await findRuleById(id, userId);
-  if (!existing) throw Errors.notFound("Recurring rule");
-  await assertOwnedReferences(userId, input);
-  const write = await toWrite(input, today);
+  const today = appDate()
+  const existing = await findRuleById(id, userId)
+  if (!existing) throw Errors.notFound("Recurring rule")
+  await assertOwnedReferences(userId, input)
+  const write = await toWrite(input, today)
   // A rule for the 31st currently sitting on a clamped Feb 28 must keep its
   // anchor when only the amount or note is edited; a new date re-anchors it.
-  if (input.nextDate === existing.nextDate) write.anchorDay = existing.anchorDay;
-  const updated = await updateRuleRepo(id, userId, write);
-  if (!updated) throw Errors.notFound("Recurring rule");
-  const { applied } = await applyDue(today, userId);
-  const appliedCount = (applied.get(userId) ?? []).reduce((sum, entry) => sum + entry.dates.length, 0);
-  return { rule: (await findRuleById(id, userId)) ?? updated, appliedCount };
+  if (input.nextDate === existing.nextDate) write.anchorDay = existing.anchorDay
+  const updated = await updateRuleRepo(id, userId, write)
+  if (!updated) throw Errors.notFound("Recurring rule")
+  const { applied } = await applyDue(today, userId)
+  const appliedCount = (applied.get(userId) ?? []).reduce(
+    (sum, entry) => sum + entry.dates.length,
+    0,
+  )
+  return { rule: (await findRuleById(id, userId)) ?? updated, appliedCount }
 }
 
 export async function deleteRecurringRule(userId: string, id: string): Promise<void> {
-  const deleted = await deleteRuleRepo(id, userId);
-  if (!deleted) throw Errors.notFound("Recurring rule");
+  const deleted = await deleteRuleRepo(id, userId)
+  if (!deleted) throw Errors.notFound("Recurring rule")
 }
 
 function summaryMessage(entries: AppliedEntry[]): string {
   // "×3" entries show the combined KRW, since caught-up USD dates can each
   // have converted at a different rate.
   const lines = entries.map(({ rule, dates, totalKrw }) => {
-    const sign = rule.type === "income" ? "+" : "−";
-    const times = dates.length > 1 ? ` ×${dates.length}` : "";
+    const sign = rule.type === "income" ? "+" : "−"
+    const times = dates.length > 1 ? ` ×${dates.length}` : ""
     const amount =
       rule.currency === "USD" && rule.originalAmount !== null
         ? `${usd.format(rule.originalAmount)}${times} (${krw.format(totalKrw)})`
-        : `${krw.format(rule.amountKrw)}${times}${dates.length > 1 ? ` (${krw.format(totalKrw)})` : ""}`;
-    return `• ${escapeTelegramHtml(rule.description)} ${sign}${amount}`;
-  });
-  const total = entries.reduce((sum, entry) => sum + entry.dates.length, 0);
-  return [`🔁 <b>Recurring added</b> (${total})`, "", ...lines].join("\n");
+        : `${krw.format(rule.amountKrw)}${times}${dates.length > 1 ? ` (${krw.format(totalKrw)})` : ""}`
+    return `• ${escapeTelegramHtml(rule.description)} ${sign}${amount}`
+  })
+  const total = entries.reduce((sum, entry) => sum + entry.dates.length, 0)
+  return [`🔁 <b>Recurring added</b> (${total})`, "", ...lines].join("\n")
 }
 
 /**
@@ -200,21 +219,23 @@ function summaryMessage(entries: AppliedEntry[]): string {
  * Telegram summary per user who got something. The transactions are written
  * regardless of Telegram; quiet hours only hold back the message.
  */
-export async function runRecurring(now: Date = new Date()): Promise<CronRunResult & { applied: number }> {
-  const { scanned, applied } = await applyDue(appDate(now));
+export async function runRecurring(
+  now: Date = new Date(),
+): Promise<CronRunResult & { applied: number }> {
+  const { scanned, applied } = await applyDue(appDate(now))
   const appliedCount = Array.from(applied.values())
     .flat()
-    .reduce((sum, entry) => sum + entry.dates.length, 0);
+    .reduce((sum, entry) => sum + entry.dates.length, 0)
 
-  let notified = 0;
+  let notified = 0
   if (isTelegramConfigured()) {
     for (const [userId, entries] of applied) {
-      const account = await findAccountByUserId(userId);
-      if (!account?.chatId) continue;
-      if (isWithinQuietHours(await findCronPreferences(userId), now)) continue;
-      if (await sendTelegramMessage(account.chatId, summaryMessage(entries))) notified += 1;
+      const account = await findAccountByUserId(userId)
+      if (!account?.chatId) continue
+      if (isWithinQuietHours(await findCronPreferences(userId), now)) continue
+      if (await sendTelegramMessage(account.chatId, summaryMessage(entries))) notified += 1
     }
   }
 
-  return { scanned, notified, applied: appliedCount };
+  return { scanned, notified, applied: appliedCount }
 }

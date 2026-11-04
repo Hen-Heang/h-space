@@ -1,10 +1,14 @@
-"use client";
+"use client"
 
-import { WalletCards } from "lucide-react";
-import { CategoryDonut } from "@/components/finance/analytics/category-donut";
-import { CategoryIcon, FinanceEmptyState, FinanceProgress } from "@/components/finance/ui/finance-primitives";
-import { krw } from "@/lib/finance-format";
-import type { CategoryAmount } from "@/types/finance";
+import { WalletCards } from "lucide-react"
+import { CategoryDonut } from "@/components/finance/analytics/category-donut"
+import {
+  CategoryIcon,
+  FinanceEmptyState,
+  FinanceProgress,
+} from "@/components/finance/ui/finance-primitives"
+import { krw } from "@/lib/finance-format"
+import type { CategoryAmount } from "@/types/finance"
 
 export function CategoryDistribution({ categories }: { categories: CategoryAmount[] }) {
   if (categories.length === 0) {
@@ -14,10 +18,10 @@ export function CategoryDistribution({ categories }: { categories: CategoryAmoun
         title="No expenses recorded"
         description="Category distribution appears once you log expenses this month."
       />
-    );
+    )
   }
 
-  const total = categories.reduce((sum, category) => sum + category.amountKrw, 0);
+  const total = categories.reduce((sum, category) => sum + category.amountKrw, 0)
 
   return (
     <div className="overflow-hidden rounded-2xl border bg-card">
@@ -26,7 +30,7 @@ export function CategoryDistribution({ categories }: { categories: CategoryAmoun
       </div>
       <div className="divide-y divide-border">
         {categories.map((category) => {
-          const share = total > 0 ? (category.amountKrw / total) * 100 : 0;
+          const share = total > 0 ? (category.amountKrw / total) * 100 : 0
           return (
             <div key={category.categoryId ?? category.categoryName} className="p-4">
               <div className="flex items-center gap-3">
@@ -34,18 +38,26 @@ export function CategoryDistribution({ categories }: { categories: CategoryAmoun
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-col items-start gap-1 xs:flex-row xs:justify-between xs:gap-4">
                     <p className="truncate text-sm font-semibold">{category.categoryName}</p>
-                    <p className="[overflow-wrap:anywhere] font-mono text-sm font-semibold tabular-nums">{krw.format(category.amountKrw)}</p>
+                    <p className="[overflow-wrap:anywhere] font-mono text-sm font-semibold tabular-nums">
+                      {krw.format(category.amountKrw)}
+                    </p>
                   </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{share.toFixed(0)}% of expenses</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {share.toFixed(0)}% of expenses
+                  </p>
                   <div className="mt-2">
-                    <FinanceProgress value={share} label={`${category.categoryName} is ${share.toFixed(0)}% of expenses`} color={category.categoryColor} />
+                    <FinanceProgress
+                      value={share}
+                      label={`${category.categoryName} is ${share.toFixed(0)}% of expenses`}
+                      color={category.categoryColor}
+                    />
                   </div>
                 </div>
               </div>
             </div>
-          );
+          )
         })}
       </div>
     </div>
-  );
+  )
 }

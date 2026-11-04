@@ -16,7 +16,12 @@ describe("financeConfigProblems", () => {
   const L = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 
   it("is empty when everything is set", () => {
-    expect(financeConfigProblems({ FINANCE_DATABASE_URL: FAKE_DB_URL, FINANCE_ACCOUNT_LINKS: `${H}=${L}` })).toEqual([])
+    expect(
+      financeConfigProblems({
+        FINANCE_DATABASE_URL: FAKE_DB_URL,
+        FINANCE_ACCOUNT_LINKS: `${H}=${L}`,
+      }),
+    ).toEqual([])
   })
 
   it("names each missing setting", () => {
@@ -27,7 +32,10 @@ describe("financeConfigProblems", () => {
   })
 
   it("calls out a malformed link without echoing its value", () => {
-    const problems = financeConfigProblems({ FINANCE_DATABASE_URL: FAKE_DB_URL, FINANCE_ACCOUNT_LINKS: `${H}:${L}` })
+    const problems = financeConfigProblems({
+      FINANCE_DATABASE_URL: FAKE_DB_URL,
+      FINANCE_ACCOUNT_LINKS: `${H}:${L}`,
+    })
     expect(problems).toHaveLength(1)
     expect(problems[0]).toMatch(/FINANCE_ACCOUNT_LINKS is malformed/)
     expect(problems[0]).not.toContain(H)
@@ -38,7 +46,8 @@ describe("requireFinanceUserId — server log", () => {
   const H = "11111111-1111-4111-8111-111111111111"
   const L = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
   const OTHER = "22222222-2222-4222-8222-222222222222"
-  const request = () => new Request("http://localhost/api/finance/overview", { headers: { authorization: "Bearer t" } })
+  const request = () =>
+    new Request("http://localhost/api/finance/overview", { headers: { authorization: "Bearer t" } })
 
   afterEach(() => {
     vi.unstubAllEnvs()
@@ -76,7 +85,8 @@ const HSPACE_ID = "11111111-1111-4111-8111-111111111111"
 const LUYRA_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 const OTHER_ID = "22222222-2222-4222-8222-222222222222"
 
-const req = () => new Request("http://localhost/api/finance/overview", { headers: { authorization: "Bearer t" } })
+const req = () =>
+  new Request("http://localhost/api/finance/overview", { headers: { authorization: "Bearer t" } })
 
 async function failure(promise: Promise<unknown>): Promise<AppError> {
   try {

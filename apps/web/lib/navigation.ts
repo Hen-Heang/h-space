@@ -39,7 +39,6 @@ import {
   Zap,
 } from "lucide-react"
 
-
 // Single source of truth for the whole nav surface — desktop sidebar, tablet
 // rail, mobile bottom bar, the "More" sheet, and the Quick Switcher all render
 // from this file. Adding a new module later (Career, Fitness, …) means adding

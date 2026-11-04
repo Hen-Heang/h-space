@@ -2,10 +2,10 @@ export class AppError extends Error {
   constructor(
     public code: string,
     message: string,
-    public status: number = 400
+    public status: number = 400,
   ) {
-    super(message);
-    this.name = "AppError";
+    super(message)
+    this.name = "AppError"
   }
 }
 
@@ -17,4 +17,4 @@ export const Errors = {
   // or a delete blocked because other rows still reference this one. Kept
   // distinct from VALIDATION_ERROR so the UI can react to it specifically.
   conflict: (message: string) => new AppError("CONFLICT", message, 409),
-};
+}

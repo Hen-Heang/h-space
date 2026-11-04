@@ -1,18 +1,24 @@
-"use client";
+"use client"
 
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Plus, WalletCards } from "lucide-react";
-import { Button } from "@/components/finance/base/button";
-import { FinanceEmptyState, FinanceErrorState, FinanceMetricGrid, FinanceSection, MonthSelector } from "@/components/finance/ui/finance-primitives";
-import { BudgetCard } from "@/components/finance/budgets/budget-card";
-import { BudgetSummary } from "@/components/finance/budgets/budget-summary";
-import { BudgetSheet } from "@/components/finance/budgets/budget-sheet";
-import { DeleteBudgetDialog } from "@/components/finance/budgets/delete-budget-dialog";
-import { monthBounds, monthLabel } from "@/lib/finance-month";
-import { deleteBudget, upsertBudget } from "@/lib/api/finance";
-import { budgetsQuery, useInvalidateAfter } from "@/lib/query/finance-queries";
-import type { BudgetPerformance, Category } from "@/types/finance";
+import { useMemo, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { Plus, WalletCards } from "lucide-react"
+import { Button } from "@/components/finance/base/button"
+import {
+  FinanceEmptyState,
+  FinanceErrorState,
+  FinanceMetricGrid,
+  FinanceSection,
+  MonthSelector,
+} from "@/components/finance/ui/finance-primitives"
+import { BudgetCard } from "@/components/finance/budgets/budget-card"
+import { BudgetSummary } from "@/components/finance/budgets/budget-summary"
+import { BudgetSheet } from "@/components/finance/budgets/budget-sheet"
+import { DeleteBudgetDialog } from "@/components/finance/budgets/delete-budget-dialog"
+import { monthBounds, monthLabel } from "@/lib/finance-month"
+import { deleteBudget, upsertBudget } from "@/lib/api/finance"
+import { budgetsQuery, useInvalidateAfter } from "@/lib/query/finance-queries"
+import type { BudgetPerformance, Category } from "@/types/finance"
 
 function BudgetListSkeleton() {
   return (
@@ -28,50 +34,52 @@ function BudgetListSkeleton() {
         ))}
       </div>
     </div>
-  );
+  )
 }
 
 export function BudgetList() {
-  const [monthOffset, setMonthOffset] = useState(0);
-  const invalidateAfter = useInvalidateAfter();
-  const { start, end } = monthBounds(monthOffset);
-  const budgets = useQuery(budgetsQuery(start, end));
-  const loading = budgets.isPending;
+  const [monthOffset, setMonthOffset] = useState(0)
+  const invalidateAfter = useInvalidateAfter()
+  const { start, end } = monthBounds(monthOffset)
+  const budgets = useQuery(budgetsQuery(start, end))
+  const loading = budgets.isPending
   // A failed background refresh keeps the month already on screen.
-  const loadError = budgets.isError && !budgets.data;
-  const categories = useMemo(() => budgets.data?.categories ?? [], [budgets.data]);
-  const performance = budgets.data?.performance ?? [];
+  const loadError = budgets.isError && !budgets.data
+  const categories = useMemo(() => budgets.data?.categories ?? [], [budgets.data])
+  const performance = budgets.data?.performance ?? []
   const [sheetTarget, setSheetTarget] = useState<
-    { mode: "create"; unbudgetedCategories: Category[] } | { mode: "edit"; budget: BudgetPerformance } | null
-  >(null);
-  const [removeTarget, setRemoveTarget] = useState<BudgetPerformance | null>(null);
-  const [removing, setRemoving] = useState(false);
+    | { mode: "create"; unbudgetedCategories: Category[] }
+    | { mode: "edit"; budget: BudgetPerformance }
+    | null
+  >(null)
+  const [removeTarget, setRemoveTarget] = useState<BudgetPerformance | null>(null)
+  const [removing, setRemoving] = useState(false)
 
   const unbudgetedCategories = useMemo(() => {
-    const budgetedCategoryIds = new Set(budgets.data?.budgets.map((budget) => budget.categoryId));
-    return categories.filter((category) => !budgetedCategoryIds.has(category.id));
-  }, [categories, budgets.data]);
+    const budgetedCategoryIds = new Set(budgets.data?.budgets.map((budget) => budget.categoryId))
+    return categories.filter((category) => !budgetedCategoryIds.has(category.id))
+  }, [categories, budgets.data])
 
   // Budgets are standing limits, not per month, so every cached month and
   // the overview's budget alerts and daily guide go stale together.
   function refresh() {
-    return invalidateAfter("budget");
+    return invalidateAfter("budget")
   }
 
   async function handleSave(categoryId: string, amountKrw: number) {
-    await upsertBudget({ categoryId, amountKrw });
-    refresh();
+    await upsertBudget({ categoryId, amountKrw })
+    refresh()
   }
 
   async function handleRemove() {
-    if (!removeTarget) return;
-    setRemoving(true);
+    if (!removeTarget) return
+    setRemoving(true)
     try {
-      await deleteBudget(removeTarget.categoryId);
-      setRemoveTarget(null);
-      refresh();
+      await deleteBudget(removeTarget.categoryId)
+      setRemoveTarget(null)
+      refresh()
     } finally {
-      setRemoving(false);
+      setRemoving(false)
     }
   }
 
@@ -121,14 +129,22 @@ export function BudgetList() {
             <BudgetSummary performance={performance} />
           </FinanceSection>
 
-          <FinanceSection id="budgets-categories" title="Categories" description="Progress, remaining balance, and status for each budgeted category.">
+          <FinanceSection
+            id="budgets-categories"
+            title="Categories"
+            description="Progress, remaining balance, and status for each budgeted category."
+          >
             {performance.length === 0 ? (
               <FinanceEmptyState
                 icon={WalletCards}
                 title="No budgets set"
                 description="Add a monthly limit for a category to start tracking budget health here."
                 action={
-                  <Button variant="outline" size="sm" onClick={() => setSheetTarget({ mode: "create", unbudgetedCategories })}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSheetTarget({ mode: "create", unbudgetedCategories })}
+                  >
                     <Plus />
                     Add budget
                   </Button>
@@ -165,5 +181,5 @@ export function BudgetList() {
         onConfirm={handleRemove}
       />
     </div>
-  );
+  )
 }

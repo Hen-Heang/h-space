@@ -371,7 +371,9 @@ describe("workspace tabs (secondary navigation)", () => {
   })
 
   it("has exactly one Finance entry, findable as Luyra or finance", () => {
-    const finance = allNavItems.filter((i) => i.href === "/finance" || i.href.startsWith("/finance/"))
+    const finance = allNavItems.filter(
+      (i) => i.href === "/finance" || i.href.startsWith("/finance/"),
+    )
     expect(finance.map((i) => i.id)).toEqual(["apps-luyra"])
     const terms = [finance[0].label, finance[0].description ?? "", ...(finance[0].keywords ?? [])]
       .join(" ")
@@ -455,7 +457,15 @@ describe("mobile bottom bar + More", () => {
   })
 
   it("lights exactly one tab on tab-owned routes and More nowhere there", () => {
-    for (const route of ["/home", "/goals/calendar", "/inbox", "/vocab", "/history", "/vault", "/finance/transactions"]) {
+    for (const route of [
+      "/home",
+      "/goals/calendar",
+      "/inbox",
+      "/vocab",
+      "/history",
+      "/vault",
+      "/finance/transactions",
+    ]) {
       const lit = mobileNavItems.filter((item) => isNavigationItemActive({ pathname: route, item }))
       expect(lit, route).toHaveLength(1)
       expect(isMoreRoute(route)).toBe(false)
@@ -548,11 +558,7 @@ describe("workspace registry details", () => {
   it("lists H-Vault as an internal app in My Apps", () => {
     const apps = navSections.find((s) => s.id === "apps")!
     expect(apps).toMatchObject({ label: "My Apps", href: "/apps" })
-    expect(apps.items.map((i) => i.href)).toEqual([
-      "/apps",
-      "/vault",
-      "/finance",
-    ])
+    expect(apps.items.map((i) => i.href)).toEqual(["/apps", "/vault", "/finance"])
     expect(getSectionForPath("/vault")?.id).toBe("apps")
     expect(getActiveNavItem("/vault")?.label).toBe("H-Vault")
     // /vault doesn't share /apps' prefix, so My Apps itself stays inactive there.

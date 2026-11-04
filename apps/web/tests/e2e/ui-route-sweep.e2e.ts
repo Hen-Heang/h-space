@@ -180,7 +180,11 @@ async function installMocks(page: Page, signedIn = true) {
           contentType: "application/json",
           body: JSON.stringify({ error: { code: "NOT_FOUND", message: "Not mocked" } }),
         })
-      : route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data }) })
+      : route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ data }),
+        })
   })
 }
 

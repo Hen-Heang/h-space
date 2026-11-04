@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogContent,
@@ -8,8 +8,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/finance/base/alert-dialog";
-import { Button } from "@/components/finance/base/button";
+} from "@/components/finance/base/alert-dialog"
+import { Button } from "@/components/finance/base/button"
 
 export function DeleteBudgetDialog({
   isOpen,
@@ -18,11 +18,11 @@ export function DeleteBudgetDialog({
   onCancel,
   onConfirm,
 }: {
-  isOpen: boolean;
-  isDeleting: boolean;
-  categoryName: string;
-  onCancel: () => void;
-  onConfirm: () => void | Promise<void>;
+  isOpen: boolean
+  isDeleting: boolean
+  categoryName: string
+  onCancel: () => void
+  onConfirm: () => void | Promise<void>
 }) {
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
@@ -30,8 +30,8 @@ export function DeleteBudgetDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Remove budget</AlertDialogTitle>
           <AlertDialogDescription>
-            Remove the monthly budget for <strong>{categoryName}</strong>? Past spending stays recorded — only the limit
-            is removed.
+            Remove the monthly budget for <strong>{categoryName}</strong>? Past spending stays
+            recorded — only the limit is removed.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -50,5 +50,5 @@ export function DeleteBudgetDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
+  )
 }

@@ -1,21 +1,21 @@
-"use client";
+"use client"
 
-import { Check, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Check, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/finance/base/dropdown-menu";
-import { CategoryIcon } from "@/components/finance/ui/finance-primitives";
-import { krw, usd } from "@/lib/finance-format";
-import { cn } from "@/lib/utils";
-import type { Transaction } from "@/types/finance";
+} from "@/components/finance/base/dropdown-menu"
+import { CategoryIcon } from "@/components/finance/ui/finance-primitives"
+import { krw, usd } from "@/lib/finance-format"
+import { cn } from "@/lib/utils"
+import type { Transaction } from "@/types/finance"
 
 function formatTime(createdAt: string): string | null {
-  const date = new Date(createdAt);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const date = new Date(createdAt)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
 }
 
 export function TransactionRow({
@@ -24,21 +24,21 @@ export function TransactionRow({
   onDeleteRequest,
   selection,
 }: {
-  transaction: Transaction;
-  onEdit: (transaction: Transaction) => void;
-  onDeleteRequest: (transaction: Transaction) => void;
+  transaction: Transaction
+  onEdit: (transaction: Transaction) => void
+  onDeleteRequest: (transaction: Transaction) => void
   /** Present while the list is in selection mode: a tap toggles instead of opening the editor. */
-  selection?: { selected: boolean; onToggle: (transaction: Transaction) => void };
+  selection?: { selected: boolean; onToggle: (transaction: Transaction) => void }
 }) {
-  const isIncome = transaction.type === "income";
-  const time = formatTime(transaction.createdAt);
+  const isIncome = transaction.type === "income"
+  const time = formatTime(transaction.createdAt)
   const metaParts = [
     transaction.categoryName ?? (isIncome ? "Income" : "Uncategorized"),
     transaction.paymentMethodName,
     transaction.note,
-  ].filter(Boolean);
-  const meta = metaParts.join(" · ");
-  const activate = () => (selection ? selection.onToggle(transaction) : onEdit(transaction));
+  ].filter(Boolean)
+  const meta = metaParts.join(" · ")
+  const activate = () => (selection ? selection.onToggle(transaction) : onEdit(transaction))
 
   return (
     <div
@@ -49,26 +49,29 @@ export function TransactionRow({
       onClick={activate}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          activate();
+          event.preventDefault()
+          activate()
         }
       }}
       className={cn(
         "flex min-h-16 cursor-pointer items-start gap-2 px-3 py-3 transition-colors hover:bg-secondary/50 active:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:items-center sm:gap-3 sm:px-4",
-        selection?.selected && "bg-primary/5 hover:bg-primary/10"
+        selection?.selected && "bg-primary/5 hover:bg-primary/10",
       )}
     >
       <CategoryIcon icon={transaction.categoryIcon} color={transaction.categoryColor} />
 
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-start gap-2">
-          <p className="min-w-0 flex-1 truncate text-sm font-semibold" title={transaction.description}>
+          <p
+            className="min-w-0 flex-1 truncate text-sm font-semibold"
+            title={transaction.description}
+          >
             {transaction.description}
           </p>
           <p
             className={cn(
               "max-w-[58%] shrink-0 whitespace-nowrap text-right font-mono text-sm font-semibold tabular-nums",
-              isIncome ? "text-success" : "text-foreground"
+              isIncome ? "text-success" : "text-foreground",
             )}
           >
             {isIncome ? "+" : "−"}
@@ -84,7 +87,9 @@ export function TransactionRow({
             {transaction.currency === "USD" && transaction.originalAmount !== null && (
               <span className="break-words">
                 {usd.format(transaction.originalAmount)}
-                {transaction.exchangeRate !== null ? ` @ ${krw.format(transaction.exchangeRate)}` : ""}
+                {transaction.exchangeRate !== null
+                  ? ` @ ${krw.format(transaction.exchangeRate)}`
+                  : ""}
               </span>
             )}
             {time && <span>{time}</span>}
@@ -97,13 +102,15 @@ export function TransactionRow({
           aria-hidden="true"
           className={cn(
             "flex size-11 shrink-0 items-center justify-center",
-            selection.selected ? "text-primary" : "text-muted-foreground"
+            selection.selected ? "text-primary" : "text-muted-foreground",
           )}
         >
           <span
             className={cn(
               "flex size-5 items-center justify-center rounded border-2",
-              selection.selected ? "border-primary bg-primary text-primary-foreground" : "border-input"
+              selection.selected
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-input",
             )}
           >
             {selection.selected && <Check className="size-3.5" strokeWidth={3} />}
@@ -134,5 +141,5 @@ export function TransactionRow({
         </DropdownMenu>
       )}
     </div>
-  );
+  )
 }
