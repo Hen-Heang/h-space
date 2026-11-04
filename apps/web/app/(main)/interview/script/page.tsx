@@ -1022,7 +1022,7 @@ export default function InterviewScriptPage() {
                   id="script-section-jump"
                   value={activeSection}
                   onChange={(event) => scrollToSection(event.target.value)}
-                  className="h-11 w-full max-w-sm rounded-full border border-white/60 bg-background/70 px-4 text-base font-medium text-foreground shadow-[0_8px_24px_-8px_rgb(0_0_0/0.2)] backdrop-blur-xl backdrop-saturate-150 dark:border-white/10"
+                  className="mobile-glass h-11 w-full max-w-sm rounded-full border border-white/60 bg-background/70 px-4 text-base font-medium text-foreground shadow-[0_8px_24px_-8px_rgb(0_0_0/0.2)] backdrop-blur-xl backdrop-saturate-150 dark:border-white/10"
                 >
                   {!activeSection && <option value="">Jump to section…</option>}
                   {allSections.map((section, index) => (

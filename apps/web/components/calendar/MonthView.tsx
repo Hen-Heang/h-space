@@ -5,7 +5,7 @@ import { Plus } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import type { Task } from "@/lib/tasks"
-import { getTaskColor, hexWithAlpha, isExternalTask } from "@/lib/tasks"
+import { getTaskColor, hexWithAlpha } from "@/lib/tasks"
 import { getHolidaysForDate } from "@/lib/holidays"
 import { HolidayMarker } from "./HolidayMarker"
 import { useWeatherForecast } from "@/hooks/useWeatherForecast"
@@ -198,7 +198,6 @@ export function MonthView({
                               task.completed
                                 ? "text-muted-foreground line-through opacity-60"
                                 : "text-foreground hover:brightness-95 dark:hover:brightness-110",
-                              isExternalTask(task) && "border-dashed",
                             )}
                             style={{
                               backgroundColor: hexWithAlpha(color, 0.16),

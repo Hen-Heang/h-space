@@ -22,11 +22,11 @@ import { cn } from "@/lib/utils"
 
 /** Shared input styling for every auth form field. */
 export const authInputClass =
-  "h-12 rounded-[14px] border-[1.5px] border-border bg-card px-4 text-[15px] shadow-none transition-[border-color,box-shadow] focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/15"
+  "h-12 rounded-[14px] border-[1.5px] border-border bg-card px-4 text-base shadow-none transition-[border-color,box-shadow] focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/15"
 
 /** Full-width primary submit button styling (pairs with the default Button variant). */
 export const authSubmitClass =
-  "h-12 w-full rounded-[14px] text-[15px] font-bold shadow-lg shadow-primary/25"
+  "h-12 w-full rounded-[14px] text-sm font-semibold shadow-lg shadow-primary/25"
 
 /** Inline text link styling used inside auth pages. */
 export const authLinkClass =
@@ -69,7 +69,7 @@ function BrandMark({ subtitle }: { subtitle?: boolean }) {
       <span>
         <span className="block text-lg font-bold leading-tight">H-Space</span>
         {subtitle && (
-          <span className="mt-0.5 block text-[10px] font-semibold tracking-[0.14em] text-white/70">
+          <span className="mt-0.5 block text-xs font-semibold tracking-[0.14em] text-white/70">
             YOUR PERSONAL OS
           </span>
         )}
@@ -165,7 +165,7 @@ function BrandPanel({ variant }: { variant: "signin" | "signup" }) {
       <BrandMark subtitle />
 
       <div className="max-w-lg space-y-5">
-        <p className="inline-flex rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em]">
+        <p className="inline-flex rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em]">
           {variant === "signup" ? "Get started" : "One account · Every app"}
         </p>
         {variant === "signup" ? (
@@ -271,7 +271,7 @@ export function AuthHeading({
           <Icon size={26} aria-hidden="true" />
         </span>
       )}
-      <h1 className="text-[28px] font-bold leading-tight tracking-tight text-foreground sm:text-[32px]">
+      <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-foreground sm:text-[32px]">
         {title}
       </h1>
       {description && (

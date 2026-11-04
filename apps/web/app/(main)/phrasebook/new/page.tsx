@@ -41,9 +41,7 @@ function emptyAnswer(): PhraseAnswerContent {
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="mb-1.5 block text-[11px] font-semibold text-muted-foreground">
-      {children}
-    </label>
+    <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">{children}</label>
   )
 }
 

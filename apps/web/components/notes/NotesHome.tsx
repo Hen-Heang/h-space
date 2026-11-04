@@ -608,7 +608,7 @@ export function NotesHome({
                 placeholder="Jot down advice, an idea or a question. Organize it later."
                 aria-invalid={captureHint || undefined}
                 aria-describedby={captureHint ? "notes-capture-hint" : undefined}
-                className="min-h-20 text-sm"
+                className="min-h-20 text-base"
               />
               {captureHint && (
                 <p id="notes-capture-hint" role="alert" className="text-xs text-destructive">

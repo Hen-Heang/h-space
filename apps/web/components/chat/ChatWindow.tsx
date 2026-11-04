@@ -219,7 +219,7 @@ const HengoWelcome: FC = () => {
           )}
         </div>
 
-        <h2 className="text-balance text-[1.75rem] font-bold tracking-[-0.035em] text-foreground sm:text-3xl">
+        <h2 className="text-balance text-2xl font-semibold tracking-[-0.035em] text-foreground sm:text-3xl">
           {isTechnicalMode ? "Practice Korean for your workday" : "Speak Korean with confidence"}
         </h2>
         <p className="mx-auto mt-2 max-w-md text-pretty text-[14px] font-medium leading-relaxed text-muted-foreground sm:text-[15px]">
@@ -259,7 +259,7 @@ const HengoWelcome: FC = () => {
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {CHAT_PRESETS.map((preset, i) => (
             <motion.button
               key={preset.id}
@@ -269,12 +269,12 @@ const HengoWelcome: FC = () => {
               type="button"
               disabled={!canInteract}
               onClick={() => send(preset.prompt)}
-              className="group flex min-h-[7.25rem] flex-col items-start rounded-2xl border border-border/70 bg-card/70 p-3.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-500/35 hover:bg-card hover:shadow-md disabled:opacity-40 active:translate-y-0 active:scale-[0.98]"
+              className="group flex min-h-[7.25rem] flex-col items-start rounded-2xl border border-border/70 bg-card/70 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-500/35 hover:bg-card hover:shadow-md disabled:opacity-40 active:translate-y-0 active:scale-[0.98]"
             >
               <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-muted/70 text-base ring-1 ring-border/50 transition-colors group-hover:bg-blue-500/10">
                 {preset.emoji}
               </span>
-              <span className="text-[13px] font-bold leading-tight text-foreground/90 group-hover:text-blue-700 dark:group-hover:text-blue-300">
+              <span className="text-sm font-semibold leading-tight text-foreground/90 group-hover:text-blue-700 dark:group-hover:text-blue-300">
                 {preset.label}
               </span>
               <span className="mt-1 line-clamp-2 text-xs font-medium leading-snug text-muted-foreground">

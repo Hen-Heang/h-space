@@ -25,8 +25,8 @@ H-Space is a small monorepo with two independently deployable applications:
 
 Auth is h-space-api (Spring); domain data still lives in Supabase under RLS,
 reached through a temporary token bridge. The only server-side code here is
-the Next.js route handlers in `apps/web/app/api` (`ai/*` and the Google
-Calendar `integrations/*`). Read the instructions nearest to the files being
+the Next.js route handlers in `apps/web/app/api` (`ai/*` and the Notion
+capture route in `integrations/notion`). Read the instructions nearest to the files being
 changed — the frontend has additional instructions in `apps/web/AGENTS.md`.
 
 The Spring Boot API that used to live at `apps/api` was removed on 2026-09-22;
@@ -119,10 +119,9 @@ Use **vertical slices** (data model + API + authorization + frontend + tests) an
 - Never read, print or commit `.env`, `apps/*/.env.local`, `.vercel/`, keys or
   credential files. Real values live in `.env.local` (git-ignored) and Vercel.
 - `NEXT_PUBLIC_*` values ship to the browser — never give a server secret
-  (`OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
-  `GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY`, …) that prefix. The service-role key
-  is used only in `apps/web/lib/server/google-calendar-store.ts`, deliberately;
-  don't add another use.
+  (`OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, …) that prefix. No app code
+  uses the service-role key (its one use left with the Google Calendar
+  integration on 2026-11-04); don't add one.
 - This repository is **public**. A real-looking secret in a tracked file is an
   incident: report it so it can be rotated — removing the line doesn't
   un-publish it.

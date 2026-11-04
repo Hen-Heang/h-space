@@ -11,7 +11,6 @@ import { QuickAccess } from "@/components/home/QuickAccess"
 import { SnapshotMetrics } from "@/components/home/SnapshotMetrics"
 import { TodayHabitCheckins } from "@/components/home/TodayHabitCheckins"
 import { TodayTasksCard } from "@/components/home/TodayTasksCard"
-import { UpcomingEventsCard } from "@/components/home/UpcomingEventsCard"
 import { Button } from "@/components/ui/button"
 import { useDailyMission } from "@/hooks/useDailyMission"
 import { useProfileImage } from "@/hooks/useProfileImage"
@@ -92,12 +91,9 @@ export default function HomePage() {
           single-line task title pushed the whole card off a phone screen. */}
       <section aria-labelledby="home-today" className="space-y-3">
         <SectionHeading id="home-today">Today</SectionHeading>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
-          <div className="min-w-0 lg:col-span-2">
-            <TodayTasksCard />
-          </div>
+        <div className="grid grid-cols-1">
           <div className="min-w-0">
-            <UpcomingEventsCard />
+            <TodayTasksCard />
           </div>
         </div>
       </section>

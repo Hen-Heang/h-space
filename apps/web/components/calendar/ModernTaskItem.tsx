@@ -1,14 +1,14 @@
 "use client"
 
 import { memo } from "react"
-import { Check, Clock, Lock, Pencil, Trash2 } from "lucide-react"
+import { Check, Clock, Pencil, Trash2 } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { Task } from "@/lib/tasks"
-import { getTaskColor, isExternalTask } from "@/lib/tasks"
+import { getTaskColor } from "@/lib/tasks"
 import { formatTaskTimeRange } from "@/lib/calendar"
 
 interface ModernTaskItemProps {
@@ -30,7 +30,6 @@ export const ModernTaskItem = memo(function ModernTaskItem({
 }: ModernTaskItemProps) {
   const rawTitle = task.title || task.description || ""
   const displayTitle = rawTitle.length > 23 ? `${rawTitle.slice(0, 23)}...` : rawTitle
-  const isExternal = isExternalTask(task)
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -50,7 +49,6 @@ export const ModernTaskItem = memo(function ModernTaskItem({
       transition={{ duration: 0.15, ease: "easeOut" }}
       className={cn(
         "relative flex items-center gap-2.5 rounded-lg border transition-colors cursor-pointer overflow-hidden",
-        isExternal && "border-dashed",
         task.completed
           ? "bg-muted/35 border-border/50 opacity-75"
           : "bg-card border-border/70 shadow-sm",
@@ -58,39 +56,30 @@ export const ModernTaskItem = memo(function ModernTaskItem({
       )}
       onClick={() => onClick?.(task)}
     >
-      {isExternal ? (
-        <div
-          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground"
-          title="Read-only — from Google Calendar"
-        >
-          <Lock className="h-2.5 w-2.5" />
-        </div>
-      ) : (
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={handleToggle}
-          // The 20px box stays; the after: layer grows the tap target to 44px
-          // (apps/web/AGENTS.md: enlarge hit areas, not visuals).
-          className={cn(
-            "relative shrink-0 flex h-5 w-5 items-center justify-center rounded-lg border transition-colors after:absolute after:-inset-3 after:content-['']",
-            task.completed ? "border-primary bg-primary shadow-sm" : "border-border bg-background",
+      <motion.button
+        whileTap={{ scale: 0.9 }}
+        onClick={handleToggle}
+        // The 20px box stays; the after: layer grows the tap target to 44px
+        // (apps/web/AGENTS.md: enlarge hit areas, not visuals).
+        className={cn(
+          "relative shrink-0 flex h-5 w-5 items-center justify-center rounded-lg border transition-colors after:absolute after:-inset-3 after:content-['']",
+          task.completed ? "border-primary bg-primary shadow-sm" : "border-border bg-background",
+        )}
+        aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
+      >
+        <AnimatePresence mode="wait">
+          {task.completed && (
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0, rotate: 180 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            >
+              <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
+            </motion.div>
           )}
-          aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
-        >
-          <AnimatePresence mode="wait">
-            {task.completed && (
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                exit={{ scale: 0, rotate: 180 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20 }}
-              >
-                <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.button>
-      )}
+        </AnimatePresence>
+      </motion.button>
 
       <div className="flex-1 min-w-0 overflow-hidden flex flex-col gap-0.5">
         <span
@@ -103,35 +92,25 @@ export const ModernTaskItem = memo(function ModernTaskItem({
           {displayTitle}
         </span>
 
-        {(timeDisplay || isExternal) && (
+        {timeDisplay && (
           <div className="flex items-center gap-1.5">
-            {timeDisplay && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  "h-4.5 px-1.5 text-[11px] font-medium",
-                  task.completed
-                    ? "border-muted-foreground/20 text-muted-foreground bg-transparent"
-                    : "border-primary/20 text-primary bg-primary/5",
-                )}
-              >
-                {!task.is_anytime && <Clock className="w-2.5 h-2.5 mr-1" />}
-                {timeDisplay}
-              </Badge>
-            )}
-            {isExternal && (
-              <Badge
-                variant="outline"
-                className="h-4.5 border-border/60 bg-transparent px-1.5 text-[11px] font-medium text-muted-foreground"
-              >
-                Google
-              </Badge>
-            )}
+            <Badge
+              variant="outline"
+              className={cn(
+                "h-5 px-1.5 text-xs font-medium",
+                task.completed
+                  ? "border-muted-foreground/20 text-muted-foreground bg-transparent"
+                  : "border-primary/20 text-primary bg-primary/5",
+              )}
+            >
+              {!task.is_anytime && <Clock className="w-2.5 h-2.5 mr-1" />}
+              {timeDisplay}
+            </Badge>
           </div>
         )}
       </div>
 
-      {!task.completed && !isExternal && (
+      {!task.completed && (
         <div className="flex items-center gap-1 shrink-0">
           {/* icon-sm: 32px with a pointer, 44px on touch (Button's coarse-
               pointer sizing) — the old h-6 override pinned these to 24px. */}
