@@ -300,7 +300,7 @@ export function UrgeRescueFlow({
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-300">
                     Name the urge
                   </p>
-                  <h1 className="mt-3 text-2xl font-semibold">Notice what is here.</h1>
+                  <h1 className="mt-3 text-2xl font-semibold text-white">Notice what is here.</h1>
                   <p className="mt-2 text-sm leading-6 text-white/55">
                     Skip any question. Useful patterns do not require private detail.
                   </p>
@@ -389,7 +389,7 @@ export function UrgeRescueFlow({
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-300">
                     Urge surfing
                   </p>
-                  <h1 className="mt-3 text-2xl font-semibold">
+                  <h1 className="mt-3 text-2xl font-semibold text-white">
                     Watch the wave without fighting it.
                   </h1>
                   <p className="mt-2 text-sm leading-6 text-white/55">
@@ -457,7 +457,9 @@ export function UrgeRescueFlow({
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-300">
                     Change the environment
                   </p>
-                  <h1 className="mt-3 text-2xl font-semibold">Choose one action you can do now.</h1>
+                  <h1 className="mt-3 text-2xl font-semibold text-white">
+                    Choose one action you can do now.
+                  </h1>
                   <p className="mt-2 text-sm leading-6 text-white/55">
                     A small physical change makes the next choice easier.
                   </p>
@@ -545,7 +547,7 @@ export function UrgeRescueFlow({
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-300">
                     Result
                   </p>
-                  <h1 className="mt-3 text-2xl font-semibold">Where are you now?</h1>
+                  <h1 className="mt-3 text-2xl font-semibold text-white">Where are you now?</h1>
                   <p className="mt-2 text-sm leading-6 text-white/55">
                     Choose the honest answer. Every answer helps the next plan.
                   </p>
@@ -582,7 +584,7 @@ export function UrgeRescueFlow({
                 <span className="flex size-16 items-center justify-center rounded-full bg-blue-400/15 text-blue-300">
                   <Check size={28} />
                 </span>
-                <h1 className="mt-6 max-w-sm text-2xl font-semibold">
+                <h1 className="mt-6 max-w-sm text-2xl font-semibold text-white">
                   You created space between the urge and your action.
                 </h1>
                 <p className="mt-3 max-w-sm text-sm leading-6 text-white/55">

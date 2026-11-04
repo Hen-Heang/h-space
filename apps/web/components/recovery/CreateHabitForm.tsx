@@ -143,9 +143,9 @@ export function CreateHabitForm({
             </span>
             <div>
               <p className="app-kicker">Private setup</p>
-              <h1 id="recovery-onboarding-title" className="text-xl font-semibold">
+              <h2 id="recovery-onboarding-title" className="text-xl font-semibold">
                 Build your recovery plan
-              </h1>
+              </h2>
             </div>
           </div>
           <span className="text-xs font-medium text-muted-foreground">About 2 min</span>

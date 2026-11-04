@@ -45,7 +45,7 @@ export default function RecoveryPlanPage() {
       <BackLink href="/growth/recovery" label="Recovery" />
       <div>
         <p className="app-kicker">Recovery plan</p>
-        <h1 className="mt-1 text-2xl font-semibold">Prepare before the difficult moment</h1>
+        <h2 className="mt-1 text-2xl font-semibold">Prepare before the difficult moment</h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
           Rehearse a small response and make your environment support it.
         </p>

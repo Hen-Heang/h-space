@@ -85,16 +85,16 @@ export function RecoveryOverview({
 
           {neverLogged ? (
             <>
-              <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
+              <h2 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
                 Ready when you are
-              </h1>
+              </h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 Log a moment whenever something comes up — there&apos;s nothing to catch up on.
               </p>
             </>
           ) : isQuietGap ? (
             <>
-              <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">Welcome back</h1>
+              <h2 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">Welcome back</h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 Nothing to catch up on — just log where you are now.
               </p>

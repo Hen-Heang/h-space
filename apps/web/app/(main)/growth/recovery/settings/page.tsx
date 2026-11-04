@@ -19,7 +19,7 @@ export default function RecoverySettingsPage() {
       <BackLink href="/growth/recovery" label="Recovery" />
       <div>
         <p className="app-kicker">Privacy settings</p>
-        <h1 className="mt-1 text-2xl font-semibold">Private by default, controlled by you</h1>
+        <h2 className="mt-1 text-2xl font-semibold">Private by default, controlled by you</h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
           Recovery records use the same authenticated Supabase session as Hengo and owner-only row
           policies.

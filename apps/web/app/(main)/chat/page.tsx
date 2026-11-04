@@ -6,6 +6,7 @@ import Link from "next/link"
 import {
   AlertCircle,
   BrainCircuit,
+  ChevronDown,
   ChevronLeft,
   History,
   MessageCircle,
@@ -24,6 +25,13 @@ import { MessageAnalyzer } from "@/components/ai/MessageAnalyzer"
 import { MessageGenerator } from "@/components/ai/MessageGenerator"
 import { AskHengoChat } from "@/components/memory/AskHengoChat"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { useConversations } from "@/hooks/useConversations"
 import { useSessionTimer } from "@/hooks/useSessionTimer"
@@ -70,6 +78,8 @@ function ChatPageContent() {
       ? (queryMode as AiMode)
       : "chat",
   )
+  const currentMode = MODES.find((m) => m.id === mode) ?? MODES[0]
+  const CurrentModeIcon = currentMode.icon
 
   // Keep the URL in sync with the active mode, so refreshing, sharing a link,
   // or navigating via the sidebar's Chat/Analyze/Generate/Corrections links
@@ -293,10 +303,43 @@ function ChatPageContent() {
           </Button>
         )}
 
-        {/* min-w-0 + its own sideways scroll: five 44px modes are wider than
-            the space between the back and history buttons on a phone, and
-            used to push the history button off the screen. */}
-        <div className="no-scrollbar flex min-w-0 flex-1 items-center overflow-x-auto">
+        {/* Phones: one menu button naming the current mode. Five 44px modes
+            don't fit between back and history at 320px, and a mode scrolled
+            off the edge is a hidden mode. */}
+        <div className="flex min-w-0 flex-1 justify-center sm:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11 max-w-full gap-2 rounded-lg px-3 text-sm font-semibold"
+              >
+                <CurrentModeIcon size={16} aria-hidden="true" className="shrink-0" />
+                <span className="sr-only">Mode: </span>
+                <span className="truncate">{currentMode.label}</span>
+                <ChevronDown size={16} aria-hidden="true" className="shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="min-w-48">
+              <DropdownMenuRadioGroup
+                value={mode}
+                onValueChange={(value) => setMode(value as AiMode)}
+              >
+                {MODES.map(({ id, label, icon: Icon }) => (
+                  <DropdownMenuRadioItem key={id} value={id} className="min-h-11">
+                    <Icon size={16} aria-hidden="true" />
+                    {label}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* From sm: the segmented control, which fits. min-w-0 + its own
+            sideways scroll keep it from ever pushing the history button off
+            the screen. */}
+        <div className="no-scrollbar hidden min-w-0 flex-1 items-center overflow-x-auto sm:flex">
           <div className="mx-auto flex min-w-max items-center gap-0.5 rounded-lg border border-border bg-muted/35 p-1">
             {MODES.map(({ id, label, icon: Icon }) => {
               const active = mode === id
@@ -392,7 +435,7 @@ function ChatPageContent() {
             <div className="mx-auto w-full max-w-2xl space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h1 className="text-xl font-semibold text-foreground">Ask Hengo</h1>
+                  <h2 className="text-xl font-semibold text-foreground">Ask Hengo</h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Answers come only from your own notes, journal, goals, and activity — never
                     invented. Every claim links back to where it came from.
