@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import Link from "next/link"
 import {
   ArrowLeft,
-  BookOpenText,
   ChevronDown,
   ChevronUp,
   ClipboardCopy,
@@ -12,14 +11,12 @@ import {
   CloudCheck,
   Download,
   Eye,
-  FileText,
   History,
   Languages,
+  Lightbulb,
   ListTree,
-  MessagesSquare,
   MoreHorizontal,
   Plus,
-  Repeat2,
   Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -61,6 +58,12 @@ import { cn } from "@/lib/utils"
 const topic = INTERVIEW_TOPICS[0]
 const SCRIPT_MODES = ["script", "qa", "read", "repeat"] as const
 type ScriptMode = (typeof SCRIPT_MODES)[number]
+const SCRIPT_MODE_LABELS: Record<ScriptMode, string> = {
+  script: "Script",
+  qa: "Q&A Prep",
+  read: "Read",
+  repeat: "Listen & Repeat",
+}
 
 const subscribeNever = () => () => undefined
 function readTabParam(): ScriptMode | null {
@@ -203,7 +206,7 @@ function DocTextarea({
       aria-label={label}
       lang={lang}
       rows={1}
-      className="w-full resize-none border-0 bg-transparent p-0 text-[15px] leading-[1.9] text-slate-800 outline-none placeholder:text-slate-500 focus:ring-0 dark:text-slate-200 dark:placeholder:text-slate-400"
+      className="w-full resize-none border-0 bg-transparent p-0 text-base leading-[1.9] text-slate-800 outline-none placeholder:text-slate-500 focus:ring-0 dark:text-slate-200 dark:placeholder:text-slate-400"
     />
   )
 }
@@ -708,32 +711,31 @@ export default function InterviewScriptPage() {
 
   return (
     // Break out of the centered content column to get a full Google-Docs canvas.
-    <div className="-mx-3.5 -mt-5 sm:-mx-6 lg:-mx-8 lg:-mt-8">
-      {/* ── Docs-style title bar ── */}
-      <div className="sticky top-[var(--shell-header-h,0px)] z-20 border-b border-border/70 bg-background/90 px-3.5 py-2.5 backdrop-blur-xl sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-[1180px] items-center gap-3">
+    // Break out of the shell's content padding (px-4 / sm:px-6 / lg:px-8,
+    // pt-5) so the title bar spans the full content width.
+    <div className="-mx-4 -mt-5 sm:-mx-6 lg:-mx-8">
+      {/* ── Title bar: doc name, save status, actions ── */}
+      <div className="sticky top-[var(--shell-header-h,0px)] z-20 border-b border-border bg-background/90 px-4 py-2 backdrop-blur-xl sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1180px] items-center gap-2">
+          {/* Phones already get a back arrow in the shell's MobileHeader. */}
           <Link
             href="/interview"
-            aria-label="Back to interview"
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            aria-label="Back to Exam Prep"
+            className="hidden size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:inline-flex"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={18} aria-hidden="true" />
           </Link>
-
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
-            <FileText size={18} strokeWidth={2.5} />
-          </div>
 
           {/* Doc name + live save status (the line Docs shows under the title) */}
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[15px] font-bold leading-tight text-foreground">
+            <p lang="ko" className="truncate text-sm font-semibold leading-tight text-foreground">
               {topic.labelKo}
             </p>
-            <span className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+            <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
               {synced ? (
-                <CloudCheck size={13} className="shrink-0 text-blue-500" />
+                <CloudCheck size={13} aria-hidden="true" className="shrink-0 text-primary" />
               ) : (
-                <Cloud size={13} className="shrink-0 text-blue-500" />
+                <Cloud size={13} aria-hidden="true" className="shrink-0" />
               )}
               <span className="truncate">
                 {synced
@@ -749,7 +751,7 @@ export default function InterviewScriptPage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
                   aria-label="Script actions"
                   className="size-11 rounded-lg"
@@ -798,186 +800,142 @@ export default function InterviewScriptPage() {
       </div>
 
       {/* ── Canvas: outline rail + paper ── */}
-      <div className="min-h-[calc(100dvh-3.25rem)] bg-[#f9fbfd] px-2 py-6 max-lg:pb-32 dark:bg-black/40 sm:px-6 sm:py-10">
+      <div className="min-h-[calc(100dvh-3.25rem)] px-4 pb-6 pt-4 max-lg:pb-32 sm:px-6 sm:pt-6 lg:px-8">
         <div className="mx-auto max-w-[1180px]">
-          {/* Script | Q&A tabs */}
-          <div className="mb-6 flex flex-wrap items-center justify-center gap-3">
-            {/* Four modes are wider than a phone: the row scrolls sideways
-                inside its own box instead of running off the screen. */}
-            <div className="no-scrollbar min-w-0 max-w-full overflow-x-auto">
-              <div className="inline-flex min-w-max items-center gap-1 rounded-2xl border border-border bg-background p-1">
-                <button
-                  type="button"
-                  onClick={() => setMode("script")}
-                  aria-pressed={mode === "script"}
-                  className={cn(
-                    "flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
-                    mode === "script"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground/70 hover:text-foreground",
-                  )}
-                >
-                  <FileText size={14} strokeWidth={2.6} /> Script
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode("qa")}
-                  aria-pressed={mode === "qa"}
-                  className={cn(
-                    "flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
-                    mode === "qa"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground/70 hover:text-foreground",
-                  )}
-                >
-                  <MessagesSquare size={14} strokeWidth={2.6} /> Q&amp;A Prep
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode("read")}
-                  aria-pressed={mode === "read"}
-                  className={cn(
-                    "flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
-                    mode === "read"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground/70 hover:text-foreground",
-                  )}
-                >
-                  <BookOpenText size={14} strokeWidth={2.6} /> Read
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode("repeat")}
-                  aria-pressed={mode === "repeat"}
-                  className={cn(
-                    "flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
-                    mode === "repeat"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground/70 hover:text-foreground",
-                  )}
-                >
-                  <Repeat2 size={14} strokeWidth={2.6} /> Listen &amp; Repeat
-                </button>
+          {/* Mode tabs (underline, like WorkspaceTabs). The row scrolls
+              inside itself on the narrowest phones. */}
+          <div className="mb-4 border-b border-border">
+            <div className="no-scrollbar -mb-px overflow-x-auto">
+              <div className="flex min-w-max gap-1">
+                {SCRIPT_MODES.map((tab) => {
+                  const current = mode === tab
+                  return (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setMode(tab)}
+                      aria-pressed={current}
+                      className={cn(
+                        "flex min-h-11 items-center whitespace-nowrap rounded-t-md border-b-2 px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                        current
+                          ? "border-primary text-foreground"
+                          : "border-transparent text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {SCRIPT_MODE_LABELS[tab]}
+                    </button>
+                  )
+                })}
               </div>
             </div>
-
-            {(mode === "script" || mode === "qa") && (
-              <button
-                type="button"
-                onClick={() => setShowEnglish((v) => !v)}
-                aria-pressed={showEnglish}
-                title={
-                  mode === "qa"
-                    ? "Show or hide English meanings in Q&A Prep"
-                    : "Show or hide the English translation under each section"
-                }
-                className={cn(
-                  "inline-flex min-h-11 items-center gap-1.5 rounded-2xl border border-border/70 px-4 py-2.5 text-[12px] font-bold uppercase tracking-wide shadow-sm transition-all",
-                  showEnglish
-                    ? "bg-emerald-600 text-white"
-                    : "bg-background text-muted-foreground/70 hover:text-foreground dark:bg-slate-900",
-                )}
-              >
-                <Languages size={14} strokeWidth={2.6} /> English
-              </button>
-            )}
           </div>
 
-          {mode === "script" && (
-            <div className="mb-6 flex justify-center">
+          {/* Toolbar for the writing modes: the English toggle, plus version
+              history on Script. On Script it lines up with the paper, not
+              the outline rail. */}
+          {(mode === "script" || mode === "qa") && (
+            <div className="mb-5 flex justify-center gap-6 xl:gap-8">
+              {mode === "script" && (
+                <div aria-hidden="true" className="hidden w-56 shrink-0 lg:block" />
+              )}
               <div className="w-full max-w-[816px]">
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/70 bg-background px-4 py-2.5 shadow-sm dark:bg-slate-900">
-                  <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-muted-foreground">
-                    <History size={14} strokeWidth={2.5} />
-                    {versions.length === 0
-                      ? "No saved versions yet"
-                      : `${versions.length} version${versions.length === 1 ? "" : "s"} saved`}
-                    {versions.find((v) => v.isActive) && (
-                      <Badge className="rounded-lg border-none bg-blue-500/10 px-2 py-0.5 text-[10px] text-blue-600 dark:text-blue-400">
-                        Active: {versions.find((v) => v.isActive)?.versionLabel}
-                      </Badge>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEnglish((v) => !v)}
+                    aria-pressed={showEnglish}
+                    title={
+                      mode === "qa"
+                        ? "Show or hide English meanings in Q&A Prep"
+                        : "Show or hide the English translation under each section"
+                    }
+                    className={cn(
+                      "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors [@media(pointer:coarse)]:min-h-11",
+                      showEnglish
+                        ? "border-primary/30 bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:text-foreground",
                     )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={saveVersion}
-                      className="h-7 rounded-lg text-xs font-bold"
-                    >
-                      Save as version
-                    </Button>
-                    {versions.length > 0 && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setVersionsOpen((v) => !v)}
-                        className="h-7 rounded-lg text-xs font-bold"
-                      >
-                        {versionsOpen ? "Hide" : "Show"} history
-                      </Button>
-                    )}
-                  </div>
+                  >
+                    <Languages size={15} aria-hidden="true" /> English
+                  </button>
+                  {mode === "script" && (
+                    <>
+                      <div className="order-last flex min-w-0 basis-full flex-wrap items-center gap-2 text-sm text-muted-foreground sm:order-none sm:flex-1 sm:basis-auto">
+                        <History size={15} aria-hidden="true" className="shrink-0" />
+                        {versions.length === 0
+                          ? "No saved versions yet"
+                          : `${versions.length} version${versions.length === 1 ? "" : "s"} saved`}
+                        {versions.find((v) => v.isActive) && (
+                          <Badge variant="secondary" className="text-xs">
+                            Active: {versions.find((v) => v.isActive)?.versionLabel}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="ml-auto flex items-center gap-2">
+                        {versions.length > 0 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setVersionsOpen((v) => !v)}
+                            aria-expanded={versionsOpen}
+                          >
+                            {versionsOpen ? "Hide" : "Show"} history
+                          </Button>
+                        )}
+                        <Button size="sm" variant="outline" onClick={saveVersion}>
+                          Save as version
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
-                {versionsOpen && versions.length > 0 && (
-                  <div className="mt-2 space-y-1.5 rounded-2xl border border-border/70 bg-background p-2 shadow-sm dark:bg-slate-900">
+                {mode === "script" && versionsOpen && versions.length > 0 && (
+                  <ul className="app-surface mt-3 divide-y divide-border">
                     {versions.map((v) => (
-                      <div
+                      <li
                         key={v.id}
-                        className="flex items-center justify-between gap-2 rounded-xl px-3 py-2 hover:bg-accent"
+                        className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-xs font-bold text-foreground">
-                            {v.versionLabel}
+                          <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                            <span className="truncate">{v.versionLabel}</span>
                             {v.isActive && (
-                              <span className="ml-1.5 text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400">
+                              <Badge variant="secondary" className="shrink-0 text-xs">
                                 Active
-                              </span>
+                              </Badge>
                             )}
                           </p>
-                          <p className="text-[10px] font-medium text-muted-foreground">
+                          <p className="text-xs text-muted-foreground">
                             {new Date(v.createdAt).toLocaleString()} · {v.sourceType}
                           </p>
                         </div>
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setPreviewVersion(v)}
-                            className="rounded-lg px-2 py-1 text-[10px] font-bold text-muted-foreground hover:bg-accent"
-                          >
-                            <Eye size={12} className="mr-1 inline" /> Preview
-                          </button>
+                        <div className="-ml-3 flex shrink-0 flex-wrap items-center gap-1 sm:ml-0">
+                          <Button size="sm" variant="ghost" onClick={() => setPreviewVersion(v)}>
+                            <Eye aria-hidden="true" /> Preview
+                          </Button>
                           {!v.isActive && (
-                            <button
-                              type="button"
-                              onClick={() => activateVersion(v)}
-                              className="rounded-lg px-2 py-1 text-[10px] font-bold text-blue-600 hover:bg-blue-500/10 dark:text-blue-400"
-                            >
+                            <Button size="sm" variant="ghost" onClick={() => activateVersion(v)}>
                               Mark active
-                            </button>
+                            </Button>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => restoreVersion(v)}
-                            className="rounded-lg px-2 py-1 text-[10px] font-bold text-muted-foreground hover:bg-accent"
-                          >
+                          <Button size="sm" variant="ghost" onClick={() => restoreVersion(v)}>
                             Load into editor
-                          </button>
+                          </Button>
                         </div>
-                      </div>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
-                {previewVersion && (
-                  <div className="mt-3 rounded-2xl border border-blue-500/25 bg-background p-4 shadow-sm dark:bg-slate-900">
+                {mode === "script" && previewVersion && (
+                  <div className="app-surface mt-3 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-3">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-bold text-foreground">
+                          <p className="text-sm font-semibold text-foreground">
                             {previewVersion.versionLabel}
                           </p>
                           {previewVersion.isActive && (
-                            <Badge className="border-none bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                            <Badge variant="secondary" className="text-xs">
                               Active
                             </Badge>
                           )}
@@ -989,11 +947,7 @@ export default function InterviewScriptPage() {
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {!previewVersion.isActive && (
-                          <Button
-                            size="sm"
-                            onClick={() => activateVersion(previewVersion)}
-                            className="h-8 rounded-lg bg-blue-600 text-xs text-white hover:bg-blue-700"
-                          >
+                          <Button size="sm" onClick={() => activateVersion(previewVersion)}>
                             Make active
                           </Button>
                         )}
@@ -1001,16 +955,10 @@ export default function InterviewScriptPage() {
                           size="sm"
                           variant="outline"
                           onClick={() => restoreVersion(previewVersion)}
-                          className="h-8 rounded-lg text-xs"
                         >
                           Load into editor
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setPreviewVersion(null)}
-                          className="h-8 rounded-lg text-xs"
-                        >
+                        <Button size="sm" variant="ghost" onClick={() => setPreviewVersion(null)}>
                           Close
                         </Button>
                       </div>
@@ -1019,8 +967,8 @@ export default function InterviewScriptPage() {
                       Preview only. Activating a version does not overwrite the live draft.
                     </p>
                     <div className="mt-4 grid gap-4 md:grid-cols-2">
-                      <section className="rounded-xl border border-border p-3">
-                        <h3 className="text-xs font-bold text-muted-foreground">Korean</h3>
+                      <section className="rounded-lg border border-border p-3">
+                        <h3 className="text-xs font-semibold text-muted-foreground">Korean</h3>
                         <div className="mt-3 space-y-4">
                           {outline.map((section) => (
                             <div key={section.id}>
@@ -1037,8 +985,8 @@ export default function InterviewScriptPage() {
                           ))}
                         </div>
                       </section>
-                      <section className="rounded-xl border border-border p-3">
-                        <h3 className="text-xs font-bold text-muted-foreground">English</h3>
+                      <section className="rounded-lg border border-border p-3">
+                        <h3 className="text-xs font-semibold text-muted-foreground">English</h3>
                         <div className="mt-3 space-y-4">
                           {outline.map((section) => (
                             <div key={section.id}>
@@ -1063,7 +1011,10 @@ export default function InterviewScriptPage() {
             <div className="flex justify-center gap-6 xl:gap-8">
               {/* Below lg the outline rail is hidden — a section jump menu
                   stands in for it so long scripts stay navigable on phones. */}
-              <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 flex justify-center px-4 lg:hidden">
+              {/* Sits just above the shell's bottom nav (its height is
+                  --shell-bottom-nav-h, 0 while the keyboard is open) and
+                  leaves the right edge free for the AI coach button. */}
+              <div className="fixed inset-x-0 bottom-[calc(var(--shell-bottom-nav-h,0px)+0.75rem)] z-20 flex justify-center pl-[max(1rem,env(safe-area-inset-left))] pr-[calc(5rem+env(safe-area-inset-right))] md:px-4 lg:hidden">
                 <label className="sr-only" htmlFor="script-section-jump">
                   Jump to section
                 </label>
@@ -1071,7 +1022,7 @@ export default function InterviewScriptPage() {
                   id="script-section-jump"
                   value={activeSection}
                   onChange={(event) => scrollToSection(event.target.value)}
-                  className="h-11 w-full max-w-sm rounded-full border border-border bg-background/95 px-4 text-sm font-medium text-foreground shadow-lg backdrop-blur"
+                  className="h-11 w-full max-w-sm rounded-full border border-white/60 bg-background/70 px-4 text-base font-medium text-foreground shadow-[0_8px_24px_-8px_rgb(0_0_0/0.2)] backdrop-blur-xl backdrop-saturate-150 dark:border-white/10"
                 >
                   {!activeSection && <option value="">Jump to section…</option>}
                   {allSections.map((section, index) => (
@@ -1088,8 +1039,8 @@ export default function InterviewScriptPage() {
               <aside className="hidden w-56 shrink-0 lg:block">
                 <div className="sticky top-[calc(var(--shell-header-h,0px)+5rem)]">
                   <div className="mb-3 flex items-center gap-2 px-2 text-muted-foreground">
-                    <ListTree size={16} strokeWidth={2.5} />
-                    <span className="text-xs font-bold uppercase tracking-[0.18em]">Outline</span>
+                    <ListTree size={16} aria-hidden="true" />
+                    <span className="text-sm font-medium">Outline</span>
                   </div>
                   <nav className="space-y-0.5">
                     {allSections.map((section, index) => {
@@ -1106,21 +1057,21 @@ export default function InterviewScriptPage() {
                           className={cn(
                             "group flex w-full items-center gap-2.5 rounded-lg border-l-2 py-1.5 pl-3 pr-2 text-left transition-colors",
                             active
-                              ? "border-blue-500 bg-blue-500/10"
+                              ? "border-primary bg-primary/10"
                               : "border-transparent hover:bg-accent",
                           )}
                         >
                           <span
                             className={cn(
                               "h-1.5 w-1.5 shrink-0 rounded-full transition-colors",
-                              filled ? "bg-blue-500" : "bg-muted-foreground/30",
+                              filled ? "bg-primary" : "bg-muted-foreground/30",
                             )}
                           />
                           <span
                             className={cn(
-                              "truncate text-[13px] font-bold transition-colors",
+                              "truncate text-sm font-medium transition-colors",
                               active
-                                ? "text-blue-700 dark:text-blue-400"
+                                ? "text-foreground"
                                 : "text-muted-foreground group-hover:text-foreground",
                             )}
                           >
@@ -1133,16 +1084,16 @@ export default function InterviewScriptPage() {
                   <button
                     type="button"
                     onClick={addCustomSection}
-                    className="mt-2 flex w-full items-center gap-2 rounded-lg py-1.5 pl-3 pr-2 text-left text-[13px] font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    className="mt-2 flex w-full items-center gap-2 rounded-lg py-1.5 pl-3 pr-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
                     <Plus size={14} strokeWidth={3} className="shrink-0" />
                     Add section
                   </button>
                   <div className="mt-4 border-t border-border/60 px-3 pt-3">
-                    <p className="text-xs font-bold text-muted-foreground/70">
+                    <p className="text-xs text-muted-foreground">
                       {completedSections}/{allSections.length} sections
                     </p>
-                    <p className="text-xs font-bold text-muted-foreground/70">
+                    <p className="text-xs text-muted-foreground">
                       {totalWords} {totalWords === 1 ? "word" : "words"} · {totalChars}자
                     </p>
                   </div>
@@ -1150,16 +1101,16 @@ export default function InterviewScriptPage() {
               </aside>
 
               {/* The paper */}
-              <article className="w-full max-w-[816px] rounded-sm bg-white px-6 py-10 shadow-[0_1px_3px_rgba(60,64,67,0.15),0_4px_24px_rgba(60,64,67,0.1)] ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/10 sm:px-14 sm:py-16 lg:px-[96px]">
+              <article className="w-full max-w-[816px] sm:rounded-lg sm:border sm:border-border sm:bg-card sm:px-10 sm:py-10 lg:px-16 lg:py-12">
                 {/* Document title */}
-                <header className="border-b border-border/60 pb-6">
-                  <h2 className="text-[1.7rem] font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+                <header className="border-b border-border pb-5">
+                  <h2 className="text-2xl font-semibold leading-tight tracking-tight text-foreground">
                     {topic.labelKo}
                   </h2>
-                  <p className="mt-2 text-sm font-medium text-muted-foreground">
+                  <p className="mt-2 text-sm text-muted-foreground">
                     {topic.label} · Interview script · Submit by {SCRIPT_DUE_LABEL}
                   </p>
-                  <p className="mt-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <p className="mt-1 text-sm tabular-nums text-muted-foreground">
                     {completedSections}/{allSections.length} sections · {totalWords} words ·{" "}
                     {totalChars}자
                   </p>
@@ -1177,13 +1128,13 @@ export default function InterviewScriptPage() {
                         data-doc-section
                         className={cn(
                           "scroll-mt-[calc(var(--shell-header-h,0px)+3.5rem)] rounded-r-lg border-l-2 pl-4 transition-colors",
-                          active ? "border-blue-500/60" : "border-transparent",
+                          active ? "border-primary/60" : "border-transparent",
                         )}
                       >
                         <div className="flex items-center justify-between gap-3">
                           {section.custom ? (
                             <div className="flex min-w-0 flex-1 items-baseline gap-2">
-                              <span className="text-lg font-bold text-foreground">
+                              <span className="text-lg font-semibold text-foreground">
                                 {index + 1}.
                               </span>
                               <input
@@ -1191,21 +1142,21 @@ export default function InterviewScriptPage() {
                                 value={section.titleKo}
                                 onChange={(e) => renameCustomSection(section.id, e.target.value)}
                                 placeholder="Section title…"
-                                className="min-w-0 flex-1 border-0 bg-transparent p-0 text-lg font-bold text-foreground outline-none placeholder:font-bold placeholder:text-muted-foreground/40 focus:ring-0"
+                                className="min-w-0 flex-1 border-0 bg-transparent p-0 text-lg font-semibold text-foreground outline-none placeholder:font-semibold placeholder:text-muted-foreground/40 focus:ring-0"
                               />
                             </div>
                           ) : (
-                            <h2 className="text-lg font-bold text-foreground">
+                            <h3 className="text-lg font-semibold text-foreground">
                               {index + 1}. {section.titleKo}
-                              <span className="ml-2 text-sm font-bold text-muted-foreground/70">
+                              <span className="mt-0.5 block text-sm font-normal text-muted-foreground sm:ml-2 sm:mt-0 sm:inline">
                                 {section.titleEn}
                               </span>
-                            </h2>
+                            </h3>
                           )}
                           <div className="flex shrink-0 items-center gap-2">
                             {sectionWords > 0 && (
-                              <span className="text-xs font-bold tabular-nums text-muted-foreground">
-                                {sectionWords}w
+                              <span className="text-xs tabular-nums text-muted-foreground">
+                                {sectionWords} {sectionWords === 1 ? "word" : "words"}
                               </span>
                             )}
                             {(view[section.id] ?? "").trim() && (
@@ -1221,7 +1172,7 @@ export default function InterviewScriptPage() {
                                   type="button"
                                   onClick={() => moveCustomSection(section.id, "up")}
                                   aria-label="Move section up"
-                                  className="flex h-7 w-6 items-center justify-center rounded-md text-muted-foreground/40 transition-colors hover:bg-accent hover:text-foreground"
+                                  className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                                 >
                                   <ChevronUp size={15} strokeWidth={2.5} />
                                 </button>
@@ -1229,7 +1180,7 @@ export default function InterviewScriptPage() {
                                   type="button"
                                   onClick={() => moveCustomSection(section.id, "down")}
                                   aria-label="Move section down"
-                                  className="flex h-7 w-6 items-center justify-center rounded-md text-muted-foreground/40 transition-colors hover:bg-accent hover:text-foreground"
+                                  className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                                 >
                                   <ChevronDown size={15} strokeWidth={2.5} />
                                 </button>
@@ -1237,7 +1188,7 @@ export default function InterviewScriptPage() {
                                   type="button"
                                   onClick={() => removeCustomSection(section.id)}
                                   aria-label="Delete section"
-                                  className="flex h-7 w-6 items-center justify-center rounded-md text-muted-foreground/40 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                  className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                                 >
                                   <Trash2 size={14} strokeWidth={2.5} />
                                 </button>
@@ -1246,8 +1197,9 @@ export default function InterviewScriptPage() {
                           </div>
                         </div>
                         {section.hint && (
-                          <p className="mt-1.5 text-xs font-medium italic leading-relaxed text-muted-foreground/80">
-                            💡 {section.hint}
+                          <p className="mt-1.5 flex gap-1.5 text-xs leading-relaxed text-muted-foreground">
+                            <Lightbulb size={13} aria-hidden="true" className="mt-0.5 shrink-0" />
+                            <span>{section.hint}</span>
                           </p>
                         )}
                         <div className="mt-3">
@@ -1263,9 +1215,9 @@ export default function InterviewScriptPage() {
                         seed until the candidate writes their own. Reference
                         only — excluded from counts and the Korean export. */}
                         {!section.custom && showEnglish && (
-                          <div className="mt-3 rounded-xl bg-muted/30 p-3">
-                            <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                              <Languages size={11} strokeWidth={2.5} /> English
+                          <div className="mt-3 rounded-lg bg-muted/40 p-3">
+                            <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                              <Languages size={13} aria-hidden="true" /> English
                             </p>
                             <div className="mt-1.5">
                               <DocTextarea
@@ -1279,7 +1231,7 @@ export default function InterviewScriptPage() {
                             </div>
                           </div>
                         )}
-                        <div className="mt-2 border-b border-dashed border-border/50" />
+                        <div className="mt-2 border-b border-border/60" />
                       </section>
                     )
                   })}
@@ -1288,7 +1240,7 @@ export default function InterviewScriptPage() {
                   <button
                     type="button"
                     onClick={addCustomSection}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3.5 text-sm font-bold text-muted-foreground transition-colors hover:border-blue-500/40 hover:bg-blue-500/5 hover:text-blue-600"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                   >
                     <Plus size={16} strokeWidth={2.5} /> Add section
                   </button>
@@ -1301,17 +1253,17 @@ export default function InterviewScriptPage() {
               <ListenRepeatPractice scriptSections={values} />
             </div>
           ) : mode === "read" ? (
-            <article className="mx-auto w-full max-w-[816px] rounded-sm bg-white px-6 py-10 shadow-[0_1px_3px_rgba(60,64,67,0.15),0_4px_24px_rgba(60,64,67,0.1)] ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/10 sm:px-14 sm:py-16 lg:px-[96px]">
-              <header className="border-b border-border/60 pb-6">
+            <article className="mx-auto w-full max-w-[816px] sm:rounded-lg sm:border sm:border-border sm:bg-card sm:px-10 sm:py-10 lg:px-16 lg:py-12">
+              <header className="border-b border-border pb-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h2 className="text-[1.7rem] font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+                    <h2 className="text-2xl font-semibold leading-tight tracking-tight text-foreground">
                       {topic.labelKo}
                     </h2>
-                    <p className="mt-2 text-sm font-medium text-muted-foreground">
+                    <p className="mt-2 text-sm text-muted-foreground">
                       Your full script as one text — read it aloud, no titles, no English.
                     </p>
-                    <p className="mt-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <p className="mt-1 text-sm tabular-nums text-muted-foreground">
                       {totalChars}자 · about {readMinutes} min aloud
                     </p>
                   </div>
@@ -1319,7 +1271,7 @@ export default function InterviewScriptPage() {
                     <SpeakButton
                       text={readText}
                       title="Listen to the whole script"
-                      className="mt-1 shrink-0 rounded-xl border border-border p-2.5"
+                      className="mt-1 shrink-0 rounded-lg border border-border p-2.5"
                     />
                   )}
                 </div>
@@ -1350,16 +1302,16 @@ export default function InterviewScriptPage() {
               )}
             </article>
           ) : (
-            <article className="mx-auto w-full max-w-[816px] rounded-sm bg-white px-6 py-10 shadow-[0_1px_3px_rgba(60,64,67,0.15),0_4px_24px_rgba(60,64,67,0.1)] ring-1 ring-black/5 dark:bg-slate-900 dark:ring-white/10 sm:px-14 sm:py-16 lg:px-[96px]">
-              <header className="border-b border-border/60 pb-6">
-                <h2 className="text-[1.7rem] font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+            <article className="mx-auto w-full max-w-[816px] sm:rounded-lg sm:border sm:border-border sm:bg-card sm:px-10 sm:py-10 lg:px-16 lg:py-12">
+              <header className="border-b border-border pb-5">
+                <h2 className="text-2xl font-semibold leading-tight tracking-tight text-foreground">
                   예상 질문 &amp; 답변 (Q&amp;A)
                 </h2>
-                <p className="mt-2 text-sm font-medium text-muted-foreground">
+                <p className="mt-2 text-sm text-muted-foreground">
                   Practice the Korean answer first, then use the English meaning only to confirm
                   what you are saying.
                 </p>
-                <p className="mt-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <p className="mt-1 text-sm tabular-nums text-muted-foreground">
                   {answeredQA}/{allQA.length} answered · {totalWords} words · {totalChars}자
                 </p>
               </header>
@@ -1379,16 +1331,16 @@ export default function InterviewScriptPage() {
                               value={item.questionKo}
                               onChange={(e) => renameCustomQA(item.id, e.target.value)}
                               placeholder="질문을 입력하세요…"
-                              className="w-full border-0 bg-transparent p-0 text-base font-bold text-foreground outline-none placeholder:font-bold placeholder:text-muted-foreground/40 focus:ring-0"
+                              className="w-full border-0 bg-transparent p-0 text-base font-semibold text-foreground outline-none placeholder:font-semibold placeholder:text-muted-foreground/40 focus:ring-0"
                               lang="ko"
                             />
                           ) : (
                             <>
-                              <p className="text-base font-bold leading-snug text-foreground">
+                              <p className="text-base font-semibold leading-snug text-foreground">
                                 {index + 1}. {item.questionKo}
                               </p>
                               {showEnglish && item.questionEn && (
-                                <p className="mt-1 text-sm font-medium leading-relaxed text-muted-foreground/70">
+                                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                                   {item.questionEn}
                                 </p>
                               )}
@@ -1408,14 +1360,14 @@ export default function InterviewScriptPage() {
                               type="button"
                               onClick={() => removeCustomQA(item.id)}
                               aria-label="Delete question"
-                              className="flex h-7 w-6 items-center justify-center rounded-md text-muted-foreground/40 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                              className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                             >
                               <Trash2 size={14} strokeWidth={2.5} />
                             </button>
                           )}
                         </div>
                       </div>
-                      <div className="mt-3 rounded-xl bg-muted/30 p-3">
+                      <div className="mt-3 rounded-lg bg-muted/40 p-3">
                         <DocTextarea
                           value={answer}
                           onChange={(text) => updateSection(item.id, text)}
@@ -1425,10 +1377,10 @@ export default function InterviewScriptPage() {
                         />
                         {showEnglish && answerEnglish && !isCustom && (
                           <div className="mt-3 border-t border-border/60 pt-3">
-                            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-600 dark:text-emerald-400">
-                              <Languages size={12} strokeWidth={2.5} /> English meaning
+                            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                              <Languages size={13} aria-hidden="true" /> English meaning
                             </div>
-                            <p className="mt-1.5 text-sm font-medium leading-relaxed text-muted-foreground">
+                            <p className="mt-1.5 text-sm leading-relaxed text-foreground/80">
                               {answerEnglish}
                             </p>
                           </div>
@@ -1441,7 +1393,7 @@ export default function InterviewScriptPage() {
                 <button
                   type="button"
                   onClick={addCustomQA}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3.5 text-sm font-bold text-muted-foreground transition-colors hover:border-blue-500/40 hover:bg-blue-500/5 hover:text-blue-600"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                 >
                   <Plus size={16} strokeWidth={2.5} /> Add your own question
                 </button>
