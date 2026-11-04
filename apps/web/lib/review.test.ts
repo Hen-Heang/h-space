@@ -15,6 +15,7 @@ import {
 } from "./review"
 import type { DailySummary } from "./timeline"
 import type { Goal } from "./goals"
+import type { GoalKeyResult } from "./goal-key-results"
 import type { Reminder } from "./reminders"
 import type { Habit, HabitCheckIn } from "./types"
 
@@ -70,17 +71,132 @@ function checkin(overrides: Partial<HabitCheckIn> = {}): HabitCheckIn {
   }
 }
 
+function keyResult(overrides: Partial<GoalKeyResult> = {}): GoalKeyResult {
+  return {
+    id: "kr1",
+    goal_id: "g1",
+    user_id: "u1",
+    title: "Reach the target",
+    description: null,
+    metric_type: "number",
+    baseline_value: 0,
+    current_value: 0,
+    target_value: 10,
+    unit: null,
+    weight: 1,
+    deadline: null,
+    data_source: "manual",
+    source_config: {},
+    status: "active",
+    created_at: "2026-07-01T00:00:00.000Z",
+    updated_at: "2026-07-01T00:00:00.000Z",
+    ...overrides,
+  } as GoalKeyResult
+}
+
 describe("goalsNeedingAttention", () => {
-  it("keeps only active goals with a concerning health status", () => {
+  const now = new Date("2026-07-26T12:00:00")
+
+  // Health is computed live (lib/goal-health's computeListGoalHealth), so the
+  // fixtures describe a goal's *situation*, and every stored health_status is
+  // deliberately set to the column's real default, "not_started".
+  const onTrack = goal({
+    id: "on-track",
+    health_status: "not_started",
+    taskCounts: { total: 2, completed: 2, incomplete: 0 },
+    target_date: "2026-12-31",
+  })
+  const noKeyResults = goal({
+    id: "attention",
+    health_status: "not_started",
+    taskCounts: { total: 3, completed: 1, incomplete: 2 },
+  })
+  const notStarted = goal({
+    id: "not-started",
+    health_status: "not_started",
+    taskCounts: { total: 0, completed: 0, incomplete: 0 },
+  })
+  const deadlinePassed = goal({
+    id: "blocked",
+    health_status: "not_started",
+    target_date: "2026-07-01",
+    metadata: { start_date: "2026-06-01" } as Goal["metadata"],
+    keyResults: [keyResult({ current_value: 2 })],
+  })
+  const behindPace = goal({
+    id: "at-risk",
+    health_status: "not_started",
+    target_date: "2026-08-25",
+    metadata: { start_date: "2026-06-26" } as Goal["metadata"],
+    keyResults: [keyResult({ current_value: 0 })],
+  })
+
+  it("flags goals from live health even though the stored column is only the default", () => {
+    const ids = goalsNeedingAttention([onTrack, noKeyResults, notStarted], now).map((g) => g.id)
+    expect(ids).toEqual(["attention"])
+  })
+
+  it("ignores a stale stored health_status in both directions", () => {
+    const storedAtRisk = { ...onTrack, id: "stored-at-risk", health_status: "at_risk" as const }
+    const storedOnTrack = {
+      ...noKeyResults,
+      id: "stored-on-track",
+      health_status: "on_track" as const,
+    }
+    expect(goalsNeedingAttention([storedAtRisk, storedOnTrack], now).map((g) => g.id)).toEqual([
+      "stored-on-track",
+    ])
+  })
+
+  it("sorts the most severe first and keeps input order within a severity", () => {
+    const secondAttention = { ...noKeyResults, id: "attention-2" }
+    const ids = goalsNeedingAttention(
+      [noKeyResults, behindPace, secondAttention, deadlinePassed],
+      now,
+    ).map((g) => g.id)
+    expect(ids).toEqual(["blocked", "at-risk", "attention", "attention-2"])
+  })
+
+  it("returns copies carrying the live status and reason without mutating the input", () => {
+    const [flagged] = goalsNeedingAttention([deadlinePassed], now)
+    expect(flagged.health_status).toBe("blocked")
+    expect(flagged.health_reason).toMatch(/Deadline passed 25 days ago/)
+    expect(deadlinePassed.health_status).toBe("not_started")
+    expect(deadlinePassed.health_reason).toBeUndefined()
+  })
+
+  it("never flags completed or archived goals, whatever their situation", () => {
     const goals = [
-      goal({ id: "1", health_status: "on_track" }),
-      goal({ id: "2", health_status: "attention" }),
-      goal({ id: "3", health_status: "at_risk" }),
-      goal({ id: "4", health_status: "blocked" }),
-      goal({ id: "5", health_status: "at_risk", status: "completed" }),
-      goal({ id: "6", health_status: "at_risk", status: "archived" }),
+      { ...deadlinePassed, id: "done", status: "completed" },
+      { ...deadlinePassed, id: "shelved", status: "archived" },
     ]
-    expect(goalsNeedingAttention(goals).map((g) => g.id)).toEqual(["2", "3", "4"])
+    expect(goalsNeedingAttention(goals, now)).toEqual([])
+  })
+
+  it("feeds the live status into Morning Brief and Weekly Review and their AI context", () => {
+    const brief = buildMorningBrief({
+      now,
+      streakDays: 0,
+      taskCounts: {
+        overdueCount: 0,
+        scheduledCount: 0,
+        anytimeCount: 0,
+        completedCount: 0,
+        totalCount: 0,
+      },
+      activeHabits: [],
+      todaysCheckins: [],
+      reminders: [],
+      goals: [onTrack, deadlinePassed],
+    })
+    expect(brief.goalsAtRisk.map((g) => g.id)).toEqual(["blocked"])
+    expect(formatMorningBriefContext(brief)).toContain(
+      "Goals needing attention: Ship the feature (blocked)",
+    )
+
+    const weekly = buildWeeklyReviewSummary([], [onTrack, behindPace], [], "Jul 20 – Jul 26", now)
+    expect(weekly.goalsAtRisk.map((g) => g.id)).toEqual(["at-risk"])
+    expect(formatWeeklyReviewContext(weekly)).toContain("Ship the feature (at_risk)")
   })
 })
 
@@ -152,7 +268,8 @@ describe("buildMorningBrief", () => {
       activeHabits: [],
       todaysCheckins: [],
       reminders: [reminder({ id: "r1", nextRunAt: "2026-07-26T07:00:00" })],
-      goals: [goal({ id: "g1", health_status: "at_risk" })],
+      // Live health: incomplete tasks and no key results → "attention".
+      goals: [goal({ id: "g1", taskCounts: { total: 2, completed: 0, incomplete: 2 } })],
     })
     expect(brief.remindersToday).toHaveLength(1)
     expect(brief.goalsAtRisk).toHaveLength(1)
@@ -295,9 +412,10 @@ describe("buildWeeklyReviewSummary / formatWeeklyReviewContext", () => {
   it("includes at-risk goals from the full goal list", () => {
     const result = buildWeeklyReviewSummary(
       [],
-      [goal({ id: "g1", health_status: "blocked" })],
+      [goal({ id: "g1", taskCounts: { total: 2, completed: 0, incomplete: 2 } })],
       [],
       "range",
+      new Date("2026-07-26T12:00:00"),
     )
     expect(result.goalsAtRisk).toHaveLength(1)
   })

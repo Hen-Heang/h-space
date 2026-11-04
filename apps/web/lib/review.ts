@@ -6,6 +6,7 @@
 // package already-fetched data into display-ready summaries — the same
 // normalizer-per-source shape lib/timeline.ts uses.
 import { toLocalDateString } from "./date-utils"
+import { computeListGoalHealth } from "./goal-health"
 import type { DailySummary } from "./timeline"
 import type { Goal, GoalHealthStatus } from "./goals"
 import type { Reminder } from "./reminders"
@@ -13,21 +14,44 @@ import type { Habit, HabitCheckIn } from "./types"
 
 // ── Shared predicates ───────────────────────────────────────────────────────
 
-const ATTENTION_STATUSES: GoalHealthStatus[] = ["attention", "at_risk", "blocked"]
+/** Most severe first — the order Morning Brief / Weekly Review list them in. */
+const ATTENTION_SEVERITY: Partial<Record<GoalHealthStatus, number>> = {
+  blocked: 0,
+  at_risk: 1,
+  attention: 2,
+}
 
 /** Active (non-completed/archived) goals whose health needs a look — used by
  * both Morning Brief ("what needs attention today") and Weekly Review
- * ("what to review this week"). Read-only: this never touches the separate,
- * still-unbuilt per-goal Weekly Review UI planned in
- * docs/goal-system-v2-audit.md — it only surfaces the existing
- * health_status/review_frequency columns that feature would eventually use too. */
-export function goalsNeedingAttention(goals: Goal[]): Goal[] {
-  return goals.filter(
-    (g) =>
-      g.status !== "completed" &&
-      g.status !== "archived" &&
-      ATTENTION_STATUSES.includes(g.health_status),
-  )
+ * ("what to review this week").
+ *
+ * Health is computed **live** with `computeListGoalHealth`, the same engine
+ * the Goals list and the Overview's Active goals card use — never read from
+ * the stored `goals.health_status` column. Nothing in the app writes that
+ * column (it keeps its `'not_started'` default), so filtering on it made
+ * both reviews silently report "nothing needs attention" while the Goals
+ * page showed goals at risk.
+ *
+ * Returns copies whose `health_status` / `health_reason` hold the live
+ * result, so the review views and the AI-summary context show the same
+ * label the Goals page does. The input goals are never mutated. Sorted
+ * most-severe first; ties keep their input order. */
+export function goalsNeedingAttention(goals: Goal[], now: Date = new Date()): Goal[] {
+  const flagged: { goal: Goal; severity: number; index: number }[] = []
+  goals.forEach((g, index) => {
+    if (g.status === "completed" || g.status === "archived") return
+    const health = computeListGoalHealth(g, now)
+    const severity = ATTENTION_SEVERITY[health.status]
+    if (severity === undefined) return
+    flagged.push({
+      goal: { ...g, health_status: health.status, health_reason: health.reason },
+      severity,
+      index,
+    })
+  })
+  return flagged
+    .sort((a, b) => a.severity - b.severity || a.index - b.index)
+    .map((entry) => entry.goal)
 }
 
 /** A reminder counts as "due" for Morning Brief when it's active and its next
@@ -92,7 +116,7 @@ export function buildMorningBrief(input: {
     habitsDoneCount: input.activeHabits.length - habitsPending.length,
     habitsTotalCount: input.activeHabits.length,
     remindersToday: remindersDueToday(input.reminders, now),
-    goalsAtRisk: goalsNeedingAttention(input.goals),
+    goalsAtRisk: goalsNeedingAttention(input.goals, now),
   }
 }
 
@@ -216,6 +240,7 @@ export function buildWeeklyReviewSummary(
   goals: Goal[],
   habitCompletion: HabitWeeklyCompletion[],
   rangeLabel: string,
+  now: Date = new Date(),
 ): WeeklyReviewSummary {
   return {
     rangeLabel,
@@ -224,7 +249,7 @@ export function buildWeeklyReviewSummary(
     totalHengoMinutes: daySummaries.reduce((sum, d) => sum + d.hengoMinutes, 0),
     journalDaysCount: daySummaries.filter((d) => d.journalCount > 0).length,
     habitCompletion,
-    goalsAtRisk: goalsNeedingAttention(goals),
+    goalsAtRisk: goalsNeedingAttention(goals, now),
   }
 }
 
