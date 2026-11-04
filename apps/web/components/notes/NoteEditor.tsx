@@ -206,7 +206,9 @@ export function NoteEditor({ mode, initial, onSave, onCancel }: NoteEditorProps)
                 onChange={(e) => set({ slug: e.target.value })}
                 disabled={mode === "edit"}
                 placeholder="slug"
-                className="min-h-11 flex-1 rounded-lg border border-border bg-background px-3 py-2 font-mono text-base text-foreground disabled:opacity-50 focus:border-blue-500/50 focus:outline-none sm:text-sm"
+                // min-w-0: an input's intrinsic width (size=20) otherwise stops
+                // flex-1 from shrinking it, and it ran past a 320px screen.
+                className="min-h-11 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 font-mono text-base text-foreground disabled:opacity-50 focus:border-ring focus:outline-none sm:text-sm"
               />
             </div>
           </div>

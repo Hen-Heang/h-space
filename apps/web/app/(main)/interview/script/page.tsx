@@ -802,59 +802,63 @@ export default function InterviewScriptPage() {
         <div className="mx-auto max-w-[1180px]">
           {/* Script | Q&A tabs */}
           <div className="mb-6 flex flex-wrap items-center justify-center gap-3">
-            <div className="inline-flex items-center gap-1 rounded-2xl border border-border/70 bg-background p-1 shadow-sm dark:bg-slate-900">
-              <button
-                type="button"
-                onClick={() => setMode("script")}
-                aria-pressed={mode === "script"}
-                className={cn(
-                  "flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
-                  mode === "script"
-                    ? "bg-blue-600 text-white shadow"
-                    : "text-muted-foreground/70 hover:text-foreground",
-                )}
-              >
-                <FileText size={14} strokeWidth={2.6} /> Script
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("qa")}
-                aria-pressed={mode === "qa"}
-                className={cn(
-                  "flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
-                  mode === "qa"
-                    ? "bg-blue-600 text-white shadow"
-                    : "text-muted-foreground/70 hover:text-foreground",
-                )}
-              >
-                <MessagesSquare size={14} strokeWidth={2.6} /> Q&amp;A Prep
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("read")}
-                aria-pressed={mode === "read"}
-                className={cn(
-                  "flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
-                  mode === "read"
-                    ? "bg-blue-600 text-white shadow"
-                    : "text-muted-foreground/70 hover:text-foreground",
-                )}
-              >
-                <BookOpenText size={14} strokeWidth={2.6} /> Read
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("repeat")}
-                aria-pressed={mode === "repeat"}
-                className={cn(
-                  "flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold uppercase tracking-wide transition-all",
-                  mode === "repeat"
-                    ? "bg-blue-600 text-white shadow"
-                    : "text-muted-foreground/70 hover:text-foreground",
-                )}
-              >
-                <Repeat2 size={14} strokeWidth={2.6} /> Listen &amp; Repeat
-              </button>
+            {/* Four modes are wider than a phone: the row scrolls sideways
+                inside its own box instead of running off the screen. */}
+            <div className="no-scrollbar min-w-0 max-w-full overflow-x-auto">
+              <div className="inline-flex min-w-max items-center gap-1 rounded-2xl border border-border bg-background p-1">
+                <button
+                  type="button"
+                  onClick={() => setMode("script")}
+                  aria-pressed={mode === "script"}
+                  className={cn(
+                    "flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
+                    mode === "script"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground/70 hover:text-foreground",
+                  )}
+                >
+                  <FileText size={14} strokeWidth={2.6} /> Script
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("qa")}
+                  aria-pressed={mode === "qa"}
+                  className={cn(
+                    "flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
+                    mode === "qa"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground/70 hover:text-foreground",
+                  )}
+                >
+                  <MessagesSquare size={14} strokeWidth={2.6} /> Q&amp;A Prep
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("read")}
+                  aria-pressed={mode === "read"}
+                  className={cn(
+                    "flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
+                    mode === "read"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground/70 hover:text-foreground",
+                  )}
+                >
+                  <BookOpenText size={14} strokeWidth={2.6} /> Read
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("repeat")}
+                  aria-pressed={mode === "repeat"}
+                  className={cn(
+                    "flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
+                    mode === "repeat"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground/70 hover:text-foreground",
+                  )}
+                >
+                  <Repeat2 size={14} strokeWidth={2.6} /> Listen &amp; Repeat
+                </button>
+              </div>
             </div>
 
             {(mode === "script" || mode === "qa") && (
