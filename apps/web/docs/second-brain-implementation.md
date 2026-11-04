@@ -294,15 +294,20 @@ AI route with no table access of its own:
 
 - `app/api/ai/review/summarize/route.ts` — a plain `jsonAiRoute` (no custom post-processing needed,
   unlike Ask Hengo's route): takes `{ reviewType, context }` where `context` is an already-formatted,
-  bounded plain-text block (counts and labels only, never raw personal content) built by
-  `lib/review.ts`'s `format*Context` helpers, and returns `{ summary, focusSuggestion }`. Same
-  never-invent discipline as Ask Hengo, scoped down since there's no retrieval/citation surface to
-  defend here — the model only ever sees numbers the app already computed.
+  bounded plain-text block built by `lib/review.ts`'s `format*Context` helpers, and returns
+  `{ summary, focusSuggestion }`. Same never-invent discipline as Ask Hengo, scoped down since
+  there's no retrieval/citation surface to defend here. **Correction (2026-11-04):** the block is
+  counts _plus user-authored names_ (tasks, habits, reminders, goals), so the route now sends it inside
+  a `<user_data>` block (`lib/server/user-data.ts`, which also neutralises any `user_data` tag in the
+  text) with the data-not-instructions rule; covered by `app/api/ai/review/summarize/route.test.ts`.
 - `lib/review.ts` — pure aggregation only, maximizing reuse rather than re-deriving anything:
   - `isReminderDueToday` / `remindersDueToday` — a reminder counts as due when active and its
     `next_run_at` isn't past end-of-today (deliberately also surfaces overdue ones).
-  - `goalsNeedingAttention` — active goals whose `health_status` is `attention`/`at_risk`/`blocked`.
-    Read-only reuse of the Goal System v2 columns; does **not** touch the separate, still-unbuilt
+  - `goalsNeedingAttention` — active goals whose **live** health (`computeListGoalHealth`, the same
+    engine as the Goals list and Home) is `attention`/`at_risk`/`blocked`, most severe first.
+    **Fixed 2026-11-04:** it used to read the stored `goals.health_status`, which nothing writes (it
+    keeps its `'not_started'` default), so both reviews never flagged any goal. It returns copies with
+    the live `health_status`/`health_reason`; the inputs are not mutated. Does **not** touch the separate, still-unbuilt
     per-goal "Weekly Review UI" planned in `docs/goal-system-v2-audit.md` (different scope — per-goal
     periodic review vs. this whole-life daily/weekly surface).
   - `buildMorningBrief` — packages `useTodaysTasks`' task-group counts (already computed

@@ -26,7 +26,7 @@ import { supabase } from "@/lib/supabase"
 // Plain-language, specific permission lines — never "full access" (AGENTS.md
 // domain-neutrality rule extends to any user-facing copy naming what a
 // connector can touch). Kept in sync by hand with the tool set registered in
-// lib/mcp/tools/*: six read tools always available, seven write tools only
+// lib/mcp/tools/*: seven read tools always available, seven write tools only
 // when the server has MCP_WRITE_ENABLED=true. Supabase's OAuth server has no
 // custom read/write scope to gate this on (design doc §4.2), so both lines
 // are shown for every connector — write tools may simply be absent from the
