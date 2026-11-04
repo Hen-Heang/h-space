@@ -149,7 +149,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // header, `bottom-[var(--shell-bottom-nav-h)]` above the fixed bottom nav.
   // Mirrors the headers' own classes: DesktopHeader is h-14; MobileHeader is a
   // size-11 row + pb-2 + 1px border + pt-[max(0.5rem,safe-area-top)].
-  // MobileBottomNav is a min-h-12 tab + py-1 + 1px border + safe-area-bottom.
+  // MobileBottomNav is a floating capsule: min-h-12 tab + p-1 + 2px border,
+  // sitting max(0.5rem, safe-area-bottom) above the screen edge.
   const showDesktopHeader = !isMobile && !isChromeless
   const shellOffsets = {
     "--shell-header-h": showDesktopHeader
@@ -158,7 +159,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ? "calc(3.25rem + 1px + max(0.5rem, env(safe-area-inset-top)))"
         : "0px",
     "--shell-bottom-nav-h": showBottomNav
-      ? "calc(3.5rem + 1px + env(safe-area-inset-bottom))"
+      ? "calc(3.5rem + 2px + max(0.5rem, env(safe-area-inset-bottom)))"
       : "0px",
   } as CSSProperties
 
@@ -244,7 +245,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   : "pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-5 sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] lg:px-8",
                 isCalendarRoute && "overflow-y-hidden",
                 isCalendarRoute && showBottomNav
-                  ? "pb-[calc(3.75rem+env(safe-area-inset-bottom))]"
+                  ? "pb-[calc(var(--shell-bottom-nav-h)+0.25rem)]"
                   : !fullBleed &&
                       !isCalendarRoute &&
                       (showBottomNav ? "pb-[calc(9rem+env(safe-area-inset-bottom))]" : "pb-10"),
