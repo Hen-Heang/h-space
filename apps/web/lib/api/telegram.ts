@@ -1,14 +1,20 @@
 import { apiFetch } from "@/lib/api/finance-client"
-import type { TelegramLinkCode, TelegramLinkStatus } from "@/types/telegram"
+import type { FinanceTelegramStatus } from "@/types/telegram"
 
-export function getTelegramLinkStatus(): Promise<TelegramLinkStatus> {
-  return apiFetch<TelegramLinkStatus>("/api/telegram/link")
+// H-Space routes (app/api/finance/telegram/link). Luyra's /api/telegram/link
+// does not exist here — calling it 404'd and hid every "Send to Telegram".
+const LINK = "/api/finance/telegram/link"
+
+export function getTelegramLinkStatus(): Promise<FinanceTelegramStatus> {
+  return apiFetch<FinanceTelegramStatus>(LINK)
 }
 
-export function generateTelegramLinkCode(): Promise<TelegramLinkCode> {
-  return apiFetch<TelegramLinkCode>("/api/telegram/link", { method: "POST" })
+/** Send finance messages to the chat linked in H-Space Settings → Reminders. */
+export function linkFinanceTelegram(): Promise<FinanceTelegramStatus> {
+  return apiFetch<FinanceTelegramStatus>(LINK, { method: "POST" })
 }
 
-export async function unlinkTelegramAccount(): Promise<void> {
-  await apiFetch<{ unlinked: boolean }>("/api/telegram/link", { method: "DELETE" })
+/** Stop finance messages (the H-Space reminder link stays). */
+export function stopFinanceTelegram(): Promise<FinanceTelegramStatus> {
+  return apiFetch<FinanceTelegramStatus>(LINK, { method: "DELETE" })
 }
