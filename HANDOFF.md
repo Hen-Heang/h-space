@@ -3,19 +3,37 @@
 ## Snapshot
 
 - **Updated:** 2026-11-05.
-- **Checkout:** `fix/recovery-loading-skeletons`, cut from `origin/main` at `4692635` (Finance quick-add PR #86 merged). Uncommitted; nothing pushed. No migration, API or data change.
-- **Loading-state audit:** every page under `app/(main)` was checked for what it shows while fetching. Most already render `components/ui/skeleton.tsx` (shimmer) or, in Finance, Luyra's own `bg-secondary animate-pulse` blocks (kept on purpose to preserve Luyra's look). Route-level `loading.tsx` files are deliberately not being added: nearly every page is a client component that fetches on mount, so `loading.tsx` wouldn't cover that wait.
-- **Fixed:** six recovery pages (`growth/recovery/{insights,review,plan,check-in,debrief,settings}`) returned `null` while loading, showing a blank screen. They now render the new `components/recovery/RecoveryPageSkeleton.tsx` (`role="status"`, `aria-busy`, width matches each page, optional header block). `components/reminders/ReminderButton.tsx` now holds its icon-button footprint while loading (only when `allowCreate`, since otherwise it usually stays hidden) so neighbouring actions don't shift.
-- **Finance tab bar:** `components/finance/finance-nav.tsx` no longer scrolls sideways (it used `overflow-x-auto` + `min-w-max` from `sm` up, which scrolled wherever the content was under ~750px). It's now a container-query layout in the same position: 2 → 3 → 4 columns (two even rows) and a single row once the bar is ≥ 50rem. Checked in Chrome by narrowing the Finance column from 320px to 952px: no overflow and no clipped labels at any width.
-- **Workspace tab rows:** `WorkspaceTabs`, `GoalDetailNav` and `ReviewTabs` also stopped scrolling sideways. They now `flex-wrap`, with `px-2` on phones (`sm:px-3` up), in the same position and style. Measured in Chrome (phone simulated at 16px root, 343/398px): Planner fits one row even at 375px (it used to scroll); Learning wraps 3+3 at 375px and 4+2 at 430px (it scrolled on every phone); Growth, Notes and My Apps stay one row. At ~650px tablet width Learning's last tab ("Listening") wraps alone. `docs/design-system.md` now says nav tab rows wrap and never scroll.
-- **Tests:** new `RecoveryPageSkeleton.test.tsx`; two loading-state cases added to `ReminderButton.test.tsx`.
-- **Verification:** `pnpm test:web` passed (170 files, 1,915 tests); `pnpm build:web` passed (with `NEXT_TURBOPACK_EXPERIMENTAL_USE_SYSTEM_TLS_CERTS=1`); `tsc --noEmit` clean; ESLint and Prettier clean on the changed files. Not run: a browser check at 375/768/1024/1440px (the loading state needs a signed-in session plus a throttled network to see).
-- **Untracked, not ours:** an empty file named `false` at the repo root and `luyra-web/`; an owner's one-line change in `apps/web/lib/api/finance-client.ts` carried over from the previous checkout. Left untouched and unstaged.
-- **Still open from the reminder work (see history):** `20261105121000_fix_reminder_reconcile_alias.sql` is **not applied yet**. Until it is, reminders send but their delivery rows stay `pending`.
+- **Checkout:** `feat/planner-ux`, cut from `fix/recovery-loading-skeletons` at `49d7c53`. That branch's skeleton, tab-wrapping and iPhone-sweep commits are underneath and are still not pushed or PR'd. Planner work is uncommitted. No migration, API or data change.
+- **Planner UX audit:** `apps/web/docs/planner-ux-audit.md` covers every Planner route, dialog and sheet. It has prioritised findings with file:line references, 7 real bugs (B1–B7), a nav proposal, shared-component recommendations and a 10-slice plan.
+- **Nav recommendation:** keep all five Planner tabs visible. They fit on one line from 375px, and only 320px wraps. Don't add a "More" overflow. The default landing route stays `/goals`. Making Tasks the default needs an owner decision.
+- **Slice 1 (done, uncommitted):**
+  - `TodaysTasks.tsx`: rows no longer repeat "Anytime" / "Overdue" under the matching group header. The word stays as sr-only text because the headers are `aria-hidden`. Scheduled-but-late tasks still show the red "Overdue · HH:MM".
+  - `GoalsHubHeader.tsx` has a new `newGoalEmphasis` prop. On Tasks, New goal is an outline button, so the composer is the one primary action.
+  - New test: `TodaysTasks.test.tsx` (4 cases).
+- **Slice 2 (done, uncommitted):** behaviour bug fixes B1, B2, B4, B5 and B7, each with a test. Details are in audit §7.
+  - B1: travel goals can now be submitted.
+  - B2: the Inbox Tag filter now works.
+  - B4: the calendar task sheet has one close button instead of two.
+  - B5: deleting from the Edit sheet asks for confirmation once.
+  - B7: calendar task titles are no longer cut to 23 characters.
+- **Slice 2 verification:**
+  - `pnpm test:web` passed: 175 files, 1,929 tests.
+  - `pnpm lint`: 0 errors. `tsc` is clean.
+  - Overflow sweep of `inbox`, `goals/calendar` and `goals/create/custom` at 375/1440 passed.
+  - The calendar body was still compiling in the screenshot, so the new two-line rows weren't seen in a browser.
+- **Slice 1 verification:**
+  - `pnpm test:web` passed: 171 files, 1,919 tests.
+  - `pnpm lint`: 0 errors, 5 warnings, none from these files. `tsc --noEmit` is clean.
+  - Narrowed UI sweep at 320/375/1440 for `goals`, `goals/tasks`: no overflow. Before/after screenshots are in `apps/web/test-results/ui-sweep/planner-{before,after}/` (gitignored).
+  - `/goals/[id]` failed to render in both sweeps because the local `next dev` crashed ("Jest worker … child process exceptions") under low memory.
+  - Not run: `pnpm build` (machine low on memory), dark mode, and 390/430/768/1024 widths.
+- **Playwright on this machine now:** `chromium-1208` is a partial install, a single DLL plus a leftover `__dirlock`, and the headless shell is missing. Use `PLAYWRIGHT_EXECUTABLE_PATH="C:/Program Files/Google/Chrome/Application/chrome.exe"`.
+- **Untracked, not ours:** `false` at the repo root, `luyra-web/`, the owner's change in `apps/web/lib/api/finance-client.ts`, and `test-results/playwright/.last-run.json`. Left unstaged.
+- **Still open from the reminder work:** `20261105121000_fix_reminder_reconcile_alias.sql` is not applied yet.
 
 ## Current focus
 
-0. Owner: review the skeleton change (throttle the network in DevTools and open `/growth/recovery/review`), then commit on this branch and open a PR.
-1. Apply `20261105121000_fix_reminder_reconcile_alias.sql`, then confirm `kori-reminder-delivery-check` succeeds in `cron.job_run_details`.
-2. Owner: create a reminder a few minutes ahead and check `kori_reminder_deliveries` and the Reminders page.
-3. Carried over: reminder follow-ups (no retry, "Open KoriAI" Telegram label, Edge Function source not in the repo), second-brain slices T2–T7, and the MCP auth decision before T10–T13.
+1. Owner: review slice 1 and the audit, then decide on the Tasks-as-default landing question.
+2. Next: slice 3 (one primary action per Planner tab, drop the "View all" links that duplicate tabs, remove the create page's `PageHero` and extra `h1`s).
+3. Then slices 4–10 in order: primary action per tab, task composer, goals list, goal detail header/body, create flow, calendar/inbox, dialog width + full responsive sweep.
+4. Carried over: commit/PR the skeleton branch; apply the reminder migration; second-brain T2–T7; MCP auth decision.
