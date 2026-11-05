@@ -5,6 +5,7 @@ import { ErrorBanner } from "@/components/ui/error-banner"
 import { PlansList } from "@/components/recovery/PlansList"
 import { ProtectionChecklist } from "@/components/recovery/ProtectionChecklist"
 import { WhenThenPlanBuilder } from "@/components/recovery/WhenThenPlanBuilder"
+import { RecoveryPageSkeleton } from "@/components/recovery/RecoveryPageSkeleton"
 import {
   useRecoveryHabits,
   useRecoveryPlans,
@@ -31,7 +32,8 @@ export default function RecoveryPlanPage() {
     saveItem,
   } = useRecoveryProtection(target?.id ?? null)
   const { triggers } = useRecoveryTriggers()
-  if (targetLoading || plansLoading || protectionLoading) return null
+  if (targetLoading || plansLoading || protectionLoading)
+    return <RecoveryPageSkeleton width="3xl" cards={3} />
   const error = targetError || plansError || protectionError
   if (error || !target)
     return (

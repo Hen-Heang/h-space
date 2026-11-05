@@ -12,8 +12,8 @@ import { cn } from "@/lib/utils"
  * Notes' Notes · Memories · Timeline — from `workspaceTabs` in
  * `lib/navigation.ts`. This is where a workspace's pages live instead of the
  * global sidebar. Real links, so back/forward, middle-click and pasted URLs
- * behave normally; the row scrolls sideways on narrow screens instead of
- * wrapping. `actions` sits at the row's end (wrapping below on phones) so a
+ * behave normally; on narrow screens the tabs wrap onto a second line rather
+ * than scrolling sideways, so none hide off-screen. `actions` sits at the row's end (wrapping below on phones) so a
  * workspace's one primary action lives beside its tabs, not in a second hero.
  */
 export function WorkspaceTabs({
@@ -42,9 +42,9 @@ export function WorkspaceTabs({
     >
       <nav
         aria-label="Workspace sections"
-        className="no-scrollbar min-w-0 overflow-x-auto shadow-[inset_0_-1px_0_var(--border)] sm:-mb-px sm:shadow-none"
+        className="min-w-0 shadow-[inset_0_-1px_0_var(--border)] sm:-mb-px sm:shadow-none"
       >
-        <ul className="flex min-w-max gap-1">
+        <ul className="flex flex-wrap gap-x-1">
           {tabs.map((tab) => {
             const current = tab.id === active?.id
             return (
@@ -54,7 +54,7 @@ export function WorkspaceTabs({
                     href={tab.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="relative flex min-h-11 items-center gap-1 whitespace-nowrap rounded-t-md border-b-2 border-transparent px-3 text-sm font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    className="relative flex min-h-11 items-center gap-1 whitespace-nowrap rounded-t-md border-b-2 border-transparent px-2 text-sm font-medium sm:px-3 text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                   >
                     {tab.label}
                     <ArrowUpRight size={14} aria-hidden="true" />
@@ -65,7 +65,7 @@ export function WorkspaceTabs({
                     href={tab.href}
                     aria-current={current ? "page" : undefined}
                     className={cn(
-                      "relative flex min-h-11 items-center whitespace-nowrap rounded-t-md border-b-2 px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                      "relative flex min-h-11 items-center whitespace-nowrap rounded-t-md border-b-2 px-2 text-sm font-medium sm:px-3 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                       current
                         ? "border-primary text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground",
