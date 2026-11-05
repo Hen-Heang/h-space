@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
   computeNextRunAt,
+  DEFAULT_REMINDER_TIMEZONE,
   describeRecurrence,
+  getDeviceTimeZone,
   isReminderInputValid,
   validateReminderInput,
   type RecurrenceRule,
@@ -186,5 +188,35 @@ describe("validateReminderInput", () => {
         channels: ["web", "telegram"],
       }),
     ).toBe(true)
+  })
+})
+
+describe("getDeviceTimeZone", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  function mockResolvedZone(timeZone: string | undefined) {
+    const real = Intl.DateTimeFormat.prototype.resolvedOptions
+    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockImplementation(function (
+      this: Intl.DateTimeFormat,
+    ) {
+      return { ...real.call(this), timeZone } as Intl.ResolvedDateTimeFormatOptions
+    })
+  }
+
+  it("returns the zone the device reports", () => {
+    mockResolvedZone("Europe/Paris")
+    expect(getDeviceTimeZone()).toBe("Europe/Paris")
+  })
+
+  it("falls back to the default when the device reports no zone", () => {
+    mockResolvedZone(undefined)
+    expect(getDeviceTimeZone()).toBe(DEFAULT_REMINDER_TIMEZONE)
+  })
+
+  it("falls back to the default when the reported zone isn't a real one", () => {
+    mockResolvedZone("Not/AZone")
+    expect(getDeviceTimeZone()).toBe(DEFAULT_REMINDER_TIMEZONE)
   })
 })

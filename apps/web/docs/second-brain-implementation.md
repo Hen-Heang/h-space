@@ -238,6 +238,21 @@ locked` (safe against the job somehow overlapping itself), re-verifies `entity_i
      functions down to internal-only (invoked by `pg_cron`-as-`postgres`, which bypasses grants, or by
      other `SECURITY DEFINER` functions); `kori_next_reminder_run` was narrowed to `authenticated`-only
      (still needed for the client-side preview, no reason to leave it open to `anon`).
+- **Delivery tracking (2026-11-05, `20261105120000_reminder_delivery_tracking.sql` — applied
+  to the live database 2026-11-05):** `kori_dispatch_push` swallows every error and `net.http_post` only queues the request,
+  so a reminder was marked sent even when nothing arrived (including when the `SERVICE_ROLE_KEY` vault
+  secret was missing). The reminder loop now calls `kori_send_reminder`, which writes one
+  `kori_reminder_deliveries` row per occurrence and channel (`pending` / `delivered` / `failed` /
+  `skipped`, unique per occurrence and channel) with its pg_net request id. A second per-minute job,
+  `kori_reconcile_reminder_deliveries` (`kori-reminder-delivery-check`), reads `net._http_response`:
+  a web push is delivered only when `kori-send-push` reports `sent > 0`, and anything unanswered after
+  15 minutes fails. The latest occurrence's outcome lands in `kori_reminders.last_error` ("Not
+  delivered — …", "Partly delivered — …", or cleared), which the Reminders page already shows. History
+  is kept 90 days, owner-readable under RLS. `kori_dispatch_push` is unchanged for the holiday, weather
+  and streak alerts. No retry yet.
+- **Timezone:** the reminder dialog now uses the device's IANA zone (`getDeviceTimeZone`, falling back
+  to `Asia/Seoul`) instead of always Seoul, so recurring reminders agree with one-time ones, whose
+  datetime input was already device-local.
 
 ### Implemented (Phase 5)
 

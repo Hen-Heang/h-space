@@ -13,6 +13,7 @@ import {
   isWebPushSupported,
   type WebPushState,
 } from "@/lib/push"
+import { needsHomeScreenForPush, readPushEnvironment } from "@/lib/push-environment"
 
 export function usePush() {
   const userId = getUserId()
@@ -21,9 +22,13 @@ export function usePush() {
 
   const [webState, setWebState] = useState<WebPushState>("disabled")
   const [webBusy, setWebBusy] = useState(false)
+  // Read after mount so the server render and the first client render agree.
+  const [needsHomeScreen, setNeedsHomeScreen] = useState(false)
 
   useEffect(() => {
     void getWebPushState().then(setWebState)
+    const env = readPushEnvironment()
+    setNeedsHomeScreen(env != null && needsHomeScreenForPush(env))
   }, [])
 
   // Telegram link status (polled while a connect window may be open).
@@ -121,6 +126,7 @@ export function usePush() {
 
   return {
     supported: isWebPushSupported(),
+    needsHomeScreen,
     webState,
     webEnabled: webState === "enabled",
     webBusy,
