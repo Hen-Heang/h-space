@@ -477,19 +477,11 @@ describe("H-Vault CSV import", () => {
 })
 
 describe("public My Apps card", () => {
-  it("links to Luyra Finance and its source repository", () => {
+  it("has no Luyra card or external Luyra link now that Finance is in-app", () => {
     render(<MyAppsSection />)
-    const card = screen.getByRole("heading", { name: "Luyra" }).closest("article")!
-    const appLink = within(card).getByRole("link", { name: /Open app/ })
-    expect(appLink.getAttribute("href")).toBe("https://luyra.henheang.site/finance")
-    expect(appLink.getAttribute("target")).toBe("_blank")
-    expect(appLink.getAttribute("rel")).toBe("noopener noreferrer")
-    expect(
-      within(card)
-        .getByRole("link", { name: /GitHub/ })
-        .getAttribute("href"),
-    ).toBe("https://github.com/Hen-Heang/luyra-web")
-    expect(within(card).getByText("Personal Finance")).toBeTruthy()
+    expect(screen.queryByRole("heading", { name: "Luyra" })).toBeNull()
+    const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href") ?? "")
+    expect(hrefs.some((href) => /luyra/i.test(href))).toBe(false)
   })
 
   it("shows a generic H-Vault card with no account data", () => {

@@ -87,9 +87,10 @@ moved; H-Space already owns those.
    (create/edit/delete/bulk), templates and recurring rules. Reads only for
    categories, payment methods, budgets, savings and preferences. The nav's
    Finance item (`apps-luyra`: sidebar, My Apps tab, Quick Switcher, phone
-   More sheet) now opens `/finance` in H-Space; the public My Apps card in
-   `lib/projects.ts` still links to Luyra. Overview links to budgets, review
-   and settings 404 until those slices land — use Luyra for them meanwhile.
+   More sheet) now opens `/finance` in H-Space. The external Luyra card was
+   removed from My Apps (`lib/projects.ts`) on 2026-11-05. Overview links to
+   budgets, review and settings 404 until those slices land — use Luyra for
+   them meanwhile.
    - Verified: unit + route denial tests; UI sweep at 320–1440px, light and
      dark, against synthetic fixtures (`tests/e2e/finance-fixtures.ts`).
    - Two responsive fixes vs Luyra: the transactions toolbar wraps, and the
@@ -147,9 +148,9 @@ moved; H-Space already owns those.
      The ported push code (`push-notification-service`, the push
      subscription repository, the `web-push` dependency) was removed on
      2026-11-05; the copied `push_subscriptions` rows are left untouched.
-6. **Cutover** — `luyra.henheang.site` redirects to H-Space `/finance`; My Apps
-   card becomes an internal link. The old `luyra` Neon project stays as the
-   read-only archive (no Luyra `DATABASE_URL` change).
+6. **Cutover** — `luyra.henheang.site` redirects to H-Space `/finance`. (The
+   My Apps card for Luyra was already removed on 2026-11-05.) The old `luyra`
+   Neon project stays as the read-only archive (no Luyra `DATABASE_URL` change).
 7. **Cleanup** — remove `apps/luyra` after the owner accepts the cutover.
 
 ## Known gaps to handle on the way

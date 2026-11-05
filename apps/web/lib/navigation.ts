@@ -661,8 +661,8 @@ export const navSections: NavSection[] = [
         // The one Finance entry point: Luyra's finance screens, now inside
         // H-Space at /finance (docs/LUYRA_MIGRATION.md). Covers /finance/* so
         // every finance page keeps it lit. The id stays "apps-luyra" (stored
-        // nav state). Screens not ported yet (savings, review, settings, …)
-        // still live in Luyra itself (LUYRA_FINANCE_URL in lib/projects.ts).
+        // nav state). There is no My Apps card or external Luyra link; this
+        // item is the way into Finance.
         id: "apps-luyra",
         href: "/finance",
         label: "Finance",
