@@ -93,8 +93,8 @@ export function SubscriptionsView() {
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
-        Detected from repeated payments in your transactions over the last 6 months. Luyra never
-        cancels anything for you — this is a note to yourself.
+        Detected from repeated payments in your transactions over the last 6 months. Nothing is
+        cancelled for you — this is a note to yourself.
       </p>
 
       {result.error ? (
