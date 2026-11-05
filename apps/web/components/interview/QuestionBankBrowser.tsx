@@ -295,7 +295,7 @@ export function QuestionBankBrowser({
       ) : null}
 
       {selectedQuestions.length > 0 ? (
-        <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 px-4 sm:hidden">
+        <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 pl-[max(1rem,env(safe-area-inset-left))] pr-[calc(5rem+env(safe-area-inset-right))] sm:hidden">
           <Button
             onClick={() => onPractice(selectedQuestions)}
             className="h-12 w-full rounded-xl bg-blue-600 text-white shadow-lg"

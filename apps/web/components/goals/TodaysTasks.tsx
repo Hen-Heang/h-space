@@ -41,6 +41,8 @@ import { cn } from "@/lib/utils"
 // add, progress, overdue/scheduled/anytime/completed grouping, and mark-all +
 // undo are kept. Sharing / select-mode (deferred) are dropped.
 
+type TaskGroup = "overdue" | "scheduled" | "anytime" | "completed"
+
 interface TodaysTasksProps {
   className?: string
 }
@@ -478,11 +480,21 @@ export function TodaysTasks({ className }: TodaysTasksProps) {
   // covers the row (stretched ::after), and one always-visible ⋯ menu for
   // Edit/Delete. The menu used to be two hover-only 28px buttons, which a
   // touch screen never showed at all.
-  const renderTaskItem = (task: Task) => {
+  const renderTaskItem = (task: Task, group?: TaskGroup) => {
     const overdue = groups.isOverdue(task)
     const goalTitle = task.goal_id ? goalTitleById[task.goal_id] : null
     const title = task.title || task.description
     const isEditing = editingId === task.id
+    // The group header above already says "Overdue" / "Anytime", so a row in
+    // that group doesn't repeat it visually. Screen readers still hear it:
+    // the headers are aria-hidden, so the row keeps the words as sr-only.
+    const overdueIsHeader = overdue && group === "overdue"
+    const anytimeIsHeader = task.is_anytime && group === "anytime"
+    const timeLabel = task.is_anytime ? "Anytime" : task.daily_start_time?.slice(0, 5)
+    const showTime = (overdue && !overdueIsHeader) || (!!timeLabel && !anytimeIsHeader)
+    const srOnlyTime = [overdueIsHeader && "Overdue", anytimeIsHeader && "Anytime"]
+      .filter(Boolean)
+      .join(", ")
     return (
       <motion.li
         key={task.id}
@@ -536,28 +548,33 @@ export function TodaysTasks({ className }: TodaysTasksProps) {
               {title}
             </Link>
           )}
-          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-sm">
-            <span
-              className={cn(
-                "flex items-center gap-1.5",
-                overdue ? "text-destructive" : "text-muted-foreground",
+          {srOnlyTime && <span className="sr-only">{srOnlyTime}</span>}
+          {(showTime || goalTitle) && (
+            <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-sm">
+              {showTime && (
+                <span
+                  className={cn(
+                    "flex items-center gap-1.5",
+                    overdue && !overdueIsHeader ? "text-destructive" : "text-muted-foreground",
+                  )}
+                >
+                  {overdue && !overdueIsHeader ? (
+                    <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+                  ) : (
+                    <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                  )}
+                  {overdue && !overdueIsHeader && "Overdue · "}
+                  {!anytimeIsHeader && timeLabel}
+                </span>
               )}
-            >
-              {overdue ? (
-                <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-              ) : (
-                <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+              {goalTitle && (
+                <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+                  <Target className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span className="truncate">{goalTitle}</span>
+                </span>
               )}
-              {overdue && "Overdue · "}
-              {task.is_anytime ? "Anytime" : task.daily_start_time?.slice(0, 5)}
-            </span>
-            {goalTitle && (
-              <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
-                <Target className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span className="truncate">{goalTitle}</span>
-              </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {!isEditing && (
@@ -607,11 +624,11 @@ export function TodaysTasks({ className }: TodaysTasksProps) {
     </li>
   )
 
-  const renderGroup = (label: string, list: Task[], tone?: "danger") =>
+  const renderGroup = (group: TaskGroup, label: string, list: Task[], tone?: "danger") =>
     list.length > 0 && (
       <React.Fragment key={`${label}-group`}>
         {sectionHeader(label, list.length, tone)}
-        {list.map((t) => renderTaskItem(t))}
+        {list.map((t) => renderTaskItem(t, group))}
       </React.Fragment>
     )
 
@@ -651,9 +668,9 @@ export function TodaysTasks({ className }: TodaysTasksProps) {
         ) : (
           <ul className="-mx-1 divide-y divide-border">
             <AnimatePresence initial={false}>
-              {renderGroup("Overdue", groups.overdue, "danger")}
-              {renderGroup("Scheduled", groups.scheduled)}
-              {renderGroup("Anytime", groups.anytime)}
+              {renderGroup("overdue", "Overdue", groups.overdue, "danger")}
+              {renderGroup("scheduled", "Scheduled", groups.scheduled)}
+              {renderGroup("anytime", "Anytime", groups.anytime)}
               {groups.completed.length > 0 && (
                 <React.Fragment key="completed-group">
                   <li key="completed-toggle">
@@ -676,7 +693,7 @@ export function TodaysTasks({ className }: TodaysTasksProps) {
                       />
                     </button>
                   </li>
-                  {showCompleted && groups.completed.map((t) => renderTaskItem(t))}
+                  {showCompleted && groups.completed.map((t) => renderTaskItem(t, "completed"))}
                 </React.Fragment>
               )}
             </AnimatePresence>

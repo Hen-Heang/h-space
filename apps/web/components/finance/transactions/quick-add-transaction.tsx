@@ -21,11 +21,17 @@ import type { CreateTransactionInput } from "@/lib/validation/finance"
  * any Finance page, not just Transactions. In Luyra it was global because the
  * whole app was Finance; in H-Space it is mounted by app/(main)/finance/layout.
  *
- * Placement: stacked directly above H-Space's floating AI Assistant button
- * (components/chat/FloatingAiCoach — right-4, size-14, ~0.75rem above the
- * bottom nav or the screen edge). size-12 at right-5 shares its centre line;
- * --shell-bottom-nav-h (set by AppShell, 0 when the nav is hidden) keeps the
- * stack above the mobile tab bar.
+ * Placement:
+ * - Phones (AppShell's "mobile" mode, < 768px = Tailwind `md`): a round button
+ *   stacked directly above H-Space's floating AI Assistant launcher
+ *   (components/chat/FloatingAiCoach — right-4, size-14, ~0.75rem above the
+ *   bottom nav). size-12 at right-5 shares its centre line; --shell-bottom-nav-h
+ *   (set by AppShell, 0 when the nav is hidden) keeps the stack above the tab
+ *   bar.
+ * - Tablet and desktop have no floating AI launcher (it lives in the header),
+ *   so the button drops to the corner and shows its label — the one obvious
+ *   "Add transaction" on every Finance page.
+ * The finance layout adds bottom padding so the last row can scroll clear.
  */
 export function QuickAddTransaction() {
   const [open, setOpen] = useState(false)
@@ -48,9 +54,12 @@ export function QuickAddTransaction() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Add transaction"
-        className="fixed right-5 bottom-[calc(var(--shell-bottom-nav-h,0px)+5rem)] z-40 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/15 outline-none transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none"
+        className="fixed right-5 bottom-[calc(var(--shell-bottom-nav-h,0px)+5rem)] z-40 flex size-12 items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 outline-none transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none md:right-6 md:bottom-6 md:w-auto md:pr-5 md:pl-4"
       >
         <Plus className="size-5.5" strokeWidth={2.4} aria-hidden />
+        <span className="hidden text-sm font-semibold md:inline" aria-hidden>
+          Add transaction
+        </span>
       </button>
 
       <TransactionSheet

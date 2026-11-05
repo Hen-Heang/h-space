@@ -14,6 +14,9 @@ import { cn } from "@/lib/utils"
  * is already running, so re-firing is what guarantees the session still ends
  * the moment it becomes possible. The parent unmounts the timer when it
  * transitions to the summary, which stops the ticks.
+ *
+ * Because it re-fires, the parent must act on expiry at most once (see
+ * `decideExamExpiry`); otherwise a failed evaluation is retried every tick.
  */
 export function ExamTimer({
   endsAt,

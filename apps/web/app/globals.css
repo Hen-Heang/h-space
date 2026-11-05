@@ -345,6 +345,29 @@ html[data-theme-transition]::view-transition-new(root) {
       letter-spacing: -0.011em;
     }
   }
+
+  /* iOS Safari zooms the whole page when a text field under 16px gets focus.
+     On touch screens, a field that inherits a smaller size from its container
+     is lifted to 16px; anything larger keeps its size (1em = the container's). */
+  @media (pointer: coarse) {
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"]),
+    textarea,
+    select {
+      font-size: max(16px, 1em);
+    }
+  }
+}
+
+/* Same zoom guard for fields that set a small size explicitly. Unlayered so it
+   beats those utilities; only the small text sizes are touched. */
+@media (pointer: coarse) {
+  :is(
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"]),
+    textarea,
+    select
+  ):is(.text-xs, .text-sm, .sm\:text-sm) {
+    font-size: 16px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

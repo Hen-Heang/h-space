@@ -1,4 +1,108 @@
-## 2026-11-05 - Focused Home redesign handoff snapshot
+## 2026-11-05 - Remove Luyra app link handoff snapshot
+
+# HANDOFF
+
+## Snapshot
+
+- **Updated:** 2026-11-05.
+- **Checkout:** `chore/remove-luyra-app-link`, cut from `origin/main` at `6f7dd44` (Planner UX PR #90 merged). Committed and pushed for a PR at the owner's request. No migration, API or data change.
+- **Luyra app link removed:** done at the owner's request, since Finance now lives in H-Space at `/finance`. `lib/projects.ts` no longer has the Luyra card or `LUYRA_FINANCE_URL`. The card is gone from `/apps`, the public landing page's My Apps section, Overview's My Apps grid and the app count. The Finance nav item (`apps-luyra` → `/finance`) is unchanged: sidebar, My Apps tab, phone tab, and Quick Switcher, where "luyra" is still a keyword. A stale `luyra` favourite in localStorage is harmless, because favourites only match existing projects.
+- **Docs:** `apps/web/AGENTS.md`, the `lib/navigation.ts` comment and `docs/LUYRA_MIGRATION.md` (the step 2 note and step 6, Cutover) now say the card was removed.
+- **Tests:** the "My Apps card links to Luyra" case in `components/vault/vault-dashboard.test.tsx` now asserts there is no Luyra card or external Luyra link.
+- **Verification:** `pnpm test:web` passed (178 files, 1,958 tests); `tsc --noEmit` clean; ESLint and Prettier clean on the changed files. Not run: `pnpm build`, a browser check.
+- **Not changed:**
+  - The sign-in page tile "Luyra · Personal finance" in `components/auth/auth-shell.tsx`. It's decorative, not a link.
+  - `apps/luyra` and `luyra.henheang.site`. Those belong to the cutover step.
+- **Untracked, not ours:** `false` at the repo root, `luyra-web/`, the owner's change in `apps/web/lib/api/finance-client.ts`, and `test-results/playwright/.last-run.json`. Left unstaged.
+- **Still open from the reminder work:** `20261105121000_fix_reminder_reconcile_alias.sql` is not applied yet.
+
+## Current focus
+
+1. Owner: merge the Luyra-link PR, and decide whether the sign-in tile should say "Finance".
+2. Planner: owner decision on Tasks-as-default, then slices 3–10. See the top `HANDOFF_HISTORY.md` entry and `apps/web/docs/planner-ux-audit.md`.
+3. Finance redesign phases D–F and the "Keep Luyra's look" wording. See the second `HANDOFF_HISTORY.md` entry.
+4. Carried over: apply the reminder migration; second-brain T2–T7; MCP auth decision.
+
+## 2026-11-05 - Planner UX slices 1–2 handoff snapshot
+
+# HANDOFF
+
+## Snapshot
+
+- **Updated:** 2026-11-05.
+- **Checkout:** `feat/planner-ux`, open as PR #90. Cut from `fix/recovery-loading-skeletons` at `49d7c53`; `origin/main` (finance redesign PR #89, skeletons PR #88) merged in on 2026-11-05 to clear a `HANDOFF.md` conflict. The previous Finance snapshot is now the top entry in `HANDOFF_HISTORY.md`. No migration, API or data change.
+- **Planner UX audit:** `apps/web/docs/planner-ux-audit.md` covers every Planner route, dialog and sheet. It has prioritised findings with file:line references, 7 real bugs (B1–B7), a nav proposal, shared-component recommendations and a 10-slice plan.
+- **Nav recommendation:** keep all five Planner tabs visible. They fit on one line from 375px, and only 320px wraps. Don't add a "More" overflow. The default landing route stays `/goals`. Making Tasks the default needs an owner decision.
+- **Slice 1 (done, committed):**
+  - `TodaysTasks.tsx`: rows no longer repeat "Anytime" / "Overdue" under the matching group header. The word stays as sr-only text because the headers are `aria-hidden`. Scheduled-but-late tasks still show the red "Overdue · HH:MM".
+  - `GoalsHubHeader.tsx` has a new `newGoalEmphasis` prop. On Tasks, New goal is an outline button, so the composer is the one primary action.
+  - New test: `TodaysTasks.test.tsx` (4 cases).
+- **Slice 2 (done, committed):** behaviour bug fixes B1, B2, B4, B5 and B7, each with a test. Details are in audit §7.
+  - B1: travel goals can now be submitted.
+  - B2: the Inbox Tag filter now works.
+  - B4: the calendar task sheet has one close button instead of two.
+  - B5: deleting from the Edit sheet asks for confirmation once.
+  - B7: calendar task titles are no longer cut to 23 characters.
+- **Slice 2 verification:**
+  - `pnpm test:web` passed: 175 files, 1,929 tests.
+  - `pnpm lint`: 0 errors. `tsc` is clean.
+  - Overflow sweep of `inbox`, `goals/calendar` and `goals/create/custom` at 375/1440 passed.
+  - The calendar body was still compiling in the screenshot, so the new two-line rows weren't seen in a browser.
+- **Slice 1 verification:**
+  - `pnpm test:web` passed: 171 files, 1,919 tests.
+  - `pnpm lint`: 0 errors, 5 warnings, none from these files. `tsc --noEmit` is clean.
+  - Narrowed UI sweep at 320/375/1440 for `goals`, `goals/tasks`: no overflow. Before/after screenshots are in `apps/web/test-results/ui-sweep/planner-{before,after}/` (gitignored).
+  - `/goals/[id]` failed to render in both sweeps because the local `next dev` crashed ("Jest worker … child process exceptions") under low memory.
+  - Not run: `pnpm build` (machine low on memory), dark mode, and 390/430/768/1024 widths.
+- **Playwright on this machine now:** `chromium-1208` is a partial install, a single DLL plus a leftover `__dirlock`, and the headless shell is missing. Use `PLAYWRIGHT_EXECUTABLE_PATH="C:/Program Files/Google/Chrome/Application/chrome.exe"`.
+- **Untracked, not ours:** `false` at the repo root, `luyra-web/`, the owner's change in `apps/web/lib/api/finance-client.ts`, and `test-results/playwright/.last-run.json`. Left unstaged.
+- **Still open from the reminder work:** `20261105121000_fix_reminder_reconcile_alias.sql` is not applied yet.
+
+## Current focus
+
+1. Owner: review slice 1 and the audit, then decide on the Tasks-as-default landing question.
+2. Next: slice 3 (one primary action per Planner tab, drop the "View all" links that duplicate tabs, remove the create page's `PageHero` and extra `h1`s).
+3. Then slices 4–10 in order: primary action per tab, task composer, goals list, goal detail header/body, create flow, calendar/inbox, dialog width + full responsive sweep.
+4. Finance redesign follow-ups (phases D–F and the "Keep Luyra's look" wording): see the top `HANDOFF_HISTORY.md` entry.
+5. Carried over: apply the reminder migration; second-brain T2–T7; MCP auth decision.
+
+## 2026-11-05 - Finance redesign (phases A–C) handoff snapshot
+
+# HANDOFF
+
+## Snapshot
+
+- **Updated:** 2026-11-05.
+- **Checkout:** worktree `E:\Fullstack\h-space-finance-redesign`, branch `feat/finance-redesign`, cut from `origin/main` at `cd6fd41` (PR #88 merged). **Uncommitted; nothing pushed.** UI only: no migration, API, type, validation, calculation, auth or deployment change. The main checkout (`fix/iphone-responsive-pass`, with the owner's uncommitted iPhone work) was not touched.
+- **Finance redesign, phases A–C** (full write-up: `apps/web/docs/finance-redesign.md`).
+  - **Audit** of all eight Finance screens with file:line references, and a plan for phases D–F.
+  - **Foundation:**
+    - `app/(main)/finance/luyra-theme.css` keeps only Finance's money colours (income green, watch amber, chart palette). Finance now inherits H-Space's surfaces, violet accent, radius and 16px body; before, it overrode them with Luyra's zinc palette and a 14px base.
+    - Finance primitives: 18/14px section type, neutral metric tiles (no tinted chips or coloured borders), sans tabular amounts, and `AmountText` wraps huge amounts between digit groups.
+    - The base `Button` is 44px on touch at any width.
+    - `FinanceNav` is now underline tabs: Overview · Transactions · Budgets · More below 1280px, all eight from 1280px. More takes the open page's name.
+    - The floating Add is a round + above the AI launcher on phones, and a labelled "Add transaction" pill from 768px.
+  - **Overview:** `finance-overview.tsx` went from 1,047 lines to an orchestrator over `components/finance/overview/*`: cash-flow summary, budget and spending, recent activity, needs attention, insights. Display helpers are in `lib/finance/overview-display.ts`. Every metric stays. Five KPI tiles plus about eight more cards became one summary and a few grouped surfaces. At 375px the page went from 4,871px to about 3,450px tall.
+- **Tests:** new `lib/finance/overview-display.test.ts`, `components/finance/finance-nav.test.tsx`, and `tests/e2e/finance-overview.e2e.ts`. The e2e uses synthetic data only. It covers overflow at 7 widths with typical and extreme data, dark mode, nav keyboard behaviour, long More labels, and the Add button against the AI launcher.
+- **Verification (in the worktree):**
+  - `pnpm lint`: 0 errors; the 5 warnings are pre-existing and not in Finance.
+  - `pnpm test:web`: 173 files, 1,944 tests passed.
+  - `pnpm build:web`: passed (synthetic `NEXT_PUBLIC_SUPABASE_*` values plus `NEXT_TURBOPACK_EXPERIMENTAL_USE_SYSTEM_TLS_CERTS=1`).
+  - `finance-overview.e2e.ts`: 9/9 passed.
+  - `UI_SWEEP` over all 8 Finance routes at 320/375/768/1024/1440: no overflow.
+  - Screenshots are in `apps/web/test-results/ui-sweep/finance-before|finance-after/` and `apps/web/test-results/finance-redesign/` (gitignored).
+- **Local run notes:** the Playwright Chromium folder (`ms-playwright/chromium-1208`) was half-installed with a lock held, so e2e ran on system Chrome (`PLAYWRIGHT_EXECUTABLE_PATH="C:/Program Files/Google/Chrome/Application/chrome.exe"`). The worktree dev server ran on :3217 with synthetic Supabase env values; port 3200 was taken.
+- **Doc conflict to resolve:** root `AGENTS.md` §Product domains 4 says "Keep Luyra's look", and `docs/LUYRA_MIGRATION.md:4` says "keeping Luyra's look". This redesign deliberately moves Finance onto H-Space's design system, at the owner's request. Left unedited for the owner to reword.
+- **Still open from earlier:** `20261105121000_fix_reminder_reconcile_alias.sql` is not applied yet (see history).
+
+## Current focus
+
+0. Owner: review `feat/finance-redesign` (screenshots above, or run it). Then decide whether to commit and open a PR, and update the "Keep Luyra's look" wording.
+1. Phase D: Transactions. Start with the duplicate Add on phones (toolbar + floating + next to the AI launcher), then flat day groups, two-line rows, one search/filter control, and progressive disclosure in the sheet.
+2. Phase E: Budgets, Savings, Subscriptions as rows; Review as a narrative; Analytics de-duplicated; Settings grouped (plan in `apps/web/docs/finance-redesign.md`).
+3. Carried over: apply the reminder reconcile fix and confirm `kori-reminder-delivery-check`; reminder follow-ups; second-brain T2–T7; the MCP auth decision.
+
+## 2026-11-05 - Loading skeletons and tab-row wrapping handoff snapshot
 
 # HANDOFF
 

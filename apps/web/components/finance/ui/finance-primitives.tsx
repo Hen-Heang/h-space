@@ -1,3 +1,4 @@
+import { Fragment } from "react"
 import type { LucideIcon } from "lucide-react"
 import { ChevronLeft, ChevronRight, CircleAlert, RefreshCw, WalletCards } from "lucide-react"
 import { Button } from "@/components/finance/base/button"
@@ -6,27 +7,11 @@ import { cn } from "@/lib/utils"
 
 type FinanceTone = "neutral" | "positive" | "expense" | "warning"
 
-const TONE_STYLES: Record<FinanceTone, { icon: string; value: string; surface: string }> = {
-  neutral: {
-    icon: "bg-secondary text-foreground",
-    value: "text-foreground",
-    surface: "border-border",
-  },
-  positive: {
-    icon: "bg-success/10 text-success",
-    value: "text-success",
-    surface: "border-success/20",
-  },
-  expense: {
-    icon: "bg-destructive/10 text-destructive",
-    value: "text-destructive",
-    surface: "border-destructive/20",
-  },
-  warning: {
-    icon: "bg-warning/10 text-warning",
-    value: "text-warning",
-    surface: "border-warning/20",
-  },
+const TONE_STYLES: Record<FinanceTone, { value: string }> = {
+  neutral: { value: "text-foreground" },
+  positive: { value: "text-success" },
+  expense: { value: "text-destructive" },
+  warning: { value: "text-warning" },
 }
 
 /**
@@ -36,15 +21,29 @@ const TONE_STYLES: Record<FinanceTone, { icon: string; value: string; surface: s
  * display sizes that lands on top of the first digit. Giving the symbol its own
  * box with normal tracking and a little trailing room absorbs the overshoot.
  * Values with no leading symbol (percentages, counts) pass through untouched.
+ *
+ * A line-break opportunity (<wbr>) follows each thousands separator, so when a
+ * very large amount can't fit its column it wraps between digit groups
+ * ("₩1,234,567,/890,000") instead of mid-group, and never clips.
  */
 export function AmountText({ value }: { value: string }) {
   const parts = splitCurrency(value)
   if (!parts) return <>{value}</>
+  const groups = parts.digits.split(",")
   return (
     <>
       {parts.sign}
       <span className="pr-[max(0.08em,3.5px)] font-sans tracking-normal">{parts.symbol}</span>
-      {parts.digits}
+      {groups.map((group, index) => (
+        <Fragment key={index}>
+          {group}
+          {index < groups.length - 1 && (
+            <>
+              ,<wbr />
+            </>
+          )}
+        </Fragment>
+      ))}
     </>
   )
 }
@@ -65,14 +64,14 @@ export function FinanceSection({
   className?: string
 }) {
   return (
-    <section aria-labelledby={id} className={cn("space-y-3", className)}>
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <section aria-labelledby={id} className={cn("min-w-0 space-y-3", className)}>
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         <div className="min-w-0">
-          <h2 id={id} className="text-base font-semibold leading-5 tracking-tight text-foreground">
+          <h2 id={id} className="text-lg font-semibold tracking-tight text-foreground">
             {title}
           </h2>
           {description ? (
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
           ) : null}
         </div>
         {action}
@@ -101,32 +100,27 @@ export function FinanceMetricCard({
   surfaceTone?: FinanceTone
   featured?: boolean
 }) {
-  const styles = TONE_STYLES[tone]
+  // Calm by default: one neutral border, a plain icon, and colour only where
+  // it is a state. `surfaceTone` is still accepted so callers don't change,
+  // but a tile no longer gets a tinted frame or a tinted icon chip.
+  void surfaceTone
+  const iconClass = tone === "neutral" ? "text-muted-foreground" : TONE_STYLES[tone].value
   const valueStyles = TONE_STYLES[valueTone ?? tone]
-  const surfaceStyles = TONE_STYLES[surfaceTone ?? tone]
   return (
     <div
       className={cn(
-        "flex h-full min-w-0 flex-col rounded-2xl border bg-card p-4",
-        featured ? "min-h-44 justify-between sm:p-5" : "gap-3",
-        surfaceStyles.surface,
+        "flex h-full min-w-0 flex-col rounded-xl border border-border bg-card p-4",
+        featured ? "min-h-44 justify-between sm:p-5" : "gap-2",
       )}
     >
-      <div className="flex items-center justify-between gap-2 sm:gap-3">
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        <span
-          className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-xl sm:size-9",
-            styles.icon,
-          )}
-        >
-          <Icon aria-hidden="true" className="size-4" />
-        </span>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
+        <Icon aria-hidden="true" className={cn("size-4 shrink-0", iconClass)} />
       </div>
       <div>
         <p
           className={cn(
-            "[overflow-wrap:anywhere] font-mono font-semibold leading-tight tracking-[-0.035em] tabular-nums",
+            "[overflow-wrap:anywhere] font-semibold leading-tight tracking-tight tabular-nums",
             featured ? "text-[clamp(1.75rem,8vw,2.5rem)]" : "text-xl sm:text-2xl",
             valueStyles.value,
           )}
@@ -134,7 +128,7 @@ export function FinanceMetricCard({
         >
           <AmountText value={value} />
         </p>
-        <div className="mt-1.5 text-xs text-muted-foreground sm:mt-2">{detail}</div>
+        <div className="mt-1.5 text-sm text-muted-foreground">{detail}</div>
       </div>
     </div>
   )
@@ -223,10 +217,14 @@ export function MonthSelector({
   ariaLabel: string
   size?: "sm" | "md"
 }) {
-  const buttonSize = size === "sm" ? "size-11 sm:size-9" : "size-11"
+  // `size` is kept for callers; both now follow the pointer, not the width:
+  // 40px for a mouse, 44px on touch.
+  void size
+  const buttonSize = "size-10 [@media(pointer:coarse)]:size-11"
   return (
     <div
-      className="flex min-h-11 items-center rounded-xl border bg-card p-1 shadow-sm"
+      role="group"
+      className="flex w-fit max-w-full items-center rounded-xl border border-border bg-card p-0.5"
       aria-label={ariaLabel}
     >
       <button
@@ -240,7 +238,10 @@ export function MonthSelector({
       >
         <ChevronLeft className="size-4" aria-hidden="true" />
       </button>
-      <span className="min-w-28 px-1 text-center text-sm font-semibold tabular-nums sm:min-w-32 sm:px-2">
+      <span
+        className="min-w-32 px-1 text-center text-sm font-semibold tabular-nums sm:px-2"
+        aria-live="polite"
+      >
         {label}
       </span>
       <button
@@ -276,8 +277,8 @@ export function FinanceErrorState({
       <div className="flex items-start gap-3">
         <CircleAlert className="mt-0.5 size-5 shrink-0 text-destructive" aria-hidden="true" />
         <div>
-          <p className="text-sm font-semibold">{title}</p>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{description}</p>
+          <p className="text-base font-semibold">{title}</p>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{description}</p>
         </div>
       </div>
       <Button variant="outline" size="sm" className="min-h-11" onClick={onRetry}>
@@ -300,12 +301,10 @@ export function FinanceEmptyState({
   action?: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-card/40 px-4 py-8 text-center sm:px-5 sm:py-10">
-      <span className="flex size-12 items-center justify-center rounded-2xl bg-secondary text-muted-foreground">
-        <Icon className="size-5" aria-hidden="true" />
-      </span>
-      <h3 className="mt-4 text-sm font-semibold">{title}</h3>
-      <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground">{description}</p>
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border px-4 py-8 text-center sm:px-6 sm:py-10">
+      <Icon className="size-6 text-muted-foreground" aria-hidden="true" />
+      <h3 className="mt-3 text-base font-semibold">{title}</h3>
+      <p className="mt-1 max-w-sm text-sm leading-relaxed text-muted-foreground">{description}</p>
       {action ? <div className="mt-4">{action}</div> : null}
     </div>
   )

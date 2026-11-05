@@ -1,12 +1,7 @@
-/**
- * Luyra Finance's landing page. Luyra deploys separately; H-Space only links to
- * it. Shared by the My Apps cards and the nav registry so every Finance entry
- * point opens the same place.
- */
-export const LUYRA_FINANCE_URL = "https://luyra.henheang.site/finance"
-
+// Finance is no longer a card here: it lives inside H-Space at /finance and is
+// reached from the nav's Finance item (`apps-luyra` in lib/navigation.ts).
 export type HSpaceProject = {
-  id: "hengo-learning" | "h-vault" | "luyra" | "h-phsar" | "portfolio"
+  id: "hengo-learning" | "h-vault" | "h-phsar" | "portfolio"
   name: string
   area: string
   description: string
@@ -45,17 +40,6 @@ export const hSpaceProjects: HSpaceProject[] = [
       "A private directory of which email or username belongs to each service, with categories, favorites, and search. Passwords stay in Bitwarden — H-Vault stores account information only.",
     stack: ["Next.js 16", "Supabase RLS", "TanStack Query", "Zod"],
     links: [{ label: "Open app", href: "/vault", kind: "app" }],
-  },
-  {
-    id: "luyra",
-    name: "Luyra",
-    area: "Personal Finance",
-    description: "Manage income, expenses, budgets, savings, financial analytics, and money goals.",
-    stack: ["Next.js 16", "TypeScript", "Supabase Auth", "Neon Postgres", "Vercel Workflow"],
-    links: [
-      { label: "Open app", href: LUYRA_FINANCE_URL, kind: "app" },
-      { label: "GitHub", href: "https://github.com/Hen-Heang/luyra-web", kind: "github" },
-    ],
   },
   {
     id: "h-phsar",

@@ -19,6 +19,7 @@ export function ChipSelect({
         <button
           key={option}
           type="button"
+          aria-pressed={value === option}
           onClick={() => onChange(option)}
           className={cn(
             "min-h-11 rounded-full border px-4 py-2 text-xs font-bold transition-all active:scale-95",

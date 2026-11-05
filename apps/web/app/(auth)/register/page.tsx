@@ -273,6 +273,9 @@ export default function RegisterPage() {
         className={cn(
           authSubmitClass,
           "bg-primary/10 font-semibold text-primary shadow-none hover:bg-primary/15",
+          // The label is longer than a 375px phone allows on one line; let it
+          // wrap instead of widening the page.
+          "h-auto min-h-12 py-2.5 text-center whitespace-normal",
         )}
       >
         <Link href="/login?method=email-code">

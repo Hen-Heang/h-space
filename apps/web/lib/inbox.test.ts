@@ -9,9 +9,11 @@ import {
   isInboxItemInputValid,
   MAX_CONTENT_LENGTH,
   parseTagsInput,
+  resolveInboxTag,
   slugifyInboxTitle,
   sortInboxItems,
   validateInboxItemInput,
+  visibleInboxItems,
   type InboxItem,
 } from "./inbox"
 
@@ -209,5 +211,33 @@ describe("buildJournalConversionPayload", () => {
       content: "Today was productive",
       tags: ["work"],
     })
+  })
+})
+
+describe("visibleInboxItems", () => {
+  const items = [
+    makeItem({ id: "a", tags: ["work"], content: "Plan the week" }),
+    makeItem({ id: "b", tags: ["home"], content: "Plan the garden", pinned: true }),
+    makeItem({ id: "c", tags: [], content: "Unrelated thought" }),
+  ]
+
+  it("applies the chosen tag (the page used to drop it)", () => {
+    expect(visibleInboxItems(items, { tag: "work" }).map((i) => i.id)).toEqual(["a"])
+  })
+
+  it("combines search text and tag", () => {
+    expect(visibleInboxItems(items, { query: "plan", tag: "home" }).map((i) => i.id)).toEqual(["b"])
+    expect(visibleInboxItems(items, { query: "unrelated", tag: "work" })).toEqual([])
+  })
+
+  it("lists pinned items first", () => {
+    expect(visibleInboxItems(items, { query: "plan" }).map((i) => i.id)).toEqual(["b", "a"])
+  })
+
+  it("ignores a tag that no loaded item carries any more", () => {
+    expect(visibleInboxItems(items, { tag: "gone" })).toHaveLength(3)
+    expect(resolveInboxTag("gone", ["work"])).toBe("all")
+    expect(resolveInboxTag("work", ["work"])).toBe("work")
+    expect(resolveInboxTag(undefined, ["work"])).toBe("all")
   })
 })
