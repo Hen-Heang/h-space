@@ -2,10 +2,10 @@ packages:
   - "apps/web"
 
 allowBuilds:
-  '@sentry/cli': set this to true or false
-  msw: set this to true or false
-  sharp: set this to true or false
-  unrs-resolver: set this to true or false
+  '@sentry/cli': false
+  msw: false
+  sharp: false
+  unrs-resolver: false
 ignoredBuiltDependencies:
   - '@sentry/cli'
   - msw

@@ -8,7 +8,7 @@ import { notificationsApi, getApiErrorMessage, type GoalNotification } from "@/l
 import { getUserId } from "@/lib/auth-store"
 
 // Ported from Orbit's notification system. Supabase realtime is deferred, so the
-// bell polls every 60s and refetches after each action (INTEGRATION.md: "Realtime
+// bell polls every 60s and refetches after each action (docs/INTEGRATION.md: "Realtime
 // patching is deferred → replaced by Query invalidation").
 
 export const notificationsQueryKey = (userId?: string | null) =>

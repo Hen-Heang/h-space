@@ -11,7 +11,7 @@ import type { Task } from "@/lib/tasks"
 
 // Ported from Orbit src/hooks/useTodaysTasks.ts. Supabase queries are replaced
 // with KoriAI's REST api (tasksApi.range / goalsApi). Sharing + self-notification
-// side effects are dropped (deferred seams — see INTEGRATION.md).
+// side effects are dropped (deferred seams — see docs/INTEGRATION.md).
 
 const selectionKey = (userId: number | string) => `dg_todays_tasks_selected_goals_v1:${userId}`
 
