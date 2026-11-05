@@ -103,7 +103,7 @@ export const pushApi = {
     const { data, error } = await supabase.functions.invoke("kori-send-push", {
       body: {
         userId,
-        title: "KoriAI",
+        title: "H-Space",
         body: "Push notifications are working 🎉",
         url: "/settings",
         tag: "koriai-test",
@@ -120,7 +120,7 @@ export const pushApi = {
     const { data, error } = await supabase.functions.invoke("kori-send-telegram", {
       body: {
         userId,
-        title: "KoriAI",
+        title: "H-Space",
         body: "Telegram notifications are working 🎉",
         url: "https://hengo.henheang.site/settings",
       },

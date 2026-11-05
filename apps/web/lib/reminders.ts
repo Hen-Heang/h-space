@@ -13,6 +13,27 @@ import { TZDate } from "@date-fns/tz"
 /** Matches lib/task-status.ts's APP_TIMEZONE — the app's default planning zone. */
 export const DEFAULT_REMINDER_TIMEZONE = "Asia/Seoul"
 
+/**
+ * The IANA zone this device is set to, so "every day at 9:00" means 9:00
+ * where the owner actually is. A one-time reminder's datetime-local input is
+ * already read in the device's zone; recurring ones used to be pinned to
+ * Seoul, so the two kinds disagreed whenever the device was elsewhere. Falls
+ * back to the default when the runtime can't name or accept its own zone.
+ */
+export function getDeviceTimeZone(): string {
+  try {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (zone) {
+      // Throws a RangeError for a zone this runtime doesn't recognise.
+      new Intl.DateTimeFormat("en-US", { timeZone: zone })
+      return zone
+    }
+  } catch {
+    /* fall through to the default */
+  }
+  return DEFAULT_REMINDER_TIMEZONE
+}
+
 export type ReminderFrequency = "daily" | "weekly" | "weekdays"
 export type ReminderChannel = "web" | "telegram"
 export type ReminderStatus = "active" | "paused" | "completed" | "cancelled"

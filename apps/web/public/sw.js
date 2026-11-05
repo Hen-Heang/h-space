@@ -1,5 +1,5 @@
-// KoriAI service worker — Web Push delivery.
-// Receives pushes from Orbit's `send-push` Supabase Edge Function
+// H-Space service worker — Web Push delivery.
+// Receives pushes from the `kori-send-push` Supabase Edge Function
 // (payload: { title, body, url }) and shows a notification; clicking focuses
 // an open tab or opens the URL.
 
@@ -11,10 +11,10 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {}
   } catch {
-    data = { title: "KoriAI", body: event.data ? event.data.text() : "" }
+    data = { title: "H-Space", body: event.data ? event.data.text() : "" }
   }
 
-  const title = data.title || "KoriAI"
+  const title = data.title || "H-Space"
   const options = {
     body: data.body || "",
     icon: "/H%20Space%20Icon.png",

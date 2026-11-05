@@ -26,7 +26,7 @@ import { getApiErrorMessage, previewNextRun } from "@/lib/api"
 import { usePush } from "@/hooks/usePush"
 import { useReminderMutations } from "@/hooks/useReminders"
 import {
-  DEFAULT_REMINDER_TIMEZONE,
+  getDeviceTimeZone,
   validateReminderInput,
   WEEKDAY_LABELS,
   type ReminderChannel,
@@ -78,6 +78,9 @@ export function ReminderDialog({
 
   const { create } = useReminderMutations()
   const push = usePush()
+  // Read once per mount. The dialog only renders client-side once opened, so
+  // the server's own zone never reaches the markup.
+  const timeZone = useMemo(() => getDeviceTimeZone(), [])
 
   useEffect(() => {
     if (open) {
@@ -114,7 +117,7 @@ export function ReminderDialog({
   useEffect(() => {
     let cancelled = false
     if (mode === "recurring" && recurrence && !errors.schedule) {
-      previewNextRun(recurrence, DEFAULT_REMINDER_TIMEZONE)
+      previewNextRun(recurrence, timeZone)
         .then((date) => {
           if (!cancelled)
             setPreview(
@@ -136,7 +139,7 @@ export function ReminderDialog({
     return () => {
       cancelled = true
     }
-  }, [errors.schedule, mode, parsedScheduledFor, recurrence])
+  }, [errors.schedule, mode, parsedScheduledFor, recurrence, timeZone])
 
   function toggleChannel(channel: ReminderChannel) {
     setChannels((prev) =>
@@ -163,7 +166,7 @@ export function ReminderDialog({
         entityId: entityId ?? null,
         scheduledFor: input.scheduledFor,
         recurrence,
-        timezone: DEFAULT_REMINDER_TIMEZONE,
+        timezone: timeZone,
         channels,
         deepLink: deepLink ?? null,
       })
@@ -185,7 +188,7 @@ export function ReminderDialog({
               <Bell size={16} />
               New reminder
             </DialogTitle>
-            <DialogDescription>Timezone: {DEFAULT_REMINDER_TIMEZONE}</DialogDescription>
+            <DialogDescription>Timezone: {timeZone}</DialogDescription>
           </DialogHeader>
 
           <div className="mt-4 space-y-3">
