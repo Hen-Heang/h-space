@@ -62,7 +62,9 @@ export function CalendarViewSwitcher({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 px-2 py-2 sm:px-3 xl:flex-row xl:items-center xl:justify-between",
+        // One row whenever it fits (an iPhone 15 Pro Max fits Today, the
+        // arrows, the date and the view switch); wraps only on narrow phones.
+        "flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-2 py-2 sm:px-3",
         className,
       )}
     >
@@ -141,7 +143,7 @@ export function CalendarViewSwitcher({
         <span className="min-w-0 flex-1" />
       )}
 
-      <div className="flex items-center justify-between gap-2 xl:justify-end">
+      <div className="ml-auto flex items-center gap-2">
         <div
           role="group"
           aria-label="Calendar view"

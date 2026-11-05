@@ -19,7 +19,7 @@ export default function AppError({
   }, [error])
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center text-foreground">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-6 text-center text-foreground">
       <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl shadow-sm ring-1 ring-border/50">
         <Image
           src="/H%20Space%20Icon.png"

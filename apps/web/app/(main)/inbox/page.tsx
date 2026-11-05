@@ -14,8 +14,8 @@ import { useInbox } from "@/hooks/useInbox"
 import { useSessionTimer } from "@/hooks/useSessionTimer"
 import {
   collectInboxTags,
-  filterInboxItems,
-  sortInboxItems,
+  resolveInboxTag,
+  visibleInboxItems,
   type InboxFilters as InboxFiltersValue,
 } from "@/lib/inbox"
 import { containerVariants, itemVariants } from "@/lib/motion"
@@ -35,9 +35,12 @@ export default function InboxPage() {
   })
 
   const availableTags = useMemo(() => collectInboxTags(items), [items])
+  // The Tag select used to be ignored here: only the search text reached the
+  // filter. A tag no longer in the list falls back to "All tags".
+  const activeTag = resolveInboxTag(filters.tag, availableTags)
   const visible = useMemo(
-    () => sortInboxItems(filterInboxItems(items, { query: filters.query })),
-    [items, filters.query],
+    () => visibleInboxItems(items, { query: filters.query, tag: activeTag }),
+    [items, filters.query, activeTag],
   )
 
   const inboxCount = items.filter((item) => item.status === "inbox").length
@@ -68,7 +71,11 @@ export default function InboxPage() {
       </motion.div>
 
       <motion.div variants={itemVariants}>
-        <InboxFilters value={filters} onChange={setFilters} availableTags={availableTags} />
+        <InboxFilters
+          value={{ ...filters, tag: activeTag }}
+          onChange={setFilters}
+          availableTags={availableTags}
+        />
       </motion.div>
 
       {/* One surface, divider rows — not a stack of bordered cards. */}

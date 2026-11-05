@@ -133,6 +133,24 @@ export function collectInboxTags(items: InboxItem[]): string[] {
   return [...tags].sort()
 }
 
+/**
+ * The tag filter that actually applies: the chosen tag while some loaded item
+ * still carries it, otherwise "all" — so switching status/type can't leave a
+ * stale tag silently emptying the list.
+ */
+export function resolveInboxTag(tag: string | undefined, availableTags: string[]): string {
+  return tag && tag !== "all" && availableTags.includes(tag) ? tag : "all"
+}
+
+/**
+ * What the Inbox page lists. Status and type are applied by the query; this
+ * narrows the fetched items by search text and tag, pinned first.
+ */
+export function visibleInboxItems(items: InboxItem[], filters: InboxFilters): InboxItem[] {
+  const tag = resolveInboxTag(filters.tag, collectInboxTags(items))
+  return sortInboxItems(filterInboxItems(items, { query: filters.query, tag }))
+}
+
 // ── Conversion ───────────────────────────────────────────────────────────────
 
 const TYPE_TO_NOTE_TYPE: Record<InboxItemType, NoteType> = {

@@ -9,7 +9,10 @@ import { TodaysTasks } from "@/components/goals/TodaysTasks"
 export default function GoalsTasksPage() {
   return (
     <div className="space-y-6 pb-12">
-      <GoalsHubHeader description="Every task tied to your goals, plus anything else on your plate today." />
+      <GoalsHubHeader
+        description="Every task tied to your goals, plus anything else on your plate today."
+        newGoalEmphasis="secondary"
+      />
       <TodaysTasks />
     </div>
   )

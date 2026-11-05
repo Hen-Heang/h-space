@@ -395,7 +395,7 @@ function ChatPageContent() {
               </SheetTrigger>
               <SheetContent side="left" className="w-80 p-0">
                 <SheetTitle className="sr-only">Chat history</SheetTitle>
-                <div className="h-full pt-10">
+                <div className="h-full pt-10 pb-[env(safe-area-inset-bottom)]">
                   <ConversationSidebar {...sidebarProps} />
                 </div>
               </SheetContent>

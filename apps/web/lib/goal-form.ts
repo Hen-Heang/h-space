@@ -61,7 +61,22 @@ export const travelActivities = [
 
 export type GoalFormValues = z.infer<typeof goalSchema>
 
-export type GoalFormStep = "basics" | "user-context" | "structure" | "advanced"
+export type GoalFormStep = "basics" | "travel" | "user-context" | "structure" | "advanced"
+
+/**
+ * The custom goal form's step order: basics → (travel details, travel goals
+ * only) → advanced, where the goal is submitted. Travel used to send "next"
+ * back to the step it was already on, so a travel goal never reached submit.
+ */
+export function nextGoalFormStep(step: GoalFormStep, goalType: string): GoalFormStep {
+  if (step === "basics" && goalType === "travel") return "travel"
+  return "advanced"
+}
+
+export function prevGoalFormStep(step: GoalFormStep, goalType: string): GoalFormStep {
+  if (step === "advanced" && goalType === "travel") return "travel"
+  return "basics"
+}
 
 export interface GoalFormProps {
   onSuccess: (goal: unknown) => void

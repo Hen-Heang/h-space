@@ -28,8 +28,9 @@ export const ModernTaskItem = memo(function ModernTaskItem({
   onDelete,
   compact = false,
 }: ModernTaskItemProps) {
+  // The full title, wrapped to two lines by CSS. It used to be cut to 23
+  // characters in JS before CSS truncation even got a say.
   const rawTitle = task.title || task.description || ""
-  const displayTitle = rawTitle.length > 23 ? `${rawTitle.slice(0, 23)}...` : rawTitle
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -85,11 +86,11 @@ export const ModernTaskItem = memo(function ModernTaskItem({
         <span
           title={rawTitle}
           className={cn(
-            "block w-full min-w-0 overflow-hidden whitespace-nowrap text-ellipsis truncate text-xs font-medium leading-tight",
+            "line-clamp-2 min-w-0 break-words text-sm font-medium leading-snug",
             task.completed ? "text-muted-foreground line-through" : "text-foreground",
           )}
         >
-          {displayTitle}
+          {rawTitle}
         </span>
 
         {timeDisplay && (

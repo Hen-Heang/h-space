@@ -124,6 +124,8 @@ export function TaskDetailsPanel({
                     : "border-primary/40 bg-background hover:border-primary",
                 )}
                 title={selectedTask.completed ? "Mark incomplete" : "Mark complete"}
+                aria-label={selectedTask.completed ? "Mark incomplete" : "Mark complete"}
+                aria-pressed={!!selectedTask.completed}
               >
                 {selectedTask.completed ? (
                   <CheckCircle2 className="h-5 w-5" />
@@ -131,14 +133,15 @@ export function TaskDetailsPanel({
                   <Circle className="h-5 w-5 opacity-40" />
                 )}
               </button>
-              <h1
+              {/* h2: the shell header owns the page's only h1. */}
+              <h2
                 className={cn(
                   "flex-1 break-words text-2xl font-semibold leading-tight tracking-tight text-foreground transition-colors duration-300 sm:text-[1.75rem]",
                   selectedTask.completed && "line-through opacity-40",
                 )}
               >
                 {selectedTask.title || "Untitled task"}
-              </h1>
+              </h2>
             </div>
 
             <div className="divide-y divide-border/40 overflow-hidden rounded-lg border border-border/60 bg-card/50">
