@@ -1,35 +1,24 @@
-/* Luyra's look for the Finance area, ported from Luyra's app/globals.css.
+/* Finance's semantic money colours, ported from Luyra's app/globals.css.
  *
  * Scoped to `.luyra` — the finance layout wrapper plus the portaled sheets,
- * dialogs and menus in components/finance/base/* — so the rest of H-Space
- * keeps its own tokens. Dark mode follows H-Space's `.dark` class
- * (next-themes) instead of Luyra's `data-theme` attribute.
+ * dialogs and menus in components/finance/base/* — so the rest of H-Space is
+ * untouched. Dark mode follows H-Space's `.dark` class (next-themes).
+ *
+ * Since the Finance redesign (2026-11-05) Finance inherits H-Space's own
+ * surfaces, text colours, violet accent, radius and 16px body text from
+ * app/globals.css instead of Luyra's zinc palette and 14px base, so it reads
+ * as part of the same app. What stays here are the colours that carry
+ * financial meaning and have no H-Space equivalent (or only a lower-contrast
+ * one): income green, the watch/near-limit amber, the chart blue and the
+ * fixed categorical chart palette.
  */
 
 .luyra {
-  --background: #fafafa;
-  --foreground: #18181b;
-  --card: #ffffff;
-  --card-foreground: #18181b;
-  --popover: #ffffff;
-  --popover-foreground: #18181b;
-  --primary: #18181b;
-  --primary-foreground: #fafafa;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #18181b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --accent: #f4f4f5;
-  --accent-foreground: #18181b;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --ring: #a1a1aa;
-  --destructive: #dc2626;
-  --destructive-foreground: #fafafa;
+  /* Text-safe on white: emerald-700 ≈ 5.5:1, amber-700 ≈ 5:1. H-Space's own
+     --success is a lighter fill colour that falls under 4.5:1 as small text. */
   --success: #047857;
   --warning: #b45309;
   --finance-chart: #2563eb;
-  --radius: 0.625rem;
   /* Fixed-order categorical palette for multi-series charts — validated for
      adjacent-pair colorblind safety, never reassigned by rank or filter. */
   --chart-series-1: #2a78d6;
@@ -40,28 +29,9 @@
   --chart-series-6: #008300;
 
   color: var(--foreground);
-  font-size: 0.875rem;
-  line-height: 1.25rem;
 }
 
 .dark .luyra {
-  --background: #0a0a0b;
-  --foreground: #fafafa;
-  --card: #131316;
-  --card-foreground: #fafafa;
-  --popover: #131316;
-  --popover-foreground: #fafafa;
-  --primary: #fafafa;
-  --primary-foreground: #18181b;
-  --secondary: #1f1f23;
-  --secondary-foreground: #fafafa;
-  --muted: #1f1f23;
-  --muted-foreground: #a1a1aa;
-  --accent: #1f1f23;
-  --accent-foreground: #fafafa;
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #52525b;
   --success: #34d399;
   --warning: #fbbf24;
   --finance-chart: #60a5fa;
@@ -71,9 +41,4 @@
   --chart-series-4: #c98500;
   --chart-series-5: #d55181;
   --chart-series-6: #008300;
-}
-
-.luyra,
-.luyra * {
-  border-color: var(--border);
 }

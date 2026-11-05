@@ -4,13 +4,17 @@ import { FinanceSessionBoundary } from "@/components/finance/finance-session-bou
 import { QuickAddTransaction } from "@/components/finance/transactions/quick-add-transaction"
 import "./luyra-theme.css"
 
-// Finance, moving in from Luyra (docs/LUYRA_MIGRATION.md). The `luyra` class
-// scopes Luyra's color tokens to this area so its screens keep their look.
-// Data comes from app/api/finance/*, which reads Luyra's Neon database for the
-// linked account only.
+// Finance, moved in from Luyra (docs/LUYRA_MIGRATION.md). The `luyra` class
+// scopes Finance's money colours (income green, watch amber, chart palette);
+// everything else is H-Space's own design system. Data comes from
+// app/api/finance/*, which reads the finance database for the linked account
+// only.
+//
+// pb-16 keeps the last row of every Finance page scrollable clear of the
+// floating "Add transaction" button (and, on phones, the AI launcher below it).
 export default function FinanceLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="luyra mx-auto flex w-full max-w-4xl flex-col gap-6">
+    <div className="luyra mx-auto flex w-full max-w-4xl flex-col gap-6 pb-16">
       <FinanceSessionBoundary>
         <FinanceNav />
         {children}
