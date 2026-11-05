@@ -2,13 +2,13 @@
 
 import { useMemo, useSyncExternalStore } from "react"
 import Link from "next/link"
-import { History } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
 
+import { PageSection } from "@/components/ui/page-section"
+import { RowList } from "@/components/ui/row-list"
 import { resolveRecentDestinations } from "@/lib/home-dashboard"
 import { readRecentNavIds } from "@/lib/last-visited"
 import { allNavItems, todayItem, type NavItem } from "@/lib/navigation"
-
-import { DASHBOARD_ROW, DASHBOARD_ROWS, DashboardCard } from "./dashboard-card"
 
 const ITEMS_BY_ID: ReadonlyMap<string, NavItem> = new Map(
   allNavItems.filter((item) => !item.soon).map((item) => [item.id, item]),
@@ -36,28 +36,33 @@ export function ContinueCard() {
     () =>
       resolveRecentDestinations(recentKey ? recentKey.split(",") : [], ITEMS_BY_ID, {
         excludeIds: [todayItem.id],
-      }),
+      }).slice(0, 3),
     [recentKey],
   )
 
   if (recent.length === 0) return null
 
   return (
-    <DashboardCard title="Continue" icon={History}>
-      <ul className={DASHBOARD_ROWS}>
+    <PageSection title="Continue">
+      <RowList className="grid grid-cols-1 sm:grid-cols-3 sm:divide-y-0 sm:gap-x-6">
         {recent.map((item) => (
           <li key={item.id}>
             <Link
               href={item.href}
-              className={`${DASHBOARD_ROW} text-base text-foreground hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring`}
+              className="flex min-h-14 min-w-0 items-center gap-3 rounded-md px-2 py-2 text-base text-foreground outline-none transition-colors hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring"
             >
               {/* Neutral, like the nav — per-item colours were decoration. */}
               <item.icon size={16} className="shrink-0 text-muted-foreground" aria-hidden="true" />
-              <span className="min-w-0 truncate">{item.label}</span>
+              <span className="line-clamp-2 min-w-0 flex-1 break-words">{item.label}</span>
+              <ArrowUpRight
+                size={14}
+                className="shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
             </Link>
           </li>
         ))}
-      </ul>
-    </DashboardCard>
+      </RowList>
+    </PageSection>
   )
 }

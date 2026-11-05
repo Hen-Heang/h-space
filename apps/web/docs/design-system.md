@@ -121,6 +121,11 @@ inside surface padding.
 | Empty state      | `EmptyState` (`empty-state.tsx`)                    | Icon (optional) + one sentence + one next action.                    |
 | Overlay          | `Dialog`, `Sheet` (bottom on phones), `AlertDialog` | Radix. Scroll inside, safe-area padding.                             |
 
+Home follows the same flat-section rule: `CompactSummary` composes `PageSection`
+without a surface, and `AppShortcut` keeps app links compact. Use `RowList` for
+task, goal, habit, and recent-destination groups; the full catalog remains at
+`/apps`.
+
 `Card` and `Button` lost their drop shadows in Phase 1, so every existing card
 already reads flatter. Elevated shadows remain only on overlays (dialogs,
 popovers, menus, the floating AI button).

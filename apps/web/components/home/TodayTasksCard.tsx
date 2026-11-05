@@ -2,12 +2,14 @@
 
 import Link from "next/link"
 import { AnimatePresence, motion } from "motion/react"
-import { CheckCircle2, Circle, ClipboardList } from "lucide-react"
+import { CheckCircle2, Circle } from "lucide-react"
 
 import { Skeleton } from "@/components/ui/skeleton"
+import { RowList } from "@/components/ui/row-list"
 import { useTodaysTasks } from "@/hooks/useTodaysTasks"
 
-import { DASHBOARD_ROW, DASHBOARD_ROWS, DashboardCard, DashboardNote } from "./dashboard-card"
+import { DashboardNote } from "./dashboard-card"
+import { HOME_ROW } from "./home-primitives"
 
 const VISIBLE_LIMIT = 3
 
@@ -35,11 +37,7 @@ export function TodayTasksCard() {
   const allDone = totalCount > 0 && pending.length === 0
 
   return (
-    <DashboardCard
-      title="Today's tasks"
-      icon={ClipboardList}
-      action={{ href: "/goals/tasks", label: "View all" }}
-    >
+    <div>
       {loading ? (
         <div className="space-y-2 py-1">
           <Skeleton className="h-11 w-full rounded-md" />
@@ -66,7 +64,7 @@ export function TodayTasksCard() {
         </motion.p>
       ) : (
         <>
-          <ul className={DASHBOARD_ROWS}>
+          <RowList aria-label="Today’s pending tasks">
             <AnimatePresence initial={false}>
               {visible.map((task) => {
                 const overdue = groups.isOverdue(task)
@@ -79,7 +77,7 @@ export function TodayTasksCard() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
-                    className={DASHBOARD_ROW}
+                    className={HOME_ROW}
                   >
                     <motion.button
                       type="button"
@@ -113,7 +111,7 @@ export function TodayTasksCard() {
                 )
               })}
             </AnimatePresence>
-          </ul>
+          </RowList>
           {remaining > 0 && (
             <p className="pt-2 text-sm text-muted-foreground">
               +{remaining} more task{remaining === 1 ? "" : "s"} today
@@ -121,6 +119,6 @@ export function TodayTasksCard() {
           )}
         </>
       )}
-    </DashboardCard>
+    </div>
   )
 }
