@@ -49,7 +49,17 @@ export function ReminderButton({
     }
   }
 
-  if (loading) return null
+  // Hold the icon button's footprint while loading so neighbouring actions
+  // don't shift when it appears. Without create access it usually ends up
+  // hidden, so reserving space there would cause the opposite jump.
+  if (loading)
+    return allowCreate ? (
+      <span
+        aria-hidden="true"
+        data-slot="reminder-placeholder"
+        className="inline-block size-8 shrink-0 [@media(pointer:coarse)]:size-11"
+      />
+    ) : null
 
   if (active) {
     return (

@@ -3,6 +3,7 @@
 import { BackLink } from "@/components/ui/back-link"
 import { DailyCheckInForm } from "@/components/recovery/DailyCheckInForm"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { RecoveryPageSkeleton } from "@/components/recovery/RecoveryPageSkeleton"
 import { useHabits } from "@/hooks/useHabits"
 import { useRecoveryDailyCheckIns, useRecoveryEvents, useRecoveryHabits } from "@/hooks/useRecovery"
 
@@ -20,7 +21,7 @@ export default function RecoveryCheckInPage() {
   const { activeHabits } = useHabits()
   const { saveCheckIn, error: checkInError } = useRecoveryDailyCheckIns(target?.id ?? null)
   const { events, logEvent, error: eventsError } = useRecoveryEvents(target?.id ?? null)
-  if (targetsLoading) return null
+  if (targetsLoading) return <RecoveryPageSkeleton width="lg" header={false} cards={1} />
   const error = targetsError || checkInError || eventsError
   if (error || !target)
     return (

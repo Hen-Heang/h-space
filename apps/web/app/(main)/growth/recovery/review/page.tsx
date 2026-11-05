@@ -3,6 +3,7 @@
 import { WeeklyReviewCard } from "@/components/recovery/WeeklyReviewCard"
 import { BackLink } from "@/components/ui/back-link"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { RecoveryPageSkeleton } from "@/components/recovery/RecoveryPageSkeleton"
 import {
   useRecoveryDailyCheckIns,
   useRecoveryEvents,
@@ -33,7 +34,7 @@ export default function RecoveryReviewPage() {
     saveReview,
   } = useRecoveryWeeklyReviews(target?.id ?? null)
   if (targetLoading || eventsLoading || checkInsLoading || triggersLoading || reviewsLoading)
-    return null
+    return <RecoveryPageSkeleton width="4xl" cards={1} />
   const error = targetError || eventsError || checkInsError || triggersError || reviewsError
   if (error || !target)
     return (

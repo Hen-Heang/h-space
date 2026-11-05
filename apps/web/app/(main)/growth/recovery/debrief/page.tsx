@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 
 import { DebriefForm } from "@/components/recovery/DebriefForm"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { RecoveryPageSkeleton } from "@/components/recovery/RecoveryPageSkeleton"
 import { useRecoveryEvents, useRecoveryHabits, useRecoveryPlans } from "@/hooks/useRecovery"
 import { useSessionTimer } from "@/hooks/useSessionTimer"
 
@@ -28,7 +29,7 @@ export default function RecoveryDebriefPage() {
   const { annotateEvent, error: eventsError } = useRecoveryEvents(habit?.id ?? null)
   const { addPlan, error: plansError } = useRecoveryPlans(habit?.id ?? null)
 
-  if (habitsLoading) return null
+  if (habitsLoading) return <RecoveryPageSkeleton width="lg" header={false} cards={1} />
   const error = habitsError || eventsError || plansError
   if (error || !habit)
     return (

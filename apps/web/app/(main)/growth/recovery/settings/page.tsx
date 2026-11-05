@@ -3,11 +3,12 @@
 import { RecoveryPrivacyPanel } from "@/components/recovery/RecoveryPrivacyPanel"
 import { BackLink } from "@/components/ui/back-link"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { RecoveryPageSkeleton } from "@/components/recovery/RecoveryPageSkeleton"
 import { useRecoveryPrivacy } from "@/hooks/useRecovery"
 
 export default function RecoverySettingsPage() {
   const { settings, loading, error, saveSettings, exportData, deleteAllData } = useRecoveryPrivacy()
-  if (loading) return null
+  if (loading) return <RecoveryPageSkeleton width="3xl" />
   if (error)
     return (
       <div className="mx-auto max-w-3xl pt-10">

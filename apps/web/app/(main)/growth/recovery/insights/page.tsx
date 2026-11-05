@@ -3,6 +3,7 @@
 import { RecoveryInsights } from "@/components/recovery/RecoveryInsights"
 import { BackLink } from "@/components/ui/back-link"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { RecoveryPageSkeleton } from "@/components/recovery/RecoveryPageSkeleton"
 import { useRecoveryEvents, useRecoveryHabits, useRecoveryTriggers } from "@/hooks/useRecovery"
 
 export default function RecoveryInsightsPage() {
@@ -13,7 +14,7 @@ export default function RecoveryInsightsPage() {
     error: eventsError,
   } = useRecoveryEvents(target?.id ?? null)
   const { triggers, loading: triggersLoading, error: triggersError } = useRecoveryTriggers()
-  if (targetLoading || eventsLoading || triggersLoading) return null
+  if (targetLoading || eventsLoading || triggersLoading) return <RecoveryPageSkeleton width="5xl" />
   const error = targetError || eventsError || triggersError
   if (error || !target)
     return (
