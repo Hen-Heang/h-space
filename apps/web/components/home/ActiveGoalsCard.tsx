@@ -2,9 +2,10 @@
 
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
-import { Star, Target } from "lucide-react"
+import { Star } from "lucide-react"
 
 import { HealthBadge } from "@/components/goals/HealthBadge"
+import { RowList } from "@/components/ui/row-list"
 import { Skeleton } from "@/components/ui/skeleton"
 import { goalsQueryKey } from "@/hooks/useGoals"
 import { goalsApi } from "@/lib/api"
@@ -12,7 +13,8 @@ import { getUserId } from "@/lib/auth-store"
 import { computeListGoalHealth } from "@/lib/goal-health"
 import { goalTaskProgress, selectActiveGoals } from "@/lib/home-dashboard"
 
-import { DASHBOARD_ROW, DASHBOARD_ROWS, DashboardCard, DashboardNote } from "./dashboard-card"
+import { DashboardNote } from "./dashboard-card"
+import { CompactSummary, HOME_ROW } from "./home-primitives"
 
 /**
  * Compact "Active goals" widget for Today. Reads the same `goalsQueryKey`
@@ -33,11 +35,7 @@ export function ActiveGoalsCard() {
   const goals = selectActiveGoals(data)
 
   return (
-    <DashboardCard
-      title="Active goals"
-      icon={Target}
-      action={{ href: "/goals", label: "View all" }}
-    >
+    <CompactSummary title="Active goals" action={{ href: "/goals", label: "View all" }}>
       {loading ? (
         <div className="space-y-2 py-1">
           <Skeleton className="h-12 w-full rounded-md" />
@@ -53,7 +51,7 @@ export function ActiveGoalsCard() {
           </Link>
         </DashboardNote>
       ) : (
-        <ul className={DASHBOARD_ROWS}>
+        <RowList>
           {goals.map((goal) => {
             const progress = goalTaskProgress(goal)
             // Live, same as the Goals list — the stored health_status only
@@ -63,7 +61,7 @@ export function ActiveGoalsCard() {
               <li key={goal.id}>
                 <Link
                   href={`/goals/${goal.id}`}
-                  className={`${DASHBOARD_ROW} flex-col items-stretch gap-1.5 py-2.5 hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring`}
+                  className={`${HOME_ROW} flex-col items-stretch gap-1.5 py-2.5 hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring`}
                 >
                   <span className="flex min-w-0 items-start gap-2">
                     {goal.isStarred && (
@@ -104,8 +102,8 @@ export function ActiveGoalsCard() {
               </li>
             )
           })}
-        </ul>
+        </RowList>
       )}
-    </DashboardCard>
+    </CompactSummary>
   )
 }

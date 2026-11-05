@@ -2,17 +2,19 @@
 
 import Link from "next/link"
 import { AnimatePresence, motion } from "motion/react"
-import { CheckCircle2, Circle, Flame, TreeDeciduous } from "lucide-react"
+import { CheckCircle2, Circle, Flame } from "lucide-react"
 
 import { CATEGORY_ICONS } from "@/components/habits/categoryMeta"
 import { Skeleton } from "@/components/ui/skeleton"
+import { RowList } from "@/components/ui/row-list"
 import { toCheckinDate, useHabitCheckins, useHabits } from "@/hooks/useHabits"
 import type { Habit } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
-import { DASHBOARD_ROW, DASHBOARD_ROWS, DashboardCard, DashboardNote } from "./dashboard-card"
+import { DashboardNote } from "./dashboard-card"
+import { CompactSummary, HOME_ROW } from "./home-primitives"
 
-const VISIBLE_LIMIT = 4
+const VISIBLE_LIMIT = 3
 
 function HabitCheckinRow({ habit }: { habit: Habit }) {
   const { checkins, currentStreak, loading, toggleCheckin } = useHabitCheckins(
@@ -29,7 +31,7 @@ function HabitCheckinRow({ habit }: { habit: Habit }) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className={DASHBOARD_ROW}
+      className={HOME_ROW}
     >
       {/* Neutral category icon — one accent colour per screen, not one per habit. */}
       <Icon
@@ -107,11 +109,7 @@ export function TodayHabitCheckins() {
   const remaining = Math.max(0, activeHabits.length - VISIBLE_LIMIT)
 
   return (
-    <DashboardCard
-      title="Today's habits"
-      icon={TreeDeciduous}
-      action={{ href: "/growth/habits", label: "View all" }}
-    >
+    <CompactSummary title="Today's habits" action={{ href: "/growth/habits", label: "View all" }}>
       {loading ? (
         <div className="space-y-2 py-1">
           <Skeleton className="h-11 w-full rounded-md" />
@@ -128,11 +126,11 @@ export function TodayHabitCheckins() {
         </DashboardNote>
       ) : (
         <>
-          <ul className={DASHBOARD_ROWS}>
+          <RowList>
             {visible.map((habit) => (
               <HabitCheckinRow key={habit.id} habit={habit} />
             ))}
-          </ul>
+          </RowList>
           {remaining > 0 && (
             <p className="pt-2 text-sm text-muted-foreground">
               +{remaining} more habit{remaining === 1 ? "" : "s"} in Growth
@@ -140,6 +138,6 @@ export function TodayHabitCheckins() {
           )}
         </>
       )}
-    </DashboardCard>
+    </CompactSummary>
   )
 }
