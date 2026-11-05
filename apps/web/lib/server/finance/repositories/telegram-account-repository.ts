@@ -39,23 +39,14 @@ export async function findAccountByUserId(userId: string): Promise<TelegramAccou
   return rows[0] ? toAccount(rows[0]) : null
 }
 
-export async function findAccountByLinkCode(code: string): Promise<TelegramAccount | null> {
-  const rows = (await sql`
-    select user_id, chat_id, telegram_username, link_code, link_code_expires_at, linked_at
-    from telegram_accounts where link_code = ${code}
-  `) as TelegramAccountRow[]
-
-  return rows[0] ? toAccount(rows[0]) : null
-}
-
 export interface LinkedTelegramAccount {
   userId: string
   chatId: string
 }
 
-// Every user the scheduler could actually reach. A row exists as soon as a
-// link code is issued, so `chat_id is not null` is what separates "linked"
-// from "started linking and never finished".
+// Every user the scheduler can reach: rows with a chat. (Luyra issued link
+// codes before a chat existed; H-Space copies the chat from the user's
+// H-Space Telegram link instead — see setChatForUser.)
 export async function findLinkedAccounts(): Promise<LinkedTelegramAccount[]> {
   const rows = (await sql`
     select user_id, chat_id from telegram_accounts
@@ -64,54 +55,6 @@ export async function findLinkedAccounts(): Promise<LinkedTelegramAccount[]> {
   `) as { user_id: string; chat_id: string }[]
 
   return rows.map((row) => ({ userId: row.user_id, chatId: row.chat_id }))
-}
-
-export async function findUserIdByChatId(chatId: string): Promise<string | null> {
-  const rows = (await sql`select user_id from telegram_accounts where chat_id = ${chatId}`) as {
-    user_id: string
-  }[]
-  return rows[0]?.user_id ?? null
-}
-
-// telegram_accounts.user_id is the primary key, so ON CONFLICT is safe here
-// (unlike finance_budgets, which has no matching unique constraint).
-export async function upsertLinkCode(
-  userId: string,
-  code: string,
-  expiresAt: string,
-): Promise<void> {
-  await sql`
-    insert into telegram_accounts (user_id, link_code, link_code_expires_at, updated_at)
-    values (${userId}, ${code}, ${expiresAt}, now())
-    on conflict (user_id) do update set
-      link_code = excluded.link_code,
-      link_code_expires_at = excluded.link_code_expires_at,
-      updated_at = now()
-  `
-}
-
-// A Telegram chat can only ever be linked to one user — called before
-// linkChat() so re-linking a chat that already belongs to someone else
-// cleanly moves it rather than violating the unique index on chat_id.
-export async function clearChatBinding(chatId: string): Promise<void> {
-  await sql`update telegram_accounts set chat_id = null, updated_at = now() where chat_id = ${chatId}`
-}
-
-export async function linkChat(
-  userId: string,
-  chatId: string,
-  username: string | null,
-): Promise<void> {
-  await sql`
-    update telegram_accounts set
-      chat_id = ${chatId},
-      telegram_username = ${username},
-      linked_at = now(),
-      link_code = null,
-      link_code_expires_at = null,
-      updated_at = now()
-    where user_id = ${userId}
-  `
 }
 
 /**

@@ -2,6 +2,9 @@ import "server-only"
 import { sql } from "@/lib/server/finance/db"
 import type { AppUser } from "@/types/user"
 
+// Read-only on purpose: the linked Luyra user already exists in Neon, and
+// H-Space never creates finance users (see requireFinanceAppUser).
+
 interface UserRow {
   id: string
   email: string
@@ -34,19 +37,4 @@ export async function findUserById(id: string): Promise<AppUser | null> {
   `) as UserRow[]
 
   return rows[0] ? toAppUser(rows[0]) : null
-}
-
-export async function createUser(input: {
-  id: string
-  email: string
-  displayName: string | null
-  avatarUrl: string | null
-}): Promise<AppUser> {
-  const rows = (await sql`
-    insert into users (id, email, display_name, avatar_url)
-    values (${input.id}, ${input.email}, ${input.displayName}, ${input.avatarUrl})
-    returning id, email, display_name, avatar_url, timezone, default_currency, created_at, updated_at
-  `) as UserRow[]
-
-  return toAppUser(rows[0])
 }

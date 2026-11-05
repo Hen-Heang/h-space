@@ -342,21 +342,6 @@ export function getMonthlyReport(month: string): Promise<MonthlyReport> {
   return apiFetch<MonthlyReport>(`/api/finance/reports/monthly?month=${month}`)
 }
 
-export interface MoneyCoachRecommendation {
-  categoryId: string
-  categoryName: string
-  currentBudgetKrw: number
-  suggestedBudgetKrw: number
-  rationale: string
-}
-export type MoneyCoachResult =
-  | { ok: true; data: { summary: string; recommendation: MoneyCoachRecommendation | null } }
-  | { ok: false; reason: "not_configured" | "request_failed" }
-
-export function getMoneyCoachInsight(month: string): Promise<MoneyCoachResult> {
-  return apiFetch<MoneyCoachResult>(`/api/finance/money-coach?month=${month}`)
-}
-
 export type TelegramSendResult =
   { sent: true } | { sent: false; reason: "not_configured" | "not_linked" | "send_failed" }
 

@@ -18,22 +18,25 @@ unchanged and remain the rollback.
   h-space-api, so the two are linked by explicit server config,
   `FINANCE_ACCOUNT_LINKS="<hspace-user-id>=<luyra-user-id>"`. It is never
   inferred from email. No link → 403; nothing configured → 503.
-- Every finance query is scoped by `requireFinanceUser(req).financeUserId`,
-  never by an id sent from the browser.
+- Every finance query is scoped by the id from `requireFinanceUserId(req)`
+  (or `requireFinanceSession` / `requireFinanceAppUser` in
+  `lib/server/finance/auth.ts`), never by an id sent from the browser.
+- Scheduled jobs scan the whole finance database, so they message only the
+  Luyra users listed in `FINANCE_ACCOUNT_LINKS` (`onlyLinkedFinanceUsers`).
 - Background jobs (crons, Telegram webhook, push, email) run in **exactly one**
   deployment at any time.
 - Agents don't set Vercel env vars, deploy, or write to Neon; the owner does.
 
 ## Where the data lives (2026-11-04)
 
-- **Old:** Neon project `luyra` (`divine-darkness-19631415`, us-east-2,
-  Postgres 18), branch `main`, database `neondb`. Luyra production still
-  reads and writes here until its Vercel `DATABASE_URL` is switched.
-- **New:** Neon project `h-space-api` (`delicate-voice-81285481`,
-  ap-southeast-1, Postgres 17), branch `production`, database **`luyra`**,
-  owned by role **`luyra_app`**. A separate database: the `hspace` database
+- **Old (archive):** Luyra's own Neon project (us-east-2, Postgres 18),
+  database `neondb`. Kept as read-only history.
+- **New:** a separate database in the h-space-api Neon project
+  (ap-southeast-1, Postgres 17), owned by its own least-privilege role.
+  (Project ids and role names are kept out of this public repo; they're in
+  the owner's Neon console.) A separate database: the `hspace` database
   (h-space-api's auth, Inbox and H-Vault, managed by Flyway) is not touched,
-  and `luyra_app` has no access to it.
+  and the finance role has no access to it.
 - Copied with `pg_dump`/`pg_restore` 18.6 (schema `public` only; Neon's
   `neon_auth` schema left out). Verified: 54/54 tables, identical row counts
   and per-table content fingerprints, identical columns, defaults and 117
@@ -141,6 +144,9 @@ moved; H-Space already owns those.
    - Not planned for now (owner, 2026-11-04): finance Web Push / push
      budget alerts — Telegram and email cover the same alerts, and a second
      push subscription can't coexist with H-Space's own in one browser.
+     The ported push code (`push-notification-service`, the push
+     subscription repository, the `web-push` dependency) was removed on
+     2026-11-05; the copied `push_subscriptions` rows are left untouched.
 6. **Cutover** — `luyra.henheang.site` redirects to H-Space `/finance`; My Apps
    card becomes an internal link. The old `luyra` Neon project stays as the
    read-only archive (no Luyra `DATABASE_URL` change).

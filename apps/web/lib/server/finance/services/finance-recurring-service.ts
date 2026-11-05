@@ -1,4 +1,5 @@
 import "server-only"
+import { linkedFinanceUserIds } from "@/lib/server/finance/account-link"
 import { assertOwnedReferences } from "@/lib/server/finance/services/finance-ownership"
 import { Errors } from "@/lib/server/finance/errors"
 import { appDate } from "@/lib/finance-cron-time"
@@ -229,7 +230,10 @@ export async function runRecurring(
 
   let notified = 0
   if (isTelegramConfigured()) {
+    // Only accounts someone can open in H-Space get the summary.
+    const linked = linkedFinanceUserIds()
     for (const [userId, entries] of applied) {
+      if (!linked.has(userId.toLowerCase())) continue
       const account = await findAccountByUserId(userId)
       if (!account?.chatId) continue
       if (isWithinQuietHours(await findCronPreferences(userId), now)) continue

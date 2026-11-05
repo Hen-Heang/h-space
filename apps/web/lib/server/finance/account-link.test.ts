@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { parseFinanceAccountLinks, resolveLuyraUserId } from "./account-link"
+import {
+  linkedFinanceUserIds,
+  onlyLinkedFinanceUsers,
+  parseFinanceAccountLinks,
+  resolveLuyraUserId,
+} from "./account-link"
 
 // Synthetic ids only.
 const H1 = "11111111-1111-4111-8111-111111111111"
@@ -68,5 +73,24 @@ describe("resolveLuyraUserId", () => {
   it("never resolves a Luyra id passed as an H-Space id", () => {
     const links = parseFinanceAccountLinks(`${H1}=${L1}`)!
     expect(resolveLuyraUserId(links, L1)).toBeNull()
+  })
+})
+
+describe("linked finance users (scheduled-job recipients)", () => {
+  const raw = `${H1}=${L1},${H2}=${L2}`
+
+  it("lists the Luyra ids that some H-Space account links to", () => {
+    expect([...linkedFinanceUserIds(raw)].sort()).toEqual([L1, L2].sort())
+  })
+
+  it("is empty when unconfigured or malformed, so jobs message nobody", () => {
+    expect(linkedFinanceUserIds(undefined).size).toBe(0)
+    expect(linkedFinanceUserIds("not-a-link").size).toBe(0)
+  })
+
+  it("keeps only rows for linked users, case-insensitively", () => {
+    const UNLINKED = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+    const rows = [{ userId: L1.toUpperCase() }, { userId: UNLINKED }, { userId: L2 }]
+    expect(onlyLinkedFinanceUsers(rows, raw).map((r) => r.userId.toLowerCase())).toEqual([L1, L2])
   })
 })

@@ -1,4 +1,5 @@
 import "server-only"
+import { onlyLinkedFinanceUsers } from "@/lib/server/finance/account-link"
 import {
   findBudgetAlertState,
   updateBudgetAlertState,
@@ -13,14 +14,6 @@ import {
   sumExpenseByDayForRange,
   sumTotalsForRange,
 } from "@/lib/server/finance/repositories/finance-transaction-repository"
-import {
-  listPushSubscriptionsForUser,
-  listUsersWithPushSubscriptions,
-} from "@/lib/server/finance/repositories/push-subscription-repository"
-import {
-  isPushNotificationConfigured,
-  sendPushToSubscriptions,
-} from "@/lib/server/finance/services/push-notification-service"
 import {
   escapeTelegramHtml,
   isTelegramConfigured,
@@ -88,7 +81,7 @@ export function budgetLevelFor(
 export async function runBudgetAlerts(now: Date = new Date()): Promise<CronRunResult> {
   if (!isTelegramConfigured()) return NOT_CONFIGURED
 
-  const accounts = await findLinkedAccounts()
+  const accounts = onlyLinkedFinanceUsers(await findLinkedAccounts())
   const month = appMonth(now)
   const start = monthStart(month)
   const end = nextMonthStart(month)
@@ -153,7 +146,7 @@ const SPIKE_MIN_TODAY_KRW = 30_000
 export async function runSpendingSpike(now: Date = new Date()): Promise<CronRunResult> {
   if (!isTelegramConfigured()) return NOT_CONFIGURED
 
-  const accounts = await findLinkedAccounts()
+  const accounts = onlyLinkedFinanceUsers(await findLinkedAccounts())
   const today = appDate(now)
   const month = appMonth(now)
   const start = monthStart(month)
@@ -196,7 +189,7 @@ export async function runSpendingSpike(now: Date = new Date()): Promise<CronRunR
 export async function runDailyReminder(now: Date = new Date()): Promise<CronRunResult> {
   if (!isTelegramConfigured()) return NOT_CONFIGURED
 
-  const accounts = await findLinkedAccounts()
+  const accounts = onlyLinkedFinanceUsers(await findLinkedAccounts())
   const today = appDate(now)
   let notified = 0
 
@@ -226,10 +219,7 @@ function entryCount(count: number): string {
 // Tied to the query rather than restated, so a new column can't drift.
 type DayTotals = Awaited<ReturnType<typeof sumTotalsForRange>>
 
-/**
- * The check-in copy, shared by both channels so Telegram and the push
- * notification never drift apart.
- */
+/** The check-in copy for the daily log reminder. */
 function dailyLogCopy(totals: DayTotals): { title: string; lines: string[] } {
   if (totals.count === 0) {
     return {
@@ -257,61 +247,33 @@ function dailyLogCopy(totals: DayTotals): { title: string; lines: string[] } {
  * day's spending and income, and on a day that already has entries it plays the
  * totals back so a forgotten income line is obvious before the day closes.
  *
- * Delivered on every channel the user has connected — Telegram, browser push,
- * or both — because Telegram is unreachable from some networks and the PWA
- * notification is the only channel that always lands on the phone.
+ * Delivered by Telegram. H-Space: Luyra also sent this as a browser push from
+ * its own site; finance push isn't ported (owner decision, 2026-11-04 — it
+ * can't share a browser subscription with H-Space's own push), so the copied
+ * push_subscriptions rows are deliberately unused.
  */
 export async function runDailyLogReminder(now: Date = new Date()): Promise<CronRunResult> {
-  const telegramAccounts = isTelegramConfigured() ? await findLinkedAccounts() : []
-  const pushUserIds = new Set(
-    isPushNotificationConfigured() ? await listUsersWithPushSubscriptions() : [],
-  )
-
-  const chatIdByUser = new Map(telegramAccounts.map((account) => [account.userId, account.chatId]))
-  const userIds = [...new Set([...chatIdByUser.keys(), ...pushUserIds])]
-  if (userIds.length === 0) {
+  if (!isTelegramConfigured())
+    return { scanned: 0, notified: 0, skipped: "telegram_not_configured" }
+  const accounts = onlyLinkedFinanceUsers(await findLinkedAccounts())
+  if (accounts.length === 0) {
     return { scanned: 0, notified: 0, skipped: "no_reminder_channel_connected" }
   }
 
   const today = appDate(now)
   const tomorrow = nextDate(today)
   let telegram = 0
-  let push = 0
 
-  for (const userId of userIds) {
+  for (const { userId, chatId } of accounts) {
     const preferences = await findCronPreferences(userId)
     if (isWithinQuietHours(preferences, now)) continue
 
     const totals = await sumTotalsForRange(userId, today, tomorrow)
     const { title, lines } = dailyLogCopy(totals)
-
-    // The two channels are independent deliveries; nothing is gained by making
-    // one wait for the other.
-    const chatId = chatIdByUser.get(userId)
-    const [telegramSent, pushResult] = await Promise.all([
-      chatId
-        ? sendTelegramMessage(chatId, [`🧾 <b>${title}</b>`, "", ...lines].join("\n"))
-        : Promise.resolve(false),
-      pushUserIds.has(userId)
-        ? listPushSubscriptionsForUser(userId).then((subscriptions) =>
-            sendPushToSubscriptions(
-              subscriptions,
-              {
-                title,
-                body: lines.join(" "),
-                // One notification per day: a re-run replaces it instead of stacking.
-                tag: `daily-log-${today}`,
-                data: { url: "/finance/transactions" },
-              },
-              { reminder: "daily_log", userId },
-            ),
-          )
-        : Promise.resolve(null),
-    ])
-
-    if (telegramSent) telegram += 1
-    push += pushResult?.sent ?? 0
+    if (await sendTelegramMessage(chatId, [`🧾 <b>${title}</b>`, "", ...lines].join("\n"))) {
+      telegram += 1
+    }
   }
 
-  return { scanned: userIds.length, notified: telegram + push, channels: { telegram, push } }
+  return { scanned: accounts.length, notified: telegram, channels: { telegram } }
 }
