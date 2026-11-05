@@ -169,8 +169,10 @@ UI_SWEEP=1 UI_SWEEP_LABEL=after PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 \
   npx playwright test ui-route-sweep --workers=1
 ```
 
-- No horizontal page scroll. Wide content (tables, tab rows, chip rows) scrolls
-  inside its own `overflow-x-auto` container.
+- No horizontal page scroll. Wide content (tables, chip rows) scrolls inside
+  its own `overflow-x-auto` container. Navigation tab rows (`WorkspaceTabs`,
+  `GoalDetailNav`, `ReviewTabs`, Finance's `FinanceNav`) never scroll: they
+  wrap onto a second line so no tab hides off-screen.
 - Rows stack on phones: title on its own line, metadata below, actions at the
   end or behind a `⋯` menu. Never let buttons squeeze a title to a few
   characters.
