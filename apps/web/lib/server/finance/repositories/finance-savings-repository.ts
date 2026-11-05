@@ -1,6 +1,7 @@
 import "server-only"
 import { sql } from "@/lib/server/finance/db"
 import { Errors } from "@/lib/server/finance/errors"
+import { appMonth } from "@/lib/finance-cron-time"
 import type { SavingsContribution, SavingsGoal, SavingsGoalPurpose } from "@/types/finance"
 import type { CreateSavingsGoalInput, UpdateSavingsGoalInput } from "@/lib/validation/finance"
 
@@ -171,7 +172,9 @@ export async function addContribution(
   userId: string,
   amountUsd: number,
 ): Promise<SavingsContribution> {
-  const month = new Date().toISOString().slice(0, 7)
+  // Asia/Seoul, like every other finance month (UTC filed early-morning
+  // contributions on the 1st under the previous month).
+  const month = appMonth()
   const [rows] = (await sql.transaction([
     sql`
     insert into finance_savings_contributions (goal_id, user_id, amount_usd, contribution_month, source)

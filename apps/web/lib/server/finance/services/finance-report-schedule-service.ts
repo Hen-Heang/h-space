@@ -1,4 +1,5 @@
 import "server-only"
+import { onlyLinkedFinanceUsers } from "@/lib/server/finance/account-link"
 import {
   findReportRecipients,
   markReportSent,
@@ -36,7 +37,7 @@ export async function runWeeklySummaries(now: Date = new Date()): Promise<CronRu
   const emailReady = isEmailConfigured()
   if (!telegramReady && !emailReady) return NO_CHANNEL
 
-  const recipients = await findReportRecipients()
+  const recipients = onlyLinkedFinanceUsers(await findReportRecipients())
   const week = weekStart(appDate(now))
   let telegram = 0
   let email = 0
@@ -77,7 +78,7 @@ export async function runMonthlyReports(now: Date = new Date()): Promise<CronRun
   const emailReady = isEmailConfigured()
   if (!telegramReady && !emailReady) return NO_CHANNEL
 
-  const recipients = await findReportRecipients()
+  const recipients = onlyLinkedFinanceUsers(await findReportRecipients())
   const reportMonth = previousMonth(appMonth(now))
   const label = monthKeyLabel(reportMonth)
   let telegram = 0

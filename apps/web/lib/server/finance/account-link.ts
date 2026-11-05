@@ -51,3 +51,24 @@ export function resolveLuyraUserId(
 ): string | null {
   return links.get(hspaceUserId.toLowerCase()) ?? null
 }
+
+/**
+ * The Luyra user ids that some H-Space account is linked to. The scheduled
+ * jobs run over the whole finance database (which also holds Luyra's other
+ * accounts), so they keep only these users: someone who can't open Finance
+ * in H-Space must not get its messages either. Empty when unconfigured.
+ */
+export function linkedFinanceUserIds(
+  raw: string | undefined | null = process.env.FINANCE_ACCOUNT_LINKS,
+): Set<string> {
+  return new Set(parseFinanceAccountLinks(raw)?.values() ?? [])
+}
+
+/** Keeps only rows whose `userId` is a linked finance user. */
+export function onlyLinkedFinanceUsers<T extends { userId: string }>(
+  rows: T[],
+  raw: string | undefined | null = process.env.FINANCE_ACCOUNT_LINKS,
+): T[] {
+  const linked = linkedFinanceUserIds(raw)
+  return rows.filter((row) => linked.has(row.userId.toLowerCase()))
+}
