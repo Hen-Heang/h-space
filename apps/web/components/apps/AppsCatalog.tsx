@@ -11,7 +11,6 @@ import {
   ShoppingBag,
   Star,
   Vault,
-  WalletCards,
   type LucideIcon,
 } from "lucide-react"
 
@@ -33,7 +32,6 @@ import { cn } from "@/lib/utils"
 const projectIcons: Record<HSpaceProject["id"], LucideIcon> = {
   "hengo-learning": GraduationCap,
   "h-vault": Vault,
-  luyra: WalletCards,
   "h-phsar": ShoppingBag,
   portfolio: BriefcaseBusiness,
 }
