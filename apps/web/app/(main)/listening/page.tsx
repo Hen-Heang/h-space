@@ -17,8 +17,18 @@ import {
 } from "lucide-react"
 import { motion } from "motion/react"
 
-import { PageHero } from "@/components/app/page-hero"
+import { LearnHeader } from "@/components/learn/LearnHeader"
 import { WorkspaceTabs } from "@/components/layout/WorkspaceTabs"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { ChipSelect } from "@/components/ui/chip-select"
 import { ErrorBanner } from "@/components/ui/error-banner"
@@ -43,6 +53,8 @@ const PLAYBACK_RATES = [
   { label: "Normal", rate: 1, icon: null },
   { label: "Slow", rate: 0.65, icon: Gauge },
 ]
+
+const PLAYBACK_ERROR = "Couldn't play the audio. Check your sound settings and try again."
 
 export default function ListeningPage() {
   return (
@@ -71,6 +83,8 @@ function ListeningPageContent() {
   const [answers, setAnswers] = useState<Record<number, number>>({})
   const [result, setResult] = useState<ListeningAttemptResult | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [confirmNewLesson, setConfirmNewLesson] = useState(false)
+  const resultRef = useRef<HTMLDivElement | null>(null)
   const { logActivity } = useLogActivity("listening")
   useSessionTimer("listening")
 
@@ -89,6 +103,13 @@ function ListeningPageContent() {
     }
   }, [])
 
+  // The Submit button disappears once the result shows, so hand focus to the
+  // result card instead of letting it fall back to <body>. Focusing the card
+  // is also what reads the score out to screen readers.
+  useEffect(() => {
+    if (result) resultRef.current?.focus()
+  }, [result])
+
   function resetLessonState() {
     audioRef.current?.pause()
     audioRef.current = null
@@ -99,6 +120,19 @@ function ListeningPageContent() {
     setShowTranscript(false)
     setAnswers({})
     setResult(null)
+  }
+
+  const answeredCount = Object.keys(answers).length
+  // Picked-but-unsubmitted answers are the only work a new lesson throws away;
+  // a scored attempt is already saved.
+  const hasUnsubmittedAnswers = lesson !== null && result === null && answeredCount > 0
+
+  function requestGenerate() {
+    if (hasUnsubmittedAnswers) {
+      setConfirmNewLesson(true)
+      return
+    }
+    void handleGenerate()
   }
 
   async function handleGenerate() {
@@ -141,27 +175,37 @@ function ListeningPageContent() {
     return audioPromiseRef.current
   }
 
+  // play() rejects when the browser blocks playback or can't decode the file.
+  // Say so instead of leaving the button showing "Pause" over silence.
+  async function startPlayback(audio: HTMLAudioElement) {
+    try {
+      await audio.play()
+      setPlaying(true)
+    } catch {
+      setPlaying(false)
+      setError(PLAYBACK_ERROR)
+    }
+  }
+
   async function handlePlay(targetRate: number) {
     const audio = await ensureAudio()
     if (!audio) return
     audio.playbackRate = targetRate
     setRate(targetRate)
-    audio.play()
-    setPlaying(true)
+    await startPlayback(audio)
   }
 
   function handlePauseToggle() {
     const audio = audioRef.current
     if (!audio) {
-      handlePlay(rate)
+      void handlePlay(rate)
       return
     }
     if (playing) {
       audio.pause()
       setPlaying(false)
     } else {
-      audio.play()
-      setPlaying(true)
+      void startPlayback(audio)
     }
   }
 
@@ -187,38 +231,36 @@ function ListeningPageContent() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="space-y-8 pb-12"
+      className="space-y-6 pb-12"
     >
       <motion.div variants={itemVariants}>
-        <PageHero
-          eyebrow="Listening"
-          title="Listening Practice"
-          description="Generate realistic Korean workplace conversations, listen at normal or slow speed, reveal the transcript, then test your comprehension with a quiz."
-          stats={[
-            { label: "Audio", value: "Normal + Slow" },
-            { label: "Format", value: "Convo + Quiz" },
-            { label: "Topics", value: `${topics.length}` },
-          ]}
-        />
+        <LearnHeader description="Listen to a short Korean workplace conversation at normal or slow speed, then answer a few questions about it." />
       </motion.div>
 
       <motion.div
         variants={itemVariants}
-        className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-900/40"
+        className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6"
       >
-        <label className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+        <p
+          id="listening-topic-label"
+          className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground"
+        >
           Topic
-        </label>
-        <ChipSelect options={topics} value={topic} onChange={setTopic} className="mt-3" />
+        </p>
+        <div role="group" aria-labelledby="listening-topic-label">
+          <ChipSelect options={topics} value={topic} onChange={setTopic} className="mt-3" />
+        </div>
         <div className="mt-5 flex justify-end">
           <Button
             type="button"
-            onClick={handleGenerate}
+            size="lg"
+            variant={lesson ? "outline" : "default"}
+            onClick={requestGenerate}
             disabled={loading}
-            className="h-11 rounded-xl bg-emerald-600 px-6 text-sm font-bold text-white hover:bg-emerald-500 active:scale-95"
+            className="rounded-xl"
           >
-            <Sparkles size={16} className="mr-2" strokeWidth={2.5} />
-            {loading ? "Generating..." : lesson ? "New Lesson" : "Generate Lesson"}
+            <Sparkles aria-hidden />
+            {loading ? "Generating..." : lesson ? "New lesson" : "Generate lesson"}
           </Button>
         </div>
       </motion.div>
@@ -228,7 +270,9 @@ function ListeningPageContent() {
       {loading && (
         <motion.div
           variants={itemVariants}
-          className="rounded-3xl border border-border bg-card p-7 dark:bg-slate-900/40"
+          className="rounded-3xl border border-border bg-card p-6"
+          aria-busy="true"
+          aria-label="Generating lesson"
         >
           <Skeleton className="h-5 w-1/3" />
           <Skeleton className="mt-4 h-16 w-full rounded-2xl" />
@@ -239,138 +283,175 @@ function ListeningPageContent() {
       {lesson && !loading && (
         <>
           {/* Player */}
-          <motion.div
+          <motion.section
             variants={itemVariants}
-            className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-900/40"
+            aria-labelledby="listening-lesson-title"
+            className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                  <Headphones size={20} strokeWidth={2.5} />
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Headphones size={20} strokeWidth={2.5} aria-hidden />
                 </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-600/70 dark:text-emerald-400/70">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
                     {lesson.topic}
                   </p>
-                  <h3 className="text-base font-bold text-foreground">{lesson.title}</h3>
+                  <h2
+                    id="listening-lesson-title"
+                    className="text-base font-bold break-words text-foreground"
+                  >
+                    {lesson.title}
+                  </h2>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button
                   type="button"
+                  size="icon"
                   onClick={handlePauseToggle}
                   disabled={audioLoading}
-                  className="h-10 w-10 rounded-full bg-emerald-600 p-0 text-white hover:bg-emerald-500 active:scale-95"
-                  title={playing ? "Pause" : "Play"}
+                  aria-label={audioLoading ? "Loading audio" : playing ? "Pause" : "Play"}
+                  className="rounded-full"
                 >
                   {audioLoading ? (
-                    <Loader2 size={18} className="animate-spin" />
+                    <Loader2 className="animate-spin" aria-hidden />
                   ) : playing ? (
-                    <Pause size={18} />
+                    <Pause aria-hidden />
                   ) : (
-                    <Play size={18} />
+                    <Play aria-hidden />
                   )}
                 </Button>
                 {PLAYBACK_RATES.map(({ label, rate: r, icon: Icon }) => (
                   <Button
                     key={label}
                     type="button"
-                    onClick={() => handlePlay(r)}
-                    className={cn(
-                      "h-10 rounded-xl px-4 text-xs font-bold active:scale-95",
-                      rate === r
-                        ? "bg-foreground text-background"
-                        : "border border-border bg-background text-foreground hover:bg-accent",
-                    )}
+                    variant={rate === r ? "secondary" : "outline"}
+                    aria-pressed={rate === r}
+                    onClick={() => void handlePlay(r)}
+                    disabled={audioLoading}
+                    className="rounded-xl"
                   >
-                    {Icon && <Icon size={14} className="mr-1.5" />} {label}
+                    {Icon && <Icon aria-hidden />}
+                    {label}
                   </Button>
                 ))}
               </div>
             </div>
 
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setShowTranscript((v) => !v)}
-              className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-emerald-600 hover:underline dark:text-emerald-400"
+              aria-expanded={showTranscript}
+              aria-controls="listening-transcript"
+              className="mt-4 -ml-3 text-primary hover:text-primary"
             >
-              {showTranscript ? <EyeOff size={14} /> : <Eye size={14} />}
+              {showTranscript ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
               {showTranscript ? "Hide transcript" : "Show transcript"}
-            </button>
+            </Button>
 
             {showTranscript && (
-              <div className="mt-4 space-y-3">
+              <ol id="listening-transcript" className="mt-2 divide-y divide-border">
                 {lesson.lines.map((line, i) => (
-                  <div
-                    key={i}
-                    className="rounded-2xl border border-border bg-background/60 px-4 py-3 dark:bg-white/4"
-                  >
-                    <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground/70">
+                  <li key={i} className="py-3 first:pt-1 last:pb-0">
+                    <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">
                       {line.speaker}
                     </p>
-                    <p className="mt-1 font-bold text-foreground">{line.korean}</p>
+                    <p
+                      lang="ko"
+                      className="mt-1 text-lg leading-relaxed font-semibold break-keep text-foreground"
+                    >
+                      {line.korean}
+                    </p>
                     <p className="mt-0.5 text-sm text-muted-foreground">{line.english}</p>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ol>
             )}
-          </motion.div>
+          </motion.section>
 
           {/* Quiz */}
           {lesson.quiz.length > 0 && (
-            <motion.div variants={itemVariants} className="space-y-4">
-              <p className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <motion.section
+              variants={itemVariants}
+              aria-labelledby="listening-quiz-heading"
+              className="space-y-4"
+            >
+              <h2
+                id="listening-quiz-heading"
+                className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+              >
                 Comprehension quiz
-              </p>
+              </h2>
               {lesson.quiz.map((q, qi) => {
                 const chosen = answers[qi]
                 const revealed = result !== null
                 return (
-                  <div
-                    key={qi}
-                    className="rounded-2xl border border-border bg-card p-5 dark:bg-slate-900/40"
-                  >
-                    <p className="font-bold text-foreground">
-                      {qi + 1}. {q.question}
-                    </p>
-                    <div className="mt-3 space-y-2">
-                      {q.options.map((opt, oi) => {
-                        const isChosen = chosen === oi
-                        const isCorrect = revealed && oi === q.answerIndex
-                        const isWrongChoice = revealed && isChosen && oi !== q.answerIndex
-                        return (
-                          <button
-                            key={oi}
-                            type="button"
-                            disabled={revealed}
-                            onClick={() => setAnswers((prev) => ({ ...prev, [qi]: oi }))}
-                            className={cn(
-                              "flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all",
-                              isCorrect &&
-                                "border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-                              isWrongChoice &&
-                                "border-red-500/50 bg-red-500/10 text-red-700 dark:text-red-300",
-                              !revealed &&
-                                isChosen &&
-                                "border-emerald-500/50 bg-emerald-500/5 text-foreground",
-                              !revealed &&
-                                !isChosen &&
-                                "border-border bg-background text-foreground hover:bg-accent",
-                              revealed &&
-                                !isCorrect &&
-                                !isWrongChoice &&
-                                "border-border bg-background text-muted-foreground",
-                            )}
-                          >
-                            <span>{opt}</span>
-                            {isCorrect && <CheckCircle2 size={16} className="shrink-0" />}
-                            {isWrongChoice && <XCircle size={16} className="shrink-0" />}
-                          </button>
-                        )
-                      })}
-                    </div>
+                  <div key={qi} className="rounded-2xl border border-border bg-card p-5">
+                    {/* A native radio group: arrow keys move between options and
+                        screen readers announce which one is selected. */}
+                    <fieldset className="m-0 min-w-0 border-0 p-0">
+                      <legend className="p-0 font-bold text-foreground">
+                        {qi + 1}. {q.question}
+                      </legend>
+                      <div className="mt-3 space-y-2">
+                        {q.options.map((opt, oi) => {
+                          const isChosen = chosen === oi
+                          const isCorrect = revealed && oi === q.answerIndex
+                          const isWrongChoice = revealed && isChosen && oi !== q.answerIndex
+                          return (
+                            <label
+                              key={oi}
+                              className={cn(
+                                "flex min-h-11 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/60",
+                                !revealed && "cursor-pointer",
+                                isCorrect &&
+                                  "border-emerald-500/50 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
+                                isWrongChoice &&
+                                  "border-red-500/50 bg-red-500/10 text-red-800 dark:text-red-200",
+                                !revealed &&
+                                  isChosen &&
+                                  "border-primary bg-primary/5 text-foreground",
+                                !revealed &&
+                                  !isChosen &&
+                                  "border-border bg-background text-foreground hover:bg-accent",
+                                revealed &&
+                                  !isCorrect &&
+                                  !isWrongChoice &&
+                                  "border-border bg-background text-muted-foreground",
+                              )}
+                            >
+                              <input
+                                type="radio"
+                                name={`listening-q-${qi}`}
+                                value={oi}
+                                checked={isChosen}
+                                disabled={revealed}
+                                onChange={() => setAnswers((prev) => ({ ...prev, [qi]: oi }))}
+                                className="size-4 shrink-0 accent-primary"
+                              />
+                              <span className="min-w-0 flex-1 break-words">{opt}</span>
+                              {isCorrect && (
+                                <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold">
+                                  <CheckCircle2 size={16} aria-hidden />
+                                  Correct answer
+                                </span>
+                              )}
+                              {isWrongChoice && (
+                                <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold">
+                                  <XCircle size={16} aria-hidden />
+                                  Your answer
+                                </span>
+                              )}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </fieldset>
                     {revealed && q.explanation && (
-                      <p className="mt-3 rounded-xl bg-sky-50/60 px-4 py-2.5 text-sm leading-6 text-sky-800 dark:bg-sky-400/6 dark:text-sky-200">
+                      <p className="mt-3 rounded-xl bg-muted/60 px-4 py-2.5 text-sm leading-6 text-foreground">
                         {q.explanation}
                       </p>
                     )}
@@ -379,44 +460,55 @@ function ListeningPageContent() {
               })}
 
               {!result ? (
-                <div className="flex justify-end">
+                <div className="flex flex-wrap items-center justify-end gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    {answeredCount} of {lesson.quiz.length} answered
+                  </p>
                   <Button
                     type="button"
+                    size="lg"
                     onClick={handleSubmit}
                     disabled={!allAnswered || submitting}
-                    className="h-11 rounded-xl bg-emerald-600 px-6 text-sm font-bold text-white hover:bg-emerald-500 active:scale-95 disabled:opacity-50"
+                    className="rounded-xl"
                   >
                     {submitting ? "Scoring..." : "Submit answers"}
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-emerald-500/20 bg-emerald-500/5 px-6 py-4">
+                <div
+                  ref={resultRef}
+                  tabIndex={-1}
+                  aria-labelledby="listening-result-score"
+                  aria-describedby="listening-result-saved"
+                  className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border bg-card px-5 py-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/60 sm:px-6"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
-                      <CheckCircle2 size={20} strokeWidth={2.5} />
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <CheckCircle2 size={20} strokeWidth={2.5} aria-hidden />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
-                        {result.score} / {result.total} correct · {result.accuracy}%
+                      <p id="listening-result-score" className="text-sm font-bold text-foreground">
+                        {result.score} of {result.total} correct · {result.accuracy}%
                       </p>
-                      <p className="text-xs font-medium text-muted-foreground">
+                      <p id="listening-result-saved" className="text-sm text-muted-foreground">
                         Saved to your progress.
                       </p>
                     </div>
                   </div>
                   <Button
                     type="button"
+                    variant="outline"
                     onClick={() => {
                       setAnswers({})
                       setResult(null)
                     }}
-                    className="h-10 rounded-xl border border-border bg-background px-5 text-xs font-bold text-foreground hover:bg-accent active:scale-95"
+                    className="rounded-xl"
                   >
-                    <RotateCcw size={14} className="mr-2" /> Try again
+                    <RotateCcw aria-hidden /> Try again
                   </Button>
                 </div>
               )}
-            </motion.div>
+            </motion.section>
           )}
         </>
       )}
@@ -426,13 +518,33 @@ function ListeningPageContent() {
           variants={itemVariants}
           className="rounded-3xl border border-dashed border-border bg-card/40 p-10 text-center"
         >
-          <Headphones size={32} className="mx-auto text-muted-foreground/50" strokeWidth={2} />
+          <Headphones
+            size={32}
+            className="mx-auto text-muted-foreground/50"
+            strokeWidth={2}
+            aria-hidden
+          />
           <p className="mt-3 text-sm font-bold text-foreground">No lesson yet</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Pick a topic above and generate your first listening lesson.
           </p>
         </motion.div>
       )}
+
+      <AlertDialog open={confirmNewLesson} onOpenChange={setConfirmNewLesson}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Start a new lesson?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your answers to this lesson haven&apos;t been submitted and will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep this lesson</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handleGenerate()}>New lesson</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   )
 }
