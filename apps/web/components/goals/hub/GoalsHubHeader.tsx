@@ -10,6 +10,12 @@ import { GoalsHubNav } from "./GoalsHubNav"
 interface GoalsHubHeaderProps {
   description: string
   stats?: Array<{ label: string; value: string }>
+  /**
+   * "secondary" on pages whose own primary action lives in the content
+   * (Tasks' composer), so the view keeps one filled button. New goal stays
+   * reachable either way.
+   */
+  newGoalEmphasis?: "primary" | "secondary"
 }
 
 /**
@@ -19,12 +25,21 @@ interface GoalsHubHeaderProps {
  * (`Planner / Goals`), so there is no second hero repeating it. Per-tab
  * stats are opt-in (Overview only) and render as a compact inline row.
  */
-export function GoalsHubHeader({ description, stats }: GoalsHubHeaderProps) {
+export function GoalsHubHeader({
+  description,
+  stats,
+  newGoalEmphasis = "primary",
+}: GoalsHubHeaderProps) {
   return (
     <div className="space-y-3">
       <GoalsHubNav
         actions={
-          <Button asChild size="sm" className="h-9 rounded-md px-3">
+          <Button
+            asChild
+            size="sm"
+            variant={newGoalEmphasis === "primary" ? "default" : "outline"}
+            className="h-9 rounded-md px-3"
+          >
             <Link href="/goals/create">
               <Plus size={16} strokeWidth={2} aria-hidden="true" />
               New goal
