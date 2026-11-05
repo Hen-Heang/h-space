@@ -3,7 +3,7 @@ import { requireCronAuthorization } from "@/lib/server/finance/cron"
 import { apiError, apiSuccess } from "@/lib/server/finance/http"
 import { runDailyLogReminder } from "@/lib/server/finance/services/finance-alert-service"
 
-// web-push needs Node APIs, so this route can't run on the edge.
+// Node runtime: the CRON_SECRET check uses node:crypto (timingSafeEqual).
 export const runtime = "nodejs"
 
 export async function GET(request: NextRequest) {

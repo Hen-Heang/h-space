@@ -52,3 +52,29 @@ describe("assertOwnedReferences", () => {
     expect((error as AppError).status).toBe(422)
   })
 })
+
+describe("assertOwnedReferences — category type", () => {
+  it("rejects an expense-only category on income with 422", async () => {
+    findCategoryById.mockResolvedValue({ id: CATEGORY, name: "Food", type: "expense" })
+    const error = await assertOwnedReferences(USER, { categoryId: CATEGORY, type: "income" }).catch(
+      (e: unknown) => e,
+    )
+    expect((error as AppError).status).toBe(422)
+  })
+
+  it("accepts a matching or 'both' category", async () => {
+    findCategoryById.mockResolvedValue({ id: CATEGORY, name: "Food", type: "expense" })
+    await expect(
+      assertOwnedReferences(USER, { categoryId: CATEGORY, type: "expense" }),
+    ).resolves.toBeUndefined()
+    findCategoryById.mockResolvedValue({ id: CATEGORY, name: "Gift", type: "both" })
+    await expect(
+      assertOwnedReferences(USER, { categoryId: CATEGORY, type: "income" }),
+    ).resolves.toBeUndefined()
+  })
+
+  it("skips the type check when the write has no type (budgets)", async () => {
+    findCategoryById.mockResolvedValue({ id: CATEGORY, name: "Salary", type: "income" })
+    await expect(assertOwnedReferences(USER, { categoryId: CATEGORY })).resolves.toBeUndefined()
+  })
+})

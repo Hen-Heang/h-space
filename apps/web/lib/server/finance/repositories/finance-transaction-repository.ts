@@ -153,15 +153,6 @@ export async function findTransactionsByUser(
   return { transactions: rows.slice(0, PAGE_SIZE).map(toTransaction), hasMore }
 }
 
-export async function findTransactionById(id: string, userId: string): Promise<Transaction | null> {
-  const rows = (await sql`
-    select ${sql.unsafe(TRANSACTION_SELECT)} ${sql.unsafe(TRANSACTION_FROM)}
-    where t.id = ${id} and t.user_id = ${userId}
-  `) as TransactionRow[]
-
-  return rows[0] ? toTransaction(rows[0]) : null
-}
-
 export async function findRecentTransactionsByUser(
   userId: string,
   start: string,

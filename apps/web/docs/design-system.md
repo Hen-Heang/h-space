@@ -171,8 +171,11 @@ UI_SWEEP=1 UI_SWEEP_LABEL=after PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 \
 
 - No horizontal page scroll. Wide content (tables, chip rows) scrolls inside
   its own `overflow-x-auto` container. Navigation tab rows (`WorkspaceTabs`,
-  `GoalDetailNav`, `ReviewTabs`, Finance's `FinanceNav`) never scroll: they
-  wrap onto a second line so no tab hides off-screen.
+  `GoalDetailNav`, `ReviewTabs`) never scroll: they wrap onto a second line
+  so no tab hides off-screen. Finance's `FinanceNav` has eight destinations,
+  so below 1280px it shows the first three plus a **More** menu (which takes
+  the open page's name) and only wraps as a last resort
+  ([`finance-redesign.md`](finance-redesign.md)).
 - Rows stack on phones: title on its own line, metadata below, actions at the
   end or behind a `⋯` menu. Never let buttons squeeze a title to a few
   characters.

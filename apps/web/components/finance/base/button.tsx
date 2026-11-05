@@ -16,10 +16,12 @@ const buttonVariants = cva(
         link: "text-foreground underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-11 px-4 py-2 sm:h-9",
-        sm: "h-11 rounded-lg px-3 text-xs sm:h-8",
-        lg: "h-12 rounded-xl px-6 sm:h-10",
-        icon: "size-11 sm:size-9",
+        // Same rule as components/ui/button: compact for a mouse, 44px on
+        // touch (pointer: coarse) at any width — a tablet is still a finger.
+        default: "h-10 px-4 py-2 [@media(pointer:coarse)]:h-11",
+        sm: "h-9 rounded-lg px-3 text-sm [@media(pointer:coarse)]:h-11",
+        lg: "h-11 rounded-xl px-6 [@media(pointer:coarse)]:h-12",
+        icon: "size-10 [@media(pointer:coarse)]:size-11",
       },
     },
     defaultVariants: {

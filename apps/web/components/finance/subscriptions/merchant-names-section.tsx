@@ -37,7 +37,9 @@ function writeDismissed(ids: Set<string>): void {
   }
 }
 
-const merchantNamesKey = [...financeKeys.all, "merchant-names"] as const
+// Includes the H-Space user id like every other finance key, so another
+// account signing in on this browser never sees these names from the cache.
+const merchantNamesKey = () => [...financeKeys.user(), "merchant-names"] as const
 
 /**
  * Lets the user merge spellings of one merchant ("Claude", "Claude AI Pro")
@@ -47,7 +49,7 @@ const merchantNamesKey = [...financeKeys.all, "merchant-names"] as const
  */
 export function MerchantNamesSection({ onChanged }: { onChanged: () => void }) {
   const queryClient = useQueryClient()
-  const names = useQuery({ queryKey: merchantNamesKey, queryFn: getMerchantNames })
+  const names = useQuery({ queryKey: merchantNamesKey(), queryFn: getMerchantNames })
   const [dismissed, setDismissed] = useState<Set<string>>(() =>
     typeof window === "undefined" ? new Set() : readDismissed(),
   )
@@ -56,7 +58,7 @@ export function MerchantNamesSection({ onChanged }: { onChanged: () => void }) {
   const [error, setError] = useState<string | null>(null)
 
   async function afterChange() {
-    await queryClient.invalidateQueries({ queryKey: merchantNamesKey })
+    await queryClient.invalidateQueries({ queryKey: merchantNamesKey() })
     onChanged()
   }
 
