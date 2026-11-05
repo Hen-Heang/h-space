@@ -1,5 +1,6 @@
 import { FinanceNav } from "@/components/finance/finance-nav"
 import { FinanceSessionBoundary } from "@/components/finance/finance-session-boundary"
+import { QuickAddTransaction } from "@/components/finance/transactions/quick-add-transaction"
 import "./luyra-theme.css"
 
 // Finance, moving in from Luyra (docs/LUYRA_MIGRATION.md). The `luyra` class
@@ -12,6 +13,8 @@ export default function FinanceLayout({ children }: { children: React.ReactNode 
       <FinanceSessionBoundary>
         <FinanceNav />
         {children}
+        {/* Floating "+ add transaction" on every Finance page (Luyra's quick add). */}
+        <QuickAddTransaction />
       </FinanceSessionBoundary>
     </div>
   )
