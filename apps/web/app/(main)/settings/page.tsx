@@ -469,8 +469,10 @@ export default function SettingsPage() {
                     {push.supported
                       ? push.webState === "denied"
                         ? "Blocked in browser settings."
-                        : "Alerts when Hengo isn't open."
-                      : "Not supported in this browser."}
+                        : "Alerts when H-Space isn't open."
+                      : push.needsHomeScreen
+                        ? "On iPhone, tap Share → Add to Home Screen, then open H-Space from that icon to turn this on."
+                        : "Not supported in this browser."}
                   </p>
                 </div>
               </div>
