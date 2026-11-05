@@ -43,6 +43,7 @@ import {
   type InterviewAnalytics,
   type InterviewEvaluation,
 } from "@/lib/interview"
+import { canFinishInterview, decideExamExpiry } from "@/lib/interview-expiry"
 import { INTERVIEW_MODES, type InterviewMode } from "@/lib/interview-modes"
 import { sampleUnexpectedQuestions } from "@/lib/interview-unexpected"
 import {
@@ -107,6 +108,9 @@ export default function InterviewPage() {
   const [analytics, setAnalytics] = useState<InterviewAnalytics | null>(null)
   // Exam-mode countdown target (epoch ms); null when untimed.
   const [endsAt, setEndsAt] = useState<number | null>(null)
+  // Set once the exam timer has run out and its one automatic evaluation (or
+  // the "nothing to score" notice) has happened. See decideExamExpiry.
+  const [timeUp, setTimeUp] = useState(false)
   // Past scorecards — localStorage first (instant), merged with the Supabase
   // attempts once they arrive so history syncs across devices.
   const [history, setHistory] = useState<ScorecardRecord[]>(loadScorecards)
@@ -236,6 +240,7 @@ export default function InterviewPage() {
       setEvaluation(null)
       setAnalytics(null)
       setEndsAt(cfg.durationSeconds ? Date.now() + cfg.durationSeconds * 1000 : null)
+      setTimeUp(false)
       speech.reset()
       sessionActiveRef.current = true
       setPhase("session")
@@ -354,6 +359,26 @@ export default function InterviewPage() {
     setIsEvaluating(false)
   }
 
+  // ExamTimer calls this on every tick once time is up. Only the first tick
+  // that finds the session idle acts; after that, a failed evaluation is
+  // retried by the candidate with Finish, never by the timer.
+  function handleExamExpire() {
+    const action = decideExamExpiry({
+      alreadyHandled: timeUp,
+      busy: isEvaluating || isExaminerThinking,
+      answeredCount: entries.filter((entry) => entry.kind === "answer").length,
+    })
+    if (action === "ignore" || action === "wait") return
+    setTimeUp(true)
+    if (action === "nothing-to-score") {
+      sessionActiveRef.current = false
+      speech.stop()
+      setError("Time's up. You didn't answer any questions, so there's nothing to score.")
+      return
+    }
+    void finishInterview()
+  }
+
   function endSession() {
     sessionActiveRef.current = false
     stopSpeechAudio()
@@ -367,6 +392,7 @@ export default function InterviewPage() {
     setEvaluation(null)
     setAnalytics(null)
     setEndsAt(null)
+    setTimeUp(false)
     setPhase("select")
   }
 
@@ -419,7 +445,7 @@ export default function InterviewPage() {
             question {Math.max(questionCount, 1)}
           </p>
           <div className="flex items-center gap-2">
-            {endsAt !== null && <ExamTimer endsAt={endsAt} onExpire={finishInterview} />}
+            {endsAt !== null && <ExamTimer endsAt={endsAt} onExpire={handleExamExpire} />}
             <Button variant="outline" size="sm" onClick={requestEndSession} className="h-10">
               <RotateCcw aria-hidden="true" /> End session
             </Button>
@@ -563,8 +589,13 @@ export default function InterviewPage() {
         >
           <Send aria-hidden="true" /> Submit answer
         </Button>
-        {/* Practice allows an early finish; exam mode wants a real conversation first. */}
-        {answeredCount >= cfg.minAnswersBeforeFinish && (
+        {/* Practice allows an early finish; exam mode wants a real conversation
+            first, until time is up. After a failed evaluation this is the retry. */}
+        {canFinishInterview({
+          answeredCount,
+          minAnswersBeforeFinish: cfg.minAnswersBeforeFinish,
+          timeUp,
+        }) && (
           <Button
             size="lg"
             variant="outline"
