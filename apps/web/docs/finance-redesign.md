@@ -14,15 +14,15 @@ Line references in the audit are to `main` at `cd6fd41`, before this branch.
 
 ### Shared foundation
 
-| Problem | Where |
-| --- | --- |
-| Finance overrode H-Space's whole palette (zinc neutrals, near-black `--primary`) and set a **14px base font** for everything inside it | `app/(main)/finance/luyra-theme.css:10-45` |
-| Eight nav tabs as a 2→3→4-column grid of pills: four rows at 375px, a second accent style | `components/finance/finance-nav.tsx:37-55` |
-| Section headings 16px, descriptions 13px (H-Space: 18 / 14) | `components/finance/ui/finance-primitives.tsx:71-75` |
-| Every metric is a bordered tile with a tone-coloured border and a tinted icon chip; summaries are grids of four | `finance-primitives.tsx:108-139`, `:352-372` |
-| Base buttons shrink by viewport width (`sm:h-8`/`sm:size-9`), so tablets get 32–36px targets; `sm` label 13px | `components/finance/base/button.tsx:19-22` |
-| Amounts in the system monospace font (needed the `AmountText` ₩ workaround) | throughout |
-| The floating + sat over content on phones and offered no label on desktop | `transactions/quick-add-transaction.tsx:51` |
+| Problem                                                                                                                                | Where                                                |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Finance overrode H-Space's whole palette (zinc neutrals, near-black `--primary`) and set a **14px base font** for everything inside it | `app/(main)/finance/luyra-theme.css:10-45`           |
+| Eight nav tabs as a 2→3→4-column grid of pills: four rows at 375px, a second accent style                                              | `components/finance/finance-nav.tsx:37-55`           |
+| Section headings 16px, descriptions 13px (H-Space: 18 / 14)                                                                            | `components/finance/ui/finance-primitives.tsx:71-75` |
+| Every metric is a bordered tile with a tone-coloured border and a tinted icon chip; summaries are grids of four                        | `finance-primitives.tsx:108-139`, `:352-372`         |
+| Base buttons shrink by viewport width (`sm:h-8`/`sm:size-9`), so tablets get 32–36px targets; `sm` label 13px                          | `components/finance/base/button.tsx:19-22`           |
+| Amounts in the system monospace font (needed the `AmountText` ₩ workaround)                                                            | throughout                                           |
+| The floating + sat over content on phones and offered no label on desktop                                                              | `transactions/quick-add-transaction.tsx:51`          |
 
 ### Overview (`components/finance/finance-overview.tsx`, 1,047 lines)
 
