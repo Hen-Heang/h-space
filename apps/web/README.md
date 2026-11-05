@@ -552,7 +552,7 @@ Other repo notes:
 
 - Path alias `@/*` maps to the repo root.
 - `dev-learning-notes/` is an unrelated embedded side project (own README/CLAUDE.md) — not part of the app; don't wire it in.
-- `GuideLineNew.md` holds the full product vision and module list; `STUDY-PLAN.md`, `FOUNDATIONS_BACKEND.md`, `INTEGRATION.md` are working docs (INTEGRATION.md predates the Supabase migration and is partly stale).
+- `docs/GuideLineNew.md` holds the full product vision and module list; `docs/STUDY-PLAN.md`, `docs/FOUNDATIONS_BACKEND.md`, `docs/FOUNDATIONS_CURRICULUM.md`, `docs/INTEGRATION.md` are working docs (INTEGRATION.md predates the Supabase migration and is partly stale).
 
 ---
 
