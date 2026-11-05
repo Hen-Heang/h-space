@@ -26,7 +26,9 @@ export function TaskDetailsSheet({
 }: TaskDetailsSheetProps) {
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="bottom" className="h-[88dvh] rounded-t-3xl p-0">
+      {/* The panel brings its own close button; the Sheet's default X sat on
+          top of the panel's Delete button in the same corner. */}
+      <SheetContent side="bottom" showCloseButton={false} className="h-[88dvh] rounded-t-3xl p-0">
         <SheetTitle className="sr-only">Task details</SheetTitle>
         <TaskDetailsPanel
           selectedTask={selectedTask}

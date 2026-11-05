@@ -18,6 +18,8 @@ import {
   type GoalFormValues,
   type GoalType,
   goalSchema,
+  nextGoalFormStep,
+  prevGoalFormStep,
 } from "@/lib/goal-form"
 import type { GoalMetadata } from "@/lib/goals"
 import { cn } from "@/lib/utils"
@@ -172,7 +174,8 @@ export function GoalFormContainer({
       {/* Step indicator */}
       <div className="flex items-center justify-center gap-3">
         {(["basics", "advanced"] as const).map((s, i) => {
-          const active = step === s
+          // Travel details are part of step 1 ("Goal details").
+          const active = s === "basics" ? step !== "advanced" : step === "advanced"
           return (
             <div key={s} className="flex items-center gap-3">
               <div
@@ -207,21 +210,21 @@ export function GoalFormContainer({
             {step === "basics" ? (
               <BasicInfoStep
                 form={form}
-                onNextStep={() => setStep("advanced")}
+                onNextStep={() => setStep(nextGoalFormStep(step, selectedGoalType))}
                 selectedGoalType={selectedGoalType}
               />
-            ) : selectedGoalType === "travel" ? (
+            ) : step === "travel" && selectedGoalType === "travel" ? (
               <TravelDetailsStep
                 form={form}
-                onPrevStep={() => setStep("basics")}
-                onNextStep={() => setStep("advanced")}
+                onPrevStep={() => setStep(prevGoalFormStep(step, selectedGoalType))}
+                onNextStep={() => setStep(nextGoalFormStep(step, selectedGoalType))}
                 selectedActivities={selectedActivities}
                 toggleActivity={toggleActivity}
               />
             ) : (
               <AdvancedStep
                 form={form}
-                onPrevStep={() => setStep("basics")}
+                onPrevStep={() => setStep(prevGoalFormStep(step, selectedGoalType))}
                 onSubmit={handleSubmit}
                 isSubmitting={isLoading}
                 isEdit={isEdit}
