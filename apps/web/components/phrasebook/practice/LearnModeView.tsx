@@ -10,6 +10,7 @@ import { RevealText } from "@/components/phrasebook/RevealText"
 import { cn } from "@/lib/utils"
 import type { PhraseCardWithProgress } from "@/lib/types"
 import type { RomanizationMode } from "@/lib/korean-coach/schemas"
+import { situationLabel } from "@/lib/korean-phrasebook/labels"
 
 interface LearnModeViewProps {
   /** Called from the last card's Finish button, so Learn reaches the completion screen. */
@@ -33,7 +34,7 @@ export function LearnModeView({ cards, romanizationPreference, onExhausted }: Le
         <span>
           {index + 1} / {cards.length}
         </span>
-        <span>{card.situation}</span>
+        <span>{situationLabel(card.situation)}</span>
       </div>
 
       <div className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-900/40 sm:p-8">

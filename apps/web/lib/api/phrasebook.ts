@@ -12,14 +12,20 @@ import {
 } from "@/lib/korean-phrasebook/mastery"
 import {
   planSeedUpsert,
+  seedContentKey,
   type ExistingSeedCard,
   type ExistingSeedCollection,
 } from "@/lib/korean-phrasebook/seed"
 import {
   phraseCardContentSchema,
   phraseCollectionInputSchema,
+  workContextSchema,
   type PhraseCardContentInput,
+  type PhraseProvenance,
+  type WorkContext,
 } from "@/lib/korean-phrasebook/schemas"
+import { WORK_CONTEXT_BY_SOURCE_KEY } from "@/lib/korean-phrasebook/work-seed"
+import { WORK_CAPTURE_COLLECTION, isWorkMessageCard } from "@/lib/korean-phrasebook/work"
 import type {
   PhraseAnswerContent,
   PhraseAttempt,
@@ -35,6 +41,7 @@ import type {
   PhraseVocabularyItem,
 } from "@/lib/types"
 import { aiPost } from "./ai-client"
+import { isMissingSchemaError } from "./schema-errors"
 
 // Supabase-backed Phrasebook service. Maps kori_phrase_* rows to the
 // camelCase app types (lib/types.ts) and delegates all SRS/mastery/filter
@@ -74,6 +81,10 @@ type CardRow = {
   position: number
   active: boolean
   is_user_edited: boolean
+  // Added by migration 20261106120000 — absent from rows until it's applied.
+  work_context?: unknown
+  provenance?: PhraseProvenance | null
+  source_label?: string | null
   created_at: string
   updated_at: string
 }
@@ -124,6 +135,17 @@ function toCollection(row: CollectionRow): PhraseCollection {
   }
 }
 
+// Stored work_context is validated on read (it's jsonb); a seeded work card
+// falls back to the pack's own notes, so the work practice works before the
+// column exists and after a learner edits the card's text.
+function resolveWorkContext(row: CardRow): WorkContext | null {
+  if (row.work_context != null) {
+    const parsed = workContextSchema.safeParse(row.work_context)
+    if (parsed.success) return parsed.data
+  }
+  return (row.source_key && WORK_CONTEXT_BY_SOURCE_KEY.get(row.source_key)) || null
+}
+
 function toCard(row: CardRow): PhraseCard {
   return {
     id: row.id,
@@ -142,6 +164,9 @@ function toCard(row: CardRow): PhraseCard {
     position: row.position,
     active: row.active,
     isUserEdited: row.is_user_edited,
+    workContext: resolveWorkContext(row),
+    provenance: row.provenance ?? null,
+    sourceLabel: row.source_label ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -191,7 +216,40 @@ function contentToCardRowFields(content: PhraseCardContentInput) {
     usage_note: content.usageNote ?? null,
     vocabulary: content.vocabulary,
     tags: content.tags,
+    // Optional metadata: undefined keys are dropped from the request body, so
+    // the edit form (which doesn't know these fields) never clears them.
+    work_context: content.workContext,
+    provenance: content.provenance,
+    source_label: content.sourceLabel,
   }
+}
+
+const WORK_COLUMNS = ["work_context", "provenance", "source_label"] as const
+
+function withoutWorkColumns<T extends Record<string, unknown>>(row: T): T {
+  const copy: Record<string, unknown> = { ...row }
+  for (const column of WORK_COLUMNS) delete copy[column]
+  return copy as T
+}
+
+// Inserts card rows; if the work-focus migration isn't applied yet (the new
+// columns are unknown), retries once without them so seeding and saving keep
+// working. Seeded cards still get their notes from the pack (resolveWorkContext).
+async function insertCardRows(rows: Array<Record<string, unknown>>) {
+  const first = await supabase.from("kori_phrase_cards").insert(rows).select("id")
+  if (!first.error || !isMissingSchemaError(first.error)) return first
+  return supabase.from("kori_phrase_cards").insert(rows.map(withoutWorkColumns)).select("id")
+}
+
+/** A one-paragraph English summary of a work context, used as the usage note
+ *  when the work_context column isn't available yet. */
+function workContextSummary(context: WorkContext): string {
+  const parts = [`Main point: ${context.mainPoint}`]
+  if (context.requiredAction) parts.push(`To do: ${context.requiredAction}`)
+  if (context.conditions.length) parts.push(`Conditions: ${context.conditions.join("; ")}`)
+  if (context.deadline) parts.push(`Deadline: ${context.deadline}`)
+  if (context.unknowns.length) parts.push(`Unclear: ${context.unknowns.join("; ")}`)
+  return parts.join(" · ")
 }
 
 async function attachProgress(cards: CardRow[]): Promise<PhraseCardWithProgress[]> {
@@ -234,7 +292,9 @@ async function runSeeding(): Promise<void> {
   const [{ data: collectionRows, error: collectionsError }, { data: cardRows, error: cardsError }] =
     await Promise.all([
       supabase.from("kori_phrase_collections").select("id, source_key, seed_version"),
-      supabase.from("kori_phrase_cards").select("id, source_key, is_user_edited"),
+      supabase
+        .from("kori_phrase_cards")
+        .select("id, source_key, is_user_edited, question, answers"),
     ])
   if (collectionsError) throw collectionsError
   if (cardsError) throw cardsError
@@ -248,6 +308,13 @@ async function runSeeding(): Promise<void> {
     id: r.id,
     sourceKey: r.source_key,
     isUserEdited: r.is_user_edited,
+    contentKey:
+      r.question && Array.isArray(r.answers)
+        ? seedContentKey({
+            question: r.question as PhraseQuestionContent,
+            answers: r.answers as PhraseAnswerContent[],
+          })
+        : undefined,
   }))
 
   const plan = planSeedUpsert(existingCollections, existingCards)
@@ -268,7 +335,7 @@ async function runSeeding(): Promise<void> {
       .single()
     if (insertError) throw insertError
     if (pack.cards.length > 0) {
-      const { error: cardsInsertError } = await supabase.from("kori_phrase_cards").insert(
+      const { error: cardsInsertError } = await insertCardRows(
         pack.cards.map((card, index) => ({
           user_id: userId,
           collection_id: collection.id,
@@ -289,7 +356,7 @@ async function runSeeding(): Promise<void> {
   }
 
   if (plan.cardsToInsert.length > 0) {
-    const { error: cardsInsertError } = await supabase.from("kori_phrase_cards").insert(
+    const { error: cardsInsertError } = await insertCardRows(
       plan.cardsToInsert.map(({ collectionId, card }) => ({
         user_id: userId,
         collection_id: collectionId,
@@ -299,6 +366,38 @@ async function runSeeding(): Promise<void> {
     )
     if (cardsInsertError) throw cardsInsertError
   }
+}
+
+async function ensureWorkCaptureCollection(userId: string): Promise<string> {
+  const select = () =>
+    supabase
+      .from("kori_phrase_collections")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("source_key", WORK_CAPTURE_COLLECTION.sourceKey)
+      .maybeSingle()
+  const found = await select()
+  if (found.error) throw found.error
+  if (found.data) return found.data.id as string
+
+  const inserted = await supabase
+    .from("kori_phrase_collections")
+    .insert({
+      user_id: userId,
+      source_key: WORK_CAPTURE_COLLECTION.sourceKey,
+      title_ko: WORK_CAPTURE_COLLECTION.titleKo,
+      title_en: WORK_CAPTURE_COLLECTION.titleEn,
+      description: WORK_CAPTURE_COLLECTION.description,
+      category: WORK_CAPTURE_COLLECTION.category,
+    })
+    .select("id")
+    .single()
+  if (!inserted.error) return inserted.data.id as string
+  if (inserted.error.code === "23505") {
+    const raced = await select()
+    if (raced.data) return raced.data.id as string
+  }
+  throw inserted.error
 }
 
 export const phrasebookApi = {
@@ -485,6 +584,81 @@ export const phrasebookApi = {
     return cards.filter((c) => c.progress && isCardDue(c.progress.nextReviewAt))
   },
 
+  // ── Korean for my work ────────────────────────────────────────────────────
+
+  // Cards the work-reply practice can use (curated comprehension cards and
+  // saved work messages), newest-practiced last so fresh ones come first.
+  getWorkMessageCards: async (): Promise<PhraseCardWithProgress[]> => {
+    const cards = await phrasebookApi.getAllCards()
+    return cards
+      .filter(isWorkMessageCard)
+      .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id))
+  },
+
+  /**
+   * Saves a reviewed work-message draft as a Phrasebook card in the owner's
+   * "My work messages" collection. Idempotent end to end:
+   * - the collection is found by its source_key, or created — a concurrent
+   *   create loses on the (user_id, source_key) unique index and re-reads;
+   * - the card's source_key is captureSourceKey(message, reply), so a double
+   *   click, a retry after a timeout or saving the same analysis twice hits
+   *   the same unique index and returns the existing card (created: false).
+   * One card row holds the reply and its 3–5 vocabulary entries, so there is
+   * no multi-row write to leave half-done. Ownership: user_id comes from the
+   * session (never the caller), RLS checks it, and the existing
+   * kori_phrase_check_card_ownership trigger rejects a collection_id that
+   * belongs to someone else.
+   */
+  saveWorkCapture: async (
+    content: PhraseCardContentInput,
+    sourceKey: string,
+  ): Promise<{ card: PhraseCard; created: boolean }> => {
+    const userId = requireUserId()
+    const parsed = phraseCardContentSchema.parse(content)
+    if (!sourceKey.startsWith("capture-")) throw new Error("Invalid capture key")
+
+    const findCard = async () => {
+      const { data, error } = await supabase
+        .from("kori_phrase_cards")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("source_key", sourceKey)
+        .maybeSingle()
+      if (error) throw error
+      return data ? toCard(data as CardRow) : null
+    }
+
+    const existing = await findCard()
+    if (existing) return { card: existing, created: false }
+
+    const collectionId = await ensureWorkCaptureCollection(userId)
+    const row = {
+      user_id: userId,
+      collection_id: collectionId,
+      source_key: sourceKey,
+      is_user_edited: true, // the owner's own content — never a seeding candidate
+      ...contentToCardRowFields(parsed),
+    }
+    let result = await supabase.from("kori_phrase_cards").insert(row).select("*").single()
+    if (result.error && isMissingSchemaError(result.error)) {
+      // Before the work-focus migration: keep the notes readable in the usage
+      // note rather than dropping them.
+      const fallback = withoutWorkColumns(row)
+      const note = parsed.workContext ? workContextSummary(parsed.workContext) : ""
+      fallback.usage_note =
+        [parsed.usageNote, note].filter(Boolean).join("\n").slice(0, 1000) || null
+      result = await supabase.from("kori_phrase_cards").insert(fallback).select("*").single()
+    }
+    if (result.error) {
+      if (result.error.code === "23505") {
+        const raced = await findCard()
+        if (raced) return { card: raced, created: false }
+      }
+      throw result.error
+    }
+    return { card: toCard(result.data as CardRow), created: true }
+  },
+
   // ── SRS review grading ────────────────────────────────────────────────────
 
   rate: async (phraseId: string, rating: ReviewRating): Promise<PhraseProgress> => {
@@ -572,7 +746,15 @@ export const phrasebookApi = {
   // answer) and, for a meaningful mistake, saves it into the shared
   // correction notebook the same way correctionApi.check does — fingerprint-
   // deduped, tagged so it's traceable back to Phrasebook practice.
-  evaluateSpeaking: async (phraseId: string, transcript: string) => {
+  //
+  // `options` is used by the work-reply practice: a typed answer (so the
+  // grader never talks about speech) and the learner's intended meaning (so
+  // meaning and tense are checked before style).
+  evaluateSpeaking: async (
+    phraseId: string,
+    transcript: string,
+    options: { intendedMeaning?: string; inputMethod?: "voice" | "text" } = {},
+  ) => {
     const result = await aiPost<{
       communicationSuccess: boolean
       correctedSentence: string
@@ -581,7 +763,16 @@ export const phrasebookApi = {
       vocabulary: PhraseVocabularyItem[]
       retryWords: string[]
       mistakeSeverity: "none" | "minor" | "important"
-    }>("/phrasebook/evaluate", { phraseId, transcript })
+      meaningPreserved?: boolean | null
+      pattern?: string | null
+    }>("/phrasebook/evaluate", {
+      phraseId,
+      transcript,
+      ...(options.intendedMeaning?.trim()
+        ? { intendedMeaning: options.intendedMeaning.trim() }
+        : {}),
+      ...(options.inputMethod ? { inputMethod: options.inputMethod } : {}),
+    })
 
     if (
       result.mistakeSeverity !== "none" &&

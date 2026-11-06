@@ -14,6 +14,7 @@ import {
 import { StatusBadge } from "@/components/learn/StatusBadge"
 import { PhraseRegisterBadge } from "./PhraseRegisterBadge"
 import { RevealText } from "./RevealText"
+import { situationLabel } from "@/lib/korean-phrasebook/labels"
 import { phraseStatus } from "@/lib/learning/course"
 import type { PhraseCardWithProgress } from "@/lib/types"
 import type { RomanizationMode } from "@/lib/korean-coach/schemas"
@@ -39,7 +40,12 @@ export function PhraseCardListItem({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-            <Badge variant="outline">{card.situation}</Badge>
+            <Badge variant="outline">{situationLabel(card.situation)}</Badge>
+            {card.provenance === "quoted" || card.provenance === "paraphrased" ? (
+              <Badge variant="secondary">
+                {card.provenance === "quoted" ? "Your message" : "Your paraphrase"}
+              </Badge>
+            ) : null}
             <PhraseRegisterBadge register={card.question.register} />
             {/* Shared Learning status words: a due review shows as "Review
                 due" instead of a separate red "Due" badge beside the state. */}

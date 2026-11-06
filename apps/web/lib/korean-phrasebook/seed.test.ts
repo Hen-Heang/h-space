@@ -4,15 +4,18 @@ import {
   SEED_PACKS,
   planSeedUpsert,
   isSeedPlanEmpty,
+  isStarterPackKey,
+  seedContentKey,
   type ExistingSeedCard,
   type ExistingSeedCollection,
   type PhraseSeedCollection,
 } from "./seed"
 
 describe("seed data validity", () => {
-  it("has exactly two packs: workplace and daily", () => {
+  it("has the three starter packs: workplace, daily, and Korean for my work", () => {
     expect(SEED_PACKS.map((p) => p.sourceKey).sort()).toEqual([
       "daily-life-essentials",
+      "work-communication",
       "workplace-essentials",
     ])
   })
@@ -76,10 +79,11 @@ describe("seed data validity", () => {
 })
 
 describe("planSeedUpsert", () => {
-  it("plans inserting both whole collections when the database is empty", () => {
+  it("plans inserting every whole collection when the database is empty", () => {
     const plan = planSeedUpsert([], [])
     expect(plan.collectionsToInsert.map((c) => c.sourceKey).sort()).toEqual([
       "daily-life-essentials",
+      "work-communication",
       "workplace-essentials",
     ])
     expect(plan.cardsToInsert).toHaveLength(0) // cards ship inline with a new collection insert
@@ -170,5 +174,69 @@ describe("planSeedUpsert", () => {
     }))
     const plan = planSeedUpsert(existingCollections, existingCards, [workplace])
     expect(plan.collectionsToBumpVersion).toHaveLength(0)
+  })
+})
+
+describe("content-level dedup (a card the learner already has under another key)", () => {
+  const work = SEED_PACKS.find((p) => p.sourceKey === "work-communication")!
+
+  it("skips a pack card whose question + recommended answer already exist, for a new collection", () => {
+    const imported: ExistingSeedCard = {
+      id: "imported-1",
+      sourceKey: null,
+      isUserEdited: true,
+      contentKey: seedContentKey(work.cards[0]),
+    }
+    const plan = planSeedUpsert([], [imported], [work])
+    expect(plan.collectionsToInsert).toHaveLength(1)
+    const cards = plan.collectionsToInsert[0].cards
+    expect(cards).toHaveLength(work.cards.length - 1)
+    expect(cards.some((c) => c.sourceKey === work.cards[0].sourceKey)).toBe(false)
+  })
+
+  it("skips it for an existing collection too, and never plans an update", () => {
+    const plan = planSeedUpsert(
+      [{ id: "col-w", sourceKey: work.sourceKey, seedVersion: work.seedVersion }],
+      [{ id: "x", sourceKey: null, isUserEdited: true, contentKey: seedContentKey(work.cards[1]) }],
+      [work],
+    )
+    expect(plan.cardsToInsert).toHaveLength(work.cards.length - 1)
+    expect(plan.cardsToInsert.some((c) => c.card.sourceKey === work.cards[1].sourceKey)).toBe(false)
+  })
+
+  it("normalizes whitespace and Unicode form when comparing content", () => {
+    const card = work.cards[0]
+    const spaced = {
+      question: { korean: `  ${card.question.korean.replace(/ /g, "   ")} ` },
+      answers: card.answers.map((a) => ({ ...a, korean: a.korean.normalize("NFD") })),
+    }
+    expect(seedContentKey(spaced)).toBe(seedContentKey(card))
+  })
+
+  it("seeding twice plans nothing the second time", () => {
+    const first = planSeedUpsert([], [])
+    const collections: ExistingSeedCollection[] = first.collectionsToInsert.map((c, i) => ({
+      id: `col-${i}`,
+      sourceKey: c.sourceKey,
+      seedVersion: c.seedVersion,
+    }))
+    const cards: ExistingSeedCard[] = first.collectionsToInsert.flatMap((c) =>
+      c.cards.map((card) => ({
+        id: card.sourceKey,
+        sourceKey: card.sourceKey,
+        isUserEdited: false,
+        contentKey: seedContentKey(card),
+      })),
+    )
+    expect(isSeedPlanEmpty(planSeedUpsert(collections, cards))).toBe(true)
+  })
+})
+
+describe("isStarterPackKey", () => {
+  it("is true only for the curated starter packs", () => {
+    expect(isStarterPackKey("work-communication")).toBe(true)
+    expect(isStarterPackKey("workplace-essentials")).toBe(true)
+    expect(isStarterPackKey("user-work-messages")).toBe(false)
+    expect(isStarterPackKey(null)).toBe(false)
   })
 })

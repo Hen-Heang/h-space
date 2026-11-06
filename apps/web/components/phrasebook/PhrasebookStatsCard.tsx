@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { phrasebookApi } from "@/lib/api"
 import type { PhrasebookStats } from "@/lib/types"
+import { situationLabel } from "@/lib/korean-phrasebook/labels"
 
 type StatTileKey =
   | "cardsLearned"
@@ -93,7 +94,7 @@ export function PhrasebookStatsCard() {
                 key={s.situation}
                 className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400"
               >
-                {s.situation} ({s.failureCount})
+                {situationLabel(s.situation)} ({s.failureCount})
               </span>
             ))}
           </div>

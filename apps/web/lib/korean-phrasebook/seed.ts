@@ -1,6 +1,8 @@
 import type { PhraseCardContentInput } from "./schemas"
+import { WORK_FOCUS_CARDS } from "./work-seed"
 
-// Curated seed data for the two launch Phrasebook packs, plus a pure,
+// Curated seed data for the Phrasebook starter packs (two launch packs here,
+// the "Korean for my work" pack in work-seed.ts), plus a pure,
 // idempotent upsert planner (no Supabase here — lib/api/phrasebook.ts calls
 // planSeedUpsert with rows it already fetched and only ever performs the
 // additive inserts the plan describes).
@@ -823,6 +825,16 @@ export const SEED_PACKS: PhraseSeedCollection[] = [
     seedVersion: 1,
     cards: DAILY_CARDS,
   },
+  {
+    sourceKey: "work-communication",
+    titleKo: "개발 업무 소통",
+    titleEn: "Korean for my work",
+    description:
+      "Short developer-work replies: confirm what you understood, scope and criteria, work status, test results, reviews, and business-rule words.",
+    category: "workplace",
+    seedVersion: 1,
+    cards: WORK_FOCUS_CARDS,
+  },
 ]
 
 // ── Idempotent seed planning ────────────────────────────────────────────────
@@ -837,6 +849,21 @@ export interface ExistingSeedCard {
   id: string
   sourceKey: string | null
   isUserEdited: boolean
+  /** seedContentKey() of the card's text, when the caller loaded it — lets a
+   *  pack skip a card the learner already has under another key (an import,
+   *  or a card they wrote themselves). */
+  contentKey?: string
+}
+
+/** Question + recommended-answer text, normalized — same idea as the import
+ *  dedup key (lib/korean-phrasebook/import.ts). */
+export function seedContentKey(card: {
+  question: { korean: string }
+  answers: Array<{ korean: string; isRecommended?: boolean }>
+}): string {
+  const norm = (text: string) => text.normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim()
+  const answer = card.answers.find((a) => a.isRecommended) ?? card.answers[0]
+  return `${norm(card.question.korean)}::${norm(answer?.korean ?? "")}`
 }
 
 export interface SeedPlan {
@@ -866,6 +893,13 @@ export function planSeedUpsert(
   const cardSourceKeys = new Set(
     existingCards.filter((c) => c.sourceKey).map((c) => c.sourceKey as string),
   )
+  const cardContentKeys = new Set(
+    existingCards.filter((c) => c.contentKey).map((c) => c.contentKey as string),
+  )
+  // A pack card is skipped when its key is taken, or when the learner already
+  // has the same question + answer under another key. Never an update.
+  const alreadyHave = (card: PhraseSeedCard) =>
+    cardSourceKeys.has(card.sourceKey) || cardContentKeys.has(seedContentKey(card))
 
   const plan: SeedPlan = {
     collectionsToInsert: [],
@@ -877,7 +911,8 @@ export function planSeedUpsert(
     const existingCollection = collectionBySourceKey.get(pack.sourceKey)
 
     if (!existingCollection) {
-      plan.collectionsToInsert.push(pack)
+      const cards = pack.cards.filter((card) => !alreadyHave(card))
+      plan.collectionsToInsert.push(cards.length === pack.cards.length ? pack : { ...pack, cards })
       continue
     }
 
@@ -889,12 +924,20 @@ export function planSeedUpsert(
     }
 
     for (const card of pack.cards) {
-      if (cardSourceKeys.has(card.sourceKey)) continue // already seeded (or user-edited) — never touch it
+      if (alreadyHave(card)) continue // already seeded, user-edited, or a duplicate — never touch it
       plan.cardsToInsert.push({ collectionId: existingCollection.id, card })
     }
   }
 
   return plan
+}
+
+const STARTER_PACK_KEYS = new Set(SEED_PACKS.map((pack) => pack.sourceKey))
+
+/** True for the curated starter packs — not for other keyed collections such
+ *  as the owner's "My work messages" (lib/korean-phrasebook/work.ts). */
+export function isStarterPackKey(sourceKey: string | null | undefined): boolean {
+  return sourceKey != null && STARTER_PACK_KEYS.has(sourceKey)
 }
 
 export function isSeedPlanEmpty(plan: SeedPlan): boolean {

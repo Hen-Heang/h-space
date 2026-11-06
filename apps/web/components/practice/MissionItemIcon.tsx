@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  BriefcaseBusiness,
   Headphones,
   MessageCircle,
   MessagesSquare,
@@ -29,5 +30,7 @@ export function MissionItemIcon({ type, ...props }: { type: MissionItemType } & 
       return <Mic {...props} />
     case "interview":
       return <MessageCircle {...props} />
+    case "work_message":
+      return <BriefcaseBusiness {...props} />
   }
 }

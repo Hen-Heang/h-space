@@ -9,6 +9,7 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition"
 import { phrasebookApi, getApiErrorMessage } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import type { PhraseAttemptFeedback, PhraseCardWithProgress } from "@/lib/types"
+import { situationLabel } from "@/lib/korean-phrasebook/labels"
 
 interface SpeakingModeViewProps {
   cards: PhraseCardWithProgress[]
@@ -97,7 +98,7 @@ export function SpeakingModeView({ cards, onExhausted }: SpeakingModeViewProps) 
         <span>
           {index + 1} / {cards.length}
         </span>
-        <span>{card.situation}</span>
+        <span>{situationLabel(card.situation)}</span>
       </div>
 
       <div className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-card p-6 text-center dark:bg-slate-900/40 sm:p-8">

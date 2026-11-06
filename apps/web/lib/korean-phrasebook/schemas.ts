@@ -36,6 +36,37 @@ export const phraseVocabularyItemSchema = z.object({
   english: z.string().trim().min(1).max(120),
 })
 
+// ── "Korean for my work" teaching metadata (all optional) ─────────────────
+// Stored in kori_phrase_cards.work_context / provenance / source_label
+// (migration 20261106120000). Optional so every existing form, import and
+// seed keeps validating unchanged; see lib/korean-phrasebook/work.ts.
+
+export const workContextSchema = z.object({
+  // One short English sentence: what the message is about.
+  mainPoint: z.string().trim().min(1).max(200),
+  // What the reader is being asked to do. Empty when nothing is requested.
+  requiredAction: z.string().trim().max(200).default(""),
+  // Explicit conditions stated in the message ("only successful items").
+  conditions: z.array(z.string().trim().min(1).max(160)).max(5).default([]),
+  // A deadline only when the message states one — never inferred.
+  deadline: z.string().trim().max(80).default(""),
+  expectedResult: z.string().trim().max(200).default(""),
+  // Things the message leaves unclear (ambiguous "this", missing target).
+  unknowns: z.array(z.string().trim().min(1).max(160)).max(5).default([]),
+  // Korean question to ask when something is unknown.
+  clarifyingQuestion: z.string().trim().max(200).default(""),
+  // Short "Why this is useful" line shown before practice.
+  whyUseful: z.string().trim().max(200).default(""),
+})
+
+export type WorkContext = z.infer<typeof workContextSchema>
+
+// quoted = exact text the owner chose to keep; paraphrased = their edit of
+// it; generated = AI-written; curated = the reviewed starter packs.
+export const phraseProvenanceSchema = z.enum(["quoted", "paraphrased", "generated", "curated"])
+
+export type PhraseProvenance = z.infer<typeof phraseProvenanceSchema>
+
 // Full card content — shared by the create/edit form, seed data validation,
 // and import row validation. `answers` requires at least one recommended
 // answer so review/learn mode always has something to show as "the" answer.
@@ -55,6 +86,9 @@ export const phraseCardContentSchema = z.object({
   usageNote: z.string().trim().max(1000).optional(),
   vocabulary: z.array(phraseVocabularyItemSchema).max(20).default([]),
   tags: z.array(z.string().trim().min(1).max(30)).max(10).default([]),
+  workContext: workContextSchema.optional(),
+  provenance: phraseProvenanceSchema.optional(),
+  sourceLabel: z.string().trim().max(100).optional(),
 })
 
 export type PhraseCardContentInput = z.infer<typeof phraseCardContentSchema>
@@ -101,6 +135,12 @@ export type PhraseImportRow = z.infer<typeof phraseImportRowSchema>
 export const phraseEvaluateInputSchema = z.object({
   phraseId: z.string().uuid(),
   transcript: z.string().trim().min(1).max(1000),
+  // Optional, from the work-reply practice: what the learner meant to say,
+  // in English, so the grader checks meaning (and tense/commitment) first.
+  intendedMeaning: z.string().trim().max(300).optional(),
+  // "text" when the answer was typed — the grader then never talks about
+  // speech or pronunciation. Defaults to speech for existing callers.
+  inputMethod: z.enum(["voice", "text"]).optional(),
 })
 
 // Server -> client (also the AI's structured output schema).
@@ -115,6 +155,13 @@ export const phraseEvaluateOutputSchema = z.object({
   // get saved to kori_corrections, so a merely-informal phrasing doesn't
   // clutter the correction notebook.
   mistakeSeverity: z.enum(["none", "minor", "important"]),
+  // Added for the work-reply practice. Nullable (not optional) so the model
+  // always returns the key; older stored feedback simply lacks them.
+  // meaningPreserved: does the reply say what the learner intended (same
+  // tense, same commitment)? null when no intended meaning was given.
+  meaningPreserved: z.boolean().nullable(),
+  // One reusable grammar pattern from the corrected reply, e.g. "~는 대로 공유드리겠습니다".
+  pattern: z.string().nullable(),
 })
 
 export type PhraseEvaluateOutput = z.infer<typeof phraseEvaluateOutputSchema>

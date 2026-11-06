@@ -20,6 +20,7 @@ export type MissionItemType =
   | "listening"
   | "interview"
   | "phrase_review"
+  | "work_message"
 
 export interface DueVocabularyItem {
   id: string
@@ -53,6 +54,14 @@ export interface ListeningCandidate {
   topic: string
 }
 
+/** A Phrasebook card with work-message comprehension notes (curated pack or
+ *  a message the learner saved), plus when the learner last replied to it. */
+export interface WorkMessageCandidate {
+  id: string
+  /** ISO time of the latest reply attempt, null if never practiced. */
+  lastPracticedAt: string | null
+}
+
 export interface MissionContext {
   dateKey: string
   koreanLevel: string
@@ -72,6 +81,12 @@ export interface MissionContext {
   availableScenarios: ScenarioCandidate[]
   availableListeningTopics: ListeningCandidate[]
   dailyPhraseLearned: boolean
+  /**
+   * Work-message practice cards. Only used when learningGoal is "workplace"
+   * (the "Korean for my work" focus); omitted/empty → no work_message item and
+   * exactly the previous behaviour.
+   */
+  workMessageCandidates?: WorkMessageCandidate[]
 }
 
 export interface DailyMissionItemPlan {
@@ -288,6 +303,67 @@ function buildGoalCandidate(
   return null
 }
 
+// ── Work focus ──────────────────────────────────────────────────────────────
+
+/** Minutes for one work message: listen/read, find the action, reply, feedback. */
+export const WORK_MESSAGE_MINUTES = 5
+/** In work focus a due-review batch is trimmed to fit, but never below this. */
+const MIN_FOCUSED_REVIEW_MINUTES = 2
+/** Review pace the estimates above already assume (ceil(count / 2) minutes). */
+const REVIEW_CARDS_PER_MINUTE = 2
+const REVIEW_TYPES = new Set<MissionItemType>([
+  "vocab_review",
+  "correction_review",
+  "phrase_review",
+])
+
+/** The work card to practice today: never-practiced first, then the one
+ *  practiced longest ago; ties broken by a stable hash of the date. */
+export function pickWorkMessage(
+  candidates: WorkMessageCandidate[],
+  dateKey: string,
+): WorkMessageCandidate | null {
+  if (candidates.length === 0) return null
+  const rank = (c: WorkMessageCandidate) => c.lastPracticedAt ?? ""
+  const oldest = candidates.reduce((min, c) => (rank(c) < min ? rank(c) : min), rank(candidates[0]))
+  const tied = candidates.filter((c) => rank(c) === oldest).sort((a, b) => a.id.localeCompare(b.id))
+  return stablePick(tied, dateKey)
+}
+
+function buildWorkMessageCandidate(ctx: MissionContext): Candidate | null {
+  if (ctx.learningGoal !== "workplace") return null
+  const pick = pickWorkMessage(ctx.workMessageCandidates ?? [], ctx.dateKey)
+  if (!pick) return null
+  return {
+    // Above every SRS/weakness weight, so the one contextual task is placed
+    // first and a big review backlog can't crowd it out of the budget.
+    weight: 0.9,
+    item: {
+      type: "work_message",
+      title: "Understand and answer a work message",
+      reason:
+        "Your focus is Korean for work: listen to one message, find what you need to do, and reply in 1–3 sentences.",
+      targetCount: 1,
+      referenceIds: [pick.id],
+      skillCodes: ["listening.workplace", "communication.clarification"],
+      estimatedMinutes: WORK_MESSAGE_MINUTES,
+    },
+  }
+}
+
+/** Trims a due-review item to `minutes`, keeping its first cards (the most
+ *  overdue — the SRS order). The backlog itself is untouched. */
+function trimReview(item: DailyMissionItemPlan, minutes: number): DailyMissionItemPlan {
+  if (item.estimatedMinutes <= minutes) return item
+  const targetCount = Math.max(1, Math.min(item.targetCount, minutes * REVIEW_CARDS_PER_MINUTE))
+  return {
+    ...item,
+    targetCount,
+    referenceIds: item.referenceIds.slice(0, targetCount),
+    estimatedMinutes: minutes,
+  }
+}
+
 const VARIETY_TYPES: MissionItemType[] = [
   "scenario",
   "listening",
@@ -366,11 +442,20 @@ export function buildDailyMission(ctx: MissionContext): DailyMissionPlan {
     }
   }
 
-  const goalCandidate = buildGoalCandidate(ctx, presentTypes)
+  // Work focus: the work message is the goal-driven task (an active exam's
+  // interview practice still takes the goal slot alongside it).
+  const workCandidate = buildWorkMessageCandidate(ctx)
+  if (workCandidate) {
+    candidates.push(workCandidate)
+    presentTypes.add("work_message")
+  }
+
+  const goalSlotTaken = workCandidate != null && !ctx.upcomingExam
+  const goalCandidate = goalSlotTaken ? null : buildGoalCandidate(ctx, presentTypes)
   if (goalCandidate) {
     candidates.push(goalCandidate)
     presentTypes.add(goalCandidate.item.type)
-  } else {
+  } else if (!goalSlotTaken) {
     const type = ctx.upcomingExam ? "interview" : "scenario"
     const existing = candidates.find((c) => c.item.type === type)
     if (existing) existing.weight += 0.2
@@ -380,6 +465,19 @@ export function buildDailyMission(ctx: MissionContext): DailyMissionPlan {
   if (varietyCandidate) candidates.push(varietyCandidate)
 
   candidates.sort((a, b) => b.weight - a.weight)
+
+  // In work focus the due reviews share what the work message leaves of the
+  // budget, so the session stays short and still has its contextual task.
+  if (workCandidate) {
+    const reviews = candidates.filter((c) => REVIEW_TYPES.has(c.item.type))
+    if (reviews.length > 0) {
+      const share = Math.max(
+        MIN_FOCUSED_REVIEW_MINUTES,
+        Math.floor((ctx.availableMinutes - WORK_MESSAGE_MINUTES) / reviews.length),
+      )
+      for (const review of reviews) review.item = trimReview(review.item, share)
+    }
+  }
 
   const items: DailyMissionItemPlan[] = []
   let minutesUsed = 0

@@ -4,8 +4,10 @@ import { dateKeyInTimeZone, DEFAULT_TIME_ZONE } from "@/lib/date-key"
 import { DEFAULT_DAILY_GOAL_MINUTES, type KoreanLearningGoal } from "@/lib/korean-coach/schemas"
 import {
   buildDailyMission,
+  type DailyMissionPlan,
   type MissionContext,
   type MissionItemType,
+  type WorkMessageCandidate,
 } from "@/lib/learning/mission-engine"
 import { EXAM_DATE, isExamActive } from "@/lib/study-plan"
 import type { SkillCode } from "@/lib/learning/skills"
@@ -123,6 +125,33 @@ async function fetchMission(userId: string, dateKey: string): Promise<DailyMissi
   return toMission(missionRow as MissionRow, (itemRows ?? []) as MissionItemRow[])
 }
 
+// Work-message cards plus when each was last answered — only fetched for the
+// work focus. Never throws: a failure just means no work item today.
+async function loadWorkMessageCandidates(): Promise<WorkMessageCandidate[]> {
+  try {
+    const cards = await phrasebookApi.getWorkMessageCards()
+    if (cards.length === 0) return []
+    const { data } = await supabase
+      .from("kori_phrase_attempts")
+      .select("phrase_id, created_at")
+      .eq("practice_mode", "speak")
+      .eq("task_completed", true)
+      .in(
+        "phrase_id",
+        cards.map((c) => c.id),
+      )
+      .order("created_at", { ascending: false })
+      .limit(500)
+    const latest = new Map<string, string>()
+    for (const row of (data ?? []) as Array<{ phrase_id: string; created_at: string }>) {
+      if (!latest.has(row.phrase_id)) latest.set(row.phrase_id, row.created_at)
+    }
+    return cards.map((c) => ({ id: c.id, lastPracticedAt: latest.get(c.id) ?? null }))
+  } catch {
+    return []
+  }
+}
+
 async function buildContext(dateKey: string): Promise<MissionContext> {
   const [
     profileRes,
@@ -159,11 +188,14 @@ async function buildContext(dateKey: string): Promise<MissionContext> {
   ])
 
   const listeningTopics = await listeningApi.getTopics()
+  const learningGoal = (coachPrefsRes.data?.main_goal as KoreanLearningGoal | undefined) ?? null
+  const workMessageCandidates =
+    learningGoal === "workplace" ? await loadWorkMessageCandidates() : []
 
   return {
     dateKey,
     koreanLevel: profileRes.data?.korean_level ?? "BEGINNER",
-    learningGoal: (coachPrefsRes.data?.main_goal as KoreanLearningGoal | undefined) ?? null,
+    learningGoal,
     availableMinutes: coachPrefsRes.data?.daily_practice_goal_minutes ?? DEFAULT_DAILY_GOAL_MINUTES,
     dueVocabulary: dueVocabulary.map((v) => ({ id: v.id, term: v.term, meaning: v.meaning })),
     dueVocabularyCount,
@@ -191,7 +223,22 @@ async function buildContext(dateKey: string): Promise<MissionContext> {
     availableScenarios: scenarios.map((s) => ({ id: s.id, title: s.title, category: s.category })),
     availableListeningTopics: listeningTopics.map((topic) => ({ topic })),
     dailyPhraseLearned: phrase?.learned ?? true,
+    workMessageCandidates,
   }
+}
+
+function itemRows(plan: DailyMissionPlan, missionId: string, userId: string) {
+  return plan.items.map((item) => ({
+    mission_id: missionId,
+    user_id: userId,
+    item_type: item.type,
+    title: item.title,
+    reason: item.reason,
+    target_count: item.targetCount,
+    reference_ids: item.referenceIds,
+    skill_codes: item.skillCodes,
+    estimated_minutes: item.estimatedMinutes,
+  }))
 }
 
 export const missionsApi = {
@@ -210,7 +257,7 @@ export const missionsApi = {
     if (existing) return existing
 
     const context = await buildContext(dateKey)
-    const plan = buildDailyMission(context)
+    let plan = buildDailyMission(context)
 
     const { data: missionRow, error: missionError } = await supabase
       .from("kori_daily_missions")
@@ -243,19 +290,27 @@ export const missionsApi = {
     }
 
     if (plan.items.length > 0) {
-      const { error: itemsError } = await supabase.from("kori_daily_mission_items").insert(
-        plan.items.map((item) => ({
-          mission_id: missionRow.id,
-          user_id: userId,
-          item_type: item.type,
-          title: item.title,
-          reason: item.reason,
-          target_count: item.targetCount,
-          reference_ids: item.referenceIds,
-          skill_codes: item.skillCodes,
-          estimated_minutes: item.estimatedMinutes,
-        })),
-      )
+      let { error: itemsError } = await supabase
+        .from("kori_daily_mission_items")
+        .insert(itemRows(plan, missionRow.id, userId))
+      // 23514 = check_violation: the database doesn't know work_message yet
+      // (migration 20261106120000 not applied). Rebuild the same plan without
+      // the work focus so today's mission still gets its items.
+      if (itemsError?.code === "23514" && plan.items.some((i) => i.type === "work_message")) {
+        plan = buildDailyMission({ ...context, workMessageCandidates: [] })
+        await supabase
+          .from("kori_daily_missions")
+          .update({
+            title: plan.title,
+            reason: plan.reason,
+            estimated_minutes: plan.estimatedMinutes,
+            focus_skill_codes: plan.focusSkillCodes,
+          })
+          .eq("id", missionRow.id)
+        ;({ error: itemsError } = await supabase
+          .from("kori_daily_mission_items")
+          .insert(itemRows(plan, missionRow.id, userId)))
+      }
       if (itemsError) throw itemsError
     }
 
@@ -358,6 +413,44 @@ export const missionsApi = {
             completed = Boolean(attempts && attempts.length > 0)
             progressCount = completed ? 1 : 0
           }
+        }
+      } else if (item.type === "work_message") {
+        // Evidence: a reply to the referenced card graded since the mission
+        // was made (typed or spoken — kept distinct in the attempt's
+        // input_method). Opening the page or pressing Play is not evidence.
+        const phraseId = item.referenceIds[0]
+        if (phraseId) {
+          const { data: attempts } = await supabase
+            .from("kori_phrase_attempts")
+            .select("id")
+            .eq("user_id", userId)
+            .eq("phrase_id", phraseId)
+            .eq("practice_mode", "speak")
+            .eq("task_completed", true)
+            .gte("created_at", mission.createdAt)
+            .limit(1)
+          completed = Boolean(attempts && attempts.length > 0)
+          if (!completed) {
+            // The card was deleted or archived after the mission was built:
+            // any graded reply today counts, so the step can still be finished.
+            const { data: card } = await supabase
+              .from("kori_phrase_cards")
+              .select("id, active")
+              .eq("id", phraseId)
+              .maybeSingle()
+            if (!card || card.active === false) {
+              const { data: anyReply } = await supabase
+                .from("kori_phrase_attempts")
+                .select("id")
+                .eq("user_id", userId)
+                .eq("practice_mode", "speak")
+                .eq("task_completed", true)
+                .gte("created_at", mission.createdAt)
+                .limit(1)
+              completed = Boolean(anyReply && anyReply.length > 0)
+            }
+          }
+          progressCount = completed ? 1 : 0
         }
       } else if (item.type === "interview") {
         const { data: attempts } = await supabase

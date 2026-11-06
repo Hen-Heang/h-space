@@ -20,6 +20,7 @@ import { applyRating, type ReviewRating } from "@/lib/srs"
 import { createCorrectionFingerprint } from "@/lib/learning/korean-text"
 import { planCorrectionUpsert, type ExistingCorrectionState } from "@/lib/learning/corrections"
 import { skillForCorrectionCategory, skillsForListeningTopic } from "@/lib/learning/skills"
+import { analyzerOutputSchema } from "@/lib/ai/schemas/analyzer"
 import { aiPost, authHeaders } from "./ai-client"
 import { readSseStream } from "./sse"
 import { skillsApi } from "./skills"
@@ -80,7 +81,10 @@ export const correctionApi = {
   // AI checks the text; if it found mistakes, each change is saved (deduped
   // by fingerprint) so it resurfaces on the SRS schedule, same as chat's
   // automatic turn analysis.
-  check: async (text: string) => {
+  //
+  // `options` (work-reply practice): the learner's intended meaning and the
+  // message they're answering, so meaning and tense are checked first.
+  check: async (text: string, options: { intendedMeaning?: string; replyingTo?: string } = {}) => {
     const result = await aiPost<{
       originalText: string
       correctedText: string
@@ -95,7 +99,18 @@ export const correctionApi = {
         reason: string
         category: string | null
       }>
-    }>("/corrections/check", { text })
+      meaningPreserved?: boolean | null
+      meaningNote?: string | null
+      pattern?: string | null
+    }>("/corrections/check", {
+      text,
+      ...(options.intendedMeaning?.trim()
+        ? { intendedMeaning: options.intendedMeaning.trim() }
+        : {}),
+      ...(options.replyingTo?.trim()
+        ? { replyingTo: options.replyingTo.trim().slice(0, 2000) }
+        : {}),
+    })
 
     if (result.hasErrors) {
       const userId = requireUserId()
@@ -575,24 +590,47 @@ function toAnalysis(row: AnalyzerRow): MessageAnalysis {
 }
 
 type AnalyzerResult = Omit<MessageAnalysis, "id" | "source" | "createdAt">
-export type PartialAnalyzerResult = Partial<AnalyzerResult>
+export type PartialAnalyzerResult = DeepPartial<AnalyzerResult>
+
+type DeepPartial<T> =
+  T extends Array<infer U>
+    ? Array<DeepPartial<U> | undefined>
+    : T extends object
+      ? { [K in keyof T]?: DeepPartial<T[K]> }
+      : T
+
+export interface AnalyzeOptions {
+  /** Aborts the request (and the server-side generation) — e.g. on navigation. */
+  signal?: AbortSignal
+  /** Store the message and its analysis in kori_analyzer_history. Off by
+   *  default: the pasted text stays transient unless the learner opts in. */
+  saveHistory?: boolean
+}
 
 // SSE stream from the Next.js route (start → partial* → done → error) — lets
 // the UI render each field/breakdown item as it's generated instead of
-// waiting for the whole structured object.
+// waiting for the whole structured object. Only `done` is a finished result.
 async function streamAnalysis(
   text: string,
   source: string | undefined,
-  onPartial?: (partial: PartialAnalyzerResult) => void,
+  onPartial: ((partial: PartialAnalyzerResult) => void) | undefined,
+  signal: AbortSignal | undefined,
 ): Promise<AnalyzerResult> {
   const response = await fetch("/api/ai/analyzer", {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(await authHeaders()) },
     body: JSON.stringify({ text, source }),
+    signal,
   })
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as { error?: string } | null
-    throw new Error(payload?.error ?? `AI request failed (${response.status})`)
+    throw new Error(
+      response.status === 429
+        ? (payload?.error ?? "Daily AI limit reached. Try again tomorrow.")
+        : response.status === 401
+          ? "Your session expired. Sign in again and retry."
+          : "The analysis couldn't start. Please try again.",
+    )
   }
 
   let final: AnalyzerResult | null = null
@@ -615,8 +653,12 @@ async function streamAnalysis(
       throw new Error(msg)
     }
   })
-  if (!final) throw new Error("Analysis stream ended unexpectedly")
-  return final
+  if (!final) throw new Error("The analysis stopped before it finished. Please try again.")
+  // Only a complete, valid result counts — anything else is a retryable error,
+  // never a half-finished lesson the learner could save.
+  const checked = analyzerOutputSchema.safeParse(final)
+  if (!checked.success) throw new Error("The analysis came back incomplete. Please try again.")
+  return checked.data
 }
 
 export const analyzerApi = {
@@ -624,8 +666,12 @@ export const analyzerApi = {
     text: string,
     source?: string,
     onPartial?: (partial: PartialAnalyzerResult) => void,
+    options: AnalyzeOptions = {},
   ): Promise<MessageAnalysis> => {
-    const analysis = await streamAnalysis(text, source, onPartial)
+    const analysis = await streamAnalysis(text, source, onPartial, options.signal)
+    if (!options.saveHistory) {
+      return { ...analysis, id: "", source: source ?? null, createdAt: new Date().toISOString() }
+    }
     const { originalText: _o, modelUsed, ...rest } = analysis
     const { data, error } = await supabase
       .from("kori_analyzer_history")
