@@ -22,9 +22,12 @@ import {
   filterPhraseCards,
   type PhraseFilters as PhraseFiltersValue,
 } from "@/lib/korean-phrasebook/mastery"
+import { isStarterPackKey } from "@/lib/korean-phrasebook/seed"
 import { containerVariants, itemVariants } from "@/lib/motion"
 import { cn } from "@/lib/utils"
 import type { PhraseCardWithProgress, PhraseCollection } from "@/lib/types"
+
+const DIFFICULTY_ORDER = ["easy", "medium", "hard"]
 
 export function PhrasebookHome() {
   useSessionTimer("phrasebook")
@@ -65,14 +68,22 @@ export function PhrasebookHome() {
   const counts = useMemo(() => countPhraseStates(cards), [cards])
   const categories = useMemo(() => [...new Set(cards.map((c) => c.category))].sort(), [cards])
   const situations = useMemo(() => [...new Set(cards.map((c) => c.situation))].sort(), [cards])
-  const difficulties = useMemo(() => [...new Set(cards.map((c) => c.difficulty))].sort(), [cards])
+  const difficulties = useMemo(
+    () =>
+      [...new Set(cards.map((c) => c.difficulty))].sort(
+        (a, b) => DIFFICULTY_ORDER.indexOf(a) - DIFFICULTY_ORDER.indexOf(b),
+      ),
+    [cards],
+  )
   const isFiltering = Boolean(
     filters.query || filters.category || filters.situation || filters.difficulty,
   )
   const filteredCards = useMemo(() => filterPhraseCards(cards, filters), [cards, filters])
 
-  const myCollections = collections.filter((c) => !c.sourceKey)
-  const seededCollections = collections.filter((c) => c.sourceKey)
+  // Starter packs vs the learner's own collections ("My work messages" has a
+  // source_key for idempotent saving, but it's the learner's, not a pack).
+  const myCollections = collections.filter((c) => !isStarterPackKey(c.sourceKey))
+  const seededCollections = collections.filter((c) => isStarterPackKey(c.sourceKey))
 
   function statsFor(collectionId: string) {
     const collectionCards = cards.filter((c) => c.collectionId === collectionId)

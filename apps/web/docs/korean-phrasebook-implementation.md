@@ -1,5 +1,12 @@
 # Korean Phrasebook & Q&A Practice System — Implementation Doc
 
+> **2026-11-06:** the "Korean for my work" focus extends this system — a third
+> starter pack, optional `work_context` / `provenance` / `source_label` card
+> columns, readable filter labels with a compact filter panel, a `work` practice
+> mode, and Save to Phrasebook from the analyzer. See
+> [`korean-for-work.md`](korean-for-work.md); sections below that say "two
+> packs" predate it.
+
 ## 1. Current-state audit
 
 The original task brief assumed a codebase shape that does not match this

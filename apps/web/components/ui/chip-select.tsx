@@ -7,11 +7,14 @@ export function ChipSelect({
   value,
   onChange,
   className,
+  getLabel,
 }: {
   options: string[]
   value: string
   onChange: (value: string) => void
   className?: string
+  /** Display text for an option; the option value itself is what onChange receives. */
+  getLabel?: (option: string) => string
 }) {
   return (
     <div className={cn("flex flex-wrap gap-2", className)}>
@@ -28,7 +31,7 @@ export function ChipSelect({
               : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
           )}
         >
-          {option}
+          {getLabel ? getLabel(option) : option}
         </button>
       ))}
     </div>

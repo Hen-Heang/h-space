@@ -1,4 +1,5 @@
 import { applyRating, isDue, type ReviewRating, type SrsCardState, type SrsResult } from "@/lib/srs"
+import { categoryLabel, situationLabel } from "./labels"
 import type { PhraseCardWithProgress, PhraseState } from "@/lib/types"
 
 // Pure Phrasebook domain logic — no React, no Supabase. Mirrors the
@@ -83,7 +84,9 @@ function matchesQuery(card: PhraseCardWithProgress, query: string): boolean {
     card.question.english,
     card.question.romanization,
     card.situation,
+    situationLabel(card.situation),
     card.category,
+    categoryLabel(card.category),
     ...card.questionVariants,
     ...card.answers.map((a) => a.korean),
     ...card.answers.map((a) => a.english),

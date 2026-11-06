@@ -102,6 +102,15 @@ export function learnerProfileBlock(profile: LearnerProfile | null | undefined):
   )
 }
 
+/** Wraps learner-supplied text in a `<user_data>` block for a prompt. Any
+ *  user_data tag inside the text is removed first, so pasted text can't close
+ *  the block early and pose as instructions. Pair it with a prompt line that
+ *  says the block is data, never instructions. */
+export function userDataBlock(text: string): string {
+  const inert = text.replace(/<\s*\/?\s*user_data[^>]*>/gi, "")
+  return `<user_data>\n${inert}\n</user_data>`
+}
+
 export interface JsonAiRouteConfig<
   In extends z.ZodType = z.ZodType,
   Out extends z.ZodType = z.ZodType,
@@ -209,7 +218,12 @@ export function jsonAiRoute(
       return Response.json(object)
     } catch (err) {
       const isValidationError = err instanceof InputValidationError
-      const message = err instanceof Error ? err.message : "AI request failed"
+      // Only our own validation messages reach the client — a provider or
+      // network error's text can carry internal details, so it's replaced.
+      const message =
+        isValidationError && err instanceof Error
+          ? err.message
+          : "The AI service couldn't complete this request. Please try again."
       void recordUsage(db, {
         userId: user.id,
         feature: config.feature,

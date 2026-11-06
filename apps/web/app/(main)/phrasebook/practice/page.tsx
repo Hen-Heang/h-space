@@ -1,6 +1,7 @@
 "use client"
 
 import { Suspense, useEffect, useState } from "react"
+import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { PartyPopper } from "lucide-react"
 import { motion } from "motion/react"
@@ -13,6 +14,7 @@ import { LearnModeView } from "@/components/phrasebook/practice/LearnModeView"
 import { ListeningModeView } from "@/components/phrasebook/practice/ListeningModeView"
 import { SpeakingModeView } from "@/components/phrasebook/practice/SpeakingModeView"
 import { ReviewModeView } from "@/components/phrasebook/practice/ReviewModeView"
+import { WorkMessageModeView } from "@/components/phrasebook/practice/WorkMessageModeView"
 import { phrasebookApi, getApiErrorMessage } from "@/lib/api"
 import { useRomanizationPreference } from "@/hooks/useRomanizationPreference"
 import { useSessionTimer } from "@/hooks/useSessionTimer"
@@ -20,23 +22,27 @@ import { isCardDue } from "@/lib/korean-phrasebook/mastery"
 import { containerVariants, itemVariants } from "@/lib/motion"
 import type { PhraseCardWithProgress } from "@/lib/types"
 
-type Mode = "learn" | "listen" | "speak" | "review"
+type Mode = "learn" | "listen" | "speak" | "review" | "work"
 
 const MODE_TITLE: Record<Mode, string> = {
   learn: "Learn",
   listen: "Listening practice",
   speak: "Speaking practice",
   review: "Review",
+  work: "Work message",
 }
+
+const MODES: Mode[] = ["learn", "listen", "speak", "review", "work"]
 
 function PhrasebookPracticeInner() {
   useSessionTimer("phrasebook")
   const router = useRouter()
   const searchParams = useSearchParams()
   const modeParam = searchParams.get("mode")
-  const mode: Mode =
-    modeParam === "listen" || modeParam === "speak" || modeParam === "review" ? modeParam : "learn"
+  const mode: Mode = MODES.includes(modeParam as Mode) ? (modeParam as Mode) : "learn"
   const collectionId = searchParams.get("collectionId") ?? undefined
+  // Today's Mission links straight to the card it picked (work mode).
+  const phraseId = searchParams.get("phraseId") ?? undefined
   const romanizationPreference = useRomanizationPreference()
 
   const [cards, setCards] = useState<PhraseCardWithProgress[]>([])
@@ -47,7 +53,13 @@ function PhrasebookPracticeInner() {
   // keep their own position, which would otherwise still be past the end.
   const [round, setRound] = useState(0)
 
-  const exitHref = collectionId ? `/phrasebook/${collectionId}` : "/phrasebook"
+  const exitHref = collectionId
+    ? `/phrasebook/${collectionId}`
+    : mode === "work"
+      ? "/learn"
+      : "/phrasebook"
+  // True when the mission's card no longer exists (deleted or archived).
+  const [missingPick, setMissingPick] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -58,7 +70,15 @@ function PhrasebookPracticeInner() {
     async function load() {
       try {
         let queue: PhraseCardWithProgress[]
-        if (mode === "learn") {
+        if (mode === "work") {
+          const all = await phrasebookApi.getWorkMessageCards()
+          const pool = collectionId ? all.filter((c) => c.collectionId === collectionId) : all
+          const picked = phraseId ? pool.find((c) => c.id === phraseId) : undefined
+          // The picked card first, then a few more for an optional longer session.
+          queue = picked ? [picked, ...pool.filter((c) => c.id !== picked.id)] : pool
+          queue = queue.slice(0, 5)
+          if (active) setMissingPick(Boolean(phraseId) && !picked)
+        } else if (mode === "learn") {
           queue = collectionId
             ? await phrasebookApi.getCardsForCollection(collectionId)
             : await phrasebookApi.getAllCards()
@@ -80,7 +100,7 @@ function PhrasebookPracticeInner() {
     return () => {
       active = false
     }
-  }, [mode, collectionId])
+  }, [mode, collectionId, phraseId])
 
   if (loading) {
     return (
@@ -104,9 +124,18 @@ function PhrasebookPracticeInner() {
     return (
       <div className="space-y-4 pb-12">
         <BackLink href={exitHref} label="Back" />
-        <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No cards available for this session yet.
-        </p>
+        <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          {mode === "work" ? (
+            <>
+              <p>No work messages to practice yet.</p>
+              <Button asChild variant="outline" className="mt-3">
+                <Link href="/chat?mode=analyze">Analyze a work message</Link>
+              </Button>
+            </>
+          ) : (
+            <p>No cards available for this session yet.</p>
+          )}
+        </div>
       </div>
     )
   }
@@ -176,6 +205,25 @@ function PhrasebookPracticeInner() {
       )}
       {mode === "review" && (
         <ReviewModeView key={round} cards={cards} onExhausted={() => setDone(true)} />
+      )}
+      {mode === "work" && (
+        <>
+          {missingPick && (
+            <p
+              role="status"
+              className="rounded-xl border border-border bg-muted/40 p-3 text-sm text-muted-foreground"
+            >
+              Today&apos;s message was removed from your Phrasebook, so here&apos;s another one. A
+              reply to any of these still completes today&apos;s step.
+            </p>
+          )}
+          <WorkMessageModeView
+            key={round}
+            cards={cards}
+            romanizationPreference={romanizationPreference}
+            onExhausted={() => setDone(true)}
+          />
+        </>
       )}
     </div>
   )

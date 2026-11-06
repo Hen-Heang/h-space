@@ -18,6 +18,7 @@ export function missionItemLabel(type: MissionItemType): string {
     listening: "Listening",
     scenario: "Speaking",
     interview: "Mock interview",
+    work_message: "Work message",
   }
   return byType[type]
 }
@@ -34,6 +35,7 @@ export function missionItemSummary(item: MissionItem): string {
     listening: "1 listening activity",
     scenario: "1 speaking scenario",
     interview: "1 mock interview",
+    work_message: "1 work message to understand and answer",
   }
   return byType[item.type] ?? item.title
 }
@@ -48,6 +50,7 @@ export function missionItemCtaLabel(type: MissionItemType): string {
     listening: "Open listening",
     scenario: "Start speaking",
     interview: "Start mock interview",
+    work_message: "Practice the work message",
   }
   return byType[type]
 }
@@ -73,6 +76,9 @@ export function missionItemHref(item: MissionItem): string | null {
       return "/interview"
     case "phrase_review":
       return "/phrasebook/practice?mode=review"
+    // The exact card the engine picked, so the step and its evidence match.
+    case "work_message":
+      return `/phrasebook/practice?mode=work${item.referenceIds[0] ? `&phraseId=${encodeURIComponent(item.referenceIds[0])}` : ""}`
     case "scenario":
       return null
   }

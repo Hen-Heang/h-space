@@ -9,6 +9,7 @@ import { LibraryList } from "@/components/learn/LibraryList"
 import { QuickAccessGrid } from "@/components/learn/QuickAccessGrid"
 import { StudySkillSummary } from "@/components/learn/StudySkillSummary"
 import { TodayPlanList } from "@/components/learn/TodayPlanList"
+import { WorkFocusCard } from "@/components/learn/WorkFocusCard"
 import { useDailyMission } from "@/hooks/useDailyMission"
 import { useSkillMastery } from "@/hooks/useSkillMastery"
 import { useVocabDueCount } from "@/hooks/useVocab"
@@ -16,7 +17,8 @@ import { summarizeStudyGroups } from "@/lib/learning/skill-groups"
 import { containerVariants, itemVariants } from "@/lib/motion"
 
 // The Learning Hub. One primary action (Continue — the daily mission's next
-// step), then today's plan, the four everyday skills, practice scores, and the
+// step), then today's plan, the "Korean for my work" focus entry, the four
+// everyday skills, practice scores, and the
 // rest of the workspace as a Library. Every number is read from an existing
 // query cache: the mission (kori_daily_missions), live vocabulary due count,
 // and skill mastery. Nothing here computes its own priority.
@@ -62,10 +64,11 @@ export default function LearnPage() {
             dueCount={dueCount}
             dueLoading={dueLoading}
           />
-          {mission && <TodayPlanList mission={mission} />}
+          {mission && <TodayPlanList mission={mission} vocabDue={dueLoading ? null : dueCount} />}
         </motion.div>
 
         <motion.div variants={item} className="space-y-6">
+          <WorkFocusCard />
           <QuickAccessGrid vocabDue={dueLoading ? null : dueCount} />
           <StudySkillSummary groups={groups} loading={masteryLoading} />
         </motion.div>

@@ -1,3 +1,5 @@
+import type { PhraseProvenance, WorkContext } from "@/lib/korean-phrasebook/schemas"
+
 export type MessageRole = "assistant" | "user" | "system"
 
 export interface ChatMessage {
@@ -317,6 +319,18 @@ export interface MessageAnalysis {
   suggestedReplies: SuggestedReply[]
   modelUsed: string
   createdAt: string
+  // Main-point-first fields (2026-11-06). Optional: older history rows and a
+  // response from before the change don't have them — render what's there.
+  mainPoint?: string
+  requiredAction?: string
+  conditions?: string[]
+  deadline?: string
+  expectedResult?: string
+  unknowns?: string[]
+  clarifyingQuestion?: string
+  recommendedReply?: { korean: string; romanization: string; english: string; register: string }
+  usefulLanguage?: Array<{ korean: string; english: string; note: string }>
+  messageRomanization?: string
 }
 
 // ── Recovery (urge/trigger tracking) ────────────────────────────────────────
@@ -615,6 +629,12 @@ export interface PhraseCard {
   position: number
   active: boolean
   isUserEdited: boolean
+  /** Optional "Korean for my work" comprehension notes (null when absent or before migration 20261106120000). */
+  workContext: WorkContext | null
+  /** Where the Korean came from — null for cards created before provenance existed. */
+  provenance: PhraseProvenance | null
+  /** Private owner-typed label ("team chat"); never fetched or shown publicly. */
+  sourceLabel: string | null
   createdAt: string
   updatedAt: string
 }
@@ -652,6 +672,10 @@ export interface PhraseAttemptFeedback {
   explanation: string
   vocabulary: PhraseVocabularyItem[]
   retryWords: string[]
+  /** Work-reply practice only: did the reply keep the intended meaning? */
+  meaningPreserved?: boolean | null
+  /** Work-reply practice only: one reusable grammar pattern. */
+  pattern?: string | null
 }
 
 export interface PhraseAttempt {

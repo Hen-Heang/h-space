@@ -13,8 +13,19 @@ import { cn } from "@/lib/utils"
 // Every step of today's mission as a compact checklist, so the hub shows how
 // much is left — not just the next step. Status comes from the mission row,
 // which missionsApi.refreshProgress re-checks against real evidence.
-export function TodayPlanList({ mission }: { mission: DailyMission }) {
+export function TodayPlanList({
+  mission,
+  vocabDue,
+}: {
+  mission: DailyMission
+  /** Live total of due vocabulary — shown as secondary info when today's
+   *  batch covers only part of it. The backlog itself is never changed. */
+  vocabDue?: number | null
+}) {
   if (mission.items.length === 0) return null
+  const vocabBatch = mission.items
+    .filter((item) => item.type === "vocab_review" && item.status !== "completed")
+    .reduce((sum, item) => sum + item.targetCount, 0)
 
   const { completed, total, remainingMinutes } = summarizeMissionProgress(mission)
   const currentId = mission.items.find((item) => item.status !== "completed")?.id
@@ -87,6 +98,12 @@ export function TodayPlanList({ mission }: { mission: DailyMission }) {
           )
         })}
       </ol>
+      {vocabDue != null && vocabBatch > 0 && vocabDue > vocabBatch && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          {vocabDue.toLocaleString()} words are due in total. Today&apos;s plan covers {vocabBatch};
+          the rest stay in your review queue.
+        </p>
+      )}
     </section>
   )
 }

@@ -9,6 +9,7 @@ import { phrasebookApi, getApiErrorMessage } from "@/lib/api"
 import { shuffle } from "@/lib/vocab-review"
 import { cn } from "@/lib/utils"
 import type { PhraseAnswerContent, PhraseCardWithProgress } from "@/lib/types"
+import { situationLabel } from "@/lib/korean-phrasebook/labels"
 
 interface ListeningModeViewProps {
   cards: PhraseCardWithProgress[]
@@ -100,7 +101,7 @@ export function ListeningModeView({ cards, onExhausted }: ListeningModeViewProps
         <span>
           {index + 1} / {cards.length}
         </span>
-        <span>{card.situation}</span>
+        <span>{situationLabel(card.situation)}</span>
       </div>
 
       <div className="flex flex-col items-center gap-5 rounded-3xl border-2 border-b-[6px] border-border bg-card p-6 text-center dark:bg-slate-900/60 sm:p-8">
