@@ -3,7 +3,7 @@
 ## Snapshot
 
 - **Updated:** 2026-11-06.
-- **Checkout:** `feat/work-korean-focus`, cut from `main` at `c1f63ca`. Committed (`a6f0e3a`) and pushed at the owner's request; PR #96 is open.
+- **Checkout:** `main` at `d497eaa`. PR #96 (`feat/work-korean-focus`) was merged by the owner on 2026-11-06 and Vercel's production deploy completed. The branch is kept.
 - **Feature: "Korean for my work"** (record: `apps/web/docs/korean-for-work.md`). A focus inside Learning, not a new nav item:
   - **Analyzer** (`/chat?mode=analyze`):
     - Results come main-point first (what it means → what to do → My reply → useful language → practice → collapsed details).
@@ -34,11 +34,11 @@
   - `tests/e2e/work-korean.e2e.ts` — 10/10 against a dev server with synthetic Supabase env, all network mocked; screenshots in `apps/web/test-results/work-korean/` (git-ignored).
   - Not done: a real-account run (it would seed the pack into live data), a physical device / WebKit run, and a human review of real model outputs and the pack's romanization.
 - **Untracked, not ours:** `test-results/` at the repo root.
-- **Still open from the reminder work:** `20261105121000_fix_reminder_reconcile_alias.sql` is not applied yet.
+- **Reminder reconcile fix applied 2026-11-06 at the owner's request:** `20261105121000_fix_reminder_reconcile_alias.sql`, recorded live as `fix_reminder_reconcile_alias`. Verified: one function overload, alias clash gone, execute still revoked from `anon`/`authenticated`; `kori-reminder-delivery-check` failed every minute through 15:05 UTC and **succeeded from 15:06 UTC**. `kori_reminder_deliveries` was empty, so nothing was stuck — the next reminder that fires is the first end-to-end delivery check.
 
 ## Current focus
 
-1. Owner: review and merge PR #96 (its migration is already live; the current `main` code ignores the new columns).
+1. Owner: open the Phrasebook once signed in (adds the new starter pack); from the next day's plan, check the work-message step. Fix the GitHub billing lock so Actions CI runs again.
 2. Native-speaker pass on `lib/korean-phrasebook/work-seed.ts` (Korean + romanization).
-3. Carried over: review the Home redesign PR; Planner slices 3–10; Finance redesign phases D–F; reminder migration; second-brain T2–T7; MCP auth decision.
+3. Carried over: review the Home redesign PR; Planner slices 3–10; Finance redesign phases D–F; second-brain T2–T7; MCP auth decision.
 4. Follow-up candidates: the same generic-error treatment for `chat/stream`, `goals/coach`, `memory/ask` and `recovery-coach` (they still echo `err.message`).
