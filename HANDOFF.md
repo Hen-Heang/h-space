@@ -19,7 +19,7 @@
   - **Mission engine** — with the goal set to Workplace Korean, one `work_message` step; due reviews are trimmed to fit the time budget, and the backlog is kept and shown as secondary text.
   - **Learning Hub** — compact "Korean for my work" card.
 - **Data:** stays in Supabase/RLS. No h-space-api change, since Learning migration is phase 4 and hasn't started.
-- **New migration, NOT applied:** `apps/web/supabase/migrations/20261106120000_work_korean_focus.sql`.
+- **Migration applied 2026-11-06 at the owner's request:** `apps/web/supabase/migrations/20261106120000_work_korean_focus.sql`, recorded live as `20261106145253 work_korean_focus`. Verified: three nullable columns on `kori_phrase_cards`, `work_message` in the mission item check, RLS still on, row counts unchanged (132 cards, 84 items).
   - Adds three nullable `kori_phrase_cards` columns and a `work_message` mission item type.
   - The app degrades without it: card inserts retry without the columns; the mission plan is rebuilt without the work step on `23514`.
   - The rollback block is at the end of the file.
@@ -38,7 +38,7 @@
 
 ## Current focus
 
-1. Owner: review PR #96, then approve applying `20261106120000_work_korean_focus.sql` (shared Orbit DB) before or with the deploy.
+1. Owner: review and merge PR #96 (its migration is already live; the current `main` code ignores the new columns).
 2. Native-speaker pass on `lib/korean-phrasebook/work-seed.ts` (Korean + romanization).
 3. Carried over: review the Home redesign PR; Planner slices 3–10; Finance redesign phases D–F; reminder migration; second-brain T2–T7; MCP auth decision.
 4. Follow-up candidates: the same generic-error treatment for `chat/stream`, `goals/coach`, `memory/ask` and `recovery-coach` (they still echo `err.message`).
