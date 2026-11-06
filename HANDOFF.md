@@ -3,7 +3,7 @@
 ## Snapshot
 
 - **Updated:** 2026-11-06.
-- **Checkout:** `feat/work-korean-focus`, cut from `main` at `c1f63ca`. **Uncommitted** — nothing committed or pushed; the owner reviews first.
+- **Checkout:** `feat/work-korean-focus`, cut from `main` at `c1f63ca`. Committed (`a6f0e3a`) and pushed at the owner's request; PR #96 is open.
 - **Feature: "Korean for my work"** (record: `apps/web/docs/korean-for-work.md`). A focus inside Learning, not a new nav item:
   - **Analyzer** (`/chat?mode=analyze`):
     - Results come main-point first (what it means → what to do → My reply → useful language → practice → collapsed details).
@@ -38,7 +38,7 @@
 
 ## Current focus
 
-1. Owner: review `feat/work-korean-focus`, then approve applying `20261106120000_work_korean_focus.sql` (shared Orbit DB) before or with the deploy.
+1. Owner: review PR #96, then approve applying `20261106120000_work_korean_focus.sql` (shared Orbit DB) before or with the deploy.
 2. Native-speaker pass on `lib/korean-phrasebook/work-seed.ts` (Korean + romanization).
 3. Carried over: review the Home redesign PR; Planner slices 3–10; Finance redesign phases D–F; reminder migration; second-brain T2–T7; MCP auth decision.
 4. Follow-up candidates: the same generic-error treatment for `chat/stream`, `goals/coach`, `memory/ask` and `recovery-coach` (they still echo `err.message`).
