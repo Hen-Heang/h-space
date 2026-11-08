@@ -17,8 +17,9 @@ self.addEventListener("push", (event) => {
   const title = data.title || "H-Space"
   const options = {
     body: data.body || "",
-    icon: "/H%20Space%20Icon.png",
-    badge: "/H%20Space%20Icon.png",
+    icon: "/icons/icon-192.png",
+    // Android draws only the badge's alpha channel, so it's a white silhouette.
+    badge: "/icons/badge-96.png",
     data: { url: data.url || "/" },
     tag: data.tag || undefined,
   }

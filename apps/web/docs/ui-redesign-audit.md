@@ -345,6 +345,35 @@ and the urge flow's steps.
 - Consider `@axe-core/playwright` in the sweep. It's a dev dependency, added
   only with the owner's OK.
 
+_Status — app icon set (2026-11-08, branch `ui/app-icon-set`):_
+
+- **Before:** the favicon, Apple touch icon, every manifest entry and the
+  push-notification icon _and_ badge all pointed at `H Space Icon.png`
+  (1254px, 1.6 MB, the artwork drawn inside a black margin), so a 32px tab
+  icon downloaded 1.6 MB and iOS/Android added a second rounded corner around
+  the artwork's own. The correctly sized `public/icon-192.png`,
+  `icon-512.png`, `apple-icon.png` and `favicon-32.png` were the old Hengo
+  mark and unreferenced; they're deleted.
+- **Now:** `scripts/generate-app-icons.mjs` draws the mark once as SVG and
+  renders every size with Playwright's Chromium into `public/icons/` plus
+  `public/favicon.ico`. Variants: _full_ (bars, ribbon, orbit, sparkle) for
+  ≥180px and the in-app logo; _simple_ (H only) for 16–48px favicons; a white
+  _mono_ badge for Android notifications. Shapes: rounded with transparent
+  corners (tab, PWA `any`, in-app), full bleed for the iOS touch icon and the
+  `maskable` icon (mark inside the 80% safe circle). The crossbar is a
+  shallow wave on purpose — a steep diagonal read as "N" at 16–32px.
+- **Wired in:** `app/layout.tsx` icons, `site.webmanifest` (real sizes, a
+  maskable entry, `background_color` matches the icon), `sw.js` (192px icon,
+  mono badge), and the ten in-app logo spots (shell sidebar and rail, auth,
+  onboarding, error/404, privacy/terms, landing) now use
+  `icons/h-space-mark.svg`, with the wrapper radius set to the mark's own
+  22.5% corner instead of clipping it to a near-circle.
+- `H Space Icon.png` stays as the source artwork and is no longer served by
+  the app; `hengo-icon.png` stays the Hengo Learning / AI Coach avatar.
+- Not done here: the Open Graph image (`app/opengraph-image.tsx`) still draws
+  a plain blue square for the logo, and the landing page's blue gradients —
+  both belong with the landing/brand pass.
+
 ## Sweep log
 
 **After Phase 1 + 2** (2026-11-03, this branch, same synthetic data):

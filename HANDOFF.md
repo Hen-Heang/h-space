@@ -2,43 +2,29 @@
 
 ## Snapshot
 
-- **Updated:** 2026-11-06.
-- **Checkout:** `main` at `d497eaa`. PR #96 (`feat/work-korean-focus`) was merged by the owner on 2026-11-06 and Vercel's production deploy completed. The branch is kept.
-- **Feature: "Korean for my work"** (record: `apps/web/docs/korean-for-work.md`). A focus inside Learning, not a new nav item:
-  - **Analyzer** (`/chat?mode=analyze`):
-    - Results come main-point first (what it means → what to do → My reply → useful language → practice → collapsed details).
-    - The editable box is the payload; a sensitive-text warning offers to replace fragments with placeholders.
-    - Analyzer history is now **opt-in**.
-    - Save to Phrasebook goes through an editable, idempotent draft.
-  - **Phrasebook:**
-    - Readable situation labels.
-    - Compact Filters popover/sheet with active count, removable chips and Clear all.
-    - New 25-card starter pack `work-communication`, with 6 comprehension cards.
-    - Saved messages go to a private "My work messages" collection.
-  - **Work practice** — new `/phrasebook/practice?mode=work` mode. Reply typed or spoken-then-corrected; meaning-first feedback; never a pronunciation score.
-  - **Mission engine** — with the goal set to Workplace Korean, one `work_message` step; due reviews are trimmed to fit the time budget, and the backlog is kept and shown as secondary text.
-  - **Learning Hub** — compact "Korean for my work" card.
-- **Data:** stays in Supabase/RLS. No h-space-api change, since Learning migration is phase 4 and hasn't started.
-- **Migration applied 2026-11-06 at the owner's request:** `apps/web/supabase/migrations/20261106120000_work_korean_focus.sql`, recorded live as `20261106145253 work_korean_focus`. Verified: three nullable columns on `kori_phrase_cards`, `work_message` in the mission item check, RLS still on, row counts unchanged (132 cards, 84 items).
-  - Adds three nullable `kori_phrase_cards` columns and a `work_message` mission item type.
-  - The app degrades without it: card inserts retry without the columns; the mission plan is rebuilt without the work step on `23514`.
-  - The rollback block is at the end of the file.
-- **Also changed:**
-  - `jsonAiRoute` and the analyzer stream no longer return provider error text.
-  - New shared `userDataBlock()` in `lib/server/ai.ts`.
-  - `ChipSelect` takes an optional `getLabel`.
-- **Verification (2026-11-06):**
-  - `pnpm lint` — 0 errors (5 warnings, all pre-existing).
-  - `pnpm test` — 192 files, 2,070 tests passed.
-  - `pnpm build` — passed.
-  - `tests/e2e/work-korean.e2e.ts` — 10/10 against a dev server with synthetic Supabase env, all network mocked; screenshots in `apps/web/test-results/work-korean/` (git-ignored).
-  - Not done: a real-account run (it would seed the pack into live data), a physical device / WebKit run, and a human review of real model outputs and the pack's romanization.
+- **Updated:** 2026-11-08.
+- **Checkout:** `ui/app-icon-set`, branched from `main` at `11a66f8` (PR #97, the reminder handoff fix). Committed and opened as a PR at the owner's request. No migration, API, auth or data change.
+- **App icon set** (record: the "app icon set" status under Phase 6 in `apps/web/docs/ui-redesign-audit.md`):
+  - **Before:** every icon slot (favicon, Apple touch icon, all manifest entries, push icon and badge) loaded `H Space Icon.png` (1254px, 1.6 MB, artwork inside a black margin). The sized `public/icon-192/512`, `apple-icon` and `favicon-32` PNGs were the old Hengo mark and unreferenced; they're deleted.
+  - **Now:** `apps/web/scripts/generate-app-icons.mjs` draws the mark once as SVG and renders every size with Playwright's Chromium into `public/icons/` plus `public/favicon.ico`. Re-run it (`node scripts/generate-app-icons.mjs` from `apps/web`) rather than editing outputs.
+  - The crossbar is a shallow wave on purpose: a steep diagonal read as "N" at 16–32px.
+  - **Wired in:** `app/layout.tsx` icons, `site.webmanifest` (real sizes + maskable), `sw.js` (192px icon, white mono badge), and the ten in-app logo spots, which now use `icons/h-space-mark.svg` with the wrapper radius matching the mark's 22.5% corner.
+  - `H Space Icon.png` stays as source artwork (no longer served); `hengo-icon.png` stays the AI Coach avatar.
+- **Verification (2026-11-08):**
+  - `pnpm lint`: 0 errors (5 pre-existing warnings).
+  - `pnpm test`: 192 files, 2,071 tests passed.
+  - `pnpm build`: passed.
+  - On `pnpm start`: every icon URL returns 200 with the right content type; head links emitted. Screenshots of the shell sidebar (light/dark), tablet rail, login, 404 and landing show the mark with no CSP errors.
+  - Not done: a physical iPhone/Android install, and a real push to see the badge. Existing home-screen installs keep the old icon until re-added.
 - **Untracked, not ours:** `test-results/` at the repo root.
-- **Reminder reconcile fix applied 2026-11-06 at the owner's request:** `20261105121000_fix_reminder_reconcile_alias.sql`, recorded live as `fix_reminder_reconcile_alias`. Verified: one function overload, alias clash gone, execute still revoked from `anon`/`authenticated`; `kori-reminder-delivery-check` failed every minute through 15:05 UTC and **succeeded from 15:06 UTC**. `kori_reminder_deliveries` was empty, so nothing was stuck — the next reminder that fires is the first end-to-end delivery check.
 
 ## Current focus
 
-1. Owner: open the Phrasebook once signed in (adds the new starter pack); from the next day's plan, check the work-message step. Fix the GitHub billing lock so Actions CI runs again.
-2. Native-speaker pass on `lib/korean-phrasebook/work-seed.ts` (Korean + romanization).
-3. Carried over: review the Home redesign PR; Planner slices 3–10; Finance redesign phases D–F; second-brain T2–T7; MCP auth decision.
-4. Follow-up candidates: the same generic-error treatment for `chat/stream`, `goals/coach`, `memory/ask` and `recovery-coach` (they still echo `err.message`).
+1. Owner: review the redrawn mark (`apps/web/public/icons/icon-512.png` and `favicon-32.png` on the branch) and merge the icon PR; then re-add H-Space to the iPhone home screen to pick up the new icon.
+2. UI audit follow-ups, in order (from the 2026-11-08 audit):
+   - **Vocab review flow:** `components/vocab/ReviewSession.tsx` and related files hold the most off-system styling.
+   - **Icon pass:** Lucide stroke 2 (171 icons at 2.5, 71 at 3), Lucide instead of emoji as UI icons (`ReviewSession`, `DeckBuilder`, `ChatWindow`), one colour per meaning.
+   - **Screen-by-screen restyle:** History, Reading, Chat leftovers, Interview, Roadmap, Recovery visuals.
+   - **Phase 6 consistency pass:** skeletons over the ~98 ad-hoc spinners, `EmptyState` (4 users), `AlertDialog` for the three `window.confirm` calls in `interview/script`, and deleting the 8 dead components.
+   - **Landing/brand pass:** the OG image logo and the landing's blue gradients.
+3. Carried over: native-speaker pass on `lib/korean-phrasebook/work-seed.ts`; fix the GitHub billing lock so Actions CI runs; Planner slices 3–10; Finance redesign phases D–F; second-brain T2–T7; MCP auth decision; generic-error treatment for `chat/stream`, `goals/coach`, `memory/ask`, `recovery-coach`.
