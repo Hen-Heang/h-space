@@ -4,7 +4,6 @@ import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState, useSyncExternalStore } from "react"
 import {
-  ArrowLeft,
   BookmarkPlus,
   BookOpenText,
   CheckCircle2,
@@ -34,6 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { BackLink } from "@/components/ui/back-link"
 import { Button } from "@/components/ui/button"
 import { SmartPeek } from "@/components/ui/SmartPeek"
 import { SpeakButton } from "@/components/ui/SpeakButton"
@@ -270,47 +270,41 @@ export default function ReadingUnitPage() {
     >
       {/* ── Header ── */}
       <motion.div variants={itemVariants} className="space-y-4">
-        <Link
-          href="/phrasebook?mode=reading"
-          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft size={14} /> All units
-        </Link>
+        {/* Phones get MobileHeader's back button, so this is desktop-only. */}
+        <BackLink href="/phrasebook?mode=reading" label="All units" desktopOnly />
 
-        <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-xl dark:bg-slate-900/40 sm:p-8">
+        <div className="app-surface p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                 {READING_CATEGORIES[unit.category].label}
               </span>
-              <span className="inline-flex rounded-full bg-muted px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                 {unit.level}
               </span>
               {progress.status === "completed" && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-white">
-                  <CheckCircle2 size={11} /> Completed
+                <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                  <CheckCircle2 aria-hidden="true" size={12} /> Completed
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <Link
-                href={`/reading/${unit.id}/edit`}
-                title="Edit unit"
-                aria-label="Edit unit"
-                className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground shadow-sm transition-all after:absolute after:-inset-1 after:content-[''] hover:text-foreground active:scale-95"
-              >
-                <Pencil aria-hidden="true" size={15} />
-              </Link>
+            <div className="flex items-center gap-1">
+              <Button asChild variant="ghost" size="icon-sm" className="text-muted-foreground">
+                <Link href={`/reading/${unit.id}/edit`} title="Edit unit" aria-label="Edit unit">
+                  <Pencil aria-hidden="true" />
+                </Link>
+              </Button>
               <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
                 <AlertDialogTrigger asChild>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     title="Delete unit"
                     aria-label="Delete unit"
-                    className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground shadow-sm transition-all after:absolute after:-inset-1 after:content-[''] hover:border-destructive/30 hover:text-destructive active:scale-95"
+                    className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                   >
-                    <Trash2 aria-hidden="true" size={15} />
-                  </button>
+                    <Trash2 aria-hidden="true" />
+                  </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -336,35 +330,30 @@ export default function ReadingUnitPage() {
           <div className="mt-4 flex items-center gap-3">
             <h2
               lang="ko"
-              className="min-w-0 break-words text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
+              className="min-w-0 break-words text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
             >
               {unit.episode ? `${unit.episode} · ` : ""}
               {unit.title}
             </h2>
             <SpeakButton text={unit.title} className="shrink-0" />
           </div>
-          <p className="mt-1 text-base font-bold text-muted-foreground">{unit.titleEnglish}</p>
-          <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-muted-foreground/80">
+          <p className="mt-1 text-base font-medium text-muted-foreground">{unit.titleEnglish}</p>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
             {unit.summary}
           </p>
-          <p className="mt-3 text-xs font-bold uppercase tracking-wider text-muted-foreground/50">
-            Source: {unit.source}
-          </p>
+          <p className="mt-3 text-xs text-muted-foreground">Source: {unit.source}</p>
         </div>
       </motion.div>
 
       {/* ── Grammar note ── */}
       {unit.grammarNote && (
-        <motion.div
-          variants={itemVariants}
-          className="rounded-[1.8rem] border border-sky-200/60 bg-sky-50/60 p-5 dark:border-sky-400/15 dark:bg-sky-400/6"
-        >
-          <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
-            <GraduationCap size={16} />
-            <span className="text-xs font-bold uppercase tracking-[0.18em]">Grammar focus</span>
+        <motion.div variants={itemVariants} className="app-surface-muted p-5">
+          <div className="flex items-center gap-2 text-primary">
+            <GraduationCap aria-hidden="true" size={16} />
+            <span className="text-sm font-medium">Grammar focus</span>
           </div>
-          <p className="mt-2 text-lg font-bold text-foreground">{unit.grammarNote.pattern}</p>
-          <p className="mt-1.5 text-sm leading-6 text-sky-800 dark:text-sky-200">
+          <p className="mt-2 text-lg font-semibold text-foreground">{unit.grammarNote.pattern}</p>
+          <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
             {unit.grammarNote.explanation}
           </p>
         </motion.div>
@@ -372,47 +361,46 @@ export default function ReadingUnitPage() {
 
       {/* ── Reading section ── */}
       <motion.section variants={itemVariants} className="space-y-3">
-        <div className="flex items-center justify-between px-1">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <BookOpenText size={16} className="text-emerald-600 dark:text-emerald-400" />
-            <h3 className="text-base font-bold tracking-tight text-foreground">Read</h3>
+            <BookOpenText aria-hidden="true" size={18} className="text-muted-foreground" />
+            <h3 className="text-section-heading font-semibold text-foreground">Read</h3>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => toggleAids("english")}
             aria-pressed={allTranslations}
-            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-300"
+            className="text-primary hover:text-primary"
           >
-            {allTranslations ? <EyeOff size={13} /> : <Eye size={13} />}
+            {allTranslations ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
             {allTranslations ? "Hide all translations" : "Show all translations"}
-          </button>
+          </Button>
         </div>
         {/* Shown on phones too — that's where tap-to-look-up matters most. */}
-        <p className="px-1 text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Tap any word to look it up · tap the speaker to listen
         </p>
 
-        <div className="space-y-3">
+        {/* One surface, one divided row per paragraph (design-system §5). */}
+        <div className="app-surface divide-y divide-border">
           {unit.paragraphs.map((p, i) => {
             const showTranslation = allTranslations || visibleTranslations.has(i)
             return (
-              <div
-                key={i}
-                className="rounded-[1.8rem] border border-border bg-card p-5 shadow-sm dark:bg-slate-900/40 sm:p-6"
-              >
+              <div key={i} className="p-4 sm:p-5">
                 <div className="flex items-start gap-3">
                   {/* Numbered point — gives each paragraph a stable reference
                       ("point 3") so notes taken while reading are easy to find
                       again, and shows position in the passage (4 of 7). */}
                   <span
                     aria-label={`Point ${i + 1}`}
-                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-xs font-bold tabular-nums text-emerald-600 ring-1 ring-emerald-500/20 dark:text-emerald-400"
+                    className="mt-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium tabular-nums text-muted-foreground"
                   >
                     {i + 1}
                   </span>
                   <p
                     lang="ko"
-                    className="min-w-0 max-w-[38em] flex-1 break-keep text-[1.0625rem] font-medium leading-8 text-foreground [overflow-wrap:anywhere] sm:text-lg sm:leading-9"
+                    className="min-w-0 max-w-[38em] flex-1 break-keep text-[1.0625rem] leading-8 text-foreground [overflow-wrap:anywhere] sm:text-lg sm:leading-9"
                   >
                     <PeekableText text={p.korean} />
                   </p>
@@ -431,34 +419,39 @@ export default function ReadingUnitPage() {
                         : `Save paragraph ${i + 1} to your Vocab deck`
                     }
                     className={cn(
-                      "relative mt-1 shrink-0 rounded-xl p-1.5 transition-all after:absolute after:-inset-2 after:content-[''] active:scale-90",
+                      "relative mt-1 shrink-0 rounded-md p-1.5 transition-colors after:absolute after:-inset-2 after:content-['']",
                       savedSentences.has(i)
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                        ? "text-success"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
                     {savingSentence === i ? (
-                      <Loader2 size={16} className="animate-spin" />
+                      <Loader2 aria-hidden="true" size={16} className="animate-spin" />
                     ) : savedSentences.has(i) ? (
-                      <CheckCircle2 size={16} />
+                      <CheckCircle2 aria-hidden="true" size={16} />
                     ) : (
-                      <BookmarkPlus size={16} />
+                      <BookmarkPlus aria-hidden="true" size={16} />
                     )}
                   </button>
                   <SpeakButton text={p.korean} className="mt-1 shrink-0" />
                 </div>
 
-                <div className="mt-3 border-t border-border/60 pt-3 sm:pl-10">
+                <div className="mt-2 sm:pl-10">
                   <button
                     type="button"
                     onClick={() => toggleTranslation(i)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground/70 transition-colors hover:text-foreground"
+                    aria-expanded={showTranslation}
+                    className="inline-flex min-h-9 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    {showTranslation ? <EyeOff size={12} /> : <Eye size={12} />}
+                    {showTranslation ? (
+                      <EyeOff aria-hidden="true" size={14} />
+                    ) : (
+                      <Eye aria-hidden="true" size={14} />
+                    )}
                     {showTranslation ? "Hide translation" : "Show translation"}
                   </button>
                   {showTranslation && (
-                    <p className="mt-2 break-words text-sm font-medium leading-relaxed text-muted-foreground">
+                    <p className="mt-1 break-words text-sm leading-relaxed text-muted-foreground">
                       {p.english}
                     </p>
                   )}
@@ -472,61 +465,58 @@ export default function ReadingUnitPage() {
       {/* ── Vocabulary section ── */}
       {unit.vocab.length > 0 && (
         <motion.section variants={itemVariants} className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <BookmarkPlus size={16} className="text-emerald-600 dark:text-emerald-400" />
-              <h3 className="text-base font-bold tracking-tight text-foreground">
-                Key Vocabulary{" "}
-                <span className="text-muted-foreground/50">({unit.vocab.length})</span>
+              <BookmarkPlus aria-hidden="true" size={18} className="text-muted-foreground" />
+              <h3 className="text-section-heading font-semibold text-foreground">
+                Key vocabulary{" "}
+                <span className="font-normal text-muted-foreground">({unit.vocab.length})</span>
               </h3>
             </div>
             <Button
-              type="button"
+              size="sm"
               onClick={handleSaveAll}
               disabled={savingAll || savedWords.size === unit.vocab.length}
-              className="h-9 rounded-xl bg-emerald-600 px-4 text-xs font-bold uppercase tracking-wider text-white hover:bg-emerald-500 active:scale-95"
             >
               {savingAll ? (
-                <Loader2 size={13} className="mr-1.5 animate-spin" />
+                <Loader2 aria-hidden="true" className="animate-spin" />
               ) : (
-                <BookmarkPlus size={13} className="mr-1.5" />
+                <BookmarkPlus aria-hidden="true" />
               )}
               {savedWords.size === unit.vocab.length ? "All saved" : "Save all to flashcards"}
             </Button>
           </div>
 
+          {/* Neutral on purpose: the same line also carries save errors. */}
           {vocabMessage && (
-            <p className="px-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+            <p role="status" className="text-sm text-muted-foreground">
               {vocabMessage}
             </p>
           )}
 
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="app-surface divide-y divide-border">
             {unit.vocab.map((v, vi) => {
               const saved = savedWords.has(v.term)
               return (
-                <div
-                  key={v.term}
-                  className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 dark:bg-white/4"
-                >
+                <div key={v.term} className="flex items-start justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       {/* Numbered so a word is referenceable ("vocab 5"), matching
                         the reading points and quiz numbering. */}
                       <span
                         aria-label={`Word ${vi + 1}`}
-                        className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-md bg-emerald-500/10 px-1 text-xs font-bold tabular-nums text-emerald-600 ring-1 ring-emerald-500/20 dark:text-emerald-400"
+                        className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1 text-xs font-medium tabular-nums text-muted-foreground"
                       >
                         {vi + 1}
                       </span>
-                      <p lang="ko" className="font-bold text-foreground">
+                      <p lang="ko" className="font-semibold text-foreground">
                         {v.term}
                       </p>
                       <SpeakButton text={v.term} />
                     </div>
-                    <p className="mt-0.5 text-sm font-medium text-muted-foreground">{v.meaning}</p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">{v.meaning}</p>
                     {v.example && (
-                      <p className="mt-1 text-xs font-medium italic text-muted-foreground/60">
+                      <p lang="ko" className="mt-1 text-sm text-muted-foreground">
                         {v.example}
                       </p>
                     )}
@@ -540,18 +530,18 @@ export default function ReadingUnitPage() {
                       saved ? `${v.term} saved to flashcards` : `Save ${v.term} to flashcards`
                     }
                     className={cn(
-                      "mt-1 shrink-0 rounded-xl border p-2 transition-all active:scale-90",
+                      "relative mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors after:absolute after:-inset-1 after:content-['']",
                       saved
-                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                        : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
+                        ? "text-success"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
                     {savingWord === v.term ? (
-                      <Loader2 size={14} className="animate-spin" />
+                      <Loader2 aria-hidden="true" size={16} className="animate-spin" />
                     ) : saved ? (
-                      <CheckCircle2 size={14} />
+                      <CheckCircle2 aria-hidden="true" size={16} />
                     ) : (
-                      <BookmarkPlus size={14} />
+                      <BookmarkPlus aria-hidden="true" size={16} />
                     )}
                   </button>
                 </div>
@@ -563,23 +553,27 @@ export default function ReadingUnitPage() {
 
       {/* ── Quiz section ── */}
       <motion.section variants={itemVariants} className="space-y-3">
-        <div className="flex items-center gap-2 px-1">
-          <GraduationCap size={16} className="text-emerald-600 dark:text-emerald-400" />
-          <h3 className="text-base font-bold tracking-tight text-foreground">Comprehension Quiz</h3>
-          <span className="text-xs font-bold text-muted-foreground/60">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <div className="flex items-center gap-2">
+            <GraduationCap aria-hidden="true" size={18} className="text-muted-foreground" />
+            <h3 className="text-section-heading font-semibold text-foreground">
+              Comprehension quiz
+            </h3>
+          </div>
+          <span className="text-sm text-muted-foreground">
             {unit.quiz.length > 0 ? "Pass to complete the unit" : "No quiz in this unit"}
           </span>
         </div>
 
         {unit.quiz.length === 0 ? (
-          <div className="flex flex-col items-start gap-3 rounded-[1.8rem] border border-border bg-card p-5 dark:bg-slate-900/40 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm font-medium text-muted-foreground">
+          <div className="app-surface flex flex-col items-start gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
               This unit has no quiz — mark it as completed once you have finished reading. You can
               add questions any time with the edit button above.
             </p>
             {progress.status === "completed" ? (
-              <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 size={16} /> Completed
+              <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                <CheckCircle2 aria-hidden="true" size={16} /> Completed
               </span>
             ) : (
               <Button
@@ -588,9 +582,9 @@ export default function ReadingUnitPage() {
                   void markUnitCompleted(unit.id)
                   void logActivity()
                 }}
-                className="h-10 shrink-0 rounded-xl bg-emerald-600 px-5 text-xs font-bold uppercase tracking-wider text-white hover:bg-emerald-500 active:scale-95"
+                className="shrink-0"
               >
-                <CheckCircle2 size={14} className="mr-1.5" />
+                <CheckCircle2 aria-hidden="true" />
                 Mark as completed
               </Button>
             )}
@@ -601,49 +595,45 @@ export default function ReadingUnitPage() {
               <div
                 role="status"
                 className={cn(
-                  "flex items-center justify-between rounded-[1.8rem] border p-5",
-                  passed
-                    ? "border-emerald-500/30 bg-emerald-500/5"
-                    : "border-amber-500/30 bg-amber-500/5",
+                  "flex flex-col gap-3 rounded-lg p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5",
+                  passed ? "bg-success/10" : "bg-amber-500/10",
                 )}
               >
                 <div className="flex items-center gap-3">
                   {passed ? (
-                    <CheckCircle2 size={24} className="text-emerald-600 dark:text-emerald-400" />
+                    <CheckCircle2 aria-hidden="true" size={24} className="shrink-0 text-success" />
                   ) : (
-                    <RotateCcw size={24} className="text-amber-600 dark:text-amber-400" />
+                    <RotateCcw aria-hidden="true" size={24} className="shrink-0 text-amber-500" />
                   )}
                   <div>
-                    <p className="text-base font-bold text-foreground">
+                    <p className="text-base font-semibold text-foreground">
                       {score}/{unit.quiz.length} correct
                     </p>
-                    <p className="text-xs font-bold text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       {passed
                         ? "Unit completed! The vocabulary you saved will come back in your reviews."
                         : "Almost there — re-read the text above and try again."}
                     </p>
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  onClick={handleRetryQuiz}
-                  className="h-9 rounded-xl border border-border bg-background px-4 text-xs font-bold uppercase tracking-wider text-foreground hover:bg-accent active:scale-95"
-                >
-                  <RotateCcw size={13} className="mr-1.5" /> Retry
+                <Button variant="outline" size="sm" onClick={handleRetryQuiz} className="shrink-0">
+                  <RotateCcw aria-hidden="true" /> Retry
                 </Button>
               </div>
             )}
 
-            <div className="space-y-3">
+            <div className="app-surface divide-y divide-border">
               {unit.quiz.map((q, qi) => {
                 const selected = answers[qi]
                 return (
                   <div
                     key={qi}
-                    className="rounded-[1.8rem] border border-border bg-card p-5 shadow-sm dark:bg-slate-900/40"
+                    role="group"
+                    aria-label={`Question ${qi + 1}`}
+                    className="p-4 sm:p-5"
                   >
-                    <p className="font-bold text-foreground">
-                      <span className="mr-2 text-muted-foreground/50">Q{qi + 1}.</span>
+                    <p className="font-medium text-foreground">
+                      <span className="mr-2 text-muted-foreground">Q{qi + 1}.</span>
                       {q.question}
                     </p>
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -657,27 +647,36 @@ export default function ReadingUnitPage() {
                             type="button"
                             disabled={submitted}
                             onClick={() => setAnswers((prev) => ({ ...prev, [qi]: oi }))}
+                            aria-pressed={isSelected}
                             className={cn(
-                              "flex items-center justify-between gap-2 rounded-xl border px-4 py-2.5 text-left text-sm font-bold transition-all active:scale-[0.98]",
+                              "flex min-h-11 items-center justify-between gap-2 rounded-lg border px-4 py-2.5 text-left text-sm font-medium transition-colors",
                               isCorrect
-                                ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                                ? "border-success bg-success/10 text-emerald-700 dark:text-emerald-400"
                                 : isWrongPick
-                                  ? "border-destructive/40 bg-destructive/5 text-destructive"
+                                  ? "border-destructive/50 bg-destructive/5 text-destructive"
                                   : isSelected
-                                    ? "border-emerald-500/50 bg-emerald-500/5 text-foreground"
-                                    : "border-border text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                                    ? "border-primary/50 bg-primary/10 text-foreground"
+                                    : "border-border text-foreground hover:bg-muted",
                             )}
                           >
                             <span lang={hasHangul(opt) ? "ko" : undefined}>{opt}</span>
-                            {isCorrect && <CheckCircle2 size={15} className="shrink-0" />}
-                            {isWrongPick && <XCircle size={15} className="shrink-0" />}
+                            {isCorrect && (
+                              <CheckCircle2 aria-hidden="true" size={16} className="shrink-0" />
+                            )}
+                            {isWrongPick && (
+                              <XCircle aria-hidden="true" size={16} className="shrink-0" />
+                            )}
                           </button>
                         )
                       })}
                     </div>
                     {submitted && q.explanation && (
-                      <div className="mt-3 flex items-start gap-2 rounded-xl bg-accent/50 p-3 text-xs font-medium leading-relaxed text-muted-foreground">
-                        <Lightbulb size={13} className="mt-0.5 shrink-0 text-amber-500" />
+                      <div className="app-surface-muted mt-3 flex items-start gap-2 p-3 text-sm leading-relaxed text-muted-foreground">
+                        <Lightbulb
+                          aria-hidden="true"
+                          size={16}
+                          className="mt-0.5 shrink-0 text-muted-foreground"
+                        />
                         {q.explanation}
                       </div>
                     )}
@@ -691,7 +690,8 @@ export default function ReadingUnitPage() {
                 type="button"
                 onClick={handleSubmitQuiz}
                 disabled={!allAnswered}
-                className="h-11 w-full rounded-2xl bg-emerald-600 text-xs font-bold uppercase tracking-wide text-white hover:bg-emerald-500 active:scale-[0.99] sm:w-auto sm:px-8"
+                size="lg"
+                className="w-full sm:w-auto sm:px-8"
               >
                 {allAnswered
                   ? "Submit answers"

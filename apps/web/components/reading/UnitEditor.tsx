@@ -4,7 +4,6 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import {
-  ArrowLeft,
   BookmarkPlus,
   BookOpenText,
   CheckCircle2,
@@ -16,6 +15,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
+import { BackLink } from "@/components/ui/back-link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -46,16 +46,18 @@ function SectionHeader({
   hint?: string
 }) {
   return (
-    <div className="flex items-center gap-2 px-1">
-      <Icon size={16} className="text-blue-600 dark:text-blue-400" />
-      <h3 className="text-base font-bold tracking-tight text-foreground">{title}</h3>
-      {hint && <span className="text-xs font-bold text-muted-foreground">{hint}</span>}
+    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+      <div className="flex items-center gap-2">
+        <Icon aria-hidden="true" size={18} className="text-muted-foreground" />
+        <h3 className="text-section-heading font-semibold text-foreground">{title}</h3>
+      </div>
+      {hint && <span className="text-sm text-muted-foreground">{hint}</span>}
     </div>
   )
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <p className="mb-1.5 text-xs font-semibold text-muted-foreground/70">{children}</p>
+  return <p className="mb-1.5 text-sm font-medium text-foreground">{children}</p>
 }
 
 export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
@@ -207,18 +209,18 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
   return (
     <div className="space-y-8 pb-12">
       <div className="space-y-4">
-        <Link
+        {/* Phones get MobileHeader's back button, so this is desktop-only. */}
+        <BackLink
           href={isEdit ? `/reading/${unit!.id}` : "/phrasebook?mode=reading"}
-          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft size={14} /> {isEdit ? "Back to unit" : "All units"}
-        </Link>
+          label={isEdit ? "Back to unit" : "All units"}
+          desktopOnly
+        />
 
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-xl dark:bg-slate-900/40 sm:p-8">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
             {isEdit ? "Edit unit" : "Create a new unit"}
           </h2>
-          <p className="mt-2 max-w-2xl text-sm font-medium leading-relaxed text-muted-foreground">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
             Paste any Korean text you want to study — an article, a podcast transcript, a work
             message — then add vocabulary and quiz questions to make it reviewable.
           </p>
@@ -228,7 +230,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
       {/* ── Basics ── */}
       <section className="space-y-3">
         <SectionHeader icon={BookOpenText} title="Basics" />
-        <div className="space-y-4 rounded-[1.8rem] border border-border bg-card p-5 shadow-sm dark:bg-slate-900/40 sm:p-6">
+        <div className="space-y-4 app-surface p-5 sm:p-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <FieldLabel>Korean title *</FieldLabel>
@@ -283,11 +285,12 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
                     key={key}
                     type="button"
                     onClick={() => setCategory(key)}
+                    aria-pressed={category === key}
                     className={cn(
-                      "rounded-xl border px-3.5 py-2 text-xs font-bold transition-all active:scale-95",
+                      "min-h-9 rounded-full border px-3.5 text-sm font-medium transition-colors",
                       category === key
-                        ? "border-blue-500/50 bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                        : "border-border text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                        ? "border-primary/40 bg-primary/10 text-primary"
+                        : "border-border text-foreground hover:bg-muted",
                     )}
                   >
                     {READING_CATEGORIES[key].label}
@@ -303,11 +306,12 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
                     key={l}
                     type="button"
                     onClick={() => setLevel(l)}
+                    aria-pressed={level === l}
                     className={cn(
-                      "rounded-xl border px-3.5 py-2 text-xs font-bold transition-all active:scale-95",
+                      "min-h-9 rounded-full border px-3.5 text-sm font-medium transition-colors",
                       level === l
-                        ? "border-blue-500/50 bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                        : "border-border text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                        ? "border-primary/40 bg-primary/10 text-primary"
+                        : "border-border text-foreground hover:bg-muted",
                     )}
                   >
                     {l}
@@ -322,7 +326,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
       {/* ── Grammar note ── */}
       <section className="space-y-3">
         <SectionHeader icon={GraduationCap} title="Grammar focus" hint="Optional" />
-        <div className="space-y-4 rounded-[1.8rem] border border-border bg-card p-5 shadow-sm dark:bg-slate-900/40 sm:p-6">
+        <div className="space-y-4 app-surface p-5 sm:p-6">
           <div>
             <FieldLabel>Pattern</FieldLabel>
             <Input
@@ -352,14 +356,9 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
         />
         <div className="space-y-3">
           {paragraphs.map((p, i) => (
-            <div
-              key={i}
-              className="space-y-3 rounded-[1.8rem] border border-border bg-card p-5 shadow-sm dark:bg-slate-900/40"
-            >
+            <div key={i} className="space-y-3 app-surface p-5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Paragraph {i + 1}
-                </span>
+                <span className="text-sm font-medium text-muted-foreground">Paragraph {i + 1}</span>
                 <button
                   type="button"
                   onClick={() => setParagraphs((prev) => prev.filter((_, j) => j !== i))}
@@ -386,9 +385,10 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
           <Button
             type="button"
             onClick={() => setParagraphs((prev) => [...prev, { korean: "", english: "" }])}
-            className="h-10 rounded-xl border border-dashed border-border bg-transparent px-4 text-xs font-bold text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+            variant="outline"
+            className="border-dashed text-muted-foreground hover:text-foreground"
           >
-            <Plus size={14} className="mr-1.5" /> Add paragraph
+            <Plus aria-hidden="true" /> Add paragraph
           </Button>
         </div>
       </section>
@@ -398,10 +398,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
         <SectionHeader icon={BookmarkPlus} title="Key vocabulary" hint="Optional" />
         <div className="space-y-2">
           {vocab.map((v, i) => (
-            <div
-              key={i}
-              className="grid gap-2 rounded-2xl border border-border bg-card p-4 dark:bg-white/4 sm:grid-cols-[1fr_1fr_1.4fr_auto]"
-            >
+            <div key={i} className="app-surface grid gap-2 p-4 sm:grid-cols-[1fr_1fr_1.4fr_auto]">
               <Input
                 value={v.term}
                 onChange={(e) => updateVocab(i, { term: e.target.value })}
@@ -430,9 +427,10 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
           <Button
             type="button"
             onClick={() => setVocab((prev) => [...prev, { term: "", meaning: "", example: "" }])}
-            className="h-10 rounded-xl border border-dashed border-border bg-transparent px-4 text-xs font-bold text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+            variant="outline"
+            className="border-dashed text-muted-foreground hover:text-foreground"
           >
-            <Plus size={14} className="mr-1.5" /> Add word
+            <Plus aria-hidden="true" /> Add word
           </Button>
         </div>
       </section>
@@ -446,14 +444,9 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
         />
         <div className="space-y-3">
           {quiz.map((q, qi) => (
-            <div
-              key={qi}
-              className="space-y-3 rounded-[1.8rem] border border-border bg-card p-5 shadow-sm dark:bg-slate-900/40"
-            >
+            <div key={qi} className="space-y-3 app-surface p-5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Question {qi + 1}
-                </span>
+                <span className="text-sm font-medium text-muted-foreground">Question {qi + 1}</span>
                 <button
                   type="button"
                   onClick={() => setQuiz((prev) => prev.filter((_, j) => j !== qi))}
@@ -475,14 +468,16 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
                       type="button"
                       onClick={() => updateQuiz(qi, { answerIndex: oi })}
                       title="Mark as correct answer"
+                      aria-label={`Option ${oi + 1} is the correct answer`}
+                      aria-pressed={q.answerIndex === oi}
                       className={cn(
-                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-all active:scale-90",
+                        "flex size-9 shrink-0 items-center justify-center rounded-lg border transition-colors [@media(pointer:coarse)]:size-11",
                         q.answerIndex === oi
-                          ? "border-blue-500/50 bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                          : "border-border text-muted-foreground/40 hover:text-muted-foreground",
+                          ? "border-success bg-success/10 text-success"
+                          : "border-border text-muted-foreground/50 hover:text-muted-foreground",
                       )}
                     >
-                      <CheckCircle2 size={15} />
+                      <CheckCircle2 aria-hidden="true" size={16} />
                     </button>
                     <Input
                       value={option}
@@ -504,9 +499,9 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
                   <button
                     type="button"
                     onClick={() => updateQuiz(qi, { options: [...q.options, ""] })}
-                    className="inline-flex items-center gap-1.5 px-1 text-xs font-bold text-muted-foreground hover:text-foreground"
+                    className="inline-flex min-h-9 items-center gap-1.5 px-1 text-sm text-muted-foreground hover:text-foreground"
                   >
-                    <Plus size={13} /> Add option
+                    <Plus aria-hidden="true" size={14} /> Add option
                   </button>
                 )}
               </div>
@@ -515,7 +510,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
                 onChange={(e) => updateQuiz(qi, { explanation: e.target.value })}
                 placeholder="Explanation shown after answering (optional)"
               />
-              <p className="text-xs font-bold text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Tap the ✓ next to an option to mark it as the correct answer.
               </p>
             </div>
@@ -528,9 +523,10 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
                 { question: "", options: ["", ""], answerIndex: 0, explanation: "" },
               ])
             }
-            className="h-10 rounded-xl border border-dashed border-border bg-transparent px-4 text-xs font-bold text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+            variant="outline"
+            className="border-dashed text-muted-foreground hover:text-foreground"
           >
-            <Plus size={14} className="mr-1.5" /> Add question
+            <Plus aria-hidden="true" /> Add question
           </Button>
         </div>
       </section>
@@ -538,30 +534,25 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
       {/* ── Save ── */}
       <div className="space-y-3">
         {error && (
-          <p className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm font-bold text-destructive">
+          <p
+            role="alert"
+            className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+          >
             {error}
           </p>
         )}
         <div className="flex flex-wrap items-center gap-3">
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="h-11 rounded-2xl bg-blue-600 px-8 text-xs font-bold uppercase tracking-wide text-white hover:bg-blue-500 active:scale-[0.99] disabled:opacity-60"
-          >
+          <Button type="button" onClick={handleSave} disabled={saving} size="lg" className="px-8">
             {saving ? (
-              <Loader2 size={14} className="mr-2 animate-spin" />
+              <Loader2 aria-hidden="true" className="animate-spin" />
             ) : (
-              <Save size={14} className="mr-2" />
+              <Save aria-hidden="true" />
             )}
             {isEdit ? "Save changes" : "Create unit"}
           </Button>
-          <Link
-            href={isEdit ? `/reading/${unit!.id}` : "/phrasebook?mode=reading"}
-            className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"
-          >
-            Cancel
-          </Link>
+          <Button asChild variant="ghost" size="lg">
+            <Link href={isEdit ? `/reading/${unit!.id}` : "/phrasebook?mode=reading"}>Cancel</Link>
+          </Button>
         </div>
       </div>
     </div>
