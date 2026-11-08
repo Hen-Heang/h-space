@@ -45,7 +45,7 @@ function Tile({
       className="group flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-blue-500/40 dark:bg-slate-900/40"
     >
       <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl", iconClass)}>
-        <Icon size={18} strokeWidth={2} />
+        <Icon size={18} />
       </div>
       <div className="min-w-0">
         <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{eyebrow}</p>

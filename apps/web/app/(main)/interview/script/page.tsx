@@ -1086,7 +1086,7 @@ export default function InterviewScriptPage() {
                     onClick={addCustomSection}
                     className="mt-2 flex w-full items-center gap-2 rounded-lg py-1.5 pl-3 pr-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
-                    <Plus size={14} strokeWidth={3} className="shrink-0" />
+                    <Plus size={14} className="shrink-0" />
                     Add section
                   </button>
                   <div className="mt-4 border-t border-border/60 px-3 pt-3">
@@ -1174,7 +1174,7 @@ export default function InterviewScriptPage() {
                                   aria-label="Move section up"
                                   className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                                 >
-                                  <ChevronUp size={15} strokeWidth={2.5} />
+                                  <ChevronUp size={15} />
                                 </button>
                                 <button
                                   type="button"
@@ -1182,7 +1182,7 @@ export default function InterviewScriptPage() {
                                   aria-label="Move section down"
                                   className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                                 >
-                                  <ChevronDown size={15} strokeWidth={2.5} />
+                                  <ChevronDown size={15} />
                                 </button>
                                 <button
                                   type="button"
@@ -1190,7 +1190,7 @@ export default function InterviewScriptPage() {
                                   aria-label="Delete section"
                                   className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                                 >
-                                  <Trash2 size={14} strokeWidth={2.5} />
+                                  <Trash2 size={14} />
                                 </button>
                               </div>
                             )}
@@ -1242,7 +1242,7 @@ export default function InterviewScriptPage() {
                     onClick={addCustomSection}
                     className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                   >
-                    <Plus size={16} strokeWidth={2.5} /> Add section
+                    <Plus size={16} /> Add section
                   </button>
                 </div>
               </article>
@@ -1362,7 +1362,7 @@ export default function InterviewScriptPage() {
                               aria-label="Delete question"
                               className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                             >
-                              <Trash2 size={14} strokeWidth={2.5} />
+                              <Trash2 size={14} />
                             </button>
                           )}
                         </div>
@@ -1395,7 +1395,7 @@ export default function InterviewScriptPage() {
                   onClick={addCustomQA}
                   className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                 >
-                  <Plus size={16} strokeWidth={2.5} /> Add your own question
+                  <Plus size={16} /> Add your own question
                 </button>
               </div>
             </article>

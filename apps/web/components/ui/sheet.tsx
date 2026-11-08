@@ -76,7 +76,7 @@ function SheetContent({
               )}
               size="icon-sm"
             >
-              <X size={20} strokeWidth={1.5} className="text-current" />
+              <X size={20} className="text-current" />
               <span className="sr-only">Close</span>
             </Button>
           </SheetPrimitive.Close>

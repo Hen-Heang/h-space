@@ -13,6 +13,15 @@ import {
   EllipsisVertical,
   Mic,
   Headphones,
+  Hand,
+  MessageCircle,
+  BookA,
+  PenLine,
+  FileText,
+  GitPullRequest,
+  Users,
+  Rocket,
+  type LucideIcon,
 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { toast } from "sonner"
@@ -56,7 +65,7 @@ import type { TurnAnalysis } from "@/lib/ai/schemas/turn-analysis"
 import { cn } from "@/lib/utils"
 
 type Suggestion = {
-  emoji: string
+  icon: LucideIcon
   label: string
   text: string
   // When true, the chip fills the composer (so the user can paste/append their
@@ -66,22 +75,22 @@ type Suggestion = {
 
 const GENERAL_SUGGESTIONS: Suggestion[] = [
   {
-    emoji: "👋",
+    icon: Hand,
     label: "Greetings",
     text: "Teach me 5 everyday Korean greetings with pronunciation tips.",
   },
   {
-    emoji: "✍️",
+    icon: MessageCircle,
     label: "Beginner chat",
     text: "I'm a beginner. Give me a simple Korean conversation I can practice right now.",
   },
   {
-    emoji: "🔤",
+    icon: BookA,
     label: "Grammar",
     text: "Explain the difference between 이/가 and 은/는 with short examples.",
   },
   {
-    emoji: "🛠️",
+    icon: PenLine,
     label: "Fix my writing",
     text: "Please correct my Korean and explain each change in English.\n\nMy text:\n",
     prefill: true,
@@ -90,23 +99,23 @@ const GENERAL_SUGGESTIONS: Suggestion[] = [
 
 const TECHNICAL_SUGGESTIONS: Suggestion[] = [
   {
-    emoji: "📝",
+    icon: FileText,
     label: "Fix my report",
     text: "Please correct my Korean writing and explain each change in English. Make it sound natural for a work report.\n\nMy text:\n",
     prefill: true,
   },
   {
-    emoji: "💻",
+    icon: GitPullRequest,
     label: "PR Review",
     text: "How do I ask a colleague to review my Pull Request politely in Korean?",
   },
   {
-    emoji: "📅",
+    icon: Users,
     label: "Stand-up",
     text: "Help me prepare a short daily stand-up update in Korean: I finished the login bug and I'm starting the API integration today.",
   },
   {
-    emoji: "🚀",
+    icon: Rocket,
     label: "Deployment",
     text: "What are some common Korean terms used during a production deployment or system maintenance?",
   },
@@ -269,12 +278,12 @@ const HengoWelcome: FC = () => {
               type="button"
               disabled={!canInteract}
               onClick={() => send(preset.prompt)}
-              className="group flex min-h-[7.25rem] flex-col items-start rounded-2xl border border-border/70 bg-card/70 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-500/35 hover:bg-card hover:shadow-md disabled:opacity-40 active:translate-y-0 active:scale-[0.98]"
+              className="group flex min-h-[7.25rem] flex-col items-start rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/40 disabled:opacity-40 active:bg-muted"
             >
-              <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-muted/70 text-base ring-1 ring-border/50 transition-colors group-hover:bg-blue-500/10">
-                {preset.emoji}
+              <span className="mb-2 flex size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+                <preset.icon aria-hidden="true" className="size-4" />
               </span>
-              <span className="text-sm font-semibold leading-tight text-foreground/90 group-hover:text-blue-700 dark:group-hover:text-blue-300">
+              <span className="text-sm font-semibold leading-tight text-foreground group-hover:text-primary">
                 {preset.label}
               </span>
               <span className="mt-1 line-clamp-2 text-xs font-medium leading-snug text-muted-foreground">
@@ -295,12 +304,13 @@ const HengoWelcome: FC = () => {
             type="button"
             disabled={!canInteract}
             onClick={() => sendSuggestion(s)}
-            className="group flex items-center gap-2 rounded-full border border-border/60 bg-background/60 px-3.5 py-1.5 text-left transition-all hover:border-blue-500/30 hover:bg-muted/60 disabled:opacity-40 active:scale-95"
+            className="group flex min-h-9 items-center gap-2 rounded-full border border-border bg-background px-3.5 py-1.5 text-left transition-colors hover:border-primary/40 hover:bg-muted disabled:opacity-40"
           >
-            <span className="text-xs">{s.emoji}</span>
-            <span className="text-sm font-semibold text-foreground/80 group-hover:text-foreground">
-              {s.label}
-            </span>
+            <s.icon
+              aria-hidden="true"
+              className="size-4 text-muted-foreground group-hover:text-primary"
+            />
+            <span className="text-sm font-medium text-foreground">{s.label}</span>
           </motion.button>
         ))}
       </div>
@@ -682,7 +692,7 @@ export function ChatWindow({
                     title="Back to home"
                     aria-label="Back to home"
                   >
-                    <ChevronLeft size={24} strokeWidth={2.5} />
+                    <ChevronLeft size={24} />
                   </Button>
                 )}
 
@@ -783,7 +793,7 @@ export function ChatWindow({
                     title="Start fresh"
                     aria-label="Start fresh chat"
                   >
-                    <SquarePen size={16} strokeWidth={2.5} />
+                    <SquarePen size={16} />
                   </Button>
                 )}
 
@@ -797,7 +807,7 @@ export function ChatWindow({
                       aria-label="Chat options"
                       title="Chat options"
                     >
-                      <EllipsisVertical size={18} strokeWidth={2.5} />
+                      <EllipsisVertical size={18} />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">

@@ -127,7 +127,7 @@ export function LearningMetricCard({
     <Card className="border-border bg-card/50 p-5 shadow-sm sm:p-6">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <BarChart3 size={15} strokeWidth={2.5} className="text-primary" />
+          <BarChart3 size={15} className="text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Learning progress</h3>
           <span className="rounded-full bg-accent/60 px-2 py-0.5 text-xs font-medium text-muted-foreground">
             auto-tracked
@@ -142,7 +142,7 @@ export function LearningMetricCard({
               aria-label="Edit tracked metric"
               className="rounded-lg p-1.5 text-muted-foreground/40 transition-all hover:bg-accent hover:text-foreground active:scale-90"
             >
-              <Pencil size={14} strokeWidth={2.5} />
+              <Pencil size={14} />
             </button>
             <button
               type="button"
@@ -150,7 +150,7 @@ export function LearningMetricCard({
               aria-label="Stop tracking"
               className="rounded-lg p-1.5 text-muted-foreground/40 transition-all hover:bg-destructive/10 hover:text-destructive active:scale-90"
             >
-              <Trash2 size={14} strokeWidth={2.5} />
+              <Trash2 size={14} />
             </button>
           </div>
         )}
@@ -248,11 +248,7 @@ export function LearningMetricCard({
                 "flex h-9 items-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-bold uppercase tracking-wider text-primary-foreground transition-all hover:opacity-90 active:scale-95 disabled:opacity-40",
               )}
             >
-              {saving ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <Sparkles size={14} strokeWidth={3} />
-              )}
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
               Save
             </button>
             <button
@@ -275,7 +271,7 @@ export function LearningMetricCard({
             onClick={startEdit}
             className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-border px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-primary active:scale-95"
           >
-            <BarChart3 size={14} strokeWidth={3} /> Auto-track this goal
+            <BarChart3 size={14} /> Auto-track this goal
           </button>
         </div>
       )}

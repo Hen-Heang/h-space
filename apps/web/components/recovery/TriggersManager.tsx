@@ -113,7 +113,7 @@ function TriggerRow({
             setEditing(false)
           }}
         >
-          <X size={16} strokeWidth={2} />
+          <X size={16} />
         </Button>
       </div>
     )
@@ -134,12 +134,12 @@ function TriggerRow({
           onClick={() => setEditing(true)}
           aria-label="Rename trigger"
         >
-          <Pencil size={14} strokeWidth={2} />
+          <Pencil size={14} />
         </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button size="icon-sm" variant="ghost" aria-label="Delete trigger">
-              <Trash2 size={14} strokeWidth={2} />
+              <Trash2 size={14} />
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -228,7 +228,7 @@ export function TriggersManager({
           disabled={adding || !newLabel.trim()}
           aria-label="Add trigger"
         >
-          <Plus size={18} strokeWidth={2} />
+          <Plus size={18} />
         </Button>
       </motion.form>
 

@@ -47,7 +47,7 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center gap-2 px-1">
-      <Icon size={16} strokeWidth={2.5} className="text-blue-600 dark:text-blue-400" />
+      <Icon size={16} className="text-blue-600 dark:text-blue-400" />
       <h3 className="text-base font-bold tracking-tight text-foreground">{title}</h3>
       {hint && <span className="text-xs font-bold text-muted-foreground">{hint}</span>}
     </div>
@@ -211,7 +211,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
           href={isEdit ? `/reading/${unit!.id}` : "/phrasebook?mode=reading"}
           className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft size={14} strokeWidth={3} /> {isEdit ? "Back to unit" : "All units"}
+          <ArrowLeft size={14} /> {isEdit ? "Back to unit" : "All units"}
         </Link>
 
         <div className="rounded-3xl border border-border bg-card p-6 shadow-xl dark:bg-slate-900/40 sm:p-8">
@@ -367,7 +367,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
                   className="rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-30"
                   title="Remove paragraph"
                 >
-                  <Trash2 size={14} strokeWidth={2.5} />
+                  <Trash2 size={14} />
                 </button>
               </div>
               <Textarea
@@ -388,7 +388,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
             onClick={() => setParagraphs((prev) => [...prev, { korean: "", english: "" }])}
             className="h-10 rounded-xl border border-dashed border-border bg-transparent px-4 text-xs font-bold text-muted-foreground hover:bg-accent/50 hover:text-foreground"
           >
-            <Plus size={14} className="mr-1.5" strokeWidth={3} /> Add paragraph
+            <Plus size={14} className="mr-1.5" /> Add paragraph
           </Button>
         </div>
       </section>
@@ -423,7 +423,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
                 className="self-center rounded-lg p-2 text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
                 title="Remove word"
               >
-                <Trash2 size={14} strokeWidth={2.5} />
+                <Trash2 size={14} />
               </button>
             </div>
           ))}
@@ -432,7 +432,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
             onClick={() => setVocab((prev) => [...prev, { term: "", meaning: "", example: "" }])}
             className="h-10 rounded-xl border border-dashed border-border bg-transparent px-4 text-xs font-bold text-muted-foreground hover:bg-accent/50 hover:text-foreground"
           >
-            <Plus size={14} className="mr-1.5" strokeWidth={3} /> Add word
+            <Plus size={14} className="mr-1.5" /> Add word
           </Button>
         </div>
       </section>
@@ -460,7 +460,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
                   className="rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
                   title="Remove question"
                 >
-                  <Trash2 size={14} strokeWidth={2.5} />
+                  <Trash2 size={14} />
                 </button>
               </div>
               <Input
@@ -482,7 +482,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
                           : "border-border text-muted-foreground/40 hover:text-muted-foreground",
                       )}
                     >
-                      <CheckCircle2 size={15} strokeWidth={2.5} />
+                      <CheckCircle2 size={15} />
                     </button>
                     <Input
                       value={option}
@@ -496,7 +496,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
                       className="rounded-lg p-2 text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-30"
                       title="Remove option"
                     >
-                      <Trash2 size={14} strokeWidth={2.5} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 ))}
@@ -506,7 +506,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
                     onClick={() => updateQuiz(qi, { options: [...q.options, ""] })}
                     className="inline-flex items-center gap-1.5 px-1 text-xs font-bold text-muted-foreground hover:text-foreground"
                   >
-                    <Plus size={13} strokeWidth={3} /> Add option
+                    <Plus size={13} /> Add option
                   </button>
                 )}
               </div>
@@ -530,7 +530,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
             }
             className="h-10 rounded-xl border border-dashed border-border bg-transparent px-4 text-xs font-bold text-muted-foreground hover:bg-accent/50 hover:text-foreground"
           >
-            <Plus size={14} className="mr-1.5" strokeWidth={3} /> Add question
+            <Plus size={14} className="mr-1.5" /> Add question
           </Button>
         </div>
       </section>
@@ -552,7 +552,7 @@ export function UnitEditor({ unit }: { unit?: ReadingUnit }) {
             {saving ? (
               <Loader2 size={14} className="mr-2 animate-spin" />
             ) : (
-              <Save size={14} className="mr-2" strokeWidth={2.5} />
+              <Save size={14} className="mr-2" />
             )}
             {isEdit ? "Save changes" : "Create unit"}
           </Button>

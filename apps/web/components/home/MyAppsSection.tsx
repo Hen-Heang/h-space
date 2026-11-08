@@ -91,7 +91,7 @@ export function MyAppsSection({
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                  <Icon className="size-5" strokeWidth={2} aria-hidden="true" />
+                  <Icon className="size-5" aria-hidden="true" />
                 </div>
                 <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs font-semibold text-muted-foreground">
                   {project.area}

@@ -25,7 +25,7 @@ export function SpeakingScoreCard({ result }: { result: SpeakingCheckResponse })
               Your score
             </p>
             <Badge className="rounded-lg border-none bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-400">
-              <Info size={12} className="mr-1" strokeWidth={2.5} />
+              <Info size={12} className="mr-1" />
               Estimated from transcript — no audio analysis
             </Badge>
           </div>
@@ -71,7 +71,7 @@ export function SpeakingScoreCard({ result }: { result: SpeakingCheckResponse })
           {result.correctedAnswer && (
             <div className="rounded-2xl border border-border bg-background/60 p-4">
               <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                <SpellCheck size={12} strokeWidth={2.5} /> Your answer, fixed
+                <SpellCheck size={12} /> Your answer, fixed
               </p>
               <div className="mt-1.5 flex items-start justify-between gap-3">
                 <p className="text-sm font-bold leading-relaxed text-foreground">
@@ -86,7 +86,7 @@ export function SpeakingScoreCard({ result }: { result: SpeakingCheckResponse })
           {result.betterAlternative && (
             <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
               <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
-                <MessageSquareQuote size={12} strokeWidth={2.5} /> A natural way to say it
+                <MessageSquareQuote size={12} /> A natural way to say it
               </p>
               <div className="mt-1.5 flex items-start justify-between gap-3">
                 <p className="text-sm font-bold leading-relaxed text-foreground">
@@ -100,7 +100,7 @@ export function SpeakingScoreCard({ result }: { result: SpeakingCheckResponse })
           {/* Tip */}
           {result.tip && (
             <div className="flex items-start gap-2.5 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
-              <Lightbulb size={16} className="mt-0.5 shrink-0 text-amber-600" strokeWidth={2.5} />
+              <Lightbulb size={16} className="mt-0.5 shrink-0 text-amber-600" />
               <p className="text-sm font-medium leading-relaxed text-foreground/90">{result.tip}</p>
             </div>
           )}

@@ -32,7 +32,7 @@ export default function NotFound() {
           className="h-11 rounded-xl bg-blue-600 px-6 font-semibold hover:bg-blue-500"
         >
           <Link href="/dashboard">
-            <LayoutDashboard size={18} strokeWidth={2} className="mr-2" />
+            <LayoutDashboard size={18} className="mr-2" />
             Back to dashboard
           </Link>
         </Button>
@@ -42,7 +42,7 @@ export default function NotFound() {
           className="h-11 rounded-xl border-border bg-background/50 px-6 font-medium backdrop-blur-sm"
         >
           <Link href="/">
-            <ArrowLeft size={18} strokeWidth={2} className="mr-2" />
+            <ArrowLeft size={18} className="mr-2" />
             Go home
           </Link>
         </Button>

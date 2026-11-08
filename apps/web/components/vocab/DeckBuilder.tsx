@@ -1,22 +1,36 @@
 "use client"
 
 import { useState } from "react"
-import { Activity, BookOpenCheck, Sparkles } from "lucide-react"
+import {
+  Activity,
+  BookOpenCheck,
+  Briefcase,
+  Clock,
+  Hand,
+  HeartPulse,
+  Laptop,
+  Plane,
+  ShoppingBag,
+  Sparkles,
+  Sunrise,
+  Users,
+  UtensilsCrossed,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const CATEGORIES = [
-  { id: "Daily Life", label: "Daily Life", emoji: "🌅" },
-  { id: "Workplace", label: "Workplace", emoji: "💼" },
-  { id: "Developer", label: "Developer", emoji: "💻" },
-  { id: "Meeting & Standup", label: "Meeting", emoji: "🗣️" },
-  { id: "Greetings", label: "Greetings", emoji: "👋" },
-  { id: "Food & Drinks", label: "Food", emoji: "🍱" },
-  { id: "Travel & Transport", label: "Travel", emoji: "✈️" },
-  { id: "Shopping", label: "Shopping", emoji: "🛍️" },
-  { id: "Health & Body", label: "Health", emoji: "🏥" },
-  { id: "Numbers & Time", label: "Time", emoji: "🕙" },
+  { id: "Daily Life", label: "Daily Life", icon: Sunrise },
+  { id: "Workplace", label: "Workplace", icon: Briefcase },
+  { id: "Developer", label: "Developer", icon: Laptop },
+  { id: "Meeting & Standup", label: "Meeting", icon: Users },
+  { id: "Greetings", label: "Greetings", icon: Hand },
+  { id: "Food & Drinks", label: "Food", icon: UtensilsCrossed },
+  { id: "Travel & Transport", label: "Travel", icon: Plane },
+  { id: "Shopping", label: "Shopping", icon: ShoppingBag },
+  { id: "Health & Body", label: "Health", icon: HeartPulse },
+  { id: "Numbers & Time", label: "Time", icon: Clock },
 ]
 
 type DeckBuilderProps = {
@@ -70,7 +84,7 @@ export function DeckBuilder({
             </p>
           </div>
           <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 sm:flex">
-            <BookOpenCheck size={24} strokeWidth={2.5} />
+            <BookOpenCheck size={24} />
           </div>
         </div>
       )}
@@ -80,20 +94,25 @@ export function DeckBuilder({
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
+            aria-pressed={selectedCategory === cat.id}
             className={cn(
-              "flex flex-col items-center gap-1.5 rounded-2xl border p-3 text-center transition-all active:scale-95 sm:gap-2 sm:p-4",
+              "flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-colors sm:gap-2 sm:p-4",
               selectedCategory === cat.id
-                ? "border-indigo-500 bg-indigo-500/10 ring-1 ring-indigo-500/20"
-                : "border-border bg-background text-muted-foreground hover:border-indigo-500/40 hover:bg-indigo-500/[0.02]",
+                ? "border-primary/40 bg-primary/10"
+                : "border-border bg-card hover:bg-muted",
             )}
           >
-            <span className="text-lg sm:text-xl">{cat.emoji}</span>
+            <cat.icon
+              aria-hidden="true"
+              className={cn(
+                "size-5",
+                selectedCategory === cat.id ? "text-primary" : "text-muted-foreground",
+              )}
+            />
             <span
               className={cn(
-                "text-xs font-bold uppercase tracking-tight sm:text-xs",
-                selectedCategory === cat.id
-                  ? "text-indigo-600 dark:text-indigo-400"
-                  : "text-muted-foreground",
+                "text-xs font-medium",
+                selectedCategory === cat.id ? "text-primary" : "text-foreground",
               )}
             >
               {cat.label}
@@ -119,7 +138,7 @@ export function DeckBuilder({
             </>
           ) : (
             <>
-              <Sparkles size={20} strokeWidth={2.5} className="mr-2 shrink-0" />
+              <Sparkles size={20} className="mr-2 shrink-0" />
               <span className="truncate">Build {selectedCategory || "New Deck"}</span>
             </>
           )}

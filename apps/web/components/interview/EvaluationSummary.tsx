@@ -134,7 +134,7 @@ export function EvaluationSummary({
           <CardHeader className="border-b border-border/80 px-5 pb-4 pt-5 sm:px-6">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600">
-                <Award size={20} strokeWidth={2.5} />
+                <Award size={20} />
               </div>
               <div>
                 <CardTitle className="text-xl font-bold">Scorecard</CardTitle>
@@ -181,7 +181,7 @@ export function EvaluationSummary({
           <Card className="rounded-[1.8rem] border-sky-500/20 bg-sky-500/5 shadow-xl dark:bg-slate-900/40 sm:rounded-[2.2rem]">
             <CardContent className="flex items-start gap-3 p-5 sm:p-6">
               <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600">
-                <CheckCircle2 size={18} strokeWidth={2.5} />
+                <CheckCircle2 size={18} />
               </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-600 dark:text-sky-400">
@@ -210,7 +210,7 @@ export function EvaluationSummary({
             <CardHeader className="border-b border-border/80 px-5 pb-4 pt-5 sm:px-6">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600">
-                  <Lightbulb size={20} strokeWidth={2.5} />
+                  <Lightbulb size={20} />
                 </div>
                 <CardTitle className="text-base font-bold">What to work on next</CardTitle>
               </div>

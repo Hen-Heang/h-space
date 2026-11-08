@@ -43,7 +43,7 @@ export function StudyModeTabs({
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Icon size={15} strokeWidth={2.5} />
+                <Icon size={15} />
                 {tab.label}
               </button>
             </li>

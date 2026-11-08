@@ -156,7 +156,7 @@ export default function ScenariosPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                      <Drama size={20} strokeWidth={2.5} />
+                      <Drama size={20} />
                     </div>
                     <div>
                       <p className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
@@ -222,7 +222,7 @@ export default function ScenariosPage() {
           variants={itemVariants}
           className="rounded-lg border border-dashed border-border bg-card/40 p-6 text-center"
         >
-          <Drama size={32} className="mx-auto text-muted-foreground/50" strokeWidth={2} />
+          <Drama size={32} className="mx-auto text-muted-foreground/50" />
           {scenarios.length === 0 ? (
             <>
               <p className="mt-3 text-sm font-bold text-foreground">

@@ -21,7 +21,7 @@ export function BestQuizStreakCard() {
       className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-orange-500/40 dark:bg-slate-900/40"
     >
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400">
-        <Flame size={20} strokeWidth={2} />
+        <Flame size={20} />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-xl font-bold tabular-nums text-foreground">

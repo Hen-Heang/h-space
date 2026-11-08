@@ -75,7 +75,6 @@ function StarRating({ rating }: { rating?: number | null }) {
         <Star
           key={i}
           size={12}
-          strokeWidth={2.5}
           className={i < rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/60"}
         />
       ))}
@@ -147,7 +146,7 @@ function CopyButton({ text }: { text: string }) {
             animate={{ scale: 1 }}
             exit={{ scale: 0.6 }}
           >
-            <Check size={13} className="text-green-500" strokeWidth={2.5} />
+            <Check size={13} className="text-green-500" />
           </motion.span>
         ) : (
           <motion.span
@@ -156,7 +155,7 @@ function CopyButton({ text }: { text: string }) {
             animate={{ scale: 1 }}
             exit={{ scale: 0.6 }}
           >
-            <Copy size={13} strokeWidth={2.5} />
+            <Copy size={13} />
           </motion.span>
         )}
       </AnimatePresence>
@@ -181,7 +180,7 @@ function GrammarTracker({
   if (patterns.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 py-10 text-center">
-        <Brain size={36} className="text-muted-foreground/60" strokeWidth={1.5} />
+        <Brain size={36} className="text-muted-foreground/60" />
         <p className="text-sm font-bold text-muted-foreground">
           No patterns yet — keep correcting!
         </p>
@@ -201,7 +200,7 @@ function GrammarTracker({
             onClick={() => onTagClick(activeTag)}
             className="rounded-md p-0.5 text-blue-500 hover:bg-blue-500/10"
           >
-            <X size={13} strokeWidth={2.5} />
+            <X size={13} />
           </button>
         </div>
       )}
@@ -294,7 +293,7 @@ function PracticeCalendar({
       {/* Streak badge */}
       {streak > 0 && (
         <div className="flex items-center justify-center gap-2 rounded-xl bg-orange-500/8 px-3 py-2.5 ring-1 ring-orange-500/15">
-          <Flame size={16} className="text-orange-500" strokeWidth={2.5} />
+          <Flame size={16} className="text-orange-500" />
           <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
             {streak}-day streak!
           </span>
@@ -310,7 +309,7 @@ function PracticeCalendar({
           aria-label="Previous month"
           className="h-9 w-9 rounded-xl [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
         >
-          <ChevronLeft size={18} strokeWidth={2.5} />
+          <ChevronLeft size={18} />
         </Button>
         <span className="text-sm font-bold text-foreground">{monthName}</span>
         <Button
@@ -321,7 +320,7 @@ function PracticeCalendar({
           disabled={isCurrentMonth}
           className="h-9 w-9 rounded-xl [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
         >
-          <ChevronRight size={18} strokeWidth={2.5} />
+          <ChevronRight size={18} />
         </Button>
       </div>
 
@@ -412,7 +411,6 @@ function FilterBar({
         <Search
           size={14}
           className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/40"
-          strokeWidth={2.5}
         />
         <input
           type="text"
@@ -429,7 +427,7 @@ function FilterBar({
             aria-label="Clear search"
             className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
           >
-            <X aria-hidden="true" size={14} strokeWidth={2.5} />
+            <X aria-hidden="true" size={14} />
           </button>
         )}
       </div>
@@ -442,12 +440,7 @@ function FilterBar({
           aria-label="Filter by rating"
           className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none"
         >
-          <Filter
-            aria-hidden="true"
-            size={13}
-            className="shrink-0 text-muted-foreground"
-            strokeWidth={2.5}
-          />
+          <Filter aria-hidden="true" size={13} className="shrink-0 text-muted-foreground" />
           {RATING_FILTERS.map((f) => (
             <button
               key={f.key}
@@ -743,7 +736,7 @@ export default function HistoryPage() {
               <CardHeader className="border-b border-border/60 bg-accent/5 px-5 py-4 sm:px-6 sm:py-5">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-500/10 text-red-500 shadow-sm ring-1 ring-red-500/20">
-                    <Brain size={18} strokeWidth={2.5} />
+                    <Brain size={18} />
                   </div>
                   <div>
                     <h2 className="text-lg font-bold">Recurring Mistakes</h2>
@@ -824,7 +817,7 @@ export default function HistoryPage() {
                 </div>
               ) : corrections.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 rounded-[1.5rem] border border-border bg-card px-4 py-10 text-center sm:rounded-3xl sm:py-12">
-                  <ScrollText size={36} className="text-muted-foreground/60" strokeWidth={1.5} />
+                  <ScrollText size={36} className="text-muted-foreground/60" />
                   <p className="text-sm font-bold text-muted-foreground">No corrections yet</p>
                   <p className="text-xs text-muted-foreground">
                     Go to AI Coach and ask it to correct your Korean — it&apos;ll show up here.
@@ -832,7 +825,7 @@ export default function HistoryPage() {
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 rounded-[1.5rem] border border-border bg-card px-4 py-8 text-center sm:rounded-3xl">
-                  <Search size={28} className="text-muted-foreground/60" strokeWidth={1.5} />
+                  <Search size={28} className="text-muted-foreground/60" />
                   <p className="text-sm font-bold text-muted-foreground">No matches</p>
                   <button
                     type="button"
@@ -891,7 +884,7 @@ export default function HistoryPage() {
                                 aria-label="Delete correction"
                                 className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-600 disabled:opacity-40"
                               >
-                                <Trash2 aria-hidden="true" size={15} strokeWidth={2.5} />
+                                <Trash2 aria-hidden="true" size={15} />
                               </button>
                               <button
                                 type="button"
@@ -903,7 +896,7 @@ export default function HistoryPage() {
                                   isExpanded ? "rotate-90" : "rotate-0",
                                 )}
                               >
-                                <ArrowRight size={16} strokeWidth={2.5} />
+                                <ArrowRight size={16} />
                               </button>
                             </div>
                           </div>
@@ -978,7 +971,6 @@ export default function HistoryPage() {
                                       <Languages
                                         size={13}
                                         className="mt-0.5 shrink-0 text-sky-500"
-                                        strokeWidth={2.5}
                                       />
                                       <p className="text-xs font-bold text-sky-700 dark:text-sky-300">
                                         {entry.englishTranslation}
@@ -1053,7 +1045,7 @@ export default function HistoryPage() {
               <CardHeader className="border-b border-border/60 bg-accent/5 px-5 py-4 sm:px-6 sm:py-5">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-500 shadow-sm ring-1 ring-violet-500/20">
-                    <CalendarDays size={18} strokeWidth={2.5} />
+                    <CalendarDays size={18} />
                   </div>
                   <div>
                     <h2 className="text-base font-bold">Practice Calendar</h2>

@@ -59,7 +59,7 @@ export function FieldSaveStatus({
             exit={{ opacity: 0 }}
             className="inline-flex items-center gap-1 text-destructive"
           >
-            <AlertCircle size={11} strokeWidth={2.5} aria-hidden="true" />
+            <AlertCircle size={11} aria-hidden="true" />
             Not saved
           </motion.span>
         )}

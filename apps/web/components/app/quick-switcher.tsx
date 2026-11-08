@@ -388,10 +388,12 @@ export function QuickSwitcher({
                             active && "border-primary/30 bg-primary/10",
                           )}
                         >
+                          {/* Neutral like the sidebar; primary marks the highlighted row
+                              (design-system §6: one colour per meaning). */}
                           <Icon
                             size={17}
-                            strokeWidth={2.2}
-                            className={cn(entry.color, !active && "opacity-80")}
+                            aria-hidden="true"
+                            className={active ? "text-primary" : "text-muted-foreground"}
                           />
                         </span>
                         <span className="min-w-0 flex-1">

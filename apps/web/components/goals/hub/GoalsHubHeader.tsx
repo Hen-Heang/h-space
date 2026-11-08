@@ -41,7 +41,7 @@ export function GoalsHubHeader({
             className="h-9 rounded-md px-3"
           >
             <Link href="/goals/create">
-              <Plus size={16} strokeWidth={2} aria-hidden="true" />
+              <Plus size={16} aria-hidden="true" />
               New goal
             </Link>
           </Button>

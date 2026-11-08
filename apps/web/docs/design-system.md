@@ -133,7 +133,17 @@ popovers, menus, the floating AI button).
 ## 6. Icons
 
 - Lucide only. Sizes: **16** inline with text / dense rows, **18** nav rows,
-  **20** mobile header and bottom nav, **24** empty states. Default stroke 2.
+  **20** mobile header and bottom nav, **24** empty states.
+- **Stroke: Lucide's default 2 — don't pass `strokeWidth`.** Two exceptions:
+  a `Check` tick inside a small filled box or badge may use `strokeWidth={3}`
+  so it stays legible at 11–14px, and a stroke may change with _state_ (the
+  bottom nav thickens the active tab's icon). `/finance` keeps Luyra's own
+  strokes. SVG/Recharts strokes (`<circle>`, `<Line>`) aren't icons.
+- **No emoji as interface icons** — chips, tiles, badges and status use a
+  Lucide icon. Emoji a user picks or types (goal icons, habit labels) are
+  content and stay.
+- One icon per destination: two different nav items never share an icon
+  (a workspace and its own landing item may).
 - An icon earns its place by speeding recognition (nav, a known action) or by
   being the action (icon button). Don't prefix every label with an icon.
 - Icon-only controls need an `aria-label`, and a 44×44 target on touch

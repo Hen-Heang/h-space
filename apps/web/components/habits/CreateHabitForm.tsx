@@ -53,7 +53,7 @@ export function CreateHabitForm({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="inline-flex rounded-xl bg-emerald-500/10 p-3 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-400">
-          <Sparkles size={20} strokeWidth={2} />
+          <Sparkles size={20} />
         </div>
         {onClose && (
           <button
@@ -62,7 +62,7 @@ export function CreateHabitForm({
             aria-label="Close"
             className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <X size={18} strokeWidth={2} />
+            <X size={18} />
           </button>
         )}
       </div>

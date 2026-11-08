@@ -251,7 +251,7 @@ function ChatPageContent() {
           className="flex flex-col items-center gap-4 text-center max-w-sm p-8 rounded-3xl border border-destructive/20 bg-destructive/5"
         >
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
-            <AlertCircle size={24} strokeWidth={2.5} />
+            <AlertCircle size={24} />
           </div>
           <div>
             <h3 className="text-lg font-bold text-foreground">Connection Error</h3>
@@ -285,7 +285,7 @@ function ChatPageContent() {
           aria-label="Back to home"
           className="h-11 w-11 rounded-lg text-muted-foreground active:scale-95"
         >
-          <ChevronLeft size={22} strokeWidth={2.5} />
+          <ChevronLeft size={22} />
         </Button>
 
         {/* Desktop: show history when the rail is collapsed */}
@@ -299,7 +299,7 @@ function ChatPageContent() {
             title="Show history"
             className="hidden h-11 w-11 rounded-lg text-muted-foreground active:scale-95 md:flex"
           >
-            <PanelLeft size={20} strokeWidth={2.5} />
+            <PanelLeft size={20} />
           </Button>
         )}
 
@@ -366,7 +366,7 @@ function ChatPageContent() {
                       transition={{ type: "spring", stiffness: 400, damping: 32 }}
                     />
                   )}
-                  <Icon size={14} strokeWidth={2.6} className="relative z-10 shrink-0" />
+                  <Icon size={14} className="relative z-10 shrink-0" />
                   {/* On phones only the active tab shows its label so the 4-mode
                       bar fits; every tab keeps its label from sm up. */}
                   <span className={cn("relative z-10", active ? "inline" : "hidden", "sm:inline")}>
@@ -390,7 +390,7 @@ function ChatPageContent() {
                   aria-label="Chat history"
                   className="h-11 w-11 rounded-lg text-muted-foreground active:scale-95 md:hidden"
                 >
-                  <History size={20} strokeWidth={2.5} />
+                  <History size={20} />
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-80 p-0">

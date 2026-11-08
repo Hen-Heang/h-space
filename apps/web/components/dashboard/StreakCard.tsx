@@ -23,7 +23,7 @@ export function StreakCard({ days, wordsSaved, className }: StreakCardProps) {
           </h3>
         </div>
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600 dark:text-orange-400">
-          <Flame size={20} strokeWidth={2} />
+          <Flame size={20} />
         </div>
       </div>
 
