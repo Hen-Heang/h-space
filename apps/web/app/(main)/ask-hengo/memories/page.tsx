@@ -9,6 +9,8 @@ import { ErrorBanner } from "@/components/ui/error-banner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useMemoryCandidates } from "@/hooks/useMemory"
 import { containerVariants, itemVariants } from "@/lib/motion"
+import { Brain } from "lucide-react"
+import { EmptyState } from "@/components/ui/empty-state"
 
 export default function AskHengoMemoriesPage() {
   const { candidates, loading, error } = useMemoryCandidates("all")
@@ -42,15 +44,13 @@ export default function AskHengoMemoriesPage() {
           <ErrorBanner>{error}</ErrorBanner>
         </motion.div>
       ) : candidates.length === 0 ? (
-        <motion.div
-          variants={itemVariants}
-          className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border bg-card/50 px-5 py-12 text-center"
-        >
-          <p className="text-sm font-semibold text-foreground">No memories yet</p>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            Ask Hengo a question and it may notice something worth remembering — or add one
-            yourself.
-          </p>
+        <motion.div variants={itemVariants}>
+          <EmptyState
+            surface
+            icon={Brain}
+            title="No memories yet"
+            description="Ask Hengo a question and it may notice something worth remembering — or add one yourself."
+          />
         </motion.div>
       ) : (
         <>

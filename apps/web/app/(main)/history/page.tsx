@@ -48,6 +48,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { SpeakButton } from "@/components/ui/SpeakButton"
 import { correctionApi, progressApi } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/ui/empty-state"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -816,29 +817,37 @@ export default function HistoryPage() {
                   </Button>
                 </div>
               ) : corrections.length === 0 ? (
-                <div className="flex flex-col items-center gap-3 rounded-[1.5rem] border border-border bg-card px-4 py-10 text-center sm:rounded-3xl sm:py-12">
-                  <ScrollText size={36} className="text-muted-foreground/60" />
-                  <p className="text-sm font-bold text-muted-foreground">No corrections yet</p>
-                  <p className="text-xs text-muted-foreground">
-                    Go to AI Coach and ask it to correct your Korean — it&apos;ll show up here.
-                  </p>
-                </div>
+                <EmptyState
+                  surface
+                  icon={ScrollText}
+                  title="No corrections yet"
+                  description="Ask the AI Coach to correct your Korean — each correction shows up here."
+                  action={
+                    <Button asChild variant="outline">
+                      <Link href="/chat?mode=corrections">Open AI Coach</Link>
+                    </Button>
+                  }
+                />
               ) : filtered.length === 0 ? (
-                <div className="flex flex-col items-center gap-3 rounded-[1.5rem] border border-border bg-card px-4 py-8 text-center sm:rounded-3xl">
-                  <Search size={28} className="text-muted-foreground/60" />
-                  <p className="text-sm font-bold text-muted-foreground">No matches</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearch("")
-                      setRatingFilter("all")
-                      setActiveTag(null)
-                    }}
-                    className="text-xs font-bold text-blue-500 hover:underline"
-                  >
-                    Clear filters
-                  </button>
-                </div>
+                <EmptyState
+                  surface
+                  icon={Search}
+                  title="No matches"
+                  description="No corrections match these filters."
+                  action={
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setSearch("")
+                        setRatingFilter("all")
+                        setActiveTag(null)
+                      }}
+                      className="text-primary"
+                    >
+                      Clear filters
+                    </Button>
+                  }
+                />
               ) : (
                 <div className="space-y-3">
                   <AnimatePresence initial={false}>

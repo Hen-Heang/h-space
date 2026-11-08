@@ -3,13 +3,16 @@
 import { useMemo, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ChevronLeft, Loader2 } from "lucide-react"
+import { ChevronLeft, SearchX } from "lucide-react"
 import { toast } from "sonner"
 import { NoteView } from "@/components/notes/NoteView"
 import { NoteEditor, type NoteEditorValues } from "@/components/notes/NoteEditor"
 import { renderMarkdown } from "@/lib/notes-markdown"
 import { useNote, useNoteMutations } from "@/hooks/useNotes"
 import { useSessionTimer } from "@/hooks/useSessionTimer"
+import { EmptyState } from "@/components/ui/empty-state"
+import { Button } from "@/components/ui/button"
+import { ReaderSkeleton } from "@/components/ui/reader-skeleton"
 
 export default function NotePage() {
   useSessionTimer("notes")
@@ -23,26 +26,25 @@ export default function NotePage() {
   const html = useMemo(() => (note ? renderMarkdown(note.content) : ""), [note])
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
-        <Loader2 size={28} className="mb-4 animate-spin" />
-        <p className="text-sm">Loading note…</p>
-      </div>
-    )
+    return <ReaderSkeleton label="Loading note…" />
   }
 
   if (error || !note) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center text-muted-foreground">
-        <p className="text-sm">{error || "Note not found."}</p>
-        <Link
-          href="/notes"
-          className="mt-4 inline-flex items-center gap-1.5 text-xs text-blue-500 hover:underline"
-        >
-          <ChevronLeft size={14} />
-          Back to all notes
-        </Link>
-      </div>
+      <EmptyState
+        className="py-24"
+        icon={SearchX}
+        title={error ? "Couldn't open this note" : "Note not found"}
+        description={error || "It may have been deleted, or the link is wrong."}
+        action={
+          <Button asChild variant="outline">
+            <Link href="/notes">
+              <ChevronLeft aria-hidden="true" />
+              Back to all notes
+            </Link>
+          </Button>
+        }
+      />
     )
   }
 
