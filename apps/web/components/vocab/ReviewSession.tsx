@@ -6,20 +6,27 @@ import {
   ArrowLeft,
   ArrowLeftRight,
   BrainCircuit,
+  Check,
   CheckCircle2,
   ChevronRight,
+  Cloud,
   Eye,
   Flame,
   Gauge,
   Headphones,
+  Keyboard,
   Layers3,
   Lightbulb,
+  ListChecks,
   Loader2,
+  PenLine,
   RotateCcw,
   Sparkles,
   Trophy,
   Volume2,
+  X,
   XCircle,
+  type LucideIcon,
 } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 
@@ -93,8 +100,26 @@ function getChoices(correct: VocabItem, pool: VocabItem[]): VocabItem[] {
 // spacing are passed in via className; the bracketed format is shared.
 function Pronunciation({ text, className }: { text?: string | null; className?: string }) {
   if (!text) return null
-  return <p className={cn("font-bold text-muted-foreground/70", className)}>[{text}]</p>
+  return <p className={cn("font-medium text-muted-foreground", className)}>[{text}]</p>
 }
+
+// Shared surfaces for the session's cards. Flat, one border, no 3D press
+// edge (docs/design-system.md §5); the prompt card is the quieter variant.
+const CARD_FACE = "rounded-xl border border-border bg-card"
+const PROMPT_CARD =
+  "flex flex-col items-center justify-center rounded-xl border border-border bg-card p-6 text-center sm:p-10"
+// Sentence-case label above a card's headline.
+const CARD_LABEL = "text-sm font-medium text-muted-foreground"
+// Large circular speaker inside a card; SpeakButton's own icon is 14px, so
+// grow it with the button.
+const CARD_SPEAKER =
+  "size-12 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary [&_svg]:size-5"
+// State text. The `success` token is a fill/border/icon colour: as text it's
+// only ≈3.4:1 on white, so success *text* uses the app's AA emerald pair.
+const SUCCESS_TEXT = "text-emerald-700 dark:text-emerald-400"
+const RELEARN_TEXT = "text-amber-700 dark:text-amber-400"
+// The one primary "continue" action at the bottom of a card.
+const NEXT_BUTTON = "h-12 w-full text-base"
 
 // Scale a card's headline down as the text gets longer, so long meanings and
 // phrases fit the card on a phone instead of overflowing the fixed-height face.
@@ -105,6 +130,79 @@ function fitText(text: string | null | undefined, base: string, mid: string, sma
 
 type Mode = "flashcard" | "choice" | "recall" | "listening" | "sentence"
 type Phase = "idle" | "quiz" | "done"
+
+// One icon per study mode in the setup picker (shown from `sm`; phones get the
+// label alone so five modes fit in two rows).
+const MODE_ICONS: Record<Mode, LucideIcon> = {
+  flashcard: Layers3,
+  choice: ListChecks,
+  recall: Keyboard,
+  listening: Headphones,
+  sentence: PenLine,
+}
+
+function ModeIcon({ mode, active }: { mode: Mode; active: boolean }) {
+  const Icon = MODE_ICONS[mode]
+  return (
+    <Icon
+      aria-hidden="true"
+      className={cn("hidden size-4 shrink-0 sm:block", active && "text-primary")}
+    />
+  )
+}
+
+// Header bar shared by the setup, quiz and results screens.
+const LAB_HEADER =
+  "flex items-center gap-3 border-b border-border bg-background px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:py-4"
+
+function LabBackButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={onClick}
+      aria-label={label}
+      className="-ml-2 text-muted-foreground"
+    >
+      <ArrowLeft aria-hidden="true" className="size-5" />
+    </Button>
+  )
+}
+
+function CategoryChip({
+  label,
+  selected,
+  onClick,
+}: {
+  label: string
+  selected: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      className={cn(
+        "flex min-h-11 items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-left text-sm font-medium transition-colors",
+        selected
+          ? "border-primary/40 bg-primary/10 text-primary"
+          : "border-border bg-card text-foreground hover:bg-muted",
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "flex size-4 shrink-0 items-center justify-center rounded-full border",
+          selected ? "border-primary bg-primary text-primary-foreground" : "border-border",
+        )}
+      >
+        {selected && <Check className="size-3" />}
+      </span>
+      <span className="truncate">{label}</span>
+    </button>
+  )
+}
 
 /** How another screen can ask Memory Lab to open — see `autoStart` below. */
 export type AutoStart = "session" | "setup"
@@ -133,9 +231,8 @@ type ReviewSessionProps = {
   onAutoStartHandled?: () => void
 }
 
-// Grade buttons: solid fill from the --grade-* theme tokens (globals.css) with
-// a darker bottom edge for the "3D" press, the label, and the interval the
-// card jumps to.
+// Grade buttons: solid fill from the --grade-* theme tokens (globals.css), the
+// label, and the interval the card jumps to.
 const GRADE_STYLES: Record<ReviewRating, { label: string; classes: string }> = {
   AGAIN: { label: "Again", classes: "bg-grade-again" },
   HARD: { label: "Hard", classes: "bg-grade-hard" },
@@ -154,7 +251,7 @@ function GradeButtons({
   showKeys?: boolean
 }) {
   return (
-    <div className="grid grid-cols-4 gap-2.5">
+    <div className="grid grid-cols-4 gap-2">
       {RATINGS.map((rating, index) => (
         <button
           key={rating}
@@ -162,14 +259,14 @@ function GradeButtons({
           onClick={() => onGrade(rating)}
           aria-keyshortcuts={showKeys ? String(index + 1) : undefined}
           className={cn(
-            "relative flex h-16 min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl border-b-4 border-black/25 px-1 text-white transition-all active:translate-y-[3px] active:border-b-0",
+            "relative flex h-16 min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-white transition-[filter,transform] hover:brightness-110 active:scale-[0.97]",
             GRADE_STYLES[rating].classes,
           )}
         >
-          <span className="max-w-full truncate text-xs font-bold uppercase tracking-wider">
+          <span className="max-w-full truncate text-sm font-semibold">
             {GRADE_STYLES[rating].label}
           </span>
-          <span className="max-w-full truncate text-xs font-semibold opacity-90">
+          <span className="max-w-full truncate text-xs font-medium opacity-90">
             {formatInterval(previewIntervalDays(card, rating))}
           </span>
           {/* Keyboard hint — FlashCard maps 1-4 to these, Anki-style. */}
@@ -244,28 +341,29 @@ function FlashCard({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Flip card — Duolingo-style chunky rounded card */}
+      {/* Flip card */}
       <div className="perspective-[1000px] h-[min(26rem,58dvh)] sm:h-96">
         <motion.div
           animate={{ rotateY: flipped ? 180 : 0 }}
-          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+          transition={{ type: "spring", stiffness: 260, damping: 24 }}
           className="relative h-full w-full transform-3d"
         >
           {/* Front */}
           <button
             type="button"
             onClick={() => setFlipped(true)}
-            className="absolute inset-0 backface-hidden flex flex-col overflow-y-auto rounded-3xl border-2 border-b-[6px] border-border bg-card p-6 text-center dark:bg-slate-900/60 sm:rounded-3xl sm:p-8"
+            className={cn(
+              CARD_FACE,
+              "absolute inset-0 backface-hidden flex flex-col overflow-y-auto p-6 text-center transition-colors hover:border-primary/30 sm:p-8",
+            )}
           >
             {/* m-auto centers when the content fits and keeps it reachable via
                 scroll when a long meaning/example makes it taller than the card. */}
             <span className="m-auto flex w-full flex-col items-center">
-              <span className="mb-6 rounded-full bg-accent/40 px-3 py-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                {reversed ? "English" : "Korean"}
-              </span>
+              <span className={cn(CARD_LABEL, "mb-6")}>{reversed ? "English" : "Korean"}</span>
               <p
                 className={cn(
-                  "w-full break-keep font-bold leading-tight tracking-tight text-foreground [overflow-wrap:anywhere]",
+                  "w-full break-keep font-semibold leading-tight tracking-tight text-foreground [overflow-wrap:anywhere]",
                   fitText(
                     reversed ? card.meaning : card.term,
                     "text-5xl sm:text-7xl",
@@ -281,21 +379,33 @@ function FlashCard({
               {!reversed && (
                 <Pronunciation text={card.pronunciation} className="mt-4 text-xl sm:text-3xl" />
               )}
-              <span className="mt-10 flex items-center gap-2 rounded-2xl border-2 border-b-4 border-border bg-accent/5 px-5 py-2.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                Tap to Reveal
+              <span className="mt-10 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Eye aria-hidden="true" className="size-4" />
+                Tap to reveal
+                <kbd
+                  aria-hidden="true"
+                  className="hidden rounded border border-border px-1.5 font-mono text-xs [@media(pointer:fine)]:inline"
+                >
+                  Space
+                </kbd>
               </span>
             </span>
           </button>
 
           {/* Back */}
-          <div className="absolute inset-0 backface-hidden rotate-y-180 flex flex-col overflow-y-auto rounded-3xl border-2 border-b-[6px] border-[#58cc02]/40 bg-[#58cc02]/[0.06] p-6 text-center dark:bg-[#58cc02]/[0.08] sm:rounded-3xl sm:p-8">
+          <div
+            className={cn(
+              CARD_FACE,
+              "absolute inset-0 backface-hidden rotate-y-180 flex flex-col overflow-y-auto border-primary/30 p-6 text-center sm:p-8",
+            )}
+          >
             <div className="m-auto flex w-full flex-col items-center">
-              <span className="mb-4 rounded-full bg-[#58cc02]/15 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#58a302] dark:text-[#89e219]">
+              <span className={cn(CARD_LABEL, "mb-4 text-primary")}>
                 {reversed ? "Korean" : "Meaning"}
               </span>
               <p
                 className={cn(
-                  "w-full break-keep font-bold leading-tight tracking-tight text-foreground [overflow-wrap:anywhere]",
+                  "w-full break-keep font-semibold leading-tight tracking-tight text-foreground [overflow-wrap:anywhere]",
                   fitText(
                     reversed ? card.term : card.meaning,
                     "text-3xl sm:text-5xl",
@@ -310,23 +420,20 @@ function FlashCard({
               </p>
               <Pronunciation text={card.pronunciation} className="mt-2 text-base sm:text-2xl" />
               {/* Always surface the other side too, so each card reinforces Korean + reading + meaning together. */}
-              <p className="mt-2 break-keep text-lg font-bold text-muted-foreground/80 [overflow-wrap:anywhere] sm:text-2xl">
+              <p className="mt-2 break-keep text-lg font-medium text-muted-foreground [overflow-wrap:anywhere] sm:text-2xl">
                 <span lang={reversed ? undefined : "ko"}>
                   {reversed ? card.meaning : card.term}
                 </span>
               </p>
 
               {card.example && (
-                <div className="mt-6 w-full max-w-sm rounded-2xl border-2 border-[#58cc02]/20 bg-card/80 p-4 text-sm font-bold leading-relaxed text-muted-foreground">
+                <div className="app-surface-muted mt-6 w-full max-w-sm p-4 text-sm leading-relaxed text-muted-foreground">
                   {card.example}
                 </div>
               )}
 
               <div className="mt-6 sm:mt-8">
-                <SpeakButton
-                  text={card.term}
-                  className="h-14 w-14 rounded-2xl border-b-4 border-[#1499e0] bg-[#1cb0f6] text-white transition-all active:translate-y-[3px] active:border-b-0"
-                />
+                <SpeakButton text={card.term} className={CARD_SPEAKER} />
               </div>
             </div>
           </div>
@@ -340,28 +447,28 @@ function FlashCard({
             animate={{ opacity: 1, y: 0 }}
             className="space-y-4"
           >
-            {/* AI Hint Section */}
-            <div className="rounded-2xl border-2 border-[#ffc800]/40 bg-[#ffc800]/10 p-4">
-              {hint ? (
-                <p className="text-sm font-bold leading-relaxed text-[#b88600] dark:text-[#ffd43b]">
-                  {hint}
-                </p>
-              ) : (
-                <button
-                  type="button"
-                  onClick={fetchHint}
-                  disabled={loadingHint}
-                  className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#b88600] hover:text-[#9a7100] dark:text-[#ffd43b]"
-                >
-                  <Lightbulb
-                    size={14}
-                    strokeWidth={2.5}
-                    className={loadingHint ? "animate-pulse" : ""}
-                  />
-                  {loadingHint ? "Creating AI sentence..." : "Get AI example sentence"}
-                </button>
-              )}
-            </div>
+            {/* AI example sentence — opt-in, quiet until asked for */}
+            {hint ? (
+              <div className="app-surface-muted flex items-start gap-2.5 p-4">
+                <Lightbulb aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
+                <p className="text-sm leading-relaxed text-foreground">{hint}</p>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={fetchHint}
+                disabled={loadingHint}
+                className="mx-auto flex text-muted-foreground"
+              >
+                {loadingHint ? (
+                  <Loader2 aria-hidden="true" className="animate-spin" />
+                ) : (
+                  <Lightbulb aria-hidden="true" />
+                )}
+                {loadingHint ? "Creating an example…" : "Get an AI example sentence"}
+              </Button>
+            )}
 
             {/* Grading Buttons (Duolingo-style, keys 1-4) */}
             <GradeButtons card={card} onGrade={grade} showKeys />
@@ -373,15 +480,16 @@ function FlashCard({
 }
 
 // ─── Correct-answer reaction ─────────────────────────────────────────────────
-// A celebratory burst shown the instant a test answer is right. The combo
-// (consecutive correct answers this session) escalates the praise so a hot
-// streak feels rewarding and keeps the learner motivated.
+// A short reaction shown the instant a test answer is right. The combo
+// (consecutive correct answers this session) escalates the praise — and swaps
+// the check for a flame from three in a row — so a hot streak still feels
+// rewarding without an emoji burst.
 const PRAISE = ["Nice!", "잘했어요!", "Perfect!", "You got it!", "Excellent!", "Spot on!"]
 
 function praiseFor(combo: number): string {
-  if (combo >= 10) return "Unstoppable! 🚀"
-  if (combo >= 5) return "On fire! 🔥"
-  if (combo >= 3) return `${combo} in a row! ⚡`
+  if (combo >= 10) return "Unstoppable!"
+  if (combo >= 5) return "On fire!"
+  if (combo >= 3) return `${combo} in a row!`
   return PRAISE[Math.floor(Math.random() * PRAISE.length)]
 }
 
@@ -394,33 +502,26 @@ function buzz() {
 
 function CorrectReaction({ combo }: { combo: number }) {
   const message = useMemo(() => praiseFor(combo), [combo])
-  const emojis = combo >= 5 ? ["🔥", "⭐", "🎉", "✨", "💪", "🚀"] : ["🎉", "✨", "⭐", "👏"]
+  const Icon = combo >= 3 ? Flame : CheckCircle2
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.85, y: 6 }}
+      initial={{ opacity: 0, scale: 0.94, y: 4 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 420, damping: 18 }}
-      className="relative flex items-center justify-center gap-2 overflow-visible rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-3"
+      transition={{ type: "spring", stiffness: 420, damping: 22 }}
+      className={cn(
+        "flex items-center justify-center gap-2 rounded-xl bg-success/10 px-5 py-3",
+        SUCCESS_TEXT,
+      )}
     >
-      {/* floating emoji burst */}
-      <div className="pointer-events-none absolute inset-x-0 top-0">
-        {emojis.map((e, i) => (
-          <motion.span
-            key={i}
-            initial={{ opacity: 0, y: 0 }}
-            animate={{ opacity: [0, 1, 0], y: -52 - i * 3 }}
-            transition={{ duration: 1, delay: i * 0.05, ease: "easeOut" }}
-            className="absolute left-1/2 top-1 text-lg"
-            style={{ marginLeft: (i - (emojis.length - 1) / 2) * 28 }}
-          >
-            {e}
-          </motion.span>
-        ))}
-      </div>
-      <CheckCircle2 size={18} strokeWidth={3} className="text-emerald-600 dark:text-emerald-400" />
-      <span className="text-base font-semibold text-emerald-700 dark:text-emerald-400">
-        {message}
-      </span>
+      <motion.span
+        initial={{ scale: 0.4, rotate: -20 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: "spring", stiffness: 500, damping: 14, delay: 0.05 }}
+        className="flex"
+      >
+        <Icon aria-hidden="true" className="size-5" />
+      </motion.span>
+      <span className="text-base font-semibold">{message}</span>
     </motion.div>
   )
 }
@@ -445,24 +546,51 @@ function ChoiceCard({
   const [selected, setSelected] = useState<string | null>(null)
   const answered = selected !== null
 
-  function pick(id: string) {
-    if (answered) return
-    setSelected(id)
-    const correct = id === card.id
-    onResult(correct)
-    if (correct) buzz()
-  }
+  const pick = useCallback(
+    (id: string) => {
+      if (answered) return
+      setSelected(id)
+      const correct = id === card.id
+      onResult(correct)
+      if (correct) buzz()
+    },
+    [answered, card.id, onResult],
+  )
+
+  const next = useCallback(
+    () => (selected === card.id ? onKnew() : onLearning()),
+    [selected, card.id, onKnew, onLearning],
+  )
+
+  // Keys: 1-4 pick an option (matching the numbers on each row), then Enter
+  // moves on — the same 1-4 rhythm FlashCard uses for grading.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      const n = Number(e.key)
+      if (!answered && n >= 1 && n <= choices.length) {
+        e.preventDefault()
+        pick(choices[n - 1].id)
+      } else if (answered && e.key === "Enter") {
+        // A focused button (e.g. "Next word") already activates on Enter;
+        // handling it here too would advance — and grade — twice.
+        if (e.target instanceof HTMLButtonElement) return
+        e.preventDefault()
+        void next()
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [answered, choices, pick, next])
 
   return (
     <div className="flex flex-col gap-6">
       {/* Prompt Card */}
-      <div className="flex flex-col items-center justify-center rounded-3xl border border-border bg-accent/5 p-6 text-center dark:bg-white/5 sm:rounded-3xl sm:p-10">
-        <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-4">
-          Select Meaning
-        </span>
+      <div className={PROMPT_CARD}>
+        <span className={cn(CARD_LABEL, "mb-4")}>Choose the meaning</span>
         <p
           className={cn(
-            "w-full break-keep font-bold leading-tight tracking-tight text-foreground [overflow-wrap:anywhere]",
+            "w-full break-keep font-semibold leading-tight tracking-tight text-foreground [overflow-wrap:anywhere]",
             fitText(
               card.term,
               "text-5xl sm:text-7xl",
@@ -475,15 +603,12 @@ function ChoiceCard({
         </p>
         <Pronunciation text={card.pronunciation} className="mt-3 text-lg sm:text-2xl" />
         <div className="mt-6">
-          <SpeakButton
-            text={card.term}
-            className="h-10 w-10 rounded-xl bg-background shadow-sm ring-1 ring-border/50"
-          />
+          <SpeakButton text={card.term} className={CARD_SPEAKER} />
         </div>
       </div>
 
       {/* Choices List */}
-      <div className="grid gap-3">
+      <div className="grid gap-2.5">
         {choices.map((choice, i) => {
           const isCorrect = choice.id === card.id
           const isSelected = choice.id === selected
@@ -491,43 +616,60 @@ function ChoiceCard({
           return (
             <motion.button
               key={choice.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04, duration: 0.18 }}
               type="button"
               onClick={() => pick(choice.id)}
               disabled={answered}
+              aria-keyshortcuts={String(i + 1)}
               className={cn(
-                "group flex w-full items-center justify-between gap-3 rounded-2xl border px-5 py-4 text-left transition-all active:scale-[0.98] sm:px-6 sm:py-5",
+                "group flex min-h-14 w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-colors sm:px-5 sm:py-4",
                 !answered
-                  ? "border-border bg-card hover:border-emerald-500/40 hover:bg-emerald-500/[0.02]"
+                  ? "border-border bg-card hover:border-primary/40 hover:bg-primary/[0.03] active:bg-primary/[0.06]"
                   : isCorrect
-                    ? "border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-500/20"
+                    ? "border-success bg-success/10"
                     : isSelected
-                      ? "border-red-500 bg-red-500/10 ring-1 ring-red-500/20"
-                      : "border-border/40 bg-accent/10 opacity-40",
+                      ? "border-destructive bg-destructive/10"
+                      : "border-border bg-card opacity-50",
               )}
             >
+              {/* Option number — keeps the four rows scannable */}
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "flex size-7 shrink-0 items-center justify-center rounded-md border text-xs font-semibold tabular-nums",
+                  !answered
+                    ? "border-border text-muted-foreground group-hover:border-primary/40 group-hover:text-primary"
+                    : isCorrect
+                      ? "border-success bg-success text-white"
+                      : isSelected
+                        ? "border-destructive bg-destructive text-white"
+                        : "border-border text-muted-foreground",
+                )}
+              >
+                {answered && isCorrect ? (
+                  <Check className="size-4" />
+                ) : answered && isSelected ? (
+                  <X className="size-4" />
+                ) : (
+                  i + 1
+                )}
+              </span>
               <span
                 className={cn(
-                  "min-w-0 text-base font-bold [overflow-wrap:anywhere] sm:text-lg",
+                  "min-w-0 flex-1 text-base font-medium [overflow-wrap:anywhere] sm:text-lg",
                   !answered
                     ? "text-foreground"
                     : isCorrect
-                      ? "text-emerald-700 dark:text-emerald-400"
+                      ? SUCCESS_TEXT
                       : isSelected
-                        ? "text-red-700 dark:text-red-400"
+                        ? "text-destructive"
                         : "text-muted-foreground",
                 )}
               >
                 {choice.meaning}
               </span>
-              {answered && isCorrect && (
-                <CheckCircle2 size={18} className="text-emerald-600" strokeWidth={3} />
-              )}
-              {answered && isSelected && !isCorrect && (
-                <XCircle size={18} className="text-red-600" strokeWidth={3} />
-              )}
             </motion.button>
           )
         })}
@@ -542,14 +684,10 @@ function ChoiceCard({
             className="mt-2 space-y-3"
           >
             {selected === card.id && <CorrectReaction combo={streak + 1} />}
-            <button
-              type="button"
-              onClick={() => (selected === card.id ? onKnew() : onLearning())}
-              className="flex h-16 w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-emerald-600 to-teal-600 text-sm font-bold uppercase tracking-wide text-white shadow-xl shadow-emerald-600/20 transition-all hover:scale-[1.02] active:scale-95"
-            >
-              Next Word
-              <ChevronRight size={20} strokeWidth={3} />
-            </button>
+            <Button size="lg" onClick={() => void next()} className={NEXT_BUTTON}>
+              Next word
+              <ChevronRight aria-hidden="true" />
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -594,13 +732,11 @@ function RecallCard({
   return (
     <div className="flex flex-col gap-6">
       {/* Prompt Card */}
-      <div className="flex flex-col items-center justify-center rounded-3xl border border-border bg-accent/5 p-6 text-center dark:bg-white/5 sm:rounded-3xl sm:p-10">
-        <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-4">
-          Type in Korean
-        </span>
+      <div className={PROMPT_CARD}>
+        <span className={cn(CARD_LABEL, "mb-4")}>Type it in Korean</span>
         <p
           className={cn(
-            "w-full break-keep font-bold leading-tight tracking-tight text-foreground [overflow-wrap:anywhere]",
+            "w-full break-keep font-semibold leading-tight tracking-tight text-foreground [overflow-wrap:anywhere]",
             fitText(
               card.meaning,
               "text-3xl sm:text-5xl",
@@ -612,9 +748,7 @@ function RecallCard({
           {card.meaning}
         </p>
         {card.pronunciation && answered && (
-          <p className="mt-3 text-xs font-bold italic text-muted-foreground">
-            [{card.pronunciation}]
-          </p>
+          <Pronunciation text={card.pronunciation} className="mt-3 text-base" />
         )}
       </div>
 
@@ -639,38 +773,35 @@ function RecallCard({
           autoCorrect="off"
           spellCheck={false}
           placeholder="한국어로 입력하세요..."
+          aria-label="Your answer in Korean"
           className={cn(
-            "h-16 w-full rounded-2xl border bg-card px-5 text-center text-xl font-bold tracking-tight text-foreground placeholder:text-base placeholder:font-bold placeholder:text-muted-foreground/60 focus:outline-none transition-colors",
+            "h-14 w-full rounded-xl border bg-card px-5 text-center text-xl font-semibold tracking-tight text-foreground outline-none transition-[color,border-color,box-shadow] placeholder:text-base placeholder:font-normal placeholder:text-muted-foreground",
             !answered
-              ? "border-border focus:border-emerald-500/40 focus:ring-2 focus:ring-emerald-500/10"
+              ? "border-border focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
               : result === "correct"
-                ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                : "border-red-500 bg-red-500/10 text-red-700 dark:text-red-400",
+                ? cn("border-success bg-success/10", SUCCESS_TEXT)
+                : "border-destructive bg-destructive/10 text-destructive",
           )}
         />
 
         {!answered && (
-          <div className="grid grid-cols-[1fr_auto] gap-3">
-            <button
-              type="button"
-              onClick={submit}
-              disabled={!answer.trim()}
-              className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-emerald-600 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-500 active:scale-95 disabled:opacity-40"
-            >
-              <CheckCircle2 size={18} strokeWidth={2.5} />
+          <div className="grid grid-cols-[1fr_auto] gap-2.5">
+            <Button size="lg" onClick={submit} disabled={!answer.trim()} className="h-12 text-base">
+              <Check aria-hidden="true" />
               Check
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
               onClick={() => {
                 setResult("incorrect")
                 onResult(false)
               }}
-              className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-border bg-background px-5 text-xs font-bold uppercase tracking-wide text-muted-foreground transition-all hover:bg-accent active:scale-95"
+              className="h-12"
             >
-              <Eye size={16} strokeWidth={2.5} />
+              <Eye aria-hidden="true" />
               Show
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -684,46 +815,32 @@ function RecallCard({
             className="space-y-4"
           >
             {result === "correct" && <CorrectReaction combo={streak + 1} />}
-            <div
-              className={cn(
-                "flex items-center justify-between gap-3 rounded-2xl border p-4",
-                result === "correct"
-                  ? "border-emerald-500/20 bg-emerald-500/5"
-                  : "border-red-500/20 bg-red-500/5",
-              )}
-            >
+            <div className={cn(CARD_FACE, "flex items-center justify-between gap-3 p-4")}>
               <div className="min-w-0">
                 <p
                   className={cn(
-                    "text-xs font-bold uppercase tracking-wide",
-                    result === "correct" ? "text-emerald-600" : "text-red-500",
+                    "text-sm font-medium",
+                    result === "correct" ? SUCCESS_TEXT : "text-muted-foreground",
                   )}
                 >
                   {result === "correct" ? "Correct" : "Answer"}
                 </p>
-                <p className="mt-1 break-keep text-2xl font-bold tracking-tight text-foreground [overflow-wrap:anywhere]">
+                <p className="mt-1 break-keep text-2xl font-semibold tracking-tight text-foreground [overflow-wrap:anywhere]">
                   <span lang="ko">{card.term}</span>
                 </p>
                 {card.example && (
-                  <p className="mt-2 text-sm font-bold leading-relaxed text-muted-foreground/70">
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {card.example}
                   </p>
                 )}
               </div>
-              <SpeakButton
-                text={card.term}
-                className="h-11 w-11 shrink-0 rounded-xl bg-background shadow-sm ring-1 ring-border/50"
-              />
+              <SpeakButton text={card.term} className={cn(CARD_SPEAKER, "shrink-0")} />
             </div>
 
-            <button
-              type="button"
-              onClick={next}
-              className="flex h-16 w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-emerald-600 to-teal-600 text-sm font-bold uppercase tracking-wide text-white shadow-xl shadow-emerald-600/20 transition-all hover:scale-[1.02] active:scale-95"
-            >
-              Next Word
-              <ChevronRight size={20} strokeWidth={3} />
-            </button>
+            <Button size="lg" onClick={next} className={NEXT_BUTTON}>
+              Next word
+              <ChevronRight aria-hidden="true" />
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -823,52 +940,50 @@ function ListeningCard({
   return (
     <div className="flex flex-col gap-6">
       {/* Audio stage */}
-      <div className="flex h-[min(26rem,58dvh)] flex-col items-center justify-center gap-6 rounded-3xl border-2 border-b-[6px] border-border bg-card p-6 text-center dark:bg-slate-900/60 sm:h-96 sm:rounded-3xl sm:p-8">
-        <span className="rounded-full bg-accent/40 px-3 py-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          Listen &amp; Recall
-        </span>
+      <div
+        className={cn(
+          CARD_FACE,
+          "flex h-[min(26rem,58dvh)] flex-col items-center justify-center gap-6 p-6 text-center sm:h-96 sm:p-8",
+        )}
+      >
+        <span className={CARD_LABEL}>Listen and recall the meaning</span>
 
-        {/* Big play button */}
+        {/* Big play button — a soft ring pulses while audio plays */}
         <button
           type="button"
           onClick={() => void play()}
           disabled={loadingAudio}
           aria-label="Play audio"
           className={cn(
-            "flex h-28 w-28 items-center justify-center rounded-3xl border-b-4 text-white transition-all active:translate-y-[3px] active:border-b-0 disabled:opacity-60 sm:h-32 sm:w-32",
-            "border-[#1499e0] bg-[#1cb0f6] shadow-lg shadow-[#1cb0f6]/30",
+            "flex size-24 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[transform,box-shadow] hover:bg-primary/90 active:scale-95 disabled:opacity-60 sm:size-28",
+            playing && "ring-8 ring-primary/15",
           )}
         >
           {loadingAudio ? (
-            <Loader2 size={44} className="animate-spin" strokeWidth={2.5} />
+            <Loader2 aria-hidden="true" className="size-10 animate-spin" />
           ) : (
-            <Volume2 size={48} strokeWidth={2.5} className={playing ? "animate-pulse" : ""} />
+            <Volume2 aria-hidden="true" className="size-10" />
           )}
         </button>
 
-        <button
-          type="button"
-          onClick={() => void play(0.7)}
-          className="flex items-center gap-2 rounded-full border-2 border-b-4 border-border bg-accent/5 px-4 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground/70 transition-all active:translate-y-[2px] active:border-b-2 hover:text-foreground"
-        >
-          <Gauge size={13} strokeWidth={3} /> Slow
-        </button>
+        <Button variant="outline" size="sm" onClick={() => void play(0.7)} className="rounded-full">
+          <Gauge aria-hidden="true" /> Slow
+        </Button>
 
         {audioFailed && (
-          <p className="text-xs font-bold text-muted-foreground">
-            Tap the speaker to play the audio.
-          </p>
+          <p className="text-sm text-muted-foreground">Tap the speaker to play the audio.</p>
         )}
       </div>
 
       {!revealed ? (
-        <button
-          type="button"
+        <Button
+          size="lg"
+          variant="outline"
           onClick={() => setRevealed(true)}
-          className="flex h-16 w-full items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-border bg-card text-sm font-bold uppercase tracking-wide text-foreground transition-all active:translate-y-[3px] active:border-b-0"
+          className={NEXT_BUTTON}
         >
-          <Eye size={18} strokeWidth={2.5} /> Show Answer
-        </button>
+          <Eye aria-hidden="true" /> Show answer
+        </Button>
       ) : (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -876,10 +991,10 @@ function ListeningCard({
           className="space-y-4"
         >
           {/* Answer reveal */}
-          <div className="rounded-2xl border-2 border-[#58cc02]/40 bg-[#58cc02]/[0.06] p-5 text-center dark:bg-[#58cc02]/[0.08]">
+          <div className={cn(CARD_FACE, "border-primary/30 p-5 text-center")}>
             <p
               className={cn(
-                "w-full break-keep font-bold leading-tight tracking-tight text-foreground [overflow-wrap:anywhere]",
+                "w-full break-keep font-semibold leading-tight tracking-tight text-foreground [overflow-wrap:anywhere]",
                 fitText(
                   card.term,
                   "text-4xl sm:text-6xl",
@@ -891,11 +1006,11 @@ function ListeningCard({
               <span lang="ko">{card.term}</span>
             </p>
             <Pronunciation text={card.pronunciation} className="mt-2 text-lg sm:text-2xl" />
-            <p className="mt-3 break-keep text-xl font-bold text-muted-foreground [overflow-wrap:anywhere] sm:text-2xl">
+            <p className="mt-3 break-keep text-xl font-medium text-foreground [overflow-wrap:anywhere] sm:text-2xl">
               {card.meaning}
             </p>
             {card.example && (
-              <p className="mx-auto mt-4 max-w-sm rounded-2xl border-2 border-[#58cc02]/20 bg-card/80 p-3 text-sm font-bold leading-relaxed text-muted-foreground">
+              <p className="app-surface-muted mx-auto mt-4 max-w-sm p-3 text-sm leading-relaxed text-muted-foreground">
                 {card.example}
               </p>
             )}
@@ -978,29 +1093,27 @@ function SentenceCard({
   const scoreColor = !result
     ? ""
     : result.score >= 80
-      ? "text-emerald-600 dark:text-emerald-400"
+      ? SUCCESS_TEXT
       : result.score >= 60
-        ? "text-amber-600 dark:text-amber-400"
-        : "text-red-600 dark:text-red-400"
+        ? RELEARN_TEXT
+        : "text-destructive"
 
   const scoreBg = !result
     ? ""
     : result.score >= 80
-      ? "border-emerald-500/20 bg-emerald-500/5"
+      ? "bg-success/10"
       : result.score >= 60
-        ? "border-amber-500/20 bg-amber-500/5"
-        : "border-red-500/20 bg-red-500/5"
+        ? "bg-amber-500/10"
+        : "bg-destructive/10"
 
   return (
     <div className="flex flex-col gap-5">
       {/* Prompt card */}
-      <div className="flex flex-col items-center justify-center rounded-3xl border border-border bg-accent/5 p-6 text-center dark:bg-white/5 sm:p-10">
-        <span className="mb-4 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          Write a Sentence
-        </span>
+      <div className={PROMPT_CARD}>
+        <span className={cn(CARD_LABEL, "mb-4")}>Write a sentence</span>
         <p
           className={cn(
-            "w-full break-keep font-bold leading-tight tracking-tight text-foreground [overflow-wrap:anywhere]",
+            "w-full break-keep font-semibold leading-tight tracking-tight text-foreground [overflow-wrap:anywhere]",
             fitText(
               card.term,
               "text-5xl sm:text-7xl",
@@ -1011,34 +1124,28 @@ function SentenceCard({
         >
           <span lang="ko">{card.term}</span>
         </p>
-        {card.pronunciation && (
-          <p className="mt-3 text-lg font-bold text-muted-foreground sm:text-2xl">
-            [{card.pronunciation}]
-          </p>
-        )}
-        <p className="mt-2 break-keep text-lg font-bold text-muted-foreground/70 [overflow-wrap:anywhere]">
+        <Pronunciation text={card.pronunciation} className="mt-3 text-lg sm:text-2xl" />
+        <p className="mt-2 break-keep text-lg font-medium text-muted-foreground [overflow-wrap:anywhere]">
           {card.meaning}
         </p>
         <div className="mt-5">
-          <SpeakButton
-            text={card.term}
-            className="h-10 w-10 rounded-xl bg-background shadow-sm ring-1 ring-border/50"
-          />
+          <SpeakButton text={card.term} className={CARD_SPEAKER} />
         </div>
       </div>
 
       {error && (
-        <p className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs font-bold text-destructive">
+        <p
+          role="alert"
+          className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+        >
           {error}
         </p>
       )}
 
       {phase === "loading" && (
-        <div className="flex items-center gap-2.5 rounded-2xl border border-violet-500/20 bg-violet-500/5 px-4 py-4">
-          <Loader2 size={16} className="animate-spin text-violet-500" />
-          <span className="text-xs font-bold text-muted-foreground">
-            Building your challenge...
-          </span>
+        <div className="app-surface-muted flex items-center gap-2.5 px-4 py-4">
+          <Loader2 aria-hidden="true" className="size-4 animate-spin text-primary" />
+          <span className="text-sm text-muted-foreground">Building your challenge…</span>
         </div>
       )}
 
@@ -1046,14 +1153,10 @@ function SentenceCard({
           self-grade the card so the session can't dead-end here. */}
       {phase === "writing" && !challenge && (
         <div className="space-y-3">
-          <button
-            type="button"
-            onClick={retryChallenge}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-violet-500/30 bg-violet-500/10 text-xs font-bold uppercase tracking-wide text-violet-600 transition-all hover:bg-violet-500/20 active:scale-95 dark:text-violet-400"
-          >
-            <RotateCcw size={14} strokeWidth={3} /> Retry challenge
-          </button>
-          <p className="text-center text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          <Button variant="outline" size="lg" onClick={retryChallenge} className="h-12 w-full">
+            <RotateCcw aria-hidden="true" /> Retry challenge
+          </Button>
+          <p className="text-center text-sm text-muted-foreground">
             Or rate this word yourself and continue
           </p>
           <GradeButtons card={card} onGrade={advanceCard} />
@@ -1062,17 +1165,11 @@ function SentenceCard({
 
       {(phase === "writing" || phase === "checking") && challenge && (
         <div className="space-y-3">
-          <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-1.5">
-            <span className="text-xs font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400">
-              Task
-            </span>
-            <p className="text-sm font-bold text-foreground leading-relaxed">
-              {challenge.challengePrompt}
-            </p>
+          <div className="app-surface-muted space-y-1.5 p-4">
+            <span className="text-sm font-medium text-primary">Task</span>
+            <p className="text-base leading-relaxed text-foreground">{challenge.challengePrompt}</p>
             {challenge.contextHint && (
-              <p className="text-xs font-medium text-muted-foreground italic">
-                {challenge.contextHint}
-              </p>
+              <p className="text-sm text-muted-foreground">{challenge.contextHint}</p>
             )}
           </div>
 
@@ -1088,25 +1185,26 @@ function SentenceCard({
                 void handleCheck()
               }
             }}
-            className="w-full resize-none rounded-2xl border border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-sm placeholder:text-muted-foreground/40 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/20 disabled:opacity-60 transition-colors"
+            aria-label={`Your Korean sentence using ${card.term}`}
+            className="w-full resize-none rounded-xl border border-border bg-card px-4 py-3 text-base text-foreground outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-60"
           />
 
-          <button
-            type="button"
+          <Button
+            size="lg"
             onClick={handleCheck}
             disabled={!attempt.trim() || phase === "checking"}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-violet-600/20 transition-all hover:bg-violet-500 active:scale-95 disabled:opacity-40"
+            className={NEXT_BUTTON}
           >
             {phase === "checking" ? (
               <>
-                <Loader2 size={16} className="animate-spin" /> Evaluating...
+                <Loader2 aria-hidden="true" className="animate-spin" /> Evaluating…
               </>
             ) : (
               <>
-                <CheckCircle2 size={16} strokeWidth={2.5} /> Check my sentence
+                <Check aria-hidden="true" /> Check my sentence
               </>
             )}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -1117,54 +1215,47 @@ function SentenceCard({
           className="space-y-3"
         >
           {/* Score */}
-          <div className={cn("rounded-2xl border p-4 flex items-center gap-4", scoreBg)}>
-            <div className={cn("text-4xl font-bold tabular-nums", scoreColor)}>{result.score}</div>
-            <div className="flex-1 min-w-0">
-              <p className={cn("text-xs font-bold uppercase tracking-wide", scoreColor)}>
+          <div className={cn("flex items-center gap-4 rounded-xl p-4", scoreBg)}>
+            <div className={cn("text-4xl font-semibold tabular-nums", scoreColor)}>
+              {result.score}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className={cn("text-sm font-semibold", scoreColor)}>
                 {result.correct ? "Good job" : "Keep practicing"}
               </p>
-              <p className="mt-1 text-xs font-medium text-muted-foreground/80 leading-relaxed">
-                {result.feedback}
-              </p>
+              <p className="mt-1 text-sm leading-relaxed text-foreground">{result.feedback}</p>
             </div>
           </div>
 
+          {/* Corrections — told apart by their labels, not by colour */}
           {result.correctedSentence && result.correctedSentence !== attempt.trim() && (
-            <div className="rounded-2xl border border-sky-500/20 bg-sky-500/5 p-3 space-y-1">
-              <span className="text-xs font-bold uppercase tracking-[0.18em] text-sky-600 dark:text-sky-400">
-                Corrected
-              </span>
-              <p className="text-sm font-bold text-foreground">{result.correctedSentence}</p>
+            <div className={cn(CARD_FACE, "space-y-1 p-3")}>
+              <span className="text-sm font-medium text-muted-foreground">Corrected</span>
+              <p lang="ko" className="text-base font-medium text-foreground">
+                {result.correctedSentence}
+              </p>
             </div>
           )}
 
           {result.betterAlternative && (
-            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3 space-y-1">
-              <span className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">
-                More natural
-              </span>
-              <p className="text-sm font-bold text-foreground">{result.betterAlternative}</p>
+            <div className={cn(CARD_FACE, "space-y-1 p-3")}>
+              <span className="text-sm font-medium text-muted-foreground">More natural</span>
+              <p lang="ko" className="text-base font-medium text-foreground">
+                {result.betterAlternative}
+              </p>
             </div>
           )}
 
           {result.grammarNote && (
-            <div className="flex items-start gap-2 rounded-2xl border border-border bg-accent/5 p-3">
-              <Lightbulb
-                size={13}
-                strokeWidth={2.5}
-                className="mt-0.5 shrink-0 text-muted-foreground/50"
-              />
-              <p className="text-xs font-medium text-muted-foreground/80 leading-relaxed">
-                {result.grammarNote}
-              </p>
+            <div className="app-surface-muted flex items-start gap-2 p-3">
+              <Lightbulb aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
+              <p className="text-sm leading-relaxed text-muted-foreground">{result.grammarNote}</p>
             </div>
           )}
 
           {/* Grade buttons — score drives the recommendation, learner confirms */}
           <div className="space-y-2">
-            <p className="text-center text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              How well did you do?
-            </p>
+            <p className="text-center text-sm text-muted-foreground">How well did you do?</p>
             <GradeButtons card={card} onGrade={advanceCard} />
           </div>
         </motion.div>
@@ -1439,10 +1530,7 @@ export function ReviewSession({
     return (
       <section
         aria-labelledby="memory-lab-heading"
-        className={cn(
-          "app-surface p-5 sm:p-6",
-          isDueSession && "border-primary/30 bg-linear-to-br from-primary/[0.06] to-card",
-        )}
+        className={cn("app-surface p-5 sm:p-6", isDueSession && "border-primary/30")}
       >
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           <div className="flex min-w-0 items-start gap-4">
@@ -1511,18 +1599,11 @@ export function ReviewSession({
     return (
       <LabOverlay title="Memory Lab — set up a review" onClose={() => setIsOpen(false)}>
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-border/60 bg-accent/5 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:py-5">
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            aria-label="Close Memory Lab"
-            className="flex size-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-          >
-            <ArrowLeft aria-hidden="true" size={20} strokeWidth={2.5} />
-          </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-base font-bold tracking-tight text-foreground">Memory Lab</p>
-            <p className="text-xs font-medium text-muted-foreground leading-tight">
+        <div className={LAB_HEADER}>
+          <LabBackButton label="Close Memory Lab" onClick={() => setIsOpen(false)} />
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-semibold tracking-tight text-foreground">Memory Lab</p>
+            <p className="text-sm leading-tight text-muted-foreground">
               {isDueSession
                 ? hasMoreQueued
                   ? `${filteredDueToday.length} of ${dueCount} due — next batch ready`
@@ -1532,21 +1613,19 @@ export function ReviewSession({
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <p className="text-base font-bold text-emerald-600 leading-none">
+              <p className="text-base font-semibold leading-none text-primary tabular-nums">
                 {filteredDueToday.length}
               </p>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mt-0.5">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {hasMoreQueued ? "In batch" : "Due"}
               </p>
             </div>
-            <div className="h-5 w-px bg-border/60" />
+            <div className="h-6 w-px bg-border" />
             <div className="text-right">
-              <p className="text-base font-bold text-foreground leading-none">
+              <p className="text-base font-semibold leading-none text-foreground tabular-nums">
                 {filteredAllWords.length}
               </p>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mt-0.5">
-                Total
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">Total</p>
             </div>
           </div>
         </div>
@@ -1557,69 +1636,43 @@ export function ReviewSession({
             {/* Category grid */}
             {categories.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                  <Layers3 size={12} strokeWidth={3} />
-                  Filter by Category
+                <div className="flex items-center gap-2">
+                  <Layers3 aria-hidden="true" className="size-4 text-muted-foreground" />
+                  <h3 className="text-sm font-semibold text-foreground">Categories</h3>
                   {selectedCategories.size > 0 && (
-                    <span className="ml-auto rounded-full bg-emerald-500/15 px-2 py-0.5 text-emerald-600 dark:text-emerald-400">
+                    <span className="ml-auto text-sm text-primary">
                       {selectedCategories.size} selected
                     </span>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategories(new Set())}
-                  className={cn(
-                    "w-full rounded-2xl border px-4 py-3 text-xs font-bold uppercase tracking-wide transition-all active:scale-[0.98]",
-                    selectedCategories.size === 0
-                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                      : "border-border bg-accent/5 text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  All Categories
-                </button>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  {categories.map((cat) => {
-                    const selected = selectedCategories.has(cat)
-                    return (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => toggleCategory(cat)}
-                        aria-pressed={selected}
-                        className={cn(
-                          "flex items-center gap-2 rounded-2xl border px-3.5 py-3 text-xs font-bold uppercase tracking-wide transition-all active:scale-[0.98]",
-                          selected
-                            ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                            : "border-border bg-accent/5 text-muted-foreground hover:text-foreground",
-                        )}
-                      >
-                        {selected ? (
-                          <CheckCircle2 size={13} strokeWidth={3} className="shrink-0" />
-                        ) : (
-                          <div className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-current opacity-30" />
-                        )}
-                        <span className="truncate">{cat}</span>
-                      </button>
-                    )
-                  })}
+                  <CategoryChip
+                    label="All categories"
+                    selected={selectedCategories.size === 0}
+                    onClick={() => setSelectedCategories(new Set())}
+                  />
+                  {categories.map((cat) => (
+                    <CategoryChip
+                      key={cat}
+                      label={cat}
+                      selected={selectedCategories.has(cat)}
+                      onClick={() => toggleCategory(cat)}
+                    />
+                  ))}
                 </div>
               </div>
             )}
 
             {/* Mode selector */}
-            <div className="space-y-2">
-              <p
-                id="memory-lab-mode-label"
-                className="text-xs font-bold uppercase tracking-wide text-muted-foreground"
-              >
-                Study Mode
-              </p>
+            <div className="space-y-3">
+              <h3 id="memory-lab-mode-label" className="text-sm font-semibold text-foreground">
+                Study mode
+              </h3>
               {/* Wraps to rows on phones so five labels don't truncate. */}
               <div
                 role="group"
                 aria-labelledby="memory-lab-mode-label"
-                className="grid grid-cols-3 gap-1 rounded-2xl bg-accent/10 p-1 sm:flex"
+                className="grid grid-cols-3 gap-1 rounded-xl bg-muted p-1 sm:flex"
               >
                 {(
                   [
@@ -1636,18 +1689,13 @@ export function ReviewSession({
                     onClick={() => setMode(m)}
                     aria-pressed={mode === m}
                     className={cn(
-                      "flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1 rounded-[0.9rem] px-1 py-3 text-xs font-bold uppercase tracking-wide transition-all",
+                      "flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-1 py-2.5 text-sm font-medium transition-colors",
                       mode === m
-                        ? "bg-card text-primary shadow-sm ring-1 ring-border"
+                        ? "bg-card text-foreground ring-1 ring-border"
                         : "text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    {m === "listening" && (
-                      <Headphones size={13} strokeWidth={3} className="hidden shrink-0 sm:block" />
-                    )}
-                    {m === "sentence" && (
-                      <Sparkles size={13} strokeWidth={3} className="hidden shrink-0 sm:block" />
-                    )}
+                    <ModeIcon mode={m} active={mode === m} />
                     <span className="truncate">
                       {m === "flashcard"
                         ? "Cards"
@@ -1663,26 +1711,27 @@ export function ReviewSession({
                 ))}
               </div>
               {mode === "flashcard" && (
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setReversed((r) => !r)}
-                  className="mx-auto flex items-center gap-2 rounded-full border border-border bg-accent/5 px-4 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground transition-all hover:bg-accent/20 hover:text-foreground active:scale-95"
+                  className="mx-auto flex rounded-full"
                 >
-                  <ArrowLeftRight size={13} strokeWidth={3} />
+                  <ArrowLeftRight aria-hidden="true" />
                   {reversed ? "English → Korean" : "Korean → English"}
-                </button>
+                </Button>
               )}
             </div>
           </div>
         </div>
 
         {/* Pinned Start button */}
-        <div className="border-t border-border/60 px-4 py-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6">
+        <div className="border-t border-border px-4 py-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6">
           <Button
             size="lg"
             disabled={loading || deckSize === 0}
             onClick={startQuiz}
-            className="mx-auto flex h-14 w-full max-w-2xl text-base"
+            className="mx-auto flex h-12 w-full max-w-2xl text-base"
           >
             <Sparkles aria-hidden="true" />
             {loading
@@ -1712,53 +1761,54 @@ export function ReviewSession({
       <LabOverlay title="Memory Lab — session results" onClose={finish}>
         {/* Stay immersive coming out of the quiz — back button mirrors the
             session header instead of dropping straight into the page shell. */}
-        <div className="flex items-center border-b border-border/60 bg-accent/5 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:py-5">
-          <button
-            type="button"
-            onClick={finish}
-            aria-label="Close Memory Lab"
-            className="flex size-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-          >
-            <ArrowLeft aria-hidden="true" size={20} strokeWidth={2.5} />
-          </button>
-          <span className="ml-3 text-sm font-bold uppercase tracking-wide text-foreground">
-            Session Results
+        <div className={LAB_HEADER}>
+          <LabBackButton label="Close Memory Lab" onClick={finish} />
+          <span className="text-base font-semibold tracking-tight text-foreground">
+            Session results
           </span>
         </div>
 
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-6">
-          <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-8 px-5 py-10 text-center sm:px-8 sm:py-16">
-            <div className="relative">
-              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-emerald-500/10 text-emerald-600 shadow-inner ring-1 ring-emerald-500/20">
-                <Trophy size={48} strokeWidth={2} />
-              </div>
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.5, type: "spring" }}
-                className="absolute -right-2 -top-2 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-600/40 ring-4 ring-card"
-              >
-                <CheckCircle2 size={24} strokeWidth={3} />
-              </motion.div>
-            </div>
+          <div className="mx-auto flex w-full max-w-md flex-col items-center gap-8 py-10 text-center sm:py-16">
+            <motion.div
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 320, damping: 18 }}
+              className="flex size-20 items-center justify-center rounded-full bg-primary/10 text-primary"
+            >
+              <Trophy aria-hidden="true" className="size-10" />
+            </motion.div>
 
             <div>
-              <h2 className="text-4xl font-bold tracking-tight text-foreground">{headline}</h2>
-              <p className="mt-3 text-base font-medium text-muted-foreground leading-relaxed">
-                You knew <span className="text-emerald-600 font-bold">{knew}</span> of{" "}
-                <span className="text-foreground font-bold">{total}</span> words on the first try.
-                Keep this momentum up to strengthen long-term memory.
+              <h2 className="text-3xl font-semibold tracking-tight text-foreground">{headline}</h2>
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+                You knew <span className="font-semibold text-foreground">{knew}</span> of{" "}
+                <span className="font-semibold text-foreground">{total}</span> words on the first
+                try. Keep this momentum up to strengthen long-term memory.
               </p>
             </div>
 
-            {/* Performance Visualization */}
-            <div className="relative h-2 w-full max-w-xs overflow-hidden rounded-full bg-accent/10">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${pct}%` }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-                className="h-full bg-linear-to-r from-emerald-500 to-teal-400"
-              />
+            {/* Score: first-try accuracy */}
+            <div className="w-full max-w-xs">
+              <div className="mb-2 flex items-baseline justify-between text-sm">
+                <span className="text-muted-foreground">First-try accuracy</span>
+                <span className="font-semibold tabular-nums text-foreground">{pct}%</span>
+              </div>
+              <div
+                role="progressbar"
+                aria-label="First-try accuracy"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={pct}
+                className="h-2 w-full overflow-hidden rounded-full bg-muted"
+              >
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  className="h-full rounded-full bg-primary"
+                />
+              </div>
             </div>
 
             {/* Best streak — only meaningful for the test modes that score answers */}
@@ -1773,15 +1823,21 @@ export function ReviewSession({
                   damping: 16,
                 }}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-2xl border px-5 py-3 text-sm font-semibold",
+                  "flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium",
                   isNewRecord && bestStreak > 0
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                    : "border-orange-500/20 bg-orange-500/5 text-orange-600 dark:text-orange-400",
+                    ? cn("bg-success/10", SUCCESS_TEXT)
+                    : "bg-muted text-foreground",
                 )}
               >
-                <Flame size={18} strokeWidth={2.5} />
+                <Flame
+                  aria-hidden="true"
+                  className={cn(
+                    "size-5 shrink-0",
+                    !(isNewRecord && bestStreak > 0) && "text-amber-600 dark:text-amber-400",
+                  )}
+                />
                 {isNewRecord && bestStreak > 0
-                  ? `New personal best! 🎉 ${bestStreak} in a row`
+                  ? `New personal best — ${bestStreak} in a row`
                   : bestStreak > 0
                     ? `Best this session: ${bestStreak} · All-time: ${allTimeBest}`
                     : allTimeBest > 0
@@ -1797,7 +1853,7 @@ export function ReviewSession({
                 size="lg"
                 variant={filteredDueToday.length > 0 ? "default" : "outline"}
                 onClick={startQuiz}
-                className="flex-1"
+                className="sm:flex-1"
               >
                 <RotateCcw aria-hidden="true" />
                 {/* Grading a batch refetches the deck (useVocab invalidates once
@@ -1812,7 +1868,7 @@ export function ReviewSession({
                 size="lg"
                 variant={filteredDueToday.length > 0 ? "outline" : "default"}
                 onClick={finish}
-                className="flex-1"
+                className="sm:flex-1"
               >
                 Finish
               </Button>
@@ -1863,76 +1919,66 @@ export function ReviewSession({
         </AlertDialogContent>
       </AlertDialog>
       {/* Session Progress Header */}
-      <div className="flex items-center justify-between border-b border-border/60 bg-accent/5 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:py-5">
-        <button
-          type="button"
-          onClick={requestLeave}
-          className="flex size-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-          aria-label="Leave review"
-        >
-          <ArrowLeft aria-hidden="true" size={20} strokeWidth={2.5} />
-        </button>
-        <div className="flex items-center gap-3">
-          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-          <span className="text-sm font-bold uppercase tracking-wide text-foreground">
-            {Math.min(attemptsCount + 1, total)} <span className="opacity-20 mx-1">/</span> {total}
+      <div className={cn(LAB_HEADER, "justify-between")}>
+        <LabBackButton label="Leave review" onClick={requestLeave} />
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="text-sm font-semibold tabular-nums text-foreground">
+            {Math.min(attemptsCount + 1, total)}
+            <span className="mx-1 text-muted-foreground">/</span>
+            {total}
           </span>
           {/* Sync status — reassures the user reviews are persisting (and warns if not) */}
           {(saveError || pendingSaves > 0 || knewCount + lapsedIds.size > 0) && (
             <span
               className={cn(
-                "flex items-center gap-1 text-xs font-medium",
-                saveError
-                  ? "text-red-500"
-                  : pendingSaves > 0
-                    ? "text-muted-foreground"
-                    : "text-emerald-600 dark:text-emerald-400",
+                "flex items-center gap-1 text-xs",
+                saveError ? "font-medium text-destructive" : "text-muted-foreground",
               )}
             >
               {saveError ? (
                 <>
-                  <XCircle size={12} strokeWidth={3} /> Not saved
+                  <XCircle aria-hidden="true" className="size-3.5" /> Not saved
                 </>
               ) : pendingSaves > 0 ? (
                 <>
-                  <Loader2 size={12} className="animate-spin" /> Saving…
+                  <Loader2 aria-hidden="true" className="size-3.5 animate-spin" /> Saving…
                 </>
               ) : (
                 <>
-                  <CheckCircle2 size={12} strokeWidth={3} /> Synced
+                  <Cloud aria-hidden="true" className="size-3.5" /> Synced
                 </>
               )}
             </span>
           )}
         </div>
         {/* Live tally: remembered vs. relearning */}
-        <div className="flex items-center gap-2.5 text-xs font-bold tabular-nums">
-          <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 aria-hidden="true" size={13} strokeWidth={3} />
+        <div className="flex items-center gap-3 text-sm font-medium tabular-nums">
+          <span className={cn("flex items-center gap-1", SUCCESS_TEXT)}>
+            <CheckCircle2 aria-hidden="true" className="size-4" />
             {knewCount}
             <span className="sr-only"> remembered</span>
           </span>
           <span
-            className="flex items-center gap-1 text-amber-600 dark:text-amber-400"
+            className={cn("flex items-center gap-1", RELEARN_TEXT)}
             title={
               lapsedIds.size > 0
                 ? `${lapsedIds.size} relearning — you'll see ${lapsedIds.size === 1 ? "it" : "them"} again before this session ends`
                 : 'Relearning — words graded "Again" come back later in this session'
             }
           >
-            <RotateCcw aria-hidden="true" size={13} strokeWidth={3} />
+            <RotateCcw aria-hidden="true" className="size-4" />
             {lapsedIds.size}
             <span className="sr-only"> relearning — they come back later in this session</span>
           </span>
         </div>
       </div>
 
-      {/* Smooth Progress Indicator */}
-      <div className="h-1 w-full bg-accent/10">
+      {/* Session progress */}
+      <div className="h-1 w-full bg-muted">
         <motion.div
           animate={{ width: `${Math.min((attemptsCount / total) * 100, 100)}%` }}
-          transition={{ duration: 0.5 }}
-          className="h-full bg-emerald-500"
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="h-full rounded-r-full bg-primary"
         />
       </div>
 
@@ -1944,10 +1990,10 @@ export function ReviewSession({
               // id+index (last card graded "Again"), and without a key change the
               // choice/recall cards keep their answered state and get stuck.
               key={`${card.id}-${attemptsCount}`}
-              initial={{ opacity: 0, scale: 0.98, x: 10 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.98, x: -10 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -12 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
             >
               {mode === "sentence" ? (
                 <SentenceCard card={card} onGrade={handleGrade} />
