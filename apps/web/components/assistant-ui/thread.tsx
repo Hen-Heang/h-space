@@ -230,7 +230,7 @@ const Composer: FC = () => {
       <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col">
         <div
           data-slot="aui_composer-shell"
-          className="border-border/70 focus-within:border-blue-500/40 focus-within:ring-4 focus-within:ring-blue-500/[0.06] dark:border-muted-foreground/15 dark:focus-within:border-blue-500/40 flex w-full flex-col gap-2 rounded-(--composer-radius) border bg-(--composer-bg) p-(--composer-padding) shadow-[0_8px_30px_-18px_rgba(0,0,0,0.28),0_1px_2px_rgba(0,0,0,0.05)] transition-[border-color,box-shadow] focus-within:shadow-[0_10px_34px_-18px_rgba(0,0,0,0.3),0_1px_2px_rgba(0,0,0,0.06)] dark:shadow-none"
+          className="border-input focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/20 flex w-full flex-col gap-2 rounded-(--composer-radius) border bg-(--composer-bg) p-(--composer-padding) shadow-[0_8px_30px_-18px_rgba(0,0,0,0.28),0_1px_2px_rgba(0,0,0,0.05)] transition-[border-color,box-shadow] focus-within:shadow-[0_10px_34px_-18px_rgba(0,0,0,0.3),0_1px_2px_rgba(0,0,0,0.06)] dark:shadow-none"
         >
           <ComposerPrimitive.Input
             placeholder="Write or speak in Korean…"
@@ -304,23 +304,27 @@ const CorrectionCard: FC = () => {
   if (!custom?.correction) return null
 
   return (
-    <div className="fade-in slide-in-from-bottom-1 animate-in mt-3 overflow-hidden rounded-2xl border border-amber-500/20 bg-amber-500/[0.03] shadow-sm duration-200">
-      <div className="flex items-center gap-2 border-b border-amber-500/10 bg-amber-500/5 px-4 py-2.5">
-        <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400" />
-        <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">
-          Suggested Improvement
+    // Green like History's "Corrected": a suggested fix is the corrected
+    // state, not a warning.
+    <div className="fade-in slide-in-from-bottom-1 animate-in mt-3 overflow-hidden rounded-lg border border-success/30 bg-card duration-200">
+      <div className="flex items-center gap-2 border-b border-success/20 bg-success/10 px-4 py-2">
+        <CheckCircle2 aria-hidden="true" size={16} className="text-success" />
+        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+          Suggested improvement
         </p>
       </div>
       <div className="p-4">
-        <div className="text-base leading-relaxed font-bold text-amber-900 dark:text-amber-100">
+        <div className="text-base leading-relaxed font-semibold text-foreground">
           {custom.correction}
         </div>
         {custom.translation && (
-          <div className="mt-3 flex items-start gap-3 rounded-xl bg-white/50 p-3 dark:bg-black/30">
-            <Languages size={14} className="mt-0.5 shrink-0 text-amber-600/60" />
-            <p className="text-xs leading-relaxed font-medium text-amber-800/80 italic dark:text-amber-200/70">
-              {custom.translation}
-            </p>
+          <div className="mt-3 flex items-start gap-2">
+            <Languages
+              aria-hidden="true"
+              size={16}
+              className="mt-0.5 shrink-0 text-muted-foreground"
+            />
+            <p className="text-sm leading-relaxed text-muted-foreground">{custom.translation}</p>
           </div>
         )}
       </div>
@@ -353,7 +357,7 @@ const MessageSpeakButton: FC = () => {
 const MessageError: FC = () => {
   return (
     <MessagePrimitive.Error>
-      <ErrorPrimitive.Root className="aui-message-error-root border-destructive bg-destructive/10 text-destructive dark:bg-destructive/5 mt-2 rounded-md border p-3 text-sm dark:text-red-200">
+      <ErrorPrimitive.Root className="aui-message-error-root border-destructive/30 bg-destructive/10 text-destructive mt-2 rounded-lg border p-3 text-sm">
         <ErrorPrimitive.Message className="aui-message-error-message line-clamp-2" />
       </ErrorPrimitive.Root>
     </MessagePrimitive.Error>
@@ -386,11 +390,9 @@ const AssistantText: FC<{ text: string }> = ({ text }) => {
         </div>
       )}
       {subtitles.fix && (
-        <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-3.5 py-2.5">
-          <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">More natural</p>
-          <p className="mt-0.5 text-xs font-medium leading-snug text-foreground/90">
-            {subtitles.fix}
-          </p>
+        <div className="rounded-lg border border-success/30 bg-success/10 px-3.5 py-2.5">
+          <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">More natural</p>
+          <p className="mt-0.5 text-sm leading-snug text-foreground">{subtitles.fix}</p>
         </div>
       )}
     </div>
@@ -414,7 +416,7 @@ const AssistantMessage: FC = () => {
       data-role="assistant"
       className="fade-in slide-in-from-bottom-1 animate-in relative -mb-7.5 flex gap-3 pb-7.5 duration-150 [contain-intrinsic-size:auto_200px] [content-visibility:auto]"
     >
-      <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-background shadow-sm ring-1 ring-blue-500/15">
+      <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-background ring-1 ring-border">
         <Image src="/hengo-icon.png" alt="" width={32} height={32} className="h-full w-full" />
       </div>
       <div className="min-w-0 flex-1">

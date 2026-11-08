@@ -116,15 +116,16 @@ export function ConversationSidebar({
                         setEditingValue("")
                       }
                     }}
-                    className="min-w-0 flex-1 rounded-lg border border-blue-500/40 bg-background px-2 py-1.5 text-sm font-medium outline-none"
+                    aria-label="Chat name"
+                    className="min-w-0 flex-1 rounded-md border border-ring bg-background px-2 py-1.5 text-sm outline-none ring-3 ring-ring/20"
                   />
                   <button
                     type="button"
                     onClick={commitEdit}
                     aria-label="Save"
-                    className="rounded-lg p-1.5 text-emerald-600 hover:bg-emerald-500/10"
+                    className="rounded-md p-1.5 text-success hover:bg-success/10"
                   >
-                    <Check size={16} />
+                    <Check aria-hidden="true" size={16} />
                   </button>
                   <button
                     type="button"
@@ -145,10 +146,8 @@ export function ConversationSidebar({
               <div
                 key={c.id}
                 className={cn(
-                  "group/conv flex items-center gap-1 rounded-xl border px-1 transition-colors",
-                  active
-                    ? "border-blue-500/20 bg-blue-500/[0.08] shadow-sm"
-                    : "border-transparent hover:bg-accent/50",
+                  "group/conv flex items-center gap-1 rounded-lg px-1 transition-colors",
+                  active ? "bg-sidebar-accent" : "hover:bg-muted",
                 )}
               >
                 <button
@@ -160,7 +159,7 @@ export function ConversationSidebar({
                     size={15}
                     className={cn(
                       "shrink-0",
-                      active ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground/40",
+                      active ? "text-sidebar-accent-foreground" : "text-muted-foreground",
                     )}
                   />
                   <span className="min-w-0 flex-1">
@@ -197,7 +196,7 @@ export function ConversationSidebar({
                         onDelete(c.id)
                         setConfirmId(null)
                       }}
-                      className="rounded-lg px-2 py-1 text-xs font-bold uppercase text-red-500 hover:bg-red-500/10"
+                      className="min-h-8 rounded-md px-2.5 text-xs font-medium text-destructive hover:bg-destructive/10"
                     >
                       Delete
                     </button>
@@ -216,7 +215,7 @@ export function ConversationSidebar({
                       type="button"
                       aria-label="Rename chat"
                       onClick={() => startEdit(c)}
-                      className="rounded-lg p-1.5 text-muted-foreground/50 hover:bg-accent hover:text-foreground"
+                      className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
                       <Pencil size={14} />
                     </button>
@@ -224,7 +223,7 @@ export function ConversationSidebar({
                       type="button"
                       aria-label="Delete chat"
                       onClick={() => setConfirmId(c.id)}
-                      className="rounded-lg p-1.5 text-muted-foreground/50 hover:bg-red-500/10 hover:text-red-500"
+                      className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     >
                       <Trash2 size={14} />
                     </button>

@@ -248,25 +248,20 @@ function ChatPageContent() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center gap-4 text-center max-w-sm p-8 rounded-3xl border border-destructive/20 bg-destructive/5"
+          role="alert"
+          className="app-surface flex max-w-sm flex-col items-center gap-4 p-8 text-center"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
-            <AlertCircle size={24} />
+          <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+            <AlertCircle aria-hidden="true" size={24} />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-foreground">Connection Error</h3>
-            <p className="mt-2 text-sm font-medium text-muted-foreground leading-relaxed">
-              {error}
-            </p>
+            <h3 className="text-lg font-semibold text-foreground">
+              Couldn&apos;t start a conversation
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{error}</p>
           </div>
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            onClick={() => window.location.reload()}
-            className="mt-2 text-xs font-bold text-blue-600 hover:text-blue-500"
-          >
-            Try refreshing
+          <Button type="button" variant="outline" onClick={() => window.location.reload()}>
+            Try again
           </Button>
         </motion.div>
       </div>
