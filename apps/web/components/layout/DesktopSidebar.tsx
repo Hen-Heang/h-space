@@ -67,9 +67,10 @@ export function DesktopSidebar({
           aria-label="H-Space home"
           className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md ring-1 ring-border">
+          <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-[22.5%] ring-1 ring-border">
             <Image
-              src="/H%20Space%20Icon.png"
+              src="/icons/h-space-mark.svg"
+              unoptimized
               alt=""
               width={32}
               height={32}

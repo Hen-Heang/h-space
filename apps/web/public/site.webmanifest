@@ -4,25 +4,32 @@
   "description": "My Projects. One Space. A personal software ecosystem for learning, finance, AI, productivity, and development.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#10131A",
-  "theme_color": "#10131A",
+  "background_color": "#11153f",
+  "theme_color": "#0a1422",
   "icons": [
     {
-      "src": "/H%20Space%20Icon.png",
-      "sizes": "any",
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/H%20Space%20Icon.png",
-      "sizes": "any",
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/H%20Space%20Icon.png",
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/favicon.svg",
       "sizes": "any",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }

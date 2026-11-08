@@ -12,9 +12,10 @@ export default function TermsPage() {
     <main className="mx-auto max-w-2xl px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-8">
       <div className="mb-10 flex items-center justify-between">
         <Link href="/" className="group flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl shadow-sm">
+          <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-[22.5%] shadow-sm">
             <Image
-              src="/H%20Space%20Icon.png"
+              src="/icons/h-space-mark.svg"
+              unoptimized
               alt=""
               width={36}
               height={36}

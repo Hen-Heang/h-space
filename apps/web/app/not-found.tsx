@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button"
 export default function NotFound() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-6 text-center text-foreground">
-      <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl shadow-sm ring-1 ring-border/50">
+      <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[22.5%] shadow-sm ring-1 ring-border/50">
         <Image
-          src="/H%20Space%20Icon.png"
+          src="/icons/h-space-mark.svg"
+          unoptimized
           alt="H-Space logo"
           width={56}
           height={56}
