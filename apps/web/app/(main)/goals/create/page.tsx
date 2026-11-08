@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch"
 import { goalTemplates } from "@/lib/goal-templates"
 import type { GoalTemplate } from "@/lib/goal-templates/types"
 import { useCreateGoal } from "@/hooks/useGoalMutations"
+import { EmptyState } from "@/components/ui/empty-state"
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -288,28 +289,23 @@ export default function CreateGoalPage() {
 
           <AnimatePresence mode="popLayout">
             {filteredTemplates.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center py-12 text-center"
-              >
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-                  <Search className="h-8 w-8 text-muted-foreground opacity-30" />
-                </div>
-                <h3 className="mb-2 text-lg font-semibold tracking-tight">No templates found</h3>
-                <p className="max-w-xs text-sm font-medium text-muted-foreground">
-                  No templates match your search.
-                </p>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setSearchQuery("")
-                    setActiveCategory(null)
-                  }}
-                  className="mt-4 text-primary"
-                >
-                  Clear filters
-                </Button>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <EmptyState
+                  icon={Search}
+                  title="No templates found"
+                  description="No templates match your search."
+                  action={
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setSearchQuery("")
+                        setActiveCategory(null)
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  }
+                />
               </motion.div>
             ) : (
               <div className="space-y-6">

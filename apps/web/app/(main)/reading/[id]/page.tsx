@@ -17,6 +17,7 @@ import {
   RotateCcw,
   Trash2,
   XCircle,
+  SearchX,
 } from "lucide-react"
 import { motion } from "motion/react"
 import { toast } from "sonner"
@@ -50,6 +51,8 @@ import {
 } from "@/lib/reading-progress-store"
 import { deleteReadingUnit } from "@/lib/reading-store"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/ui/empty-state"
+import { ReaderSkeleton } from "@/components/ui/reader-skeleton"
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -143,25 +146,22 @@ export default function ReadingUnitPage() {
   }, [unit])
 
   if (loadingUnit) {
-    return (
-      <div className="flex items-center justify-center gap-2 py-24 text-muted-foreground">
-        <Loader2 size={18} className="animate-spin" />
-        <span className="text-sm font-bold">Loading unit…</span>
-      </div>
-    )
+    return <ReaderSkeleton label="Loading unit…" />
   }
 
   if (!unit) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
-        <p className="text-lg font-bold text-foreground">Unit not found.</p>
-        <Link
-          href="/phrasebook?mode=reading"
-          className="text-sm font-bold text-emerald-600 hover:underline"
-        >
-          Back to Reading Units
-        </Link>
-      </div>
+      <EmptyState
+        className="py-24"
+        icon={SearchX}
+        title="Unit not found"
+        description="It may have been deleted, or the link is wrong."
+        action={
+          <Button asChild variant="outline">
+            <Link href="/phrasebook?mode=reading">Back to reading units</Link>
+          </Button>
+        }
+      />
     )
   }
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion, useReducedMotion } from "motion/react"
-import { ChevronRight, Clock, LifeBuoy, SpellCheck2, Type } from "lucide-react"
+import { ChevronRight, Clock, LifeBuoy, SpellCheck2, Type, BookOpen } from "lucide-react"
 
 import { CourseProgress } from "@/components/learn/CourseProgress"
 import { LearnHeader } from "@/components/learn/LearnHeader"
@@ -17,6 +17,7 @@ import { lessonStatus, nextIncompleteLesson } from "@/lib/learning/course"
 import { containerVariants, itemVariants } from "@/lib/motion"
 import { cn } from "@/lib/utils"
 import type { LearnTrack } from "@/lib/types"
+import { EmptyState } from "@/components/ui/empty-state"
 
 const TRACKS: Array<{
   key: LearnTrack
@@ -140,10 +141,12 @@ export function FoundationsHome() {
           ))}
         </div>
       ) : lessons.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-center">
-          <p className="text-sm font-semibold text-foreground">No lessons in this track yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">More lessons are on the way.</p>
-        </div>
+        <EmptyState
+          surface
+          icon={BookOpen}
+          title="No lessons in this track yet"
+          description="More lessons are on the way."
+        />
       ) : (
         <>
           <motion.div variants={item}>
