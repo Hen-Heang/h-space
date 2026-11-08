@@ -42,6 +42,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SpeakButton } from "@/components/ui/SpeakButton"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { interviewApi } from "@/lib/api"
 import type { InterviewScript, ScriptVersion } from "@/lib/api/interview"
 import {
@@ -245,6 +255,13 @@ export default function InterviewScriptPage() {
   const [versions, setVersions] = useState<ScriptVersion[]>([])
   const [versionsOpen, setVersionsOpen] = useState(false)
   const [previewVersion, setPreviewVersion] = useState<ScriptVersion | null>(null)
+  // In-app dialogs for the version flow (they replace window.prompt/confirm).
+  const [saveVersionOpen, setSaveVersionOpen] = useState(false)
+  const [versionName, setVersionName] = useState("")
+  const [pendingVersion, setPendingVersion] = useState<{
+    action: "activate" | "restore"
+    version: ScriptVersion
+  } | null>(null)
   useEffect(() => {
     interviewApi
       .listScriptVersions(topic.id)
@@ -563,22 +580,25 @@ export default function InterviewScriptPage() {
   }
 
   // ── Script version snapshots ──────────────────────────────────────────────
-  async function saveVersion() {
-    const enteredLabel = window.prompt(
-      'Name this version (examples: "Final Practice Version 2", "Mentor Review", "Exam Week Version"):',
-      "",
-    )
-    if (!enteredLabel || !enteredLabel.trim()) return
-    let label = enteredLabel.trim()
-    const existingLabels = versions.map((version) => version.versionLabel)
-    if (duplicateVersionLabel(label, existingLabels)) {
-      const suggested = suggestUniqueVersionLabel(label, existingLabels)
-      const useSuggestion = window.confirm(
-        `A version named "${label}" already exists. Save this snapshot as "${suggested}" instead?`,
-      )
-      if (!useSuggestion) return
-      label = suggested
-    }
+  // A name that's already taken is saved under the next free name; the dialog
+  // says so before saving instead of asking in a second pop-up.
+  const trimmedVersionName = versionName.trim()
+  const existingVersionLabels = versions.map((version) => version.versionLabel)
+  const versionNameTaken =
+    trimmedVersionName !== "" && duplicateVersionLabel(trimmedVersionName, existingVersionLabels)
+  const versionSaveLabel = versionNameTaken
+    ? suggestUniqueVersionLabel(trimmedVersionName, existingVersionLabels)
+    : trimmedVersionName
+
+  function saveVersion() {
+    setVersionName("")
+    setSaveVersionOpen(true)
+  }
+
+  async function confirmSaveVersion() {
+    const label = versionSaveLabel
+    if (!label) return
+    setSaveVersionOpen(false)
     try {
       const version = await interviewApi.saveScriptVersion(topic.id, {
         versionLabel: label,
@@ -592,13 +612,16 @@ export default function InterviewScriptPage() {
     }
   }
 
-  async function activateVersion(version: ScriptVersion) {
-    if (
-      !window.confirm(
-        `Make "${version.versionLabel}" the active practice version? Your live editor draft will not be overwritten.`,
-      )
-    )
-      return
+  // Both ask first through one AlertDialog (`pendingVersion`).
+  function activateVersion(version: ScriptVersion) {
+    setPendingVersion({ action: "activate", version })
+  }
+
+  function restoreVersion(version: ScriptVersion) {
+    setPendingVersion({ action: "restore", version })
+  }
+
+  async function applyActivateVersion(version: ScriptVersion) {
     try {
       await interviewApi.setActiveScriptVersion(topic.id, version.id)
       setVersions((prev) => prev.map((v) => ({ ...v, isActive: v.id === version.id })))
@@ -610,13 +633,7 @@ export default function InterviewScriptPage() {
     }
   }
 
-  function restoreVersion(version: ScriptVersion) {
-    if (
-      !window.confirm(
-        `Load "${version.versionLabel}" into the editor? This will overwrite the current draft text below (your saved versions themselves are never lost).`,
-      )
-    )
-      return
+  function applyRestoreVersion(version: ScriptVersion) {
     const next = { ...values, ...version.sections }
     setValues(next)
     setSynced(false)
@@ -791,6 +808,96 @@ export default function InterviewScriptPage() {
                     onClick={clearAll}
                   >
                     Clear
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Name a new version snapshot */}
+            <Dialog open={saveVersionOpen} onOpenChange={setSaveVersionOpen}>
+              <DialogContent className="sm:max-w-md">
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    void confirmSaveVersion()
+                  }}
+                  className="space-y-4"
+                >
+                  <DialogHeader>
+                    <DialogTitle>Save a version</DialogTitle>
+                    <DialogDescription>
+                      Snapshots the current script and makes it your active practice version.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-2">
+                    <Label htmlFor="script-version-name">Version name</Label>
+                    <Input
+                      id="script-version-name"
+                      value={versionName}
+                      onChange={(event) => setVersionName(event.target.value)}
+                      placeholder="Final Practice Version 2"
+                      autoComplete="off"
+                      autoFocus
+                      aria-describedby="script-version-name-hint"
+                    />
+                    <p
+                      id="script-version-name-hint"
+                      className="text-sm text-muted-foreground"
+                      aria-live="polite"
+                    >
+                      {versionNameTaken
+                        ? `"${trimmedVersionName}" already exists, so this will be saved as "${versionSaveLabel}".`
+                        : 'For example "Mentor Review" or "Exam Week Version".'}
+                    </p>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setSaveVersionOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={!versionSaveLabel}>
+                      Save version
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Make a version active, or load it into the editor */}
+            <AlertDialog
+              open={pendingVersion !== null}
+              onOpenChange={(open) => {
+                if (!open) setPendingVersion(null)
+              }}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {pendingVersion?.action === "restore"
+                      ? `Load "${pendingVersion.version.versionLabel}" into the editor?`
+                      : `Make "${pendingVersion?.version.versionLabel ?? ""}" the active version?`}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {pendingVersion?.action === "restore"
+                      ? "This replaces the current draft text below. Your saved versions are never lost."
+                      : "It becomes the version you practice with. Your live editor draft isn't overwritten."}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      if (!pendingVersion) return
+                      const { action, version } = pendingVersion
+                      setPendingVersion(null)
+                      if (action === "restore") applyRestoreVersion(version)
+                      else void applyActivateVersion(version)
+                    }}
+                  >
+                    {pendingVersion?.action === "restore" ? "Load version" : "Make active"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

@@ -427,7 +427,7 @@ Queue construction, drill sizing, style-example picking, and score averaging are
 
 **Study Pack and strategy.** Topic vocabulary, key phrases, and likely questions — each with TTS playback — plus a Speaking Strategy card (short answers first, slow speaking, safety sentences, show growth) available as a quick reference during a live session.
 
-**Study plan.** An 11-week phased plan (baseline → foundation → speaking → polish → taper) rendered by `StudyPlanCard` with a live countdown (`ExamCountdownBanner`); task check-off state persists per device.
+**Study plan.** An 11-week phased plan (baseline → foundation → speaking → polish → taper) rendered by `StudyPlanCard`, which also shows the exam date; task check-off state persists per device.
 
 > This module is inspired by real interview requirements — the exam format, judging criteria, script process, and question style all mirror the actual K-Specialist spoken exam.
 
