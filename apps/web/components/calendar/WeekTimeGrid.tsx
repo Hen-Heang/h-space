@@ -189,6 +189,9 @@ export function WeekTimeGrid({
             />
           ))}
         </div>
+        {/* Phones: room to scroll the last half-hour clear of the floating
+            AI and "Add task" buttons that sit over the grid's bottom-right. */}
+        <div aria-hidden="true" className="h-24 md:hidden" />
       </div>
     </div>
   )
