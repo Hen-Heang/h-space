@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { BookMarked, FolderPlus, Inbox, Pin, Search, X } from "lucide-react"
+import { BookMarked, FolderPlus, Inbox, Pin, Search, X, NotebookPen, SearchX } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -53,6 +53,7 @@ import {
   type NoteType,
 } from "@/lib/notes"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/ui/empty-state"
 
 const sectionTitle = "text-base font-semibold tracking-tight text-foreground"
 const panel = "rounded-xl border border-border bg-card"
@@ -567,24 +568,31 @@ export function NotesHome({
               {listedNotes.length > 0 ? (
                 <NoteList notes={listedNotes} projectNames={projectNames} />
               ) : notes.length === 0 ? (
-                <div className="flex flex-col items-center gap-2.5 rounded-xl border border-dashed border-border px-6 py-12 text-center">
-                  <h3 className="text-base font-semibold text-foreground">No notes yet</h3>
-                  <p className="max-w-sm text-sm text-muted-foreground">
-                    Write your first note, or capture a quick thought and organize it later.
-                  </p>
-                  <Button asChild className="h-11">
-                    <Link href="/notes/new">New note</Link>
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2.5 rounded-xl border border-dashed border-border px-6 py-10 text-center">
-                  <p className="text-sm text-muted-foreground">No notes match these filters.</p>
-                  {filtersActive && (
-                    <Button variant="outline" className="h-11" onClick={() => showAllNotes()}>
-                      Show all notes
+                <EmptyState
+                  surface
+                  icon={NotebookPen}
+                  title="No notes yet"
+                  description="Write your first note, or capture a quick thought and organize it later."
+                  action={
+                    <Button asChild className="h-11">
+                      <Link href="/notes/new">New note</Link>
                     </Button>
-                  )}
-                </div>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  surface
+                  icon={SearchX}
+                  title="No matches"
+                  description="No notes match these filters."
+                  action={
+                    filtersActive && (
+                      <Button variant="outline" className="h-11" onClick={() => showAllNotes()}>
+                        Show all notes
+                      </Button>
+                    )
+                  }
+                />
               )}
             </section>
           </div>

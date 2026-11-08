@@ -2,7 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { ExternalLink, FileText, Pencil, Pin, Plus, Search, X } from "lucide-react"
+import {
+  ExternalLink,
+  FileText,
+  Pencil,
+  Pin,
+  Plus,
+  Search,
+  X,
+  NotebookPen,
+  SearchX,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -34,6 +44,7 @@ import {
   type NoteType,
 } from "@/lib/notes"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/ui/empty-state"
 
 const panel = "rounded-xl border border-border bg-card"
 const cardTitle = "text-base font-semibold text-foreground"
@@ -382,29 +393,39 @@ export function ProjectWorkspace({ project, notes }: { project: Project; notes: 
           {filteredNotes.length > 0 ? (
             <NoteList notes={filteredNotes} />
           ) : projectNotes.length === 0 ? (
-            <div className="flex flex-col items-center gap-2.5 rounded-xl border border-dashed border-border px-6 py-12 text-center">
-              <h3 className="text-base font-semibold text-foreground">No notes yet</h3>
-              <Button asChild className="h-11 gap-1.5">
-                <Link href={newNoteHref(project.id)}>
-                  <Plus size={16} aria-hidden="true" />
-                  New note
-                </Link>
-              </Button>
-            </div>
+            <EmptyState
+              surface
+              icon={NotebookPen}
+              title="No notes yet"
+              description="Notes you add to this project show up here."
+              action={
+                <Button asChild className="h-11 gap-1.5">
+                  <Link href={newNoteHref(project.id)}>
+                    <Plus size={16} aria-hidden="true" />
+                    New note
+                  </Link>
+                </Button>
+              }
+            />
           ) : (
-            <div className="flex flex-col items-center gap-2.5 rounded-xl border border-dashed border-border px-6 py-10 text-center">
-              <p className="text-sm text-muted-foreground">No notes match these filters.</p>
-              <Button
-                variant="outline"
-                className="h-11"
-                onClick={() => {
-                  setQuery("")
-                  setTypeFilter("all")
-                }}
-              >
-                Clear filters
-              </Button>
-            </div>
+            <EmptyState
+              surface
+              icon={SearchX}
+              title="No matches"
+              description="No notes match these filters."
+              action={
+                <Button
+                  variant="outline"
+                  className="h-11"
+                  onClick={() => {
+                    setQuery("")
+                    setTypeFilter("all")
+                  }}
+                >
+                  Clear filters
+                </Button>
+              }
+            />
           )}
         </TabsContent>
 

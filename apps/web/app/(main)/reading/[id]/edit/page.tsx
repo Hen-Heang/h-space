@@ -3,11 +3,14 @@
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Loader2 } from "lucide-react"
+import { SearchX } from "lucide-react"
 
 import { UnitEditor } from "@/components/reading/UnitEditor"
 import { readingApi } from "@/lib/api"
 import type { ReadingUnit } from "@/lib/reading"
+import { EmptyState } from "@/components/ui/empty-state"
+import { ReaderSkeleton } from "@/components/ui/reader-skeleton"
+import { Button } from "@/components/ui/button"
 
 export default function EditReadingUnitPage() {
   const params = useParams<{ id: string }>()
@@ -31,25 +34,22 @@ export default function EditReadingUnitPage() {
   }, [unitId])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center gap-2 py-24 text-muted-foreground">
-        <Loader2 size={18} className="animate-spin" />
-        <span className="text-sm font-bold">Loading unit…</span>
-      </div>
-    )
+    return <ReaderSkeleton label="Loading unit…" variant="form" />
   }
 
   if (!unit) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
-        <p className="text-lg font-bold text-foreground">Unit not found.</p>
-        <Link
-          href="/phrasebook?mode=reading"
-          className="text-sm font-bold text-blue-600 hover:underline"
-        >
-          Back to Reading Units
-        </Link>
-      </div>
+      <EmptyState
+        className="py-24"
+        icon={SearchX}
+        title="Unit not found"
+        description="It may have been deleted, or the link is wrong."
+        action={
+          <Button asChild variant="outline">
+            <Link href="/phrasebook?mode=reading">Back to reading units</Link>
+          </Button>
+        }
+      />
     )
   }
 

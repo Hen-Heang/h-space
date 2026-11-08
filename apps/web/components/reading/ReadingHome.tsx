@@ -29,6 +29,7 @@ import {
   subscribeReadingUnits,
 } from "@/lib/reading-store"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/ui/empty-state"
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -133,16 +134,14 @@ export function ReadingHome() {
       )}
 
       {!loadError && loaded && units.length === 0 && (
-        <motion.div
-          variants={itemVariants}
-          className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-14 text-center"
-        >
-          <BookOpenText aria-hidden="true" size={28} className="text-muted-foreground/60" />
-          <p className="text-sm font-semibold text-foreground">No reading units yet.</p>
-          <p className="max-w-xs text-sm text-muted-foreground">
-            Add your first text — paste an article, podcast transcript, or message to study.
-          </p>
-          {newUnitButton}
+        <motion.div variants={itemVariants}>
+          <EmptyState
+            surface
+            icon={BookOpenText}
+            title="No reading units yet"
+            description="Add your first text — paste an article, podcast transcript, or message to study."
+            action={newUnitButton}
+          />
         </motion.div>
       )}
 

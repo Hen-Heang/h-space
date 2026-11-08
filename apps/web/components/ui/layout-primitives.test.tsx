@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { EmptyState } from "./empty-state"
 import { PageSection } from "./page-section"
+import { ReaderSkeleton } from "./reader-skeleton"
 import { InteractiveRow, RowList } from "./row-list"
 
 afterEach(cleanup)
@@ -79,5 +80,20 @@ describe("EmptyState", () => {
     expect(screen.getByText("Nothing captured yet")).toBeTruthy()
     expect(screen.getByText("Capture a thought and it lands here.")).toBeTruthy()
     expect(screen.getByRole("button", { name: "Capture" })).toBeTruthy()
+  })
+})
+
+describe("ReaderSkeleton", () => {
+  it("is a status announcing its label, with the placeholder shapes hidden", () => {
+    render(<ReaderSkeleton label="Loading note…" />)
+    const status = screen.getByRole("status")
+    expect(status.textContent).toBe("Loading note…")
+    expect(status.querySelectorAll('[aria-hidden="true"] [data-slot="skeleton"]').length).toBe(8)
+  })
+
+  it("shows field-shaped blocks for a form", () => {
+    render(<ReaderSkeleton label="Loading unit…" variant="form" />)
+    // title + meta, then three label/field pairs
+    expect(screen.getByRole("status").querySelectorAll('[data-slot="skeleton"]').length).toBe(8)
   })
 })

@@ -21,6 +21,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import type { KoreanCoachMistake } from "@/lib/api"
 import { getKoreanCoachScenario } from "@/lib/korean-coach/scenarios"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/ui/empty-state"
 
 type TypeFilter = "all" | KoreanCoachMistake["type"]
 type ScenarioFilter = "all" | "workplace" | "daily"
@@ -58,21 +59,20 @@ export function MistakeNotebook({
 
   if (mistakes.length === 0) {
     return (
-      <div
-        className="rounded-2xl border border-dashed border-border bg-muted/20 px-5 py-12 text-center"
-        data-testid="empty-mistake-notebook"
-      >
-        <BookOpenCheck className="mx-auto size-9 text-muted-foreground" aria-hidden="true" />
-        <h2 className="mt-4 text-lg font-semibold">No saved mistakes yet</h2>
-        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-          Save a useful correction after a speaking attempt. Repeated patterns will be deduplicated
-          and their occurrence count will increase.
-        </p>
-        <Button asChild className="mt-5">
-          <Link href="/korean-coach/scenarios">
-            Start practice <ArrowRight aria-hidden="true" />
-          </Link>
-        </Button>
+      <div data-testid="empty-mistake-notebook">
+        <EmptyState
+          surface
+          icon={BookOpenCheck}
+          title="No saved mistakes yet"
+          description="Save a useful correction after a speaking attempt. Repeated patterns are merged and their count goes up."
+          action={
+            <Button asChild>
+              <Link href="/korean-coach/scenarios">
+                Start practice <ArrowRight aria-hidden="true" />
+              </Link>
+            </Button>
+          }
+        />
       </div>
     )
   }

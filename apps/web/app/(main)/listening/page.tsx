@@ -40,6 +40,7 @@ import { useSessionTimer } from "@/hooks/useSessionTimer"
 import { containerVariants, itemVariants } from "@/lib/motion"
 import { cn } from "@/lib/utils"
 import type { ListeningAttemptResult, ListeningLesson } from "@/lib/types"
+import { EmptyState } from "@/components/ui/empty-state"
 
 const FALLBACK_TOPICS = [
   "Daily Standup",
@@ -514,15 +515,13 @@ function ListeningPageContent() {
       )}
 
       {!lesson && !loading && !error && (
-        <motion.div
-          variants={itemVariants}
-          className="rounded-3xl border border-dashed border-border bg-card/40 p-10 text-center"
-        >
-          <Headphones size={32} className="mx-auto text-muted-foreground/50" aria-hidden />
-          <p className="mt-3 text-sm font-bold text-foreground">No lesson yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Pick a topic above and generate your first listening lesson.
-          </p>
+        <motion.div variants={itemVariants}>
+          <EmptyState
+            surface
+            icon={Headphones}
+            title="No lesson yet"
+            description="Pick a topic above and generate your first listening lesson."
+          />
         </motion.div>
       )}
 

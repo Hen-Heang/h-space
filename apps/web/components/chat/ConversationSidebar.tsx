@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Conversation } from "@/hooks/useConversations"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/ui/empty-state"
 
 interface ConversationSidebarProps {
   conversations: Conversation[]
@@ -91,13 +92,13 @@ export function ConversationSidebar({
             <Skeleton className="h-10 w-full rounded-lg" />
           </div>
         ) : conversations.length === 0 ? (
-          <div className="mx-1 flex flex-col items-center rounded-lg border border-dashed border-border px-4 py-6 text-center">
-            <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-              <MessageSquare size={17} />
-            </span>
-            <p className="text-xs font-semibold text-foreground">No conversations yet</p>
-            <p className="mt-1 text-xs text-muted-foreground">Start one with Hengo.</p>
-          </div>
+          <EmptyState
+            surface
+            icon={MessageSquare}
+            title="No conversations yet"
+            description="Start one with Hengo."
+            className="mx-1 py-6"
+          />
         ) : (
           conversations.map((c) => {
             const active = c.id === activeId
