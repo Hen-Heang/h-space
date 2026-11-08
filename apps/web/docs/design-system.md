@@ -47,10 +47,18 @@ exposed as Tailwind colours (`bg-card`, `text-muted-foreground`, …).
 | Divider        | `border`                            | Row dividers, the one surface border                |
 | States         | `destructive`, `success`, `grade-*` | Errors, success, SRS grades only                    |
 | Brand panel    | `brand-surface`                     | Auth + marketing panels only                        |
+| Brand gradient | `--brand-from/via/to`, `.text-brand-gradient`, `.bg-brand-gradient` | Landing page + share image only — never in the app |
 
 Contrast: `foreground` and `muted-foreground` on `background` and `card` meet
 WCAG AA for body text in both themes. `primary` on white meets 4.5:1 for
 button text. Don't put `muted-foreground` text on a `muted` fill below 14px.
+
+The **brand gradient** comes from the app icon (blue bar → violet →
+light violet; `scripts/generate-app-icons.mjs` draws the icon). It's for
+marketing surfaces — the landing headline and glows, the Open Graph image —
+and never inside the app, where `primary` stays the one accent. Every stop is
+≥4:1 on the page background in both themes, so gradient display text stays
+readable.
 
 ## 3. Typography
 

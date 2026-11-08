@@ -63,9 +63,7 @@ export function MyAppsSection({
   return (
     <section id="my-apps" aria-labelledby="my-apps-title" className={cn("scroll-mt-24", className)}>
       <div className="mb-6 max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">
-          Connected work
-        </p>
+        <p className="app-kicker">Connected work</p>
         <h2
           id="my-apps-title"
           className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
@@ -87,10 +85,10 @@ export function MyAppsSection({
           return (
             <article
               key={project.id}
-              className="flex min-h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-blue-500/35 dark:bg-slate-900/40"
+              className="flex min-h-full flex-col rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/30"
             >
               <div className="flex items-start justify-between gap-4">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <Icon className="size-5" aria-hidden="true" />
                 </div>
                 <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs font-semibold text-muted-foreground">
