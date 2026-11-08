@@ -26,7 +26,7 @@ The plan (`STUDY_WEEKS` in `lib/study-plan.ts`) runs week by week up to the exam
 4. **Polish** — tighten wording, fix weak pronunciation, handle off-script/follow-up questions, finalize and submit the script by the script deadline.
 5. **Taper (Week 10)** — timed mocks under real conditions (no English, no notes), light review only, rest before exam day.
 
-Each week's tasks and the live countdown are what `StudyPlanCard` and `ExamCountdownBanner` render — check off tasks there as you go; that state (plus any custom tasks you add) is saved per-device.
+Each week's tasks and the exam date are what `StudyPlanCard` renders — check off tasks there as you go; that state (plus any custom tasks you add) is saved per-device.
 
 ## The script
 
