@@ -1,10 +1,20 @@
+import {
+  Briefcase,
+  Coffee,
+  Laptop,
+  SearchCode,
+  UtensilsCrossed,
+  type LucideIcon,
+} from "lucide-react"
+
 // One-click AI Coach conversation presets. Each kicks off a multi-turn roleplay
 // by sending a single instruction message as the conversation's first turn —
 // the same trick lib/interview.ts uses for the mock-interview system prompt,
 // just condensed into one user-authored message instead of a separate API field.
 export interface ChatPreset {
   id: string
-  emoji: string
+  /** Shown in a neutral tile on the chat welcome screen. */
+  icon: LucideIcon
   label: string
   description: string
   prompt: string
@@ -13,7 +23,7 @@ export interface ChatPreset {
 export const CHAT_PRESETS: ChatPreset[] = [
   {
     id: "workplace",
-    emoji: "💼",
+    icon: Briefcase,
     label: "Workplace Korean",
     description: "Casual chat with a coworker before a meeting",
     prompt:
@@ -21,7 +31,7 @@ export const CHAT_PRESETS: ChatPreset[] = [
   },
   {
     id: "dev-meeting",
-    emoji: "🧑‍💻",
+    icon: Laptop,
     label: "Developer Meeting",
     description: "Sprint update with your team lead",
     prompt:
@@ -29,7 +39,7 @@ export const CHAT_PRESETS: ChatPreset[] = [
   },
   {
     id: "code-review",
-    emoji: "🔍",
+    icon: SearchCode,
     label: "Code Review",
     description: "Explain your PR to a senior developer",
     prompt:
@@ -37,7 +47,7 @@ export const CHAT_PRESETS: ChatPreset[] = [
   },
   {
     id: "lunch",
-    emoji: "🍱",
+    icon: UtensilsCrossed,
     label: "Lunch Conversation",
     description: "Small talk over lunch with coworkers",
     prompt:
@@ -45,7 +55,7 @@ export const CHAT_PRESETS: ChatPreset[] = [
   },
   {
     id: "weekend",
-    emoji: "☕",
+    icon: Coffee,
     label: "Weekend Small Talk",
     description: "Monday morning catch-up",
     prompt:

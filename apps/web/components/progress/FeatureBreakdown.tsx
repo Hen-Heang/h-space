@@ -72,7 +72,7 @@ export function FeatureBreakdown() {
         return (
           <div key={row.feature} className="flex items-center gap-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-              <Icon size={15} strokeWidth={2} />
+              <Icon size={15} />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">

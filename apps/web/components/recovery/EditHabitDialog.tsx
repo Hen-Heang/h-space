@@ -97,7 +97,7 @@ export function EditHabitDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon-sm" aria-label="Edit habit">
-          <Pencil size={16} strokeWidth={2} />
+          <Pencil size={16} />
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -178,7 +178,7 @@ export function EditHabitDialog({
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button type="button" variant="destructive" size="sm">
-                  <Trash2 size={14} strokeWidth={2} />
+                  <Trash2 size={14} />
                   Delete habit
                 </Button>
               </AlertDialogTrigger>

@@ -126,13 +126,13 @@ export function RecoveryOverview({
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button asChild size="lg" className="w-full sm:flex-1">
             <Link href="/growth/recovery/pause">
-              <Wind size={18} strokeWidth={2} />
+              <Wind size={18} />
               Pause
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="w-full sm:flex-1">
             <Link href={`/growth/recovery/log?habitId=${habit.id}`}>
-              <Zap size={18} strokeWidth={2} />
+              <Zap size={18} />
               Log a moment
             </Link>
           </Button>
@@ -154,7 +154,6 @@ export function RecoveryOverview({
               <div className="flex min-h-5 items-center justify-between gap-1">
                 <Icon
                   size={16}
-                  strokeWidth={2}
                   aria-hidden="true"
                   className="shrink-0 text-muted-foreground transition-transform group-hover:scale-110"
                 />

@@ -95,7 +95,7 @@ export function ReviewModeView({ cards, onExhausted }: ReviewModeViewProps) {
           onClick={() => setRevealed(true)}
           className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-border bg-card text-sm font-bold uppercase tracking-wide text-foreground transition-all active:translate-y-[3px] active:border-b-0"
         >
-          <Eye size={18} strokeWidth={2.5} /> Reveal answer
+          <Eye size={18} /> Reveal answer
         </button>
       ) : (
         <div className="space-y-4">

@@ -274,7 +274,7 @@ export default function ReadingUnitPage() {
           href="/phrasebook?mode=reading"
           className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft size={14} strokeWidth={3} /> All units
+          <ArrowLeft size={14} /> All units
         </Link>
 
         <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-xl dark:bg-slate-900/40 sm:p-8">
@@ -288,7 +288,7 @@ export default function ReadingUnitPage() {
               </span>
               {progress.status === "completed" && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-white">
-                  <CheckCircle2 size={11} strokeWidth={3} /> Completed
+                  <CheckCircle2 size={11} /> Completed
                 </span>
               )}
             </div>
@@ -299,7 +299,7 @@ export default function ReadingUnitPage() {
                 aria-label="Edit unit"
                 className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground shadow-sm transition-all after:absolute after:-inset-1 after:content-[''] hover:text-foreground active:scale-95"
               >
-                <Pencil aria-hidden="true" size={15} strokeWidth={2.5} />
+                <Pencil aria-hidden="true" size={15} />
               </Link>
               <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
                 <AlertDialogTrigger asChild>
@@ -309,7 +309,7 @@ export default function ReadingUnitPage() {
                     aria-label="Delete unit"
                     className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground shadow-sm transition-all after:absolute after:-inset-1 after:content-[''] hover:border-destructive/30 hover:text-destructive active:scale-95"
                   >
-                    <Trash2 aria-hidden="true" size={15} strokeWidth={2.5} />
+                    <Trash2 aria-hidden="true" size={15} />
                   </button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -360,7 +360,7 @@ export default function ReadingUnitPage() {
           className="rounded-[1.8rem] border border-sky-200/60 bg-sky-50/60 p-5 dark:border-sky-400/15 dark:bg-sky-400/6"
         >
           <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
-            <GraduationCap size={16} strokeWidth={2.5} />
+            <GraduationCap size={16} />
             <span className="text-xs font-bold uppercase tracking-[0.18em]">Grammar focus</span>
           </div>
           <p className="mt-2 text-lg font-bold text-foreground">{unit.grammarNote.pattern}</p>
@@ -374,11 +374,7 @@ export default function ReadingUnitPage() {
       <motion.section variants={itemVariants} className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
-            <BookOpenText
-              size={16}
-              strokeWidth={2.5}
-              className="text-emerald-600 dark:text-emerald-400"
-            />
+            <BookOpenText size={16} className="text-emerald-600 dark:text-emerald-400" />
             <h3 className="text-base font-bold tracking-tight text-foreground">Read</h3>
           </div>
           <button
@@ -387,11 +383,7 @@ export default function ReadingUnitPage() {
             aria-pressed={allTranslations}
             className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-300"
           >
-            {allTranslations ? (
-              <EyeOff size={13} strokeWidth={3} />
-            ) : (
-              <Eye size={13} strokeWidth={3} />
-            )}
+            {allTranslations ? <EyeOff size={13} /> : <Eye size={13} />}
             {allTranslations ? "Hide all translations" : "Show all translations"}
           </button>
         </div>
@@ -448,9 +440,9 @@ export default function ReadingUnitPage() {
                     {savingSentence === i ? (
                       <Loader2 size={16} className="animate-spin" />
                     ) : savedSentences.has(i) ? (
-                      <CheckCircle2 size={16} strokeWidth={2.5} />
+                      <CheckCircle2 size={16} />
                     ) : (
-                      <BookmarkPlus size={16} strokeWidth={2.5} />
+                      <BookmarkPlus size={16} />
                     )}
                   </button>
                   <SpeakButton text={p.korean} className="mt-1 shrink-0" />
@@ -462,11 +454,7 @@ export default function ReadingUnitPage() {
                     onClick={() => toggleTranslation(i)}
                     className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground/70 transition-colors hover:text-foreground"
                   >
-                    {showTranslation ? (
-                      <EyeOff size={12} strokeWidth={3} />
-                    ) : (
-                      <Eye size={12} strokeWidth={3} />
-                    )}
+                    {showTranslation ? <EyeOff size={12} /> : <Eye size={12} />}
                     {showTranslation ? "Hide translation" : "Show translation"}
                   </button>
                   {showTranslation && (
@@ -486,11 +474,7 @@ export default function ReadingUnitPage() {
         <motion.section variants={itemVariants} className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2 px-1">
             <div className="flex items-center gap-2">
-              <BookmarkPlus
-                size={16}
-                strokeWidth={2.5}
-                className="text-emerald-600 dark:text-emerald-400"
-              />
+              <BookmarkPlus size={16} className="text-emerald-600 dark:text-emerald-400" />
               <h3 className="text-base font-bold tracking-tight text-foreground">
                 Key Vocabulary{" "}
                 <span className="text-muted-foreground/50">({unit.vocab.length})</span>
@@ -505,7 +489,7 @@ export default function ReadingUnitPage() {
               {savingAll ? (
                 <Loader2 size={13} className="mr-1.5 animate-spin" />
               ) : (
-                <BookmarkPlus size={13} className="mr-1.5" strokeWidth={3} />
+                <BookmarkPlus size={13} className="mr-1.5" />
               )}
               {savedWords.size === unit.vocab.length ? "All saved" : "Save all to flashcards"}
             </Button>
@@ -565,9 +549,9 @@ export default function ReadingUnitPage() {
                     {savingWord === v.term ? (
                       <Loader2 size={14} className="animate-spin" />
                     ) : saved ? (
-                      <CheckCircle2 size={14} strokeWidth={2.5} />
+                      <CheckCircle2 size={14} />
                     ) : (
-                      <BookmarkPlus size={14} strokeWidth={2.5} />
+                      <BookmarkPlus size={14} />
                     )}
                   </button>
                 </div>
@@ -580,11 +564,7 @@ export default function ReadingUnitPage() {
       {/* ── Quiz section ── */}
       <motion.section variants={itemVariants} className="space-y-3">
         <div className="flex items-center gap-2 px-1">
-          <GraduationCap
-            size={16}
-            strokeWidth={2.5}
-            className="text-emerald-600 dark:text-emerald-400"
-          />
+          <GraduationCap size={16} className="text-emerald-600 dark:text-emerald-400" />
           <h3 className="text-base font-bold tracking-tight text-foreground">Comprehension Quiz</h3>
           <span className="text-xs font-bold text-muted-foreground/60">
             {unit.quiz.length > 0 ? "Pass to complete the unit" : "No quiz in this unit"}
@@ -599,7 +579,7 @@ export default function ReadingUnitPage() {
             </p>
             {progress.status === "completed" ? (
               <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 size={16} strokeWidth={2.5} /> Completed
+                <CheckCircle2 size={16} /> Completed
               </span>
             ) : (
               <Button
@@ -610,7 +590,7 @@ export default function ReadingUnitPage() {
                 }}
                 className="h-10 shrink-0 rounded-xl bg-emerald-600 px-5 text-xs font-bold uppercase tracking-wider text-white hover:bg-emerald-500 active:scale-95"
               >
-                <CheckCircle2 size={14} className="mr-1.5" strokeWidth={2.5} />
+                <CheckCircle2 size={14} className="mr-1.5" />
                 Mark as completed
               </Button>
             )}
@@ -629,17 +609,9 @@ export default function ReadingUnitPage() {
               >
                 <div className="flex items-center gap-3">
                   {passed ? (
-                    <CheckCircle2
-                      size={24}
-                      strokeWidth={2.5}
-                      className="text-emerald-600 dark:text-emerald-400"
-                    />
+                    <CheckCircle2 size={24} className="text-emerald-600 dark:text-emerald-400" />
                   ) : (
-                    <RotateCcw
-                      size={24}
-                      strokeWidth={2.5}
-                      className="text-amber-600 dark:text-amber-400"
-                    />
+                    <RotateCcw size={24} className="text-amber-600 dark:text-amber-400" />
                   )}
                   <div>
                     <p className="text-base font-bold text-foreground">
@@ -657,7 +629,7 @@ export default function ReadingUnitPage() {
                   onClick={handleRetryQuiz}
                   className="h-9 rounded-xl border border-border bg-background px-4 text-xs font-bold uppercase tracking-wider text-foreground hover:bg-accent active:scale-95"
                 >
-                  <RotateCcw size={13} className="mr-1.5" strokeWidth={3} /> Retry
+                  <RotateCcw size={13} className="mr-1.5" /> Retry
                 </Button>
               </div>
             )}
@@ -697,23 +669,15 @@ export default function ReadingUnitPage() {
                             )}
                           >
                             <span lang={hasHangul(opt) ? "ko" : undefined}>{opt}</span>
-                            {isCorrect && (
-                              <CheckCircle2 size={15} strokeWidth={3} className="shrink-0" />
-                            )}
-                            {isWrongPick && (
-                              <XCircle size={15} strokeWidth={3} className="shrink-0" />
-                            )}
+                            {isCorrect && <CheckCircle2 size={15} className="shrink-0" />}
+                            {isWrongPick && <XCircle size={15} className="shrink-0" />}
                           </button>
                         )
                       })}
                     </div>
                     {submitted && q.explanation && (
                       <div className="mt-3 flex items-start gap-2 rounded-xl bg-accent/50 p-3 text-xs font-medium leading-relaxed text-muted-foreground">
-                        <Lightbulb
-                          size={13}
-                          strokeWidth={2.5}
-                          className="mt-0.5 shrink-0 text-amber-500"
-                        />
+                        <Lightbulb size={13} className="mt-0.5 shrink-0 text-amber-500" />
                         {q.explanation}
                       </div>
                     )}

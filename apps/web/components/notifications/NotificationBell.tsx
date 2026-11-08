@@ -215,7 +215,7 @@ export function NotificationBell({ className }: { className?: string } = {}) {
             className,
           )}
         >
-          <Bell size={18} strokeWidth={2.5} />
+          <Bell size={18} />
           {unreadCount > 0 && (
             <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground shadow-md ring-2 ring-background">
               {unreadCount > 99 ? "99+" : unreadCount}
@@ -254,7 +254,7 @@ export function NotificationBell({ className }: { className?: string } = {}) {
           ) : isError ? (
             <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
-                <TriangleAlert size={28} strokeWidth={1.75} />
+                <TriangleAlert size={28} />
               </div>
               <p className="text-sm font-bold tracking-tight text-foreground">
                 Couldn&apos;t load notifications
@@ -276,7 +276,7 @@ export function NotificationBell({ className }: { className?: string } = {}) {
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-                <Bell size={28} strokeWidth={1.75} />
+                <Bell size={28} />
               </div>
               <p className="text-sm font-bold tracking-tight text-foreground">
                 You&apos;re all caught up

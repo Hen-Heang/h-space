@@ -78,7 +78,7 @@ export function PhraseCardListItem({
               aria-label="Edit this Q&A card"
               className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
-              <Pencil size={14} strokeWidth={2.5} />
+              <Pencil size={14} />
             </Link>
           )}
           {(onArchive || onDelete) && (
@@ -89,7 +89,7 @@ export function PhraseCardListItem({
                   aria-label="More actions"
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 >
-                  <MoreVertical size={14} strokeWidth={2.5} />
+                  <MoreVertical size={14} />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

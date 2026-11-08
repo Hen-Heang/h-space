@@ -125,7 +125,7 @@ export function ListeningModeView({ cards, onExhausted }: ListeningModeViewProps
               onClick={() => void play(speed)}
               className="flex items-center gap-1.5 rounded-full border-2 border-b-4 border-border bg-accent/5 px-3 py-1.5 text-xs font-bold text-muted-foreground/70 transition-all active:translate-y-[2px] active:border-b-2 hover:text-foreground"
             >
-              <Gauge size={12} strokeWidth={3} /> {speed}×
+              <Gauge size={12} /> {speed}×
             </button>
           ))}
         </div>

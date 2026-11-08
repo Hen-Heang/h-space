@@ -138,7 +138,7 @@ export function SmartPeek({ word, children }: { word: string; children: React.Re
                         aria-label="Close"
                         className="-mr-2 -mt-2 rounded-lg p-2 text-muted-foreground hover:text-foreground"
                       >
-                        <X size={14} strokeWidth={3} />
+                        <X size={14} />
                       </button>
                     </div>
 

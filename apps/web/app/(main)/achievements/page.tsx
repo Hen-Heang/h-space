@@ -168,7 +168,7 @@ export default function AchievementsPage() {
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-sm">
-                  <Trophy size={22} strokeWidth={2.5} />
+                  <Trophy size={22} />
                 </div>
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Level {level?.level}</p>
@@ -231,11 +231,7 @@ export default function AchievementsPage() {
                               : "bg-muted text-muted-foreground/50",
                           )}
                         >
-                          {a.unlocked ? (
-                            <Icon size={22} strokeWidth={2.5} />
-                          ) : (
-                            <Lock size={20} strokeWidth={2.5} />
-                          )}
+                          {a.unlocked ? <Icon size={22} /> : <Lock size={20} />}
                         </div>
                         <span
                           className={cn(

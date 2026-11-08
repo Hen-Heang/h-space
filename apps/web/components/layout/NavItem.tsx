@@ -68,7 +68,7 @@ export function NavRow({
         aria-disabled="true"
         className={cn(ROW_BASE, ROW_SIZE[variant], ROW_STATE.soon, className)}
       >
-        <Icon size={iconSize} strokeWidth={2} className="shrink-0" />
+        <Icon size={iconSize} className="shrink-0" />
         <span className="min-w-0 flex-1 truncate">{item.label}</span>
         <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold">Soon</span>
       </div>
@@ -80,7 +80,6 @@ export function NavRow({
       {active && <ActiveIndicator />}
       <Icon
         size={iconSize}
-        strokeWidth={2}
         aria-hidden
         className={cn(
           "shrink-0",
@@ -174,7 +173,7 @@ export function NavIconRow({
               className,
             )}
           >
-            <Icon size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+            <Icon size={18} aria-hidden className="shrink-0" />
             {showLabel && (
               <span className="max-w-full truncate px-1 text-xs leading-none">
                 {item.shortLabel ?? name}
@@ -198,7 +197,7 @@ export function NavIconRow({
             )}
           >
             {active && <ActiveIndicator />}
-            <Icon size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+            <Icon size={18} aria-hidden className="shrink-0" />
             {showLabel && (
               <span
                 className={cn(

@@ -39,7 +39,7 @@ export function BackLink({
       )}
     >
       <Link href={href}>
-        <ArrowLeft size={16} strokeWidth={2} />
+        <ArrowLeft size={16} />
         {label}
       </Link>
     </Button>

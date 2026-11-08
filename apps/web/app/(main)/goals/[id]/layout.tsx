@@ -131,7 +131,7 @@ export default function GoalDetailLayout({ children }: { children: ReactNode }) 
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
         <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-muted/20 text-muted-foreground/40">
-          <Target size={40} strokeWidth={1.5} />
+          <Target size={40} />
         </div>
         <div>
           <h2 className="text-xl font-semibold tracking-tight">Goal not found</h2>
@@ -141,7 +141,7 @@ export default function GoalDetailLayout({ children }: { children: ReactNode }) 
         </div>
         <Button asChild variant="outline" className="rounded-xl font-semibold">
           <Link href="/goals">
-            <ArrowLeft size={18} strokeWidth={2} className="mr-2" /> Back to Goals
+            <ArrowLeft size={18} className="mr-2" /> Back to Goals
           </Link>
         </Button>
       </div>

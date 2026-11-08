@@ -63,7 +63,7 @@ export default function HabitsPage() {
             onClick={() => setShowForm(true)}
             className="shrink-0"
           >
-            <Plus size={16} strokeWidth={2} />
+            <Plus size={16} />
             New
           </Button>
         )}

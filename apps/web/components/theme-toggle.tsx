@@ -114,7 +114,7 @@ export function ThemeToggle({ className }: { className?: string }) {
           )}
           aria-label="Toggle theme"
         >
-          <ActiveIcon size={20} strokeWidth={1.5} className="text-current" />
+          <ActiveIcon size={20} className="text-current" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -138,10 +138,10 @@ export function ThemeToggle({ className }: { className?: string }) {
               }}
               className="rounded-xl"
             >
-              <Icon size={20} strokeWidth={1.5} className="text-current" />
+              <Icon size={20} className="text-current" />
               {option.label}
               {activeTheme === option.value ? (
-                <Check size={20} strokeWidth={1.5} className="ml-auto text-current" />
+                <Check size={20} className="ml-auto text-current" />
               ) : null}
             </DropdownMenuItem>
           )

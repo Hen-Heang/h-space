@@ -448,10 +448,10 @@ function PhaseCard({
             phase.color,
           )}
         >
-          <Icon size={20} strokeWidth={1.75} className="text-foreground/70" />
+          <Icon size={20} className="text-foreground/70" />
           {isComplete && (
             <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
-              <Check size={11} strokeWidth={3.5} className="text-white" />
+              <Check size={11} strokeWidth={3} className="text-white" />
             </div>
           )}
         </div>
@@ -484,7 +484,6 @@ function PhaseCard({
         />
         <ChevronDown
           size={16}
-          strokeWidth={2}
           className={cn(
             "shrink-0 text-muted-foreground transition-transform",
             isOpen && "rotate-180",
@@ -701,7 +700,7 @@ function PhaseCard({
                             : "border-border text-transparent hover:border-primary/50",
                         )}
                       >
-                        <Check size={11} strokeWidth={3.5} />
+                        <Check size={11} strokeWidth={3} />
                       </button>
                       <span
                         className={cn(
@@ -788,11 +787,7 @@ function PhaseCard({
                 <div className="mt-4 space-y-2 border-t border-border/60 pt-4">
                   {phase.project && (
                     <div className="flex gap-2">
-                      <Sparkles
-                        size={14}
-                        strokeWidth={2}
-                        className="mt-0.5 shrink-0 text-violet-500"
-                      />
+                      <Sparkles size={14} className="mt-0.5 shrink-0 text-violet-500" />
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           Mini Project
@@ -803,11 +798,7 @@ function PhaseCard({
                   )}
                   {phase.exitTest && (
                     <div className="flex gap-2">
-                      <Target
-                        size={14}
-                        strokeWidth={2}
-                        className="mt-0.5 shrink-0 text-orange-500"
-                      />
+                      <Target size={14} className="mt-0.5 shrink-0 text-orange-500" />
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           Exit Test
@@ -1121,7 +1112,7 @@ export default function RoadmapPage() {
               </p>
               {currentPhase && (
                 <div className="mt-3 flex items-center gap-2">
-                  <Flame size={13} strokeWidth={2} className="text-orange-500" />
+                  <Flame size={13} className="text-orange-500" />
                   <span className="text-xs font-semibold text-muted-foreground">
                     Currently on:{" "}
                     <span className="text-foreground">
@@ -1133,7 +1124,6 @@ export default function RoadmapPage() {
             </div>
             <Trophy
               size={28}
-              strokeWidth={1.5}
               className={cn(
                 "shrink-0 transition-colors",
                 overallPct === 100 ? "text-amber-500" : "text-muted-foreground",
@@ -1162,12 +1152,8 @@ export default function RoadmapPage() {
                         : "bg-accent/60 text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  {complete ? (
-                    <Check size={11} strokeWidth={3.5} />
-                  ) : (
-                    <ChevronRight size={11} strokeWidth={2.5} />
-                  )}
-                  P{phase.number}
+                  {complete ? <Check size={11} strokeWidth={3} /> : <ChevronRight size={11} />}P
+                  {phase.number}
                 </button>
               )
             })}

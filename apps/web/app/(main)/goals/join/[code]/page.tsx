@@ -53,7 +53,7 @@ export default function JoinGoalPage() {
         href="/goals"
         className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
       >
-        <ArrowLeft size={16} strokeWidth={2.5} /> Goals
+        <ArrowLeft size={16} /> Goals
       </Link>
 
       <PageHero
@@ -73,7 +73,7 @@ export default function JoinGoalPage() {
         ) : error || !goal ? (
           <div className="flex flex-col items-center gap-4 py-8 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              <Target size={32} strokeWidth={1.5} />
+              <Target size={32} />
             </div>
             <div>
               <h2 className="text-lg font-semibold tracking-tight">Invalid or expired link</h2>

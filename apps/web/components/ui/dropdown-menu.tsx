@@ -96,7 +96,7 @@ function DropdownMenuCheckboxItem({
         data-slot="dropdown-menu-checkbox-item-indicator"
       >
         <DropdownMenuPrimitive.ItemIndicator>
-          <Check size={20} strokeWidth={1.5} className="text-current" />
+          <Check size={20} className="text-current" />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -133,7 +133,7 @@ function DropdownMenuRadioItem({
         data-slot="dropdown-menu-radio-item-indicator"
       >
         <DropdownMenuPrimitive.ItemIndicator>
-          <Check size={20} strokeWidth={1.5} className="text-current" />
+          <Check size={20} className="text-current" />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -210,7 +210,7 @@ function DropdownMenuSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRight size={20} strokeWidth={1.5} className="ml-auto shrink-0 text-current" />
+      <ChevronRight size={20} className="ml-auto shrink-0 text-current" />
     </DropdownMenuPrimitive.SubTrigger>
   )
 }

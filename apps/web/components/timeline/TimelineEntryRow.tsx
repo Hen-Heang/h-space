@@ -39,7 +39,7 @@ export function TimelineEntryRow({ entry }: { entry: TimelineEntry }) {
           KIND_COLOR[entry.kind],
         )}
       >
-        <Icon size={15} strokeWidth={2} />
+        <Icon size={15} />
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
