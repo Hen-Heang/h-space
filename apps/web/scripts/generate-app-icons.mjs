@@ -122,7 +122,8 @@ export function iconSvg({ variant, shape, markScale = 1 }) {
   const id = `hs-${variant}-${shape}`
   const mono = variant === "mono"
   const c = VIEW / 2
-  const markTransform = markScale === 1 ? "" : `translate(${c} ${c}) scale(${markScale}) translate(${-c} ${-c})`
+  const markTransform =
+    markScale === 1 ? "" : `translate(${c} ${c}) scale(${markScale}) translate(${-c} ${-c})`
 
   const background =
     shape === "none"

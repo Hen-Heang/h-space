@@ -34,20 +34,20 @@ meaning. When unsure, leave it out.
 All colours are CSS variables in `app/globals.css` (`:root` and `.dark`),
 exposed as Tailwind colours (`bg-card`, `text-muted-foreground`, …).
 
-| Role           | Token                               | Use                                                 |
-| -------------- | ----------------------------------- | --------------------------------------------------- |
-| Page           | `background`                        | App background (cool neutral `#f6f7fb` / `#0b1120`) |
-| Surface        | `card`                              | Grouping surfaces, dialogs, rows on hover           |
-| Quiet surface  | `muted` (`.app-surface-muted`)      | Tinted group without a border                       |
-| Text           | `foreground`                        | Titles, body                                        |
-| Secondary text | `muted-foreground`                  | Descriptions, metadata, idle icons                  |
-| Accent         | `primary`                           | Primary button, active tab/nav, progress, links     |
-| Selected nav   | `sidebar-accent` / `-foreground`    | Active nav row background                           |
-| Hover          | `accent`                            | Row/ghost hover (neutral, _not_ the brand colour)   |
-| Divider        | `border`                            | Row dividers, the one surface border                |
-| States         | `destructive`, `success`, `grade-*` | Errors, success, SRS grades only                    |
-| Brand panel    | `brand-surface`                     | Auth + marketing panels only                        |
-| Brand gradient | `--brand-from/via/to`, `.text-brand-gradient`, `.bg-brand-gradient` | Landing page + share image only — never in the app |
+| Role           | Token                                                               | Use                                                 |
+| -------------- | ------------------------------------------------------------------- | --------------------------------------------------- |
+| Page           | `background`                                                        | App background (cool neutral `#f6f7fb` / `#0b1120`) |
+| Surface        | `card`                                                              | Grouping surfaces, dialogs, rows on hover           |
+| Quiet surface  | `muted` (`.app-surface-muted`)                                      | Tinted group without a border                       |
+| Text           | `foreground`                                                        | Titles, body                                        |
+| Secondary text | `muted-foreground`                                                  | Descriptions, metadata, idle icons                  |
+| Accent         | `primary`                                                           | Primary button, active tab/nav, progress, links     |
+| Selected nav   | `sidebar-accent` / `-foreground`                                    | Active nav row background                           |
+| Hover          | `accent`                                                            | Row/ghost hover (neutral, _not_ the brand colour)   |
+| Divider        | `border`                                                            | Row dividers, the one surface border                |
+| States         | `destructive`, `success`, `grade-*`                                 | Errors, success, SRS grades only                    |
+| Brand panel    | `brand-surface`                                                     | Auth + marketing panels only                        |
+| Brand gradient | `--brand-from/via/to`, `.text-brand-gradient`, `.bg-brand-gradient` | Landing page + share image only — never in the app  |
 
 Contrast: `foreground` and `muted-foreground` on `background` and `card` meet
 WCAG AA for body text in both themes. `primary` on white meets 4.5:1 for
