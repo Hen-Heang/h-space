@@ -109,3 +109,49 @@ describe("Memory Lab review session", () => {
     expect(screen.getByRole("button", { name: "Start review" })).toBeTruthy()
   })
 })
+
+describe("Memory Lab quiz keyboard", () => {
+  const four = [word("a", "안건"), word("b", "회의"), word("c", "보고"), word("d", "결재")]
+
+  function startQuiz(onRate = vi.fn()) {
+    render(<ReviewSession dueToday={four} dueCount={4} allWords={four} onRate={onRate} />)
+    fireEvent.click(screen.getByRole("button", { name: "Customize" }))
+    fireEvent.click(screen.getByRole("button", { name: "Quiz" }))
+    fireEvent.click(screen.getByRole("button", { name: "Review 4 due" }))
+    return onRate
+  }
+
+  function pressKey(key: string) {
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key }))
+    })
+  }
+
+  it("picks an option with 1-4 and moves on with Enter", () => {
+    const onRate = startQuiz()
+    const options = screen
+      .getAllByRole("button")
+      .filter((b) => b.getAttribute("aria-keyshortcuts") !== null)
+    expect(options.map((b) => b.getAttribute("aria-keyshortcuts"))).toEqual(["1", "2", "3", "4"])
+
+    pressKey("2")
+    expect(options.every((b) => (b as HTMLButtonElement).disabled)).toBe(true)
+    expect(onRate).not.toHaveBeenCalled()
+
+    pressKey("Enter")
+    expect(onRate).toHaveBeenCalledTimes(1)
+    expect(["GOOD", "AGAIN"]).toContain(onRate.mock.calls[0][1])
+  })
+
+  it("doesn't grade twice when Enter lands on the focused Next button", () => {
+    const onRate = startQuiz()
+    pressKey("1")
+    const nextButton = screen.getByRole("button", { name: "Next word" })
+    // The window listener must ignore Enter aimed at a button; the button's
+    // own activation (the click) is what advances.
+    fireEvent.keyDown(nextButton, { key: "Enter" })
+    expect(onRate).not.toHaveBeenCalled()
+    fireEvent.click(nextButton)
+    expect(onRate).toHaveBeenCalledTimes(1)
+  })
+})
