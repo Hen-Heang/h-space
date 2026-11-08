@@ -63,8 +63,15 @@ const SIGN_UP_STEPS = [
 function BrandMark({ subtitle }: { subtitle?: boolean }) {
   return (
     <span className="flex items-center gap-3">
-      <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl ring-1 ring-white/15">
-        <Image src="/H%20Space%20Icon.png" alt="" width={40} height={40} className="size-full" />
+      <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-[22.5%] ring-1 ring-white/15">
+        <Image
+          src="/icons/h-space-mark.svg"
+          unoptimized
+          alt=""
+          width={40}
+          height={40}
+          className="size-full"
+        />
       </span>
       <span>
         <span className="block text-lg font-bold leading-tight">H-Space</span>

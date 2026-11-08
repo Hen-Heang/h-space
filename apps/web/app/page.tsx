@@ -204,9 +204,10 @@ export default function Home() {
         <header className="sticky top-0 z-50 border-b border-border/40 bg-background/60 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl sm:px-6 lg:px-8">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between">
             <Link href="/" className="group flex items-center gap-3">
-              <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
+              <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-[22.5%] shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
                 <Image
-                  src="/H%20Space%20Icon.png"
+                  src="/icons/h-space-mark.svg"
+                  unoptimized
                   alt=""
                   width={36}
                   height={36}
@@ -766,9 +767,10 @@ export default function Home() {
           <div className="mx-auto max-w-7xl">
             <div className="flex flex-col items-center justify-between gap-8 sm:flex-row">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl shadow-md">
+                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-[22.5%] shadow-md">
                   <Image
-                    src="/H%20Space%20Icon.png"
+                    src="/icons/h-space-mark.svg"
+                    unoptimized
                     alt=""
                     width={32}
                     height={32}

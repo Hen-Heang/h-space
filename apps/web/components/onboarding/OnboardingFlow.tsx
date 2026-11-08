@@ -34,9 +34,10 @@ export function OnboardingFlow({ onDone }: OnboardingFlowProps) {
         className="max-h-[calc(100dvh-2rem)] max-w-md gap-0 overflow-y-auto rounded-2xl p-0 sm:max-w-md"
       >
         <div className="px-6 pt-6 pb-4">
-          <span className="mb-4 flex size-11 items-center justify-center overflow-hidden rounded-xl shadow-sm">
+          <span className="mb-4 flex size-11 items-center justify-center overflow-hidden rounded-[22.5%] shadow-sm">
             <Image
-              src="/H%20Space%20Icon.png"
+              src="/icons/h-space-mark.svg"
+              unoptimized
               alt=""
               width={44}
               height={44}
