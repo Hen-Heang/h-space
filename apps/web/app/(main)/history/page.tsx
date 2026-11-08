@@ -6,6 +6,7 @@ import {
   ArrowRight,
   Brain,
   CalendarDays,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ScrollText,
@@ -34,7 +35,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import {
@@ -137,7 +137,7 @@ function CopyButton({ text }: { text: string }) {
       type="button"
       onClick={handleCopy}
       aria-label="Copy text"
-      className="relative flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors after:absolute after:-inset-2 after:content-[''] hover:bg-accent hover:text-foreground"
+      className="relative flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors after:absolute after:-inset-2 after:content-[''] hover:bg-muted hover:text-foreground"
     >
       <AnimatePresence mode="wait" initial={false}>
         {copied ? (
@@ -147,7 +147,7 @@ function CopyButton({ text }: { text: string }) {
             animate={{ scale: 1 }}
             exit={{ scale: 0.6 }}
           >
-            <Check size={13} className="text-green-500" />
+            <Check size={13} className="text-success" />
           </motion.span>
         ) : (
           <motion.span
@@ -161,6 +161,38 @@ function CopyButton({ text }: { text: string }) {
         )}
       </AnimatePresence>
     </button>
+  )
+}
+
+// ─── Section surface ──────────────────────────────────────────────────────────
+
+/** A flat grouping surface with a sentence-case h2 (the shell owns the h1). */
+function SectionSurface({
+  id,
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  id: string
+  icon: typeof Brain
+  title: string
+  description: string
+  children: React.ReactNode
+}) {
+  return (
+    <section aria-labelledby={id} className="app-surface overflow-hidden">
+      <header className="flex items-center gap-3 border-b border-border px-5 py-4">
+        <Icon aria-hidden="true" size={18} className="shrink-0 text-muted-foreground" />
+        <div className="min-w-0">
+          <h2 id={id} className="text-base font-semibold text-foreground">
+            {title}
+          </h2>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+      </header>
+      <div className="p-4 sm:p-5">{children}</div>
+    </section>
   )
 }
 
@@ -180,28 +212,26 @@ function GrammarTracker({
 
   if (patterns.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-10 text-center">
-        <Brain size={36} className="text-muted-foreground/60" />
-        <p className="text-sm font-bold text-muted-foreground">
-          No patterns yet — keep correcting!
-        </p>
-      </div>
+      <p className="py-6 text-center text-sm text-muted-foreground">
+        No patterns yet. They appear once a grammar point shows up in your corrections.
+      </p>
     )
   }
 
   return (
     <div className="space-y-3">
       {activeTag && (
-        <div className="flex items-center justify-between rounded-xl bg-blue-500/8 px-3 py-2">
-          <p className="text-xs font-bold text-blue-600 dark:text-blue-400">
-            Filtering by: <span className="italic">{activeTag}</span>
+        <div className="flex items-center justify-between gap-2 rounded-lg bg-primary/10 py-1 pl-3 pr-1">
+          <p className="min-w-0 truncate text-sm text-primary">
+            Filtering by <span className="font-medium">{activeTag}</span>
           </p>
           <button
             type="button"
             onClick={() => onTagClick(activeTag)}
-            className="rounded-md p-0.5 text-blue-500 hover:bg-blue-500/10"
+            aria-label="Clear pattern filter"
+            className="flex size-8 shrink-0 items-center justify-center rounded-md text-primary hover:bg-primary/10"
           >
-            <X size={13} />
+            <X aria-hidden="true" size={14} />
           </button>
         </div>
       )}
@@ -212,54 +242,52 @@ function GrammarTracker({
             key={point}
             type="button"
             onClick={() => onTagClick(point)}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.04 }}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.03, duration: 0.18 }}
+            aria-pressed={isActive}
             className={cn(
-              "w-full space-y-1.5 rounded-xl px-2 py-1.5 text-left transition-colors",
-              isActive ? "bg-blue-500/8 ring-1 ring-blue-500/20" : "hover:bg-accent/50",
+              "w-full space-y-2 rounded-lg px-2.5 py-2 text-left transition-colors",
+              isActive ? "bg-primary/10" : "hover:bg-muted",
             )}
           >
             <div className="flex items-center justify-between gap-3">
-              <span className="text-xs font-bold leading-snug text-foreground/80 line-clamp-2">
-                {point}
-              </span>
               <span
                 className={cn(
-                  "shrink-0 rounded-full px-2.5 py-1 text-xs font-bold",
+                  "line-clamp-2 text-sm leading-snug",
+                  isActive ? "font-medium text-primary" : "text-foreground",
+                )}
+              >
+                {point}
+              </span>
+              {/* Colour = how often it recurs (4+ red, 2+ amber); the bar shows the same count. */}
+              <span
+                className={cn(
+                  "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums",
                   count >= 4
-                    ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                    ? "bg-destructive/10 text-destructive"
                     : count >= 2
-                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                      : "bg-slate-500/10 text-slate-500",
+                      ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                      : "bg-muted text-muted-foreground",
                 )}
               >
                 ×{count}
               </span>
             </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/30">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${(count / max) * 100}%` }}
-                transition={{ duration: 0.6, ease: "easeOut", delay: i * 0.04 + 0.1 }}
+                transition={{ duration: 0.5, ease: "easeOut", delay: i * 0.03 + 0.1 }}
                 className={cn(
                   "h-full rounded-full",
-                  isActive
-                    ? "bg-blue-500"
-                    : count >= 4
-                      ? "bg-red-500"
-                      : count >= 2
-                        ? "bg-amber-500"
-                        : "bg-slate-400",
+                  isActive ? "bg-primary" : "bg-muted-foreground/40",
                 )}
               />
             </div>
           </motion.button>
         )
       })}
-      <p className="px-2 text-xs font-bold text-muted-foreground">
-        Tap a pattern to filter corrections
-      </p>
     </div>
   )
 }
@@ -293,11 +321,9 @@ function PracticeCalendar({
     <div className="space-y-4">
       {/* Streak badge */}
       {streak > 0 && (
-        <div className="flex items-center justify-center gap-2 rounded-xl bg-orange-500/8 px-3 py-2.5 ring-1 ring-orange-500/15">
-          <Flame size={16} className="text-orange-500" />
-          <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
-            {streak}-day streak!
-          </span>
+        <div className="app-surface-muted flex items-center justify-center gap-2 px-3 py-2.5">
+          <Flame aria-hidden="true" size={16} className="text-amber-500" />
+          <span className="text-sm font-medium text-foreground">{streak}-day streak</span>
         </div>
       )}
 
@@ -308,30 +334,27 @@ function PracticeCalendar({
           size="icon"
           onClick={onPrev}
           aria-label="Previous month"
-          className="h-9 w-9 rounded-xl [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
+          className="h-9 w-9 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
         >
-          <ChevronLeft size={18} />
+          <ChevronLeft aria-hidden="true" size={18} />
         </Button>
-        <span className="text-sm font-bold text-foreground">{monthName}</span>
+        <span className="text-sm font-semibold text-foreground">{monthName}</span>
         <Button
           variant="ghost"
           size="icon"
           onClick={onNext}
           aria-label="Next month"
           disabled={isCurrentMonth}
-          className="h-9 w-9 rounded-xl [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
+          className="h-9 w-9 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
         >
-          <ChevronRight size={18} />
+          <ChevronRight aria-hidden="true" size={18} />
         </Button>
       </div>
 
       {/* Weekday headers */}
       <div className="grid grid-cols-7 gap-1">
         {weekdays.map((d) => (
-          <div
-            key={d}
-            className="py-1 text-center text-xs font-bold uppercase tracking-wide text-muted-foreground"
-          >
+          <div key={d} className="py-1 text-center text-xs font-medium text-muted-foreground">
             {d}
           </div>
         ))}
@@ -349,11 +372,11 @@ function PracticeCalendar({
             <div
               key={day}
               className={cn(
-                "relative flex aspect-square items-center justify-center rounded-xl text-xs font-bold",
+                "relative flex aspect-square items-center justify-center rounded-lg text-xs font-medium tabular-nums",
                 isActive
-                  ? "bg-blue-500 text-white shadow-md shadow-blue-500/20"
+                  ? "bg-primary text-primary-foreground"
                   : isToday
-                    ? "ring-2 ring-blue-500/40 text-blue-600 font-bold"
+                    ? "font-semibold text-primary ring-2 ring-primary/40"
                     : "text-muted-foreground",
               )}
             >
@@ -363,7 +386,7 @@ function PracticeCalendar({
         })}
       </div>
 
-      <p className="text-center text-xs font-bold text-muted-foreground">
+      <p className="text-center text-sm text-muted-foreground">
         {activeDays.size} {activeDays.size === 1 ? "practice day" : "practice days"} this month
       </p>
     </div>
@@ -410,8 +433,9 @@ function FilterBar({
       {/* Search */}
       <div className="relative">
         <Search
-          size={14}
-          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/40"
+          aria-hidden="true"
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
         />
         <input
           type="text"
@@ -419,7 +443,7 @@ function FilterBar({
           onChange={(e) => onSearch(e.target.value)}
           placeholder="Search corrections…"
           aria-label="Search corrections"
-          className="w-full rounded-xl border border-border bg-card py-2.5 pl-9 pr-11 text-base font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40 sm:text-sm"
+          className="h-10 w-full rounded-lg border border-input bg-card pl-9 pr-11 text-base outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 sm:text-sm"
         />
         {search && (
           <button
@@ -475,7 +499,7 @@ function FilterBar({
       </div>
 
       {(search || ratingFilter !== "all") && (
-        <p aria-live="polite" className="text-xs font-medium text-muted-foreground">
+        <p aria-live="polite" className="text-sm text-muted-foreground">
           Showing {totalVisible} of {totalAll} corrections
         </p>
       )}
@@ -686,7 +710,7 @@ export default function HistoryPage() {
               shown up here so it isn't buried. */}
           {streak > 0 && (
             <span className="inline-flex items-center gap-1 text-foreground lg:hidden">
-              <Flame aria-hidden="true" size={14} className="text-orange-500" /> {streak}-day streak
+              <Flame aria-hidden="true" size={14} className="text-amber-500" /> {streak}-day streak
             </span>
           )}
           <span>
@@ -733,50 +757,40 @@ export default function HistoryPage() {
         <div className="space-y-6 min-w-0">
           {/* Grammar Patterns */}
           <motion.div variants={itemVariants}>
-            <Card className="overflow-hidden rounded-[1.8rem] border-border bg-card shadow-xl dark:bg-slate-900/40 sm:rounded-[2.2rem] lg:rounded-3xl">
-              <CardHeader className="border-b border-border/60 bg-accent/5 px-5 py-4 sm:px-6 sm:py-5">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-500/10 text-red-500 shadow-sm ring-1 ring-red-500/20">
-                    <Brain size={18} />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold">Recurring Mistakes</h2>
-                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                      Grammar patterns · tap to filter
-                    </p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-5 sm:p-6">
-                {loadingCorrections ? (
-                  <div className="space-y-3">
-                    {[70, 55, 90, 40, 65, 50].map((w, i) => (
-                      <div key={i} className="space-y-1.5">
-                        <div className="flex items-center justify-between gap-3">
-                          <Skeleton className="h-4" style={{ width: `${w}%` }} />
-                          <Skeleton className="h-5 w-8 rounded-full" />
-                        </div>
-                        <Skeleton className="h-1.5 w-full rounded-full" />
+            <SectionSurface
+              id="recurring-mistakes"
+              icon={Brain}
+              title="Recurring mistakes"
+              description="Grammar patterns you repeat — tap one to filter your corrections."
+            >
+              {loadingCorrections ? (
+                <div className="space-y-3">
+                  {[70, 55, 90, 40, 65, 50].map((w, i) => (
+                    <div key={i} className="space-y-1.5">
+                      <div className="flex items-center justify-between gap-3">
+                        <Skeleton className="h-4" style={{ width: `${w}%` }} />
+                        <Skeleton className="h-5 w-8 rounded-full" />
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <GrammarTracker
-                    entries={corrections}
-                    activeTag={activeTag}
-                    onTagClick={handleTagClick}
-                  />
-                )}
-              </CardContent>
-            </Card>
+                      <Skeleton className="h-1.5 w-full rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <GrammarTracker
+                  entries={corrections}
+                  activeTag={activeTag}
+                  onTagClick={handleTagClick}
+                />
+              )}
+            </SectionSurface>
           </motion.div>
 
           {/* Correction History */}
           <motion.div variants={itemVariants}>
-            <div className="space-y-4">
-              <h3 className="px-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                Correction History
-              </h3>
+            <section aria-labelledby="correction-history" className="space-y-4">
+              <h2 id="correction-history" className="text-section-heading font-semibold">
+                Correction history
+              </h2>
 
               {!loadingCorrections && corrections.length > 0 && (
                 <FilterBar
@@ -792,20 +806,18 @@ export default function HistoryPage() {
               )}
 
               {loadingCorrections ? (
-                <div className="space-y-3">
+                <div className="app-surface divide-y divide-border">
                   {[1, 2, 3, 4].map((i) => (
                     <div
                       key={i}
-                      className="overflow-hidden rounded-[1.5rem] border border-border bg-card px-5 py-4 shadow-sm dark:bg-slate-900/40 sm:rounded-3xl sm:px-6 sm:py-5"
+                      className="flex items-start justify-between gap-4 px-4 py-4 sm:px-5"
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-2">
-                          <Skeleton className="h-3 w-24" />
-                          <Skeleton className="h-4 w-4/5" />
-                          <Skeleton className="h-4 w-3/5" />
-                        </div>
-                        <Skeleton className="mt-1 h-4 w-4 shrink-0 rounded-sm" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-4 w-4/5" />
+                        <Skeleton className="h-4 w-3/5" />
                       </div>
+                      <Skeleton className="mt-1 size-5 shrink-0 rounded-md" />
                     </div>
                   ))}
                 </div>
@@ -850,176 +862,185 @@ export default function HistoryPage() {
                 />
               ) : (
                 <div className="space-y-3">
-                  <AnimatePresence initial={false}>
-                    {visible.map((entry) => {
-                      const isExpanded = expandedId === entry.id
-                      return (
-                        <motion.div
-                          key={entry.id}
-                          layout
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -8 }}
-                          transition={{ duration: 0.22 }}
-                          className="overflow-hidden rounded-[1.5rem] border border-border bg-card shadow-sm dark:bg-slate-900/40 sm:rounded-3xl"
-                        >
-                          {/* Header row */}
-                          <div className="flex items-start justify-between gap-4 px-5 py-4 sm:px-6 sm:py-5">
-                            <button
-                              type="button"
-                              className="min-w-0 flex-1 space-y-1.5 text-left"
-                              onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                            >
-                              <div className="flex items-center gap-2">
-                                <p className="text-xs font-medium text-muted-foreground">
-                                  {formatDate(entry.createdAt)}
-                                </p>
-                                <StarRating rating={entry.rating} />
-                              </div>
-                              {/* Collapsed: the corrected sentence only, up to
-                                  two lines — expand to see what changed. */}
-                              <p
-                                lang="ko"
-                                className="line-clamp-2 break-keep text-sm font-semibold text-foreground"
-                              >
-                                {entry.correctedText}
-                              </p>
-                            </button>
-                            <div className="mt-1 flex shrink-0 items-center gap-1">
+                  {/* One surface, divided rows (design-system §5: lists are rows). */}
+                  <div className="app-surface divide-y divide-border overflow-hidden">
+                    <AnimatePresence initial={false}>
+                      {visible.map((entry) => {
+                        const isExpanded = expandedId === entry.id
+                        return (
+                          <motion.div
+                            key={entry.id}
+                            layout
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            {/* Header row */}
+                            <div className="flex items-start justify-between gap-3 px-4 py-3.5 sm:px-5">
                               <button
                                 type="button"
-                                onClick={() => setDeleteTarget(entry)}
-                                disabled={deletingId === entry.id}
-                                aria-label="Delete correction"
-                                className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-600 disabled:opacity-40"
-                              >
-                                <Trash2 aria-hidden="true" size={15} />
-                              </button>
-                              <button
-                                type="button"
-                                aria-label={isExpanded ? "Hide details" : "Show details"}
-                                aria-expanded={isExpanded}
+                                className="min-w-0 flex-1 space-y-1.5 text-left"
                                 onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                                className={cn(
-                                  "flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-transform duration-200",
-                                  isExpanded ? "rotate-90" : "rotate-0",
-                                )}
                               >
-                                <ArrowRight size={16} />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Expanded detail */}
-                          <AnimatePresence>
-                            {isExpanded && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.25 }}
-                                className="overflow-hidden"
-                              >
-                                <div className="space-y-5 border-t border-border/60 px-5 pb-5 pt-4 sm:px-6 sm:pb-6 sm:pt-5">
-                                  {/* Rating */}
-                                  {entry.rating != null && (
-                                    <div className="flex items-center gap-2">
-                                      <p className="text-xs font-medium text-muted-foreground">
-                                        Sentence quality
-                                      </p>
-                                      <StarRating rating={entry.rating} />
-                                    </div>
-                                  )}
-
-                                  <CorrectionDiff
-                                    before={entry.originalText}
-                                    after={entry.correctedText}
-                                  />
-
-                                  {/* Original vs Corrected */}
-                                  <div className="grid gap-3 sm:grid-cols-2">
-                                    <div className="rounded-2xl bg-red-500/5 p-4">
-                                      <div className="mb-2 flex items-center justify-between">
-                                        <p className="text-xs font-medium text-red-700 dark:text-red-300">
-                                          Original
-                                        </p>
-                                        <CopyButton text={entry.originalText} />
-                                      </div>
-                                      <p
-                                        lang="ko"
-                                        className="break-keep text-base leading-relaxed text-foreground/80"
-                                      >
-                                        {entry.originalText}
-                                      </p>
-                                    </div>
-                                    <div className="rounded-2xl bg-blue-500/5 p-4">
-                                      <div className="mb-2 flex items-center justify-between">
-                                        <p className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                                          Corrected
-                                        </p>
-                                        <div className="flex items-center gap-1">
-                                          <CopyButton text={entry.correctedText} />
-                                          <SpeakButton
-                                            text={entry.correctedText}
-                                            className="h-7 w-7 rounded-lg"
-                                          />
-                                        </div>
-                                      </div>
-                                      <p
-                                        lang="ko"
-                                        className="break-keep text-base font-semibold leading-relaxed text-foreground"
-                                      >
-                                        {entry.correctedText}
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  {/* English translation */}
-                                  {entry.englishTranslation && (
-                                    <div className="flex items-start gap-2 rounded-2xl bg-sky-500/5 px-4 py-3">
-                                      <Languages
-                                        size={13}
-                                        className="mt-0.5 shrink-0 text-sky-500"
-                                      />
-                                      <p className="text-xs font-bold text-sky-700 dark:text-sky-300">
-                                        {entry.englishTranslation}
-                                      </p>
-                                    </div>
-                                  )}
-
-                                  {/* Grammar points (clickable) */}
-                                  {entry.grammarPoints?.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                      {entry.grammarPoints.map((p, i) => (
-                                        <button
-                                          key={i}
-                                          type="button"
-                                          onClick={() => handleTagClick(p.trim())}
-                                          className={cn(
-                                            "rounded-full border px-3 py-1 text-xs font-bold transition-colors",
-                                            activeTag === p.trim()
-                                              ? "border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                                              : "border-border bg-accent/30 text-foreground/70 hover:bg-accent",
-                                          )}
-                                        >
-                                          {p}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  )}
-
-                                  {/* Explanation */}
-                                  <p className="text-xs font-medium leading-relaxed text-muted-foreground">
-                                    {entry.explanation}
+                                <div className="flex items-center gap-2">
+                                  <p className="text-xs font-medium text-muted-foreground">
+                                    {formatDate(entry.createdAt)}
                                   </p>
+                                  <StarRating rating={entry.rating} />
                                 </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </motion.div>
-                      )
-                    })}
-                  </AnimatePresence>
+                                {/* Collapsed: the corrected sentence only, up to
+                                  two lines — expand to see what changed. */}
+                                <p
+                                  lang="ko"
+                                  className="line-clamp-2 break-keep text-sm font-semibold text-foreground"
+                                >
+                                  {entry.correctedText}
+                                </p>
+                              </button>
+                              <div className="mt-1 flex shrink-0 items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteTarget(entry)}
+                                  disabled={deletingId === entry.id}
+                                  aria-label="Delete correction"
+                                  className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-40 [@media(pointer:coarse)]:size-11"
+                                >
+                                  <Trash2 aria-hidden="true" size={15} />
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label={isExpanded ? "Hide details" : "Show details"}
+                                  aria-expanded={isExpanded}
+                                  onClick={() => setExpandedId(isExpanded ? null : entry.id)}
+                                  className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [@media(pointer:coarse)]:size-11"
+                                >
+                                  <ChevronDown
+                                    aria-hidden="true"
+                                    size={18}
+                                    className={cn(
+                                      "transition-transform duration-200",
+                                      isExpanded && "rotate-180",
+                                    )}
+                                  />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Expanded detail */}
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: "auto" }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  transition={{ duration: 0.25 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="space-y-4 border-t border-border bg-muted/30 px-4 pb-5 pt-4 sm:px-5">
+                                    {/* Rating */}
+                                    {entry.rating != null && (
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-xs font-medium text-muted-foreground">
+                                          Sentence quality
+                                        </p>
+                                        <StarRating rating={entry.rating} />
+                                      </div>
+                                    )}
+
+                                    <CorrectionDiff
+                                      before={entry.originalText}
+                                      after={entry.correctedText}
+                                    />
+
+                                    {/* Original vs Corrected */}
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                      <div className="rounded-lg border border-destructive/20 bg-card p-4">
+                                        <div className="mb-2 flex items-center justify-between">
+                                          <p className="text-xs font-medium text-destructive">
+                                            Original
+                                          </p>
+                                          <CopyButton text={entry.originalText} />
+                                        </div>
+                                        <p
+                                          lang="ko"
+                                          className="break-keep text-base leading-relaxed text-foreground/80"
+                                        >
+                                          {entry.originalText}
+                                        </p>
+                                      </div>
+                                      <div className="rounded-lg border border-success/30 bg-card p-4">
+                                        <div className="mb-2 flex items-center justify-between">
+                                          <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                                            Corrected
+                                          </p>
+                                          <div className="flex items-center gap-1">
+                                            <CopyButton text={entry.correctedText} />
+                                            <SpeakButton
+                                              text={entry.correctedText}
+                                              className="h-7 w-7 rounded-md"
+                                            />
+                                          </div>
+                                        </div>
+                                        <p
+                                          lang="ko"
+                                          className="break-keep text-base font-semibold leading-relaxed text-foreground"
+                                        >
+                                          {entry.correctedText}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    {/* English translation */}
+                                    {entry.englishTranslation && (
+                                      <div className="flex items-start gap-2">
+                                        <Languages
+                                          aria-hidden="true"
+                                          size={16}
+                                          className="mt-0.5 shrink-0 text-muted-foreground"
+                                        />
+                                        <p className="text-sm text-foreground">
+                                          {entry.englishTranslation}
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {/* Grammar points (clickable) */}
+                                    {entry.grammarPoints?.length > 0 && (
+                                      <div className="flex flex-wrap gap-2">
+                                        {entry.grammarPoints.map((p, i) => (
+                                          <button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => handleTagClick(p.trim())}
+                                            aria-pressed={activeTag === p.trim()}
+                                            className={cn(
+                                              "min-h-8 rounded-full border px-3 text-xs font-medium transition-colors",
+                                              activeTag === p.trim()
+                                                ? "border-primary/40 bg-primary/10 text-primary"
+                                                : "border-border bg-card text-foreground hover:bg-muted",
+                                            )}
+                                          >
+                                            {p}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {/* Explanation */}
+                                    <p className="text-sm leading-relaxed text-muted-foreground">
+                                      {entry.explanation}
+                                    </p>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.div>
+                        )
+                      })}
+                    </AnimatePresence>
+                  </div>
 
                   {/* Load more */}
                   {hasMore && (
@@ -1031,7 +1052,6 @@ export default function HistoryPage() {
                       <Button
                         variant="outline"
                         onClick={() => setVisibleCount((c) => c + LOAD_PAGE)}
-                        className="rounded-2xl px-6 font-bold"
                       >
                         Load more ({filtered.length - visibleCount} remaining)
                       </Button>
@@ -1039,7 +1059,7 @@ export default function HistoryPage() {
                   )}
                 </div>
               )}
-            </div>
+            </section>
           </motion.div>
         </div>
 
@@ -1050,47 +1070,37 @@ export default function HistoryPage() {
             variants={itemVariants}
             className="lg:sticky lg:top-[calc(var(--shell-header-h,0px)+2rem)]"
           >
-            <Card className="overflow-hidden rounded-[1.8rem] border-border bg-card shadow-xl dark:bg-slate-900/40 sm:rounded-[2.2rem] lg:rounded-3xl">
-              <CardHeader className="border-b border-border/60 bg-accent/5 px-5 py-4 sm:px-6 sm:py-5">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-500 shadow-sm ring-1 ring-violet-500/20">
-                    <CalendarDays size={18} />
+            <SectionSurface
+              id="practice-calendar"
+              icon={CalendarDays}
+              title="Practice calendar"
+              description="Days you practiced this month."
+            >
+              {loadingCorrections ? (
+                <div className="space-y-4">
+                  <Skeleton className="mx-auto h-9 w-2/3 rounded-lg" />
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-9 w-9 rounded-lg" />
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-9 w-9 rounded-lg" />
                   </div>
-                  <div>
-                    <h2 className="text-base font-bold">Practice Calendar</h2>
-                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                      Days you practiced
-                    </p>
+                  <div className="grid grid-cols-7 gap-1">
+                    {Array.from({ length: 35 }).map((_, i) => (
+                      <Skeleton key={i} className="aspect-square rounded-lg" />
+                    ))}
                   </div>
+                  <Skeleton className="mx-auto h-3 w-32" />
                 </div>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-5">
-                {loadingCorrections ? (
-                  <div className="space-y-4">
-                    <Skeleton className="mx-auto h-9 w-2/3 rounded-xl" />
-                    <div className="flex items-center justify-between">
-                      <Skeleton className="h-9 w-9 rounded-xl" />
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-9 w-9 rounded-xl" />
-                    </div>
-                    <div className="grid grid-cols-7 gap-1">
-                      {Array.from({ length: 35 }).map((_, i) => (
-                        <Skeleton key={i} className="aspect-square rounded-xl" />
-                      ))}
-                    </div>
-                    <Skeleton className="mx-auto h-3 w-32" />
-                  </div>
-                ) : (
-                  <PracticeCalendar
-                    month={calendarMonth}
-                    activeDays={activeDays}
-                    streak={calendarStreak}
-                    onPrev={prevMonth}
-                    onNext={nextMonth}
-                  />
-                )}
-              </CardContent>
-            </Card>
+              ) : (
+                <PracticeCalendar
+                  month={calendarMonth}
+                  activeDays={activeDays}
+                  streak={calendarStreak}
+                  onPrev={prevMonth}
+                  onNext={nextMonth}
+                />
+              )}
+            </SectionSurface>
           </motion.div>
         </div>
       </div>
