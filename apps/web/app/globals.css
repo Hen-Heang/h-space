@@ -62,6 +62,9 @@ html[data-theme-transition]::view-transition-new(root) {
   --color-primary-navy: var(--primary-navy);
   --color-primary-accent: var(--primary-accent);
   --color-brand-surface: var(--brand-surface);
+  --color-brand-from: var(--brand-from);
+  --color-brand-via: var(--brand-via);
+  --color-brand-to: var(--brand-to);
   --color-primary-action-foreground: var(--primary-action-foreground);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -170,6 +173,13 @@ html[data-theme-transition]::view-transition-new(root) {
   --primary-foreground: #ffffff;
   /* Deep indigo for brand panels (auth, Overview banner); same in both themes. */
   --brand-surface: #26245a;
+  /* Brand gradient, from the app icon (blue bar → violet → light violet).
+     Marketing surfaces only — the landing page, the share image — never
+     inside the app, where `primary` is the one accent. Every stop is ≥4:1 on
+     the page background, so gradient display text stays readable. */
+  --brand-from: #3b6ef5;
+  --brand-via: #6757f5;
+  --brand-to: #9b4dff;
   --secondary: #f1f3f9;
   --secondary-foreground: #1f2847;
   --muted: #f1f3f9;
@@ -242,6 +252,9 @@ html[data-theme-transition]::view-transition-new(root) {
   --sidebar-foreground: #f1f5f9;
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #0f172a;
+  --brand-from: #6aa8ff;
+  --brand-via: #8b7ff8;
+  --brand-to: #c39bff;
   --sidebar-accent: rgb(139 127 248 / 16%);
   --sidebar-accent-foreground: #c4bdff;
   --sidebar-border: oklch(1 0 0 / 9%);
@@ -437,6 +450,18 @@ html[data-theme-transition]::view-transition-new(root) {
 
   .app-muted-copy {
     @apply text-sm leading-6 text-muted-foreground;
+  }
+
+  /* Brand gradient (see --brand-* above). Marketing surfaces only. */
+  .bg-brand-gradient {
+    background-image: linear-gradient(90deg, var(--brand-from), var(--brand-via), var(--brand-to));
+  }
+
+  .text-brand-gradient {
+    background-image: linear-gradient(90deg, var(--brand-from), var(--brand-via), var(--brand-to));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 }
 

@@ -31,9 +31,7 @@ export function AboutHSpace({ className }: { className?: string }) {
       className={cn("rounded-3xl border border-border bg-muted/25 p-6 sm:p-8", className)}
     >
       <div className="max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">
-          Purpose and architecture
-        </p>
+        <p className="app-kicker">Purpose and architecture</p>
         <h2
           id="about-h-space-title"
           className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
@@ -50,7 +48,7 @@ export function AboutHSpace({ className }: { className?: string }) {
       <div className="mt-7 grid gap-5 md:grid-cols-3">
         {architecture.map((item) => (
           <div key={item.title}>
-            <item.icon className="size-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+            <item.icon className="size-5 text-primary" aria-hidden="true" />
             <h3 className="mt-3 text-sm font-semibold text-foreground">{item.title}</h3>
             <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{item.description}</p>
           </div>

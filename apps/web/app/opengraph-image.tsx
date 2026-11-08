@@ -1,11 +1,22 @@
+import { readFile } from "node:fs/promises"
+import { join } from "node:path"
 import { ImageResponse } from "next/og"
 
-export const runtime = "edge"
+// Node runtime (not edge) so the real app icon can be read from public/ at
+// build time; the image has no params, so it's generated once and cached.
 export const alt = "H-Space — My Projects. One Space."
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
-export default function OpengraphImage() {
+// Brand colours: the icon's navy-to-violet background and its blue → violet
+// gradient (the dark-theme stops of --brand-* in app/globals.css).
+const BRAND_BG = "linear-gradient(135deg, #11153f 0%, #1a1f5e 55%, #2a1656 100%)"
+const BRAND_GRADIENT = "linear-gradient(90deg, #6aa8ff, #8b7ff8, #c39bff)"
+
+export default async function OpengraphImage() {
+  const icon = await readFile(join(process.cwd(), "public/icons/icon-512.png"))
+  const iconSrc = `data:image/png;base64,${icon.toString("base64")}`
+
   return new ImageResponse(
     <div
       style={{
@@ -15,32 +26,23 @@ export default function OpengraphImage() {
         flexDirection: "column",
         justifyContent: "center",
         padding: "80px",
-        background: "linear-gradient(135deg, #0a1422 0%, #0f1b30 55%, #10223d 100%)",
+        backgroundImage: `radial-gradient(circle at 12% 18%, rgba(61,123,255,0.35), transparent 45%), radial-gradient(circle at 92% 88%, rgba(163,92,255,0.35), transparent 45%), ${BRAND_BG}`,
         fontFamily: "sans-serif",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <div
-          style={{
-            display: "flex",
-            width: 56,
-            height: 56,
-            borderRadius: 16,
-            background: "linear-gradient(135deg, #3b82f6, #6366f1)",
-          }}
-        />
-        <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff" }}>H-Space</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+        <img src={iconSrc} width={72} height={72} alt="" />
+        <div style={{ fontSize: 34, fontWeight: 700, color: "#ffffff" }}>H-Space</div>
       </div>
 
       <div
         style={{
           display: "flex",
-          marginTop: 48,
-          fontSize: 60,
+          marginTop: 52,
+          fontSize: 68,
           fontWeight: 700,
-          lineHeight: 1.15,
+          lineHeight: 1.1,
           color: "#ffffff",
-          maxWidth: 980,
         }}
       >
         My Projects.
@@ -48,21 +50,27 @@ export default function OpengraphImage() {
       <div
         style={{
           display: "flex",
-          marginTop: 8,
-          fontSize: 60,
+          marginTop: 6,
+          fontSize: 68,
           fontWeight: 700,
-          lineHeight: 1.15,
-          background: "linear-gradient(90deg, #3b82f6, #6366f1, #0ea5e9)",
+          lineHeight: 1.1,
+          backgroundImage: BRAND_GRADIENT,
           backgroundClip: "text",
           color: "transparent",
-          maxWidth: 980,
         }}
       >
         One Space.
       </div>
 
       <div
-        style={{ display: "flex", marginTop: 40, fontSize: 28, color: "#94a3b8", maxWidth: 820 }}
+        style={{
+          display: "flex",
+          marginTop: 36,
+          fontSize: 28,
+          lineHeight: 1.4,
+          color: "rgba(255,255,255,0.72)",
+          maxWidth: 860,
+        }}
       >
         A personal software ecosystem for learning, finance, AI engineering, productivity, and
         development.
