@@ -52,7 +52,7 @@ export function CheckinCalendar({
           className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [@media(pointer:coarse)]:size-11"
           aria-label="Previous month"
         >
-          <ChevronLeft size={16} strokeWidth={2} />
+          <ChevronLeft size={16} />
         </button>
         <p className="text-sm font-semibold text-foreground">{format(month, "MMMM yyyy")}</p>
         <button
@@ -62,7 +62,7 @@ export function CheckinCalendar({
           className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30 [@media(pointer:coarse)]:size-11"
           aria-label="Next month"
         >
-          <ChevronRight size={16} strokeWidth={2} />
+          <ChevronRight size={16} />
         </button>
       </div>
 

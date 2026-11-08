@@ -171,7 +171,7 @@ export function MessageGenerator({ initialCategory }: { initialCategory?: string
             disabled={loading || !intent.trim()}
             className="h-11 rounded-lg bg-blue-600 px-5 text-sm font-semibold text-white hover:bg-blue-500"
           >
-            <Wand2 size={16} className="mr-2" strokeWidth={2.5} />
+            <Wand2 size={16} className="mr-2" />
             {loading ? "Generating..." : "Generate"}
           </Button>
         </div>

@@ -172,7 +172,7 @@ function EditForm({
           variant="outline"
           className="flex-1"
         >
-          <X size={13} strokeWidth={3} />
+          <X size={13} />
           Cancel
         </Button>
       </div>
@@ -275,7 +275,7 @@ export function VocabCard({ item, onReview, onUpdate, onDelete }: VocabCardProps
                     className="rounded-xl text-muted-foreground"
                     aria-label="Edit word"
                   >
-                    <Pencil size={14} strokeWidth={2.5} />
+                    <Pencil size={14} />
                   </Button>
                 )}
                 {onDelete && (
@@ -293,7 +293,7 @@ export function VocabCard({ item, onReview, onUpdate, onDelete }: VocabCardProps
                         className="rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                         aria-label={`Delete ${item.term}`}
                       >
-                        <Trash2 size={14} strokeWidth={2.5} />
+                        <Trash2 size={14} />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent className="rounded-3xl">
@@ -378,7 +378,7 @@ export function VocabCard({ item, onReview, onUpdate, onDelete }: VocabCardProps
                 key={tag}
                 className="flex items-center gap-1 rounded-full bg-accent/30 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-muted-foreground/70"
               >
-                <Tag size={10} strokeWidth={3} />
+                <Tag size={10} />
                 {tag}
               </span>
             ))
@@ -388,7 +388,7 @@ export function VocabCard({ item, onReview, onUpdate, onDelete }: VocabCardProps
         </div>
 
         <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <Calendar size={12} strokeWidth={3} />
+          <Calendar size={12} />
           <span>Next review: {formatReviewDate(item.nextReview)}</span>
         </div>
       </div>
@@ -400,7 +400,7 @@ export function VocabCard({ item, onReview, onUpdate, onDelete }: VocabCardProps
           className="mt-5 w-full bg-emerald-600 text-white hover:bg-emerald-500"
         >
           Complete Review
-          <ChevronRight size={16} strokeWidth={3} />
+          <ChevronRight size={16} />
         </Button>
       )}
 

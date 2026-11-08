@@ -19,7 +19,7 @@ export function AnalyticsCard({ analytics }: { analytics: InterviewAnalytics }) 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600">
-              <AudioLines size={20} strokeWidth={2.5} />
+              <AudioLines size={20} />
             </div>
             <div>
               <CardTitle className="text-xl font-bold">Speech Analysis</CardTitle>
@@ -29,7 +29,7 @@ export function AnalyticsCard({ analytics }: { analytics: InterviewAnalytics }) 
             </div>
           </div>
           <Badge className="rounded-lg border-none bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-400">
-            <Info size={12} className="mr-1" strokeWidth={2.5} />
+            <Info size={12} className="mr-1" />
             Estimated from transcript — no audio analysis
           </Badge>
         </div>
@@ -39,7 +39,7 @@ export function AnalyticsCard({ analytics }: { analytics: InterviewAnalytics }) 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-2xl border border-border bg-accent/5 p-4">
             <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              <Ruler size={12} strokeWidth={2.5} /> Sentence length
+              <Ruler size={12} /> Sentence length
             </p>
             <p className="mt-1.5 text-2xl font-bold tabular-nums text-foreground">
               {analytics.avgSentenceLengthWords}
@@ -50,7 +50,7 @@ export function AnalyticsCard({ analytics }: { analytics: InterviewAnalytics }) 
           </div>
           <div className="rounded-2xl border border-border bg-accent/5 p-4">
             <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              <AudioLines size={12} strokeWidth={2.5} /> Fillers &amp; hesitation
+              <AudioLines size={12} /> Fillers &amp; hesitation
             </p>
             <p className="mt-1.5 text-sm font-medium leading-relaxed text-foreground/90">
               {analytics.fillerNotes}
@@ -74,7 +74,7 @@ export function AnalyticsCard({ analytics }: { analytics: InterviewAnalytics }) 
         {analytics.grammarIssues.length > 0 && (
           <section>
             <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              <SpellCheck size={13} strokeWidth={2.5} /> Grammar to fix
+              <SpellCheck size={13} /> Grammar to fix
             </p>
             <div className="mt-3 space-y-2">
               {analytics.grammarIssues.map((issue, i) => (
@@ -100,7 +100,7 @@ export function AnalyticsCard({ analytics }: { analytics: InterviewAnalytics }) 
         {analytics.wordsToPractice.length > 0 && (
           <section>
             <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              <BookMarked size={13} strokeWidth={2.5} /> Words to practice
+              <BookMarked size={13} /> Words to practice
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {analytics.wordsToPractice.map((word) => (

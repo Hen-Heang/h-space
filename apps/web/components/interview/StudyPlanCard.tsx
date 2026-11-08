@@ -11,6 +11,7 @@ import {
   Pencil,
   Plus,
   Trash2,
+  Target,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -147,14 +148,9 @@ export function StudyPlanCard() {
             <CheckCircle2
               size={18}
               className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"
-              strokeWidth={2.5}
             />
           ) : (
-            <Circle
-              size={18}
-              className="mt-0.5 shrink-0 text-muted-foreground/50"
-              strokeWidth={2}
-            />
+            <Circle size={18} className="mt-0.5 shrink-0 text-muted-foreground/50" />
           )}
           <span
             className={cn(
@@ -199,7 +195,7 @@ export function StudyPlanCard() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
-              <CalendarDays size={18} strokeWidth={2.5} />
+              <CalendarDays size={18} />
             </div>
             <div>
               <p className="text-sm font-bold leading-tight text-foreground">Exam Prep Plan</p>
@@ -210,11 +206,11 @@ export function StudyPlanCard() {
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-rose-500/10 px-2.5 py-1 text-xs font-bold text-rose-600 dark:text-rose-400">
-              <Flame size={12} strokeWidth={3} />
+              <Flame size={12} />
               {mounted ? `${daysToExam}d` : "—"} to exam
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-500/10 px-2.5 py-1 text-xs font-bold text-blue-600 dark:text-blue-400">
-              <FileText size={12} strokeWidth={3} />
+              <FileText size={12} />
               {mounted ? `${daysToScript}d` : "—"} to script
             </span>
           </div>
@@ -285,7 +281,10 @@ export function StudyPlanCard() {
             ))}
             <li className="flex items-center justify-between rounded-lg bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">
               <span>{EXAM_DATE_LABEL}</span>
-              <span>EXAM 🎯</span>
+              <span className="flex items-center gap-1">
+                <Target aria-hidden="true" className="size-3.5" />
+                Exam
+              </span>
             </li>
           </ul>
         )}

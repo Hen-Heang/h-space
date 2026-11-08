@@ -70,7 +70,7 @@ export function CorrectionCard({
     >
       <div className="flex items-start justify-between gap-3 px-4 pt-3.5">
         <div className="flex items-center gap-2">
-          <Sparkles size={14} className="text-amber-600 dark:text-amber-400" strokeWidth={2.5} />
+          <Sparkles size={14} className="text-amber-600 dark:text-amber-400" />
           <span className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-400">
             Quick correction
           </span>
@@ -81,7 +81,7 @@ export function CorrectionCard({
           className="-mr-1 -mt-1 flex h-6 w-6 items-center justify-center rounded-lg text-muted-foreground/50 hover:bg-accent/60 hover:text-foreground"
           aria-label="Dismiss"
         >
-          <X size={14} strokeWidth={2.5} />
+          <X size={14} />
         </button>
       </div>
 

@@ -1,7 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { Ban, CheckCircle2, ChevronDown, Dumbbell, Lightbulb, Quote, Scale } from "lucide-react"
+import {
+  Ban,
+  CheckCircle2,
+  ChevronDown,
+  Dumbbell,
+  Lightbulb,
+  Quote,
+  Scale,
+  ArrowRight,
+} from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
 import { SpeakButton } from "@/components/ui/SpeakButton"
@@ -35,7 +44,7 @@ export function SpeakingTipsCard({ defaultOpen = false }: { defaultOpen?: boolea
       >
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600">
-            <Lightbulb size={20} strokeWidth={2.5} />
+            <Lightbulb size={20} />
           </div>
           <div>
             <CardTitle className="text-xl font-bold">Speaking Strategy</CardTitle>
@@ -64,7 +73,7 @@ export function SpeakingTipsCard({ defaultOpen = false }: { defaultOpen?: boolea
             <CardContent className="space-y-7 border-t border-border/80 pt-6">
               {/* The nine rules */}
               <section>
-                <TipsSectionLabel icon={<Lightbulb size={13} strokeWidth={3} />} color="violet">
+                <TipsSectionLabel icon={<Lightbulb size={13} />} color="violet">
                   Main ideas to remember
                 </TipsSectionLabel>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -89,8 +98,9 @@ export function SpeakingTipsCard({ defaultOpen = false }: { defaultOpen?: boolea
                           </li>
                         ))}
                       </ul>
-                      <p className="mt-2 text-xs font-bold text-violet-600 dark:text-violet-400">
-                        👉 {rule.takeaway}
+                      <p className="mt-2 flex items-start gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
+                        <ArrowRight aria-hidden="true" className="mt-px size-3.5 shrink-0" />
+                        {rule.takeaway}
                       </p>
                     </div>
                   ))}
@@ -99,7 +109,7 @@ export function SpeakingTipsCard({ defaultOpen = false }: { defaultOpen?: boolea
 
               {/* Safety sentences — memorize + drill by ear */}
               <section>
-                <TipsSectionLabel icon={<Quote size={13} strokeWidth={3} />} color="emerald">
+                <TipsSectionLabel icon={<Quote size={13} />} color="emerald">
                   Safety sentences · memorize these
                 </TipsSectionLabel>
                 <div className="mt-3 space-y-2">
@@ -122,7 +132,7 @@ export function SpeakingTipsCard({ defaultOpen = false }: { defaultOpen?: boolea
 
               {/* What the judges want */}
               <section>
-                <TipsSectionLabel icon={<Scale size={13} strokeWidth={3} />} color="sky">
+                <TipsSectionLabel icon={<Scale size={13} />} color="sky">
                   What the judges want
                 </TipsSectionLabel>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -132,7 +142,7 @@ export function SpeakingTipsCard({ defaultOpen = false }: { defaultOpen?: boolea
                         key={item}
                         className="flex items-center gap-2 py-0.5 text-sm font-bold text-destructive"
                       >
-                        <Ban size={14} strokeWidth={2.5} className="shrink-0" /> {item}
+                        <Ban size={14} className="shrink-0" /> {item}
                       </p>
                     ))}
                   </div>
@@ -142,7 +152,7 @@ export function SpeakingTipsCard({ defaultOpen = false }: { defaultOpen?: boolea
                         key={item}
                         className="flex items-center gap-2 py-0.5 text-sm font-bold text-emerald-700 dark:text-emerald-400"
                       >
-                        <CheckCircle2 size={14} strokeWidth={2.5} className="shrink-0" /> {item}
+                        <CheckCircle2 size={14} className="shrink-0" /> {item}
                       </p>
                     ))}
                   </div>
@@ -151,7 +161,7 @@ export function SpeakingTipsCard({ defaultOpen = false }: { defaultOpen?: boolea
 
               {/* Per-skill training plan */}
               <section>
-                <TipsSectionLabel icon={<Dumbbell size={13} strokeWidth={3} />} color="amber">
+                <TipsSectionLabel icon={<Dumbbell size={13} />} color="amber">
                   Training plan by skill
                 </TipsSectionLabel>
                 <div className="mt-3 space-y-2">

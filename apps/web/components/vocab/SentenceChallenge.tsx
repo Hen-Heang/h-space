@@ -127,7 +127,6 @@ export function SentenceChallenge({ cardId, term, onGetChallenge, onCheckSentenc
         <div className="flex items-center gap-2.5">
           <PenLine
             size={14}
-            strokeWidth={2.5}
             className={open ? "text-violet-600 dark:text-violet-400" : "text-muted-foreground/50"}
           />
           <span
@@ -141,7 +140,6 @@ export function SentenceChallenge({ cardId, term, onGetChallenge, onCheckSentenc
         </div>
         <ChevronDown
           size={14}
-          strokeWidth={2.5}
           className={cn(
             "text-muted-foreground/40 transition-transform duration-200",
             open && "rotate-180",
@@ -179,11 +177,7 @@ export function SentenceChallenge({ cardId, term, onGetChallenge, onCheckSentenc
                   {/* Challenge prompt */}
                   <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-1.5">
                     <div className="flex items-center gap-1.5">
-                      <BookOpen
-                        size={12}
-                        strokeWidth={2.5}
-                        className="text-violet-600 dark:text-violet-400"
-                      />
+                      <BookOpen size={12} className="text-violet-600 dark:text-violet-400" />
                       <span className="text-xs font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400">
                         Task
                       </span>
@@ -220,7 +214,7 @@ export function SentenceChallenge({ cardId, term, onGetChallenge, onCheckSentenc
                       </>
                     ) : (
                       <>
-                        <CheckCircle2 size={14} strokeWidth={2.5} /> Check Answer
+                        <CheckCircle2 size={14} /> Check Answer
                       </>
                     )}
                   </button>
@@ -244,14 +238,9 @@ export function SentenceChallenge({ cardId, term, onGetChallenge, onCheckSentenc
                           <CheckCircle2
                             size={14}
                             className="text-emerald-600 dark:text-emerald-400"
-                            strokeWidth={2.5}
                           />
                         ) : (
-                          <XCircle
-                            size={14}
-                            className="text-red-600 dark:text-red-400"
-                            strokeWidth={2.5}
-                          />
+                          <XCircle size={14} className="text-red-600 dark:text-red-400" />
                         )}
                         <span
                           className={cn("text-xs font-bold uppercase tracking-wide", scoreColor)}
@@ -280,11 +269,7 @@ export function SentenceChallenge({ cardId, term, onGetChallenge, onCheckSentenc
                   {result.betterAlternative && (
                     <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3 space-y-1">
                       <div className="flex items-center gap-1.5">
-                        <Star
-                          size={11}
-                          strokeWidth={2.5}
-                          className="text-amber-600 dark:text-amber-400"
-                        />
+                        <Star size={11} className="text-amber-600 dark:text-amber-400" />
                         <span className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">
                           More natural
                         </span>
@@ -297,11 +282,7 @@ export function SentenceChallenge({ cardId, term, onGetChallenge, onCheckSentenc
 
                   {result.grammarNote && (
                     <div className="flex items-start gap-2.5 rounded-2xl border border-border bg-accent/5 p-3">
-                      <Lightbulb
-                        size={13}
-                        strokeWidth={2.5}
-                        className="mt-0.5 shrink-0 text-muted-foreground/50"
-                      />
+                      <Lightbulb size={13} className="mt-0.5 shrink-0 text-muted-foreground/50" />
                       <p className="text-xs font-medium text-muted-foreground/80 leading-relaxed">
                         {result.grammarNote}
                       </p>
@@ -315,14 +296,14 @@ export function SentenceChallenge({ cardId, term, onGetChallenge, onCheckSentenc
                       onClick={handleRetry}
                       className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl border border-border bg-background py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground transition-all hover:bg-accent active:scale-95"
                     >
-                      <RotateCcw size={12} strokeWidth={2.5} /> Try again
+                      <RotateCcw size={12} /> Try again
                     </button>
                     <button
                       type="button"
                       onClick={handleNewChallenge}
                       className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-violet-600 py-3 text-xs font-bold uppercase tracking-wide text-white shadow-md shadow-violet-600/20 transition-all hover:bg-violet-500 active:scale-95"
                     >
-                      <PenLine size={12} strokeWidth={2.5} /> New challenge
+                      <PenLine size={12} /> New challenge
                     </button>
                   </div>
                 </motion.div>

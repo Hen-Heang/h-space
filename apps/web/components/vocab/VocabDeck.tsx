@@ -81,7 +81,7 @@ function DeckAddForm({
         onClick={() => setOpen(true)}
         className="flex w-full items-center justify-center gap-2 border-t border-border/60 px-4 py-3.5 text-xs font-bold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-accent/5 hover:text-foreground"
       >
-        <Plus size={14} strokeWidth={3} />
+        <Plus size={14} />
         Add word to this deck
       </button>
     )
@@ -102,7 +102,7 @@ function DeckAddForm({
           aria-label="Close add form"
           className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors after:absolute after:-inset-2 after:content-[''] hover:bg-accent/50 hover:text-foreground"
         >
-          <X size={14} strokeWidth={3} />
+          <X size={14} />
         </button>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
@@ -143,7 +143,7 @@ function DeckAddForm({
         disabled={!canSave}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
       >
-        <Plus aria-hidden="true" size={16} strokeWidth={3} />
+        <Plus aria-hidden="true" size={16} />
         {saving ? "Saving…" : "Add word"}
       </button>
     </div>
@@ -207,7 +207,7 @@ export function VocabDeck({
         >
           <div className="flex w-full items-start justify-between gap-2">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-500/10 text-teal-600">
-              <FolderOpen size={18} strokeWidth={2.5} />
+              <FolderOpen size={18} />
             </div>
             {dueCount > 0 && (
               <span className="shrink-0 rounded-full bg-amber-500/10 px-2 py-1 text-xs font-bold tabular-nums text-amber-600 dark:text-amber-400">
@@ -254,7 +254,7 @@ export function VocabDeck({
           className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/40 sm:px-6"
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-500/10 text-teal-600">
-            <FolderOpen size={18} strokeWidth={2.5} />
+            <FolderOpen size={18} />
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-bold text-foreground">{name}</p>
@@ -275,7 +275,6 @@ export function VocabDeck({
           </div>
           <ChevronDown
             size={18}
-            strokeWidth={2.5}
             className={cn(
               "shrink-0 text-muted-foreground/40 transition-transform duration-200",
               isOpen && "rotate-180",

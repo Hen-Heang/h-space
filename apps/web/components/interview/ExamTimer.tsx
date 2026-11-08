@@ -62,7 +62,7 @@ export function ExamTimer({
             : "bg-accent/40 text-foreground",
       )}
     >
-      <TimerIcon size={15} strokeWidth={2.5} />
+      <TimerIcon size={15} />
       {minutes}:{String(seconds).padStart(2, "0")}
     </span>
   )

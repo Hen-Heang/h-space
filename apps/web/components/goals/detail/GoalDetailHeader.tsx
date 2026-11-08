@@ -85,7 +85,7 @@ export function GoalDetailHeader({
           aria-label="Back to goals"
           className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
-          <ArrowLeft size={18} strokeWidth={2} />
+          <ArrowLeft size={18} />
         </Link>
 
         <div

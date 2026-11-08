@@ -95,7 +95,7 @@ function KoreanCoachDashboard() {
           aria-label="Korean Coach preferences"
           className="flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent"
         >
-          <Settings2 size={18} strokeWidth={2.2} />
+          <Settings2 size={18} />
         </Link>
       </div>
 
@@ -129,7 +129,7 @@ function KoreanCoachDashboard() {
           href={`/korean-coach/practice/${scenario.id}`}
           className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-rose-600 text-sm font-bold text-white shadow-sm shadow-rose-600/20 transition-colors hover:bg-rose-500 active:scale-[0.985] dark:bg-rose-500 dark:hover:bg-rose-400"
         >
-          <Mic size={16} strokeWidth={2.2} />
+          <Mic size={16} />
           Start speaking
         </Link>
       </div>
@@ -182,7 +182,7 @@ function CompactLink({
       className="flex items-center gap-2 rounded-full border border-border/70 bg-card/70 px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm outline-none transition-colors hover:border-rose-500/35 focus-visible:ring-2 focus-visible:ring-ring/70 dark:bg-slate-900/40"
     >
       <span className="flex size-6 items-center justify-center rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400">
-        <Icon size={13} strokeWidth={2.2} />
+        <Icon size={13} />
       </span>
       {label}
       {badge != null && (

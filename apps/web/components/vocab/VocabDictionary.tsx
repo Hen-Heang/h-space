@@ -432,7 +432,7 @@ export function VocabDictionary({
                     viewMode === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground",
                   )}
                 >
-                  <List size={14} strokeWidth={2.5} />
+                  <List size={14} />
                 </Button>
                 <Button
                   type="button"
@@ -446,7 +446,7 @@ export function VocabDictionary({
                     viewMode === "grid" ? "bg-primary/10 text-primary" : "text-muted-foreground",
                   )}
                 >
-                  <LayoutGrid size={14} strokeWidth={2.5} />
+                  <LayoutGrid size={14} />
                 </Button>
               </div>
             </div>
@@ -488,7 +488,7 @@ export function VocabDictionary({
 
       {!loading && words.length > 0 && !filtered.length ? (
         <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-accent/5 p-10 text-center">
-          <SearchX size={32} strokeWidth={1.5} className="mb-4 text-muted-foreground/60" />
+          <SearchX size={32} className="mb-4 text-muted-foreground/60" />
           <h3 className="text-base font-semibold text-foreground">No matching words</h3>
           <p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
             Try a different book, level, priority, part of speech, spelling, or progress filter.
@@ -502,7 +502,7 @@ export function VocabDictionary({
       {!loading && !words.length ? (
         <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-accent/5 p-10 text-center sm:rounded-3xl sm:p-16">
           <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-muted/10 text-muted-foreground/60">
-            <Layers3 size={40} strokeWidth={1.5} />
+            <Layers3 size={40} />
           </div>
           <h3 className="text-xl font-bold text-foreground">Start Your Collection</h3>
           <p className="mx-auto mt-3 max-w-xs text-base font-medium leading-relaxed text-muted-foreground">
@@ -511,7 +511,7 @@ export function VocabDictionary({
           </p>
           {onStartAdd && (
             <Button type="button" onClick={onStartAdd} size="lg" className="mt-6">
-              <Plus size={18} strokeWidth={2.5} />
+              <Plus size={18} />
               Add your first words
             </Button>
           )}

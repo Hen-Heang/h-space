@@ -157,7 +157,7 @@ function PracticeSession() {
                 aria-label="Previous step"
                 className="flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent disabled:opacity-30"
               >
-                <ChevronLeft size={16} strokeWidth={2.5} />
+                <ChevronLeft size={16} />
               </button>
               <span
                 aria-live="polite"
@@ -176,7 +176,7 @@ function PracticeSession() {
                 aria-label="Next step"
                 className="flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent disabled:opacity-30"
               >
-                <ChevronRight size={16} strokeWidth={2.5} />
+                <ChevronRight size={16} />
               </button>
             </div>
           )}
@@ -214,7 +214,7 @@ function StepCard({ item }: { item: MissionItem }) {
     <div className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-900/40 sm:p-8">
       <div className="flex items-center gap-2.5">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/15">
-          <MissionItemIcon type={item.type} size={17} strokeWidth={2.2} />
+          <MissionItemIcon type={item.type} size={17} />
         </span>
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
@@ -237,7 +237,7 @@ function StepCard({ item }: { item: MissionItem }) {
 
       {done ? (
         <p className="mt-6 flex items-center gap-2 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-          <CheckCircle2 size={18} strokeWidth={2.5} />
+          <CheckCircle2 size={18} />
           Done for today
         </p>
       ) : (
@@ -365,7 +365,7 @@ function CompletionSummary({
     >
       <motion.div variants={itemVariants} className="flex items-center gap-3">
         <span className="flex size-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-          <PartyPopper size={22} strokeWidth={2.2} />
+          <PartyPopper size={22} />
         </span>
         <div>
           <h2 className="text-lg font-bold text-foreground">Daily goal complete!</h2>
@@ -382,7 +382,7 @@ function CompletionSummary({
         >
           {mission.items.map((item) => (
             <li key={item.id} className="flex items-center gap-2 text-sm text-foreground">
-              <CheckCircle2 size={15} strokeWidth={2.5} className="shrink-0 text-emerald-500" />
+              <CheckCircle2 size={15} className="shrink-0 text-emerald-500" />
               {missionItemSummary(item)}
             </li>
           ))}

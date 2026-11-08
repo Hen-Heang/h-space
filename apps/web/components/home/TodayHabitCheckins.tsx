@@ -34,12 +34,7 @@ function HabitCheckinRow({ habit }: { habit: Habit }) {
       className={HOME_ROW}
     >
       {/* Neutral category icon — one accent colour per screen, not one per habit. */}
-      <Icon
-        size={18}
-        strokeWidth={2}
-        aria-hidden="true"
-        className="shrink-0 text-muted-foreground"
-      />
+      <Icon size={18} aria-hidden="true" className="shrink-0 text-muted-foreground" />
       <span
         className={cn(
           "line-clamp-2 min-w-0 flex-1 break-words text-base text-foreground",

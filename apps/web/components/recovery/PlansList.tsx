@@ -160,12 +160,12 @@ function PlanCard({
             onClick={() => setEditing(true)}
             aria-label="Edit plan"
           >
-            <Pencil size={14} strokeWidth={2} />
+            <Pencil size={14} />
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="ghost" size="icon-sm" aria-label="Delete plan">
-                <Trash2 size={14} strokeWidth={2} />
+                <Trash2 size={14} />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

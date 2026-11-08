@@ -435,9 +435,9 @@ export function LessonRunner({ lessonId }: { lessonId: string }) {
               )}
             >
               {result.completed ? (
-                <CheckCircle2 aria-hidden="true" size={28} strokeWidth={2.5} />
+                <CheckCircle2 aria-hidden="true" size={28} />
               ) : (
-                <RotateCcw aria-hidden="true" size={26} strokeWidth={2.5} />
+                <RotateCcw aria-hidden="true" size={26} />
               )}
             </div>
             <p className="mt-4 text-2xl font-bold text-foreground">

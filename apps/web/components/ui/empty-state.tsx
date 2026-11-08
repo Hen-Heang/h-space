@@ -31,7 +31,7 @@ export function EmptyState({
         className,
       )}
     >
-      {Icon && <Icon size={24} strokeWidth={1.75} aria-hidden className="text-muted-foreground" />}
+      {Icon && <Icon size={24} aria-hidden className="text-muted-foreground" />}
       <p className={cn("text-base font-medium text-foreground", Icon && "mt-3")}>{title}</p>
       {description && <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>}
       {action && <div className="mt-4">{action}</div>}

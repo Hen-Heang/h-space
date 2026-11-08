@@ -52,7 +52,7 @@ export function StudyPack({
       >
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600">
-            <BookOpen size={20} strokeWidth={2.5} />
+            <BookOpen size={20} />
           </div>
           <div>
             <CardTitle className="text-xl font-bold">Exam Topic Course</CardTitle>
@@ -137,7 +137,7 @@ export function StudyPack({
 
                   {prep.answerFrames && prep.answerFrames.length > 0 && (
                     <section>
-                      <SectionLabel icon={<Sparkles size={13} strokeWidth={3} />} color="blue">
+                      <SectionLabel icon={<Sparkles size={13} />} color="blue">
                         Six reusable answer frames
                       </SectionLabel>
                       <div className="mt-3 grid gap-3 lg:grid-cols-2">
@@ -180,10 +180,7 @@ export function StudyPack({
                   )}
 
                   <section>
-                    <SectionLabel
-                      icon={<MessageCircleQuestion size={13} strokeWidth={3} />}
-                      color="blue"
-                    >
+                    <SectionLabel icon={<MessageCircleQuestion size={13} />} color="blue">
                       Model Q&amp;A · {modelQuestions.length} answers
                     </SectionLabel>
                     <div className="mt-3 space-y-3">
@@ -198,7 +195,7 @@ export function StudyPack({
                   </section>
 
                   <section>
-                    <SectionLabel icon={<Quote size={13} strokeWidth={3} />} color="emerald">
+                    <SectionLabel icon={<Quote size={13} />} color="emerald">
                       Key phrases
                     </SectionLabel>
                     <div className="mt-3 space-y-2">
@@ -239,7 +236,7 @@ export function StudyPack({
 
               {prep.sources && prep.sources.length > 0 && (
                 <section className="mt-8 border-t border-border pt-6">
-                  <SectionLabel icon={<ExternalLink size={13} strokeWidth={3} />} color="slate">
+                  <SectionLabel icon={<ExternalLink size={13} />} color="slate">
                     Research basis
                   </SectionLabel>
                   <p className="mt-2 text-xs font-medium leading-relaxed text-muted-foreground">

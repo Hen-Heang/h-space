@@ -98,7 +98,7 @@ export function EssentialBooksPanel({ words, loading }: EssentialBooksPanelProps
       <div className="space-y-5 p-5 sm:p-6">
         <div className="flex items-start gap-3">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
-            <BookOpenCheck size={22} strokeWidth={2.2} aria-hidden="true" />
+            <BookOpenCheck size={22} aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="app-kicker">Essential Korean books</p>

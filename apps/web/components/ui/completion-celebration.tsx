@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "motion/react"
+import { PartyPopper } from "lucide-react"
 
 // Ported from Orbit components/ui/CompletionCelebration.tsx. A lightweight,
 // dependency-free confetti burst + "Congratulations!" card. Render it once near
@@ -90,12 +91,12 @@ export function CompletionCelebration({
             transition={{ type: "spring", stiffness: 300, damping: 18 }}
           >
             <motion.div
-              className="text-5xl"
+              className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary"
               initial={{ scale: 0, rotate: -30 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: "spring", stiffness: 260, damping: 11, delay: 0.05 }}
             >
-              🎉
+              <PartyPopper aria-hidden="true" className="size-8" />
             </motion.div>
             <p className="text-xl font-bold tracking-tight text-foreground">{message}</p>
             <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">

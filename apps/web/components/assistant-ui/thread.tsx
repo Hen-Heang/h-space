@@ -306,7 +306,7 @@ const CorrectionCard: FC = () => {
   return (
     <div className="fade-in slide-in-from-bottom-1 animate-in mt-3 overflow-hidden rounded-2xl border border-amber-500/20 bg-amber-500/[0.03] shadow-sm duration-200">
       <div className="flex items-center gap-2 border-b border-amber-500/10 bg-amber-500/5 px-4 py-2.5">
-        <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400" strokeWidth={2.5} />
+        <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400" />
         <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">
           Suggested Improvement
         </p>

@@ -28,7 +28,7 @@ export default function MainError({
         onClick={reset}
         className="mt-8 h-11 rounded-xl bg-blue-600 px-6 font-semibold hover:bg-blue-500"
       >
-        <RotateCw size={18} strokeWidth={2} className="mr-2" />
+        <RotateCw size={18} className="mr-2" />
         Try again
       </Button>
     </div>

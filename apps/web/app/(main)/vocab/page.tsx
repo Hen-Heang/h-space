@@ -198,7 +198,6 @@ function VocabPageContent() {
                 <Search
                   aria-hidden="true"
                   size={18}
-                  strokeWidth={2}
                   className="pointer-events-none ml-2 shrink-0 text-muted-foreground"
                 />
                 <Input

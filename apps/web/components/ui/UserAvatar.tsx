@@ -39,7 +39,7 @@ export function UserAvatar({ className, href, title = "Your profile" }: UserAvat
 
   const badge = (
     <span className="absolute -right-1 -bottom-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-card bg-emerald-400">
-      <CheckCircle2 size={8} strokeWidth={4} className="text-white" />
+      <CheckCircle2 size={8} className="text-white" />
     </span>
   )
 

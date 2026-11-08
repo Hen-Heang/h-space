@@ -87,7 +87,7 @@ export function OverviewTab({
       {/* ── Next Best Action ─────────────────────────────────────────────── */}
       <Card className="rounded-xl border-border p-4 sm:p-5">
         <div className="flex items-center gap-2">
-          <Play size={14} strokeWidth={2.5} className="text-primary" />
+          <Play size={14} className="text-primary" />
           <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Next best action
           </h2>
@@ -310,7 +310,7 @@ export function OverviewTab({
           <ul className="mt-3 space-y-2">
             {recentCompleted.map((t) => (
               <li key={t.id} className="flex items-center gap-2.5 text-sm">
-                <Check size={14} className="shrink-0 text-emerald-500" strokeWidth={2.5} />
+                <Check size={14} className="shrink-0 text-emerald-500" />
                 <span className="min-w-0 flex-1 truncate font-medium text-foreground">
                   {t.title || t.description}
                 </span>

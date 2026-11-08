@@ -291,7 +291,7 @@ function ListeningPageContent() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <Headphones size={20} strokeWidth={2.5} aria-hidden />
+                  <Headphones size={20} aria-hidden />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
@@ -484,7 +484,7 @@ function ListeningPageContent() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <CheckCircle2 size={20} strokeWidth={2.5} aria-hidden />
+                      <CheckCircle2 size={20} aria-hidden />
                     </div>
                     <div>
                       <p id="listening-result-score" className="text-sm font-bold text-foreground">
@@ -518,12 +518,7 @@ function ListeningPageContent() {
           variants={itemVariants}
           className="rounded-3xl border border-dashed border-border bg-card/40 p-10 text-center"
         >
-          <Headphones
-            size={32}
-            className="mx-auto text-muted-foreground/50"
-            strokeWidth={2}
-            aria-hidden
-          />
+          <Headphones size={32} className="mx-auto text-muted-foreground/50" aria-hidden />
           <p className="mt-3 text-sm font-bold text-foreground">No lesson yet</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Pick a topic above and generate your first listening lesson.
