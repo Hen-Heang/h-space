@@ -338,10 +338,10 @@ and the urge flow's steps.
 - Re-run the sweep at all widths, light and dark.
 - Fix remaining sub-12px text.
 - Keyboard pass through dialogs and sheets.
-- Delete confirmed-dead components (`WorkspacePosterCard`, `StreakCard`,
+- ~~Delete confirmed-dead components (`WorkspacePosterCard`, `StreakCard`,
   `BestQuizStreakCard`, `FirstRunBanner`, `GoalMilestones`,
   `ExamCountdownBanner`, `SpeakingScoreCard`, `practice/LearningSnapshot`),
-  only after re-confirming zero imports.
+  only after re-confirming zero imports.~~ Done in #101 (see below).
 - Consider `@axe-core/playwright` in the sweep. It's a dev dependency, added
   only with the owner's OK.
 
@@ -532,3 +532,52 @@ answered, recall wrong, listening revealed, and the sentence mode's
 Left for the next vocab PR: `SentenceChallenge.tsx` (≈74 hits, also used by
 `DailyPhraseCard`), `VocabCard.tsx`, `VocabDeck.tsx` and `DeckBuilder.tsx` —
 the library and add-words flows, not the review session.
+
+### Phase 6 status — 6a and 6b
+
+Merged 2026-11-08.
+
+- **6a (#101):** the eight dead components above are deleted. Before
+  deleting, they were re-checked: no importer by name or by path, and no
+  module left orphaned. `/interview/script`'s version history used
+  `window.prompt` + three `window.confirm`s; it now uses a `Dialog` to name a
+  version (a taken name shows the unique name it will be saved under) and one
+  `AlertDialog` for "Mark active" / "Load into editor". No
+  `window.confirm/prompt/alert` is left in `app/` or `components/`.
+- **6b (#102):** Planner and Home already had skeletons and `EmptyState`. The
+  audit's "~98 spinner files" were nearly all in-button progress, which is
+  correct. Changes:
+  - Page-level loaders on `/reading/[id]`, `/reading/[id]/edit` and
+    `/notes/[slug]` → new `components/ui/reader-skeleton.tsx` (tested).
+  - "Not found" states → `EmptyState`.
+  - Twelve hand-made empty blocks → `EmptyState` (Listening, goal templates,
+    memories, History, Reading home, Foundations, chat sidebar, Coach
+    mistakes, Notes home and project notes).
+- **Still open:** the full sweep at every width in both themes, the keyboard
+  pass through dialogs and sheets, and `@axe-core/playwright` (owner's OK).
+
+### Screen restyles — History (#104) and Reading (#105)
+
+Merged 2026-11-08. Visual only; data, filtering, quiz and save logic are
+unchanged.
+
+- **History:**
+  - The side sections are flat surfaces with sentence-case `h2`s.
+  - Corrections are one surface with divided rows that expand in place.
+  - `primary` for the active filter, practice days and selected chips;
+    Original/Corrected are outlined destructive/success.
+- **Reading:**
+  - The reader's header, grammar note, paragraphs, vocabulary and quiz are
+    flat; lists are divided rows.
+  - Emerald accent → `primary`; success only for saved/completed/correct.
+  - `BackLink desktopOnly` removes the duplicate back control on phones.
+  - The vocab message no longer shows save errors in green.
+  - `UnitEditor` got the same pass, with `aria-pressed` pills and a named
+    correct-answer toggle.
+- **Found, not changed:**
+  - History's rating filters can never match (rating isn't mapped from
+    `kori_corrections`).
+  - `UnitEditor`'s field labels aren't `<label>`s.
+- **Remaining screens:** Chat leftovers, Interview, Roadmap, Recovery, and the
+  rest of vocab (`SentenceChallenge`, `VocabCard`, `VocabDeck`,
+  `DeckBuilder`).
