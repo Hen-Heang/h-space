@@ -492,3 +492,43 @@ Sweep (worktree dev server, synthetic data): `/goals/overview`, `/inbox`,
 `/goals/create`, `/goals/calendar` and the five goal-detail routes pass at
 320/390/768/1024/1440. Remaining sub-13px text there: the `⌘K` hint, the
 "Anytime" badge and phone calendar weekday labels.
+
+### Vocab review (Memory Lab) restyle
+
+Done on `ui/vocab-review-restyle` (2026-11-08). `components/vocab/ReviewSession.tsx`
+was the most off-system file in the app (≈168 hits: Duolingo hex colours,
+emerald/teal/violet/sky accents, gradients, coloured shadows, 3D
+`border-b-4` press edges, `rounded-2xl/3xl`, stroke 2.5–3, uppercase labels,
+emoji). Visual pass only; scheduling, saving, retry, requeue and the
+dialog/focus model are unchanged.
+
+- **Tokens:** `primary` for actions, selection and progress; `success` /
+  `destructive` for right/wrong (fills, borders, icons); the `--grade-*`
+  tokens stay for Again/Hard/Good/Easy. Success _text_ uses
+  `text-emerald-700 dark:text-emerald-400`, because the `success` token is
+  only ≈3.4:1 as text on white (fine as a fill or icon).
+- **Surfaces:** one flat `rounded-xl` card face shared by every mode; AI hints,
+  examples and grammar notes are `.app-surface-muted`; the sentence result's
+  "Corrected" / "More natural" boxes are told apart by label, not colour.
+- **Controls:** primary/secondary actions are the shared `Button`; the shell
+  headers share one `LAB_HEADER` + ghost icon back button; category chips and
+  mode icons (one Lucide icon per mode) are small local components.
+- **Copy:** sentence case and lighter weights throughout ("Tap to reveal",
+  "Next word", "Session results"); emoji removed from praise and the best-
+  streak line. The correct-answer reaction is one success chip whose icon turns
+  into a flame from three in a row, instead of a floating emoji burst.
+- **Behaviour added:** Quiz options show 1–4 and answer to those keys, then
+  Enter moves on (matching Cards' 1–4 grading). Enter aimed at a focused button
+  is left to the button, so "Next word" can't grade twice — covered by a test.
+  The recall input and sentence textarea gained accessible names.
+- **Bug fixed:** on phones the results screen's two buttons collapsed to ≈28px
+  tall (`flex-1` in a column overrode `h-11`); `flex-1` is now `sm:` only.
+
+Checked rendered at 390px (light and dark) and 1280px with synthetic words and
+all network mocked: launch card, setup, card front/back, results, quiz
+answered, recall wrong, listening revealed, and the sentence mode's
+"couldn't load" state. Not checked: a real AI sentence result, real audio.
+
+Left for the next vocab PR: `SentenceChallenge.tsx` (≈74 hits, also used by
+`DailyPhraseCard`), `VocabCard.tsx`, `VocabDeck.tsx` and `DeckBuilder.tsx` —
+the library and add-words flows, not the review session.
