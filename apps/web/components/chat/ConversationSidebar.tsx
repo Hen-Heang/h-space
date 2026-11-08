@@ -66,7 +66,7 @@ export function ConversationSidebar({
             title="New chat"
             className="h-11 gap-1 rounded-lg border-border/70 bg-background px-3 text-xs text-foreground"
           >
-            <Plus size={14} strokeWidth={2.5} />
+            <Plus size={14} />
             New
           </Button>
           {onCollapse && (
@@ -78,7 +78,7 @@ export function ConversationSidebar({
               aria-label="Hide chat history"
               className="h-11 w-11 rounded-lg text-muted-foreground/60 hover:bg-accent hover:text-foreground"
             >
-              <PanelLeftClose size={16} strokeWidth={2.5} />
+              <PanelLeftClose size={16} />
             </Button>
           )}
         </div>

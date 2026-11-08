@@ -68,11 +68,7 @@ export function ScoreTrend({ records }: { records: ScorecardRecord[] }) {
                     : "text-muted-foreground",
               )}
             >
-              {delta > 0 ? (
-                <TrendingUp size={13} strokeWidth={3} />
-              ) : delta < 0 ? (
-                <TrendingDown size={13} strokeWidth={3} />
-              ) : null}
+              {delta > 0 ? <TrendingUp size={13} /> : delta < 0 ? <TrendingDown size={13} /> : null}
               {delta > 0 ? `+${delta}` : delta} from last
             </p>
           )}

@@ -102,7 +102,7 @@ export function TextbookImport({ existingTerms, onImport, embedded = false }: Te
             </p>
           </div>
           <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 sm:flex">
-            <ClipboardPaste size={24} strokeWidth={2.5} />
+            <ClipboardPaste size={24} />
           </div>
         </div>
       )}
@@ -187,7 +187,7 @@ export function TextbookImport({ existingTerms, onImport, embedded = false }: Te
                   aria-label="Edit entry"
                   className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-muted-foreground/40 transition-colors hover:bg-accent/50 hover:text-foreground"
                 >
-                  <Pencil size={12} strokeWidth={2.5} />
+                  <Pencil size={12} />
                 </button>
                 <button
                   type="button"
@@ -195,7 +195,7 @@ export function TextbookImport({ existingTerms, onImport, embedded = false }: Te
                   aria-label="Remove entry"
                   className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-muted-foreground/40 transition-colors hover:bg-red-500/10 hover:text-red-500"
                 >
-                  <X size={12} strokeWidth={3} />
+                  <X size={12} />
                 </button>
               </li>
             ))}
@@ -213,7 +213,7 @@ export function TextbookImport({ existingTerms, onImport, embedded = false }: Te
               </>
             ) : (
               <>
-                <ClipboardPaste size={18} strokeWidth={2.5} className="mr-2" /> Import Words
+                <ClipboardPaste size={18} className="mr-2" /> Import Words
               </>
             )}
           </Button>

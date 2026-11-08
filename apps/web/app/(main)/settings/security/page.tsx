@@ -74,7 +74,7 @@ function StepBadge({ n, done }: { n: number; done?: boolean }) {
         done ? "bg-emerald-500/15 text-emerald-600" : "bg-primary/10 text-primary",
       )}
     >
-      {done ? <Check size={15} strokeWidth={2.5} /> : n}
+      {done ? <Check size={15} /> : n}
     </span>
   )
 }

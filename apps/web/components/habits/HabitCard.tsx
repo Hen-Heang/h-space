@@ -34,7 +34,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
         <div
           className={`pointer-events-none flex size-10 shrink-0 items-center justify-center rounded-xl ${CATEGORY_COLORS[habit.category]}`}
         >
-          <Icon size={19} strokeWidth={2} />
+          <Icon size={19} />
         </div>
 
         <div className="pointer-events-none min-w-0 flex-1">

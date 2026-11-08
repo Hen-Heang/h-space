@@ -65,7 +65,7 @@ export function LevelBadge({ className }: { className?: string }) {
       )}
     >
       <span className="flex items-center gap-1.5">
-        <Trophy size={13} strokeWidth={2.5} />
+        <Trophy size={13} />
         <span className="text-xs font-bold uppercase tracking-wide text-nowrap">
           Lv {level.level} · {level.totalXp} XP
         </span>

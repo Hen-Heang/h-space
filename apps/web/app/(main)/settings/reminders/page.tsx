@@ -46,7 +46,7 @@ export default function RemindersSettingsPage() {
             </p>
           </div>
           <Button type="button" size="sm" className="shrink-0" onClick={() => setCreating(true)}>
-            <Plus size={15} strokeWidth={2.5} />
+            <Plus size={15} />
             New
           </Button>
         </div>
@@ -91,7 +91,7 @@ export default function RemindersSettingsPage() {
                 className="mt-2"
                 onClick={() => setCreating(true)}
               >
-                <Plus size={15} strokeWidth={2.5} />
+                <Plus size={15} />
                 New reminder
               </Button>
             </motion.div>

@@ -88,7 +88,7 @@ export function WorkspacePosterCard({
               accent.iconBg,
             )}
           >
-            <Icon size={20} strokeWidth={2} />
+            <Icon size={20} />
           </div>
           <p className={cn("text-xs font-semibold uppercase tracking-wide", accent.eyebrow)}>
             {eyebrow}

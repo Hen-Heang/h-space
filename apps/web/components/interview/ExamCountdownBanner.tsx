@@ -68,7 +68,7 @@ export function ExamCountdownBanner() {
     >
       <div className="flex items-center gap-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-600 dark:text-rose-400">
-          <GraduationCap size={24} strokeWidth={2} />
+          <GraduationCap size={24} />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -113,7 +113,7 @@ export function ExamCountdownBanner() {
             <span>K-Specialist speaking exam · {EXAM_DATE_LABEL}</span>
             {daysToScript >= 0 && (
               <span className="inline-flex shrink-0 items-center gap-1 text-blue-600 dark:text-blue-400">
-                <FileText size={12} strokeWidth={2} />
+                <FileText size={12} />
                 script due in {daysToScript}d
               </span>
             )}

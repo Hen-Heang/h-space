@@ -110,7 +110,7 @@ export function AddWordCard({ categories, onAdd, onUpdate, embedded = false }: A
             </p>
           </div>
           <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 sm:flex">
-            <PencilLine size={24} strokeWidth={2.5} />
+            <PencilLine size={24} />
           </div>
         </div>
       )}
@@ -176,7 +176,7 @@ export function AddWordCard({ categories, onAdd, onUpdate, embedded = false }: A
           disabled={!canSave}
           className="h-14 w-full rounded-2xl bg-emerald-600 px-6 text-base font-bold text-white shadow-xl shadow-emerald-600/20 transition-all hover:bg-emerald-500 active:scale-95 disabled:opacity-50 sm:w-auto sm:px-8"
         >
-          <Plus size={20} strokeWidth={2.5} className="mr-2 shrink-0" />
+          <Plus size={20} className="mr-2 shrink-0" />
           {saving ? "Saving…" : "Add to deck"}
         </Button>
         {categories.length > 0 && (

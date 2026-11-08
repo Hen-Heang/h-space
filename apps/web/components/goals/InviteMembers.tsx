@@ -86,7 +86,6 @@ export function InviteMembers({ goalId, onInvited }: InviteMembersProps) {
       <div className="relative">
         <Search
           size={16}
-          strokeWidth={2.5}
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50"
         />
         <Input
@@ -149,11 +148,11 @@ export function InviteMembers({ goalId, onInvited }: InviteMembersProps) {
                   <Loader2 size={15} className="animate-spin" />
                 ) : invited ? (
                   <>
-                    <Check size={15} strokeWidth={2.5} /> Invited
+                    <Check size={15} /> Invited
                   </>
                 ) : (
                   <>
-                    <UserPlus size={15} strokeWidth={2.5} /> Invite
+                    <UserPlus size={15} /> Invite
                   </>
                 )}
               </Button>

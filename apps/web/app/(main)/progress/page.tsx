@@ -51,7 +51,7 @@ export default function ProgressPage() {
                   card.color ?? "text-primary",
                 )}
               >
-                <Icon size={20} strokeWidth={2.25} />
+                <Icon size={20} />
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="text-base font-semibold text-foreground">{card.label}</h3>

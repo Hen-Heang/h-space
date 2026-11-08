@@ -19,6 +19,7 @@ import {
   Headphones,
   Drama,
   BookOpenText,
+  Flame,
 } from "lucide-react"
 import { motion } from "motion/react"
 
@@ -252,7 +253,7 @@ export default function Home() {
                   variants={itemVariants}
                   className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-blue-700 dark:text-blue-400"
                 >
-                  <BrainCircuit size={14} strokeWidth={2.5} />
+                  <BrainCircuit size={14} />
                   Personal software ecosystem
                 </motion.div>
 
@@ -338,7 +339,7 @@ export default function Home() {
                   className="absolute -right-4 top-16 z-10 hidden rounded-2xl border border-border bg-background px-4 py-2.5 shadow-xl lg:flex items-center gap-2.5"
                 >
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
-                    <BookOpenCheck size={14} strokeWidth={2.5} />
+                    <BookOpenCheck size={14} />
                   </div>
                   <div>
                     <p className="text-xs font-bold text-foreground">배포</p>
@@ -356,7 +357,7 @@ export default function Home() {
                   transition={{ duration: 0.6, delay: 1.3 }}
                   className="absolute -left-4 bottom-24 z-10 hidden rounded-2xl border border-border bg-background px-4 py-2.5 shadow-xl lg:flex items-center gap-2.5"
                 >
-                  <div className="text-lg">🔥</div>
+                  <Flame aria-hidden="true" className="size-5 text-amber-500" />
                   <div>
                     <p className="text-xs font-bold text-foreground">7-day streak</p>
                     <p className="text-xs text-muted-foreground">Keep it up!</p>
@@ -374,7 +375,7 @@ export default function Home() {
                       <div className="flex items-center justify-between border-b border-border/50 bg-background/80 px-6 pb-4 pt-10 backdrop-blur-md">
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
-                            <Sparkles size={16} className="text-white" strokeWidth={2.5} />
+                            <Sparkles size={16} className="text-white" />
                           </div>
                           <div>
                             <p className="text-xs font-bold leading-none text-foreground">
@@ -384,7 +385,7 @@ export default function Home() {
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1">
-                          <span className="text-xs">🔥</span>
+                          <Flame aria-hidden="true" className="size-3.5 text-amber-600" />
                           <span className="text-xs font-bold text-amber-600">7</span>
                         </div>
                       </div>
@@ -510,7 +511,7 @@ export default function Home() {
                       <div
                         className={`inline-flex rounded-2xl ${feature.iconBg} p-4 shadow-sm ring-1 ring-border/50 group-hover:scale-110 transition-transform duration-500`}
                       >
-                        <Icon size={24} strokeWidth={2} className={feature.iconColor} />
+                        <Icon size={24} className={feature.iconColor} />
                       </div>
                       <h3 className="mt-6 text-xl font-bold text-foreground">{feature.title}</h3>
                       <p className="mt-3 text-base leading-relaxed text-muted-foreground">
@@ -593,7 +594,7 @@ export default function Home() {
                         <div
                           className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${step.iconBg} shadow-sm ring-1 ring-border/50`}
                         >
-                          <Icon size={22} strokeWidth={2} className={step.iconColor} />
+                          <Icon size={22} className={step.iconColor} />
                         </div>
                         {i < processSteps.length - 1 && (
                           <div className="mt-2 w-px flex-1 bg-border/60" />
@@ -648,7 +649,7 @@ export default function Home() {
                   ].map((benefit) => (
                     <div key={benefit.title} className="flex gap-4">
                       <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-600 mt-1">
-                        <CheckCircle2 size={16} strokeWidth={3} />
+                        <CheckCircle2 size={16} />
                       </div>
                       <div>
                         <h4 className="font-bold text-foreground">{benefit.title}</h4>
@@ -676,7 +677,7 @@ export default function Home() {
                       </p>
                     </div>
                     <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1.5">
-                      <span className="text-sm">🔥</span>
+                      <Flame aria-hidden="true" className="size-4 text-amber-600" />
                       <span className="text-sm font-bold text-amber-600">12-day streak</span>
                     </div>
                   </div>
@@ -705,7 +706,7 @@ export default function Home() {
                             : "border-border bg-background/60 text-muted-foreground"
                         }`}
                       >
-                        {vocab.done && <CheckCircle2 size={12} strokeWidth={3} />}
+                        {vocab.done && <CheckCircle2 size={12} />}
                         <span className="font-bold">{vocab.term}</span>
                         <span className="opacity-70">{vocab.gloss}</span>
                       </div>

@@ -100,7 +100,7 @@ export function CorrectionsReview({ onDone }: { onDone?: () => void }) {
         <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-2xl dark:bg-slate-900/40">
           <div className="border-b border-border/60 bg-red-500/[0.03] px-5 py-7 text-center sm:px-8 sm:py-8">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-red-500/10 text-red-600 ring-1 ring-red-500/20">
-              <RotateCcw size={32} strokeWidth={2.5} />
+              <RotateCcw size={32} />
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-foreground">Mistake Review</h2>
             <p className="mt-2 text-sm font-medium text-muted-foreground">
@@ -116,7 +116,7 @@ export function CorrectionsReview({ onDone }: { onDone?: () => void }) {
               onClick={start}
               className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-red-600 text-base font-bold uppercase tracking-wide text-white shadow-xl shadow-red-600/30 transition-all hover:bg-red-500 hover:scale-[1.02] active:scale-95 disabled:opacity-40"
             >
-              <Sparkles size={20} strokeWidth={2.5} />
+              <Sparkles size={20} />
               Start Review
             </button>
           </div>
@@ -130,7 +130,7 @@ export function CorrectionsReview({ onDone }: { onDone?: () => void }) {
               onClick={() => setPhase("idle")}
               className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground/40 hover:bg-accent/50 hover:text-foreground"
             >
-              <ArrowLeft size={20} strokeWidth={2.5} />
+              <ArrowLeft size={20} />
             </button>
             <span className="text-sm font-bold uppercase tracking-wide text-foreground">
               {currentIndex + 1} <span className="opacity-20 mx-1">/</span> {total}
@@ -164,7 +164,7 @@ export function CorrectionsReview({ onDone }: { onDone?: () => void }) {
                   onClick={() => setRevealed(true)}
                   className="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-b-4 border-border bg-accent/5 text-sm font-bold uppercase tracking-wide text-foreground active:translate-y-[3px] active:border-b-0"
                 >
-                  <Eye size={18} strokeWidth={2.5} /> Show Correction
+                  <Eye size={18} /> Show Correction
                 </button>
               ) : (
                 <motion.div
@@ -242,7 +242,7 @@ export function CorrectionsReview({ onDone }: { onDone?: () => void }) {
         <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-2xl dark:bg-slate-900/40">
           <div className="flex flex-col items-center gap-6 px-5 py-10 text-center sm:px-8 sm:py-14">
             <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/20">
-              <Trophy size={40} strokeWidth={2} />
+              <Trophy size={40} />
             </div>
             <div>
               <h2 className="text-3xl font-bold tracking-tight text-foreground">Review complete</h2>
@@ -256,7 +256,7 @@ export function CorrectionsReview({ onDone }: { onDone?: () => void }) {
                 onClick={() => setPhase("idle")}
                 className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-4 text-xs font-bold uppercase tracking-wide text-white shadow-xl shadow-emerald-600/20 hover:bg-emerald-500 active:scale-95"
               >
-                <CheckCircle2 size={16} strokeWidth={3} />
+                <CheckCircle2 size={16} />
                 Done
               </button>
               {onDone && (

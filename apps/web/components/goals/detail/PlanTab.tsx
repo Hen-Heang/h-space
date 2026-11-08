@@ -176,7 +176,7 @@ export function PlanTab({
 
       <div className="flex items-center justify-between gap-3 px-1">
         <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <Flag size={13} strokeWidth={2.5} /> Phases
+          <Flag size={13} /> Phases
           {phasesLoading && <Loader2 size={12} className="animate-spin" />}
         </h2>
         <Button

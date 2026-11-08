@@ -98,7 +98,7 @@ export function DailyPhraseCard({
               : "h-10 rounded-xl border border-border bg-background px-5 text-xs font-bold text-foreground hover:bg-accent active:scale-95"
           }
         >
-          <CheckCircle2 size={14} className="mr-2" strokeWidth={2.5} />
+          <CheckCircle2 size={14} className="mr-2" />
           {phrase.learned ? "Learned" : "Mark as learned"}
         </Button>
         <Button
@@ -112,9 +112,9 @@ export function DailyPhraseCard({
           }
         >
           {justSaved ? (
-            <CheckCircle2 size={14} className="mr-2" strokeWidth={2.5} />
+            <CheckCircle2 size={14} className="mr-2" />
           ) : (
-            <BookmarkPlus size={14} className="mr-2" strokeWidth={2.5} />
+            <BookmarkPlus size={14} className="mr-2" />
           )}
           {saving ? "Saving..." : justSaved ? "Added" : "Add to flashcards"}
         </Button>
@@ -143,7 +143,7 @@ export function DailyPhraseCard({
       <div className="mt-6 rounded-2xl border border-border bg-background/60 p-5">
         <div className="mb-1 flex items-center gap-2">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
-            <PenLine size={16} strokeWidth={2.5} />
+            <PenLine size={16} />
           </div>
           <div>
             <h4 className="text-sm font-bold text-foreground">Write it yourself</h4>

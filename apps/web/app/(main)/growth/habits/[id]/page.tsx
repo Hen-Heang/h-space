@@ -88,7 +88,7 @@ export default function HabitDetailPage() {
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link href="/growth/habits">
-            <ArrowLeft size={16} strokeWidth={2} />
+            <ArrowLeft size={16} />
             Habits
           </Link>
         </Button>
@@ -120,7 +120,7 @@ export default function HabitDetailPage() {
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-sm font-bold text-foreground">
-            <Flame size={14} strokeWidth={2} className="text-orange-500" />
+            <Flame size={14} className="text-orange-500" />
             {currentStreak}d streak
           </div>
           <div className="rounded-full border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground">

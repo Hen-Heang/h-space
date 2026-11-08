@@ -72,15 +72,15 @@ export function AddWordsDialog({
     <Tabs defaultValue="manual">
       <TabsList className="grid h-12 w-full grid-cols-3 rounded-2xl border border-border/70 bg-muted/60 p-1">
         <TabsTrigger value="manual" className="gap-1.5 rounded-xl px-2 text-xs font-semibold">
-          <PencilLine size={14} strokeWidth={2.5} />
+          <PencilLine size={14} />
           Add one
         </TabsTrigger>
         <TabsTrigger value="ai" className="gap-1.5 rounded-xl px-2 text-xs font-semibold">
-          <Sparkles size={14} strokeWidth={2.5} />
+          <Sparkles size={14} />
           Build deck
         </TabsTrigger>
         <TabsTrigger value="import" className="gap-1.5 rounded-xl px-2 text-xs font-semibold">
-          <ClipboardPaste size={14} strokeWidth={2.5} />
+          <ClipboardPaste size={14} />
           Paste list
         </TabsTrigger>
       </TabsList>

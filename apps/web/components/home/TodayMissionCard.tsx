@@ -36,11 +36,7 @@ export function TodayMissionCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 ring-1 ring-inset ring-violet-500/15 dark:text-violet-400">
-            {allDone ? (
-              <PartyPopper size={18} strokeWidth={2.2} />
-            ) : (
-              <Sparkles size={18} strokeWidth={2.2} />
-            )}
+            {allDone ? <PartyPopper size={18} /> : <Sparkles size={18} />}
           </span>
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-400">
@@ -81,7 +77,6 @@ export function TodayMissionCard({
             >
               <CheckCircle2
                 size={15}
-                strokeWidth={2.5}
                 className={cn("shrink-0", done ? "text-emerald-500" : "text-muted-foreground/30")}
               />
               {missionItemSummary(item)}

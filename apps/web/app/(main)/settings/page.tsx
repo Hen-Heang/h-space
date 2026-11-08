@@ -360,7 +360,7 @@ export default function SettingsPage() {
                   onChange={handleAvatarChange}
                 />
                 <div className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-card bg-emerald-400">
-                  <CheckCircle2 size={10} className="text-white" strokeWidth={4} />
+                  <CheckCircle2 size={10} className="text-white" />
                 </div>
               </div>
               <div className="min-w-0 flex-1">
@@ -402,12 +402,12 @@ export default function SettingsPage() {
               <div>
                 <FieldLabel>Email address</FieldLabel>
                 <div className="flex h-11 items-center gap-2.5 rounded-lg border border-border bg-accent/5 px-4 opacity-60">
-                  <Mail size={14} className="shrink-0 text-muted-foreground" strokeWidth={2} />
+                  <Mail size={14} className="shrink-0 text-muted-foreground" />
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
                     {email}
                   </span>
                   <span className="hidden shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground sm:flex">
-                    <ShieldCheck size={10} strokeWidth={3} /> Verified
+                    <ShieldCheck size={10} /> Verified
                   </span>
                 </div>
               </div>
@@ -644,7 +644,7 @@ export default function SettingsPage() {
           >
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-500/10 text-red-500">
-                <LogOut size={16} strokeWidth={2} />
+                <LogOut size={16} />
               </div>
               <div>
                 <p className="text-sm font-semibold text-red-600 dark:text-red-400">Sign out</p>
@@ -653,7 +653,6 @@ export default function SettingsPage() {
             </div>
             <ChevronRight
               size={14}
-              strokeWidth={2}
               className="text-muted-foreground/60 transition-transform group-hover:translate-x-0.5"
             />
           </button>

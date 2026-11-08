@@ -77,7 +77,7 @@ export function FirstRunBanner() {
             aria-label="Dismiss welcome banner"
             className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground"
           >
-            <X size={15} strokeWidth={2.5} />
+            <X size={15} />
           </button>
 
           <div className="mb-4 pr-8">
@@ -104,7 +104,7 @@ export function FirstRunBanner() {
                       color,
                     )}
                   >
-                    <Icon size={18} strokeWidth={2.5} />
+                    <Icon size={18} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground">

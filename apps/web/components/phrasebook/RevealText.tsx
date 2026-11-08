@@ -37,7 +37,7 @@ export function RevealText({
         className,
       )}
     >
-      <Eye size={13} strokeWidth={2.5} />
+      <Eye size={13} />
       Show {label}
     </button>
   )
