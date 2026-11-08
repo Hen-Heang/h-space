@@ -17,7 +17,7 @@ import {
 
 /**
  * Key results for a goal — the measurable proof-of-outcome layer (Goal
- * System v2). Distinct from GoalMilestones (a plain checklist stored in
+ * System v2). Distinct from a goal's milestone checklist (stored in
  * goal.metadata): key results have a metric type, baseline/target/current
  * value, and a weight that feeds the weighted outcome-progress calculation
  * in lib/goal-progress.ts.

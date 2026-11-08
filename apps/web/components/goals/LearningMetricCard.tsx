@@ -58,8 +58,7 @@ function windowLabel(window: LearningMetricWindow) {
  * saved, corrections logged, foundation lessons completed, or feature session
  * count) instead of relying purely on the manual task checklist. Persists in
  * `goal.metadata.learning_metric` (no backend change) and reports the updated
- * goal up so the page's React Query cache stays in sync — same pattern as
- * GoalMilestones.
+ * goal up so the page's React Query cache stays in sync.
  */
 export function LearningMetricCard({
   goal,

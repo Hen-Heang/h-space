@@ -211,8 +211,8 @@ async function buildContext(dateKey: string): Promise<MissionContext> {
     recentFeatures: (activity.data ?? []).map((a) => a.feature),
     recentTopics: [],
     // No per-user exam-date field exists yet — there's only the one fixed
-    // K-Specialist date every account shares (same source as
-    // ExamCountdownBanner, lib/study-plan.ts), not per-account data. Rather
+    // K-Specialist date every account shares (lib/study-plan.ts, also
+    // shown by StudyPlanCard), not per-account data. Rather
     // than fabricate personalization or leave this permanently null, key it
     // off whether that shared exam window is actually still active: while
     // it's upcoming/ongoing this lets the `interview` mission type compete
