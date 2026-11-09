@@ -168,3 +168,58 @@ export function selectDecisionNotes(notes: NoteMeta[], projectId: string): NoteM
     .filter((note) => note.noteType === "decision")
     .sort((a, b) => time(b.updatedAt) - time(a.updatedAt))
 }
+
+// ---------------------------------------------------------------------------
+// AI permission level (migrations 20261109150000 + 20261109170000). Stored as
+// two columns; the app shows them as one three-way setting.
+
+export type ProjectAiLevel = "off" | "read" | "edit"
+
+export const PROJECT_AI_LEVELS: { value: ProjectAiLevel; label: string; hint: string }[] = [
+  {
+    value: "off",
+    label: "Off",
+    hint: "AI apps you've connected can't see this project or its notes.",
+  },
+  {
+    value: "read",
+    label: "Read only",
+    hint: "AI apps can list and read this project's notes, but can't add or change them.",
+  },
+  {
+    value: "edit",
+    label: "Read & edit",
+    hint: "AI apps can read, add and edit notes in this project. They can't delete notes.",
+  },
+]
+
+export interface ProjectAiAccessRow {
+  ai_access?: boolean | null
+  ai_can_edit?: boolean | null
+}
+
+/**
+ * Level from the stored columns. Without the ai_can_edit column (its migration
+ * not applied yet) an AI-accessible project means Read & edit, as before.
+ */
+export function aiLevelFromRow(row: ProjectAiAccessRow): ProjectAiLevel {
+  if (row.ai_access !== true) return "off"
+  if (!("ai_can_edit" in row)) return "edit"
+  return row.ai_can_edit === true ? "edit" : "read"
+}
+
+/**
+ * Column values for a level. Off also clears ai_can_edit, so turning AI
+ * access back on starts at Read only. `editColumn` is false while the
+ * ai_can_edit migration isn't applied (only Off and Read & edit exist then).
+ */
+export function aiLevelPatch(
+  level: ProjectAiLevel,
+  editColumn: boolean,
+): { ai_access: boolean; ai_can_edit?: boolean } {
+  if (!editColumn) {
+    if (level === "read") throw new Error("Read only isn't available yet.")
+    return { ai_access: level === "edit" }
+  }
+  return { ai_access: level !== "off", ai_can_edit: level === "edit" }
+}

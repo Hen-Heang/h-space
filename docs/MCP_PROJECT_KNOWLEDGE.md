@@ -18,18 +18,30 @@ No note deletion, cross-project transfer, bulk edits, or AI-generated changes wi
 
 ## Which projects AI can reach
 
-A project is AI-accessible when EITHER:
+Each project has an **AI access** level, set on its Project page in Notes:
 
-1. its **Allow AI access** switch is on (Project page in Notes; column
-   `kori_note_projects.ai_access`, default off; migration
-   `20261109150000_note_projects_ai_access.sql`), OR
-2. its UUID is in the env allowlist below (the original gate, kept for compatibility).
+| Level       | Columns (`kori_note_projects`)            | AI can                         |
+| ----------- | ----------------------------------------- | ------------------------------ |
+| Off         | `ai_access = false` (default)             | nothing — project is invisible |
+| Read only   | `ai_access = true`, `ai_can_edit = false` | list and read notes            |
+| Read & edit | `ai_access = true`, `ai_can_edit = true`  | also create and edit notes     |
 
-`create_knowledge_project` creates a new, empty project with the switch already on. No MCP tool
-can turn the switch on for an existing project, and a database trigger rejects any change to
-`ai_access` made with a connector token (a JWT carrying `client_id`), because an MCP token is a
-full Supabase user token that could otherwise call the data API directly. Until the migration is
-applied, the switch is hidden in the app and only the env allowlist applies.
+Migrations: `20261109150000_note_projects_ai_access.sql` (`ai_access`) and
+`20261109170000_note_projects_ai_edit_level.sql` (`ai_can_edit`; projects that already had access
+were backfilled to Read & edit). A UUID in the env allowlist below grants **Read only**.
+
+`create_knowledge_project` creates a new, empty project at Read & edit. No MCP tool can change an
+existing project's level. Because an MCP token is a full Supabase user token (its claims carry the
+connector's `client_id`) that could call the data API directly, the database enforces this too,
+for any token with a `client_id`:
+
+- `kori_note_projects`: changes to `ai_access` / `ai_can_edit` are rejected;
+- `kori_notes`: inserts and updates are allowed only in Read & edit projects; moving a note between
+  projects and deleting notes are rejected.
+
+First-party H-Space sessions have no `client_id` and are unaffected. Read access is enforced by
+the MCP server (not the database). Until `ai_can_edit` exists, the app disables Read only and the
+server treats `ai_access = true` as Read & edit.
 
 ### Env allowlist
 
