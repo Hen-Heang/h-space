@@ -1,4 +1,4 @@
-## 2026-11-08 - App icon handoff before UI PR integration
+## 2026-11-08 - App icon set (PR #98) handoff snapshot
 
 # HANDOFF
 

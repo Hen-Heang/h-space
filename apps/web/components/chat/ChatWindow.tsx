@@ -208,11 +208,13 @@ const HengoWelcome: FC = () => {
     >
       <div className="w-full max-w-xl px-4 text-center">
         <div className="relative mx-auto mb-5 w-fit">
-          <span className="absolute inset-0 scale-150 rounded-full bg-blue-500/10 blur-xl" />
-          <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1.35rem] bg-background shadow-xl shadow-blue-600/15 ring-1 ring-blue-500/20 sm:h-[4.5rem] sm:w-[4.5rem]">
+          <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-background ring-1 ring-border sm:h-[4.5rem] sm:w-[4.5rem]">
             <Image src="/hengo-icon.png" alt="" width={72} height={72} className="h-full w-full" />
           </div>
-          <span className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full border-[3px] border-background bg-emerald-500">
+          <span
+            aria-hidden="true"
+            className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full border-[3px] border-background bg-success"
+          >
             <span className="h-1.5 w-1.5 rounded-full bg-white" />
           </span>
         </div>
@@ -262,7 +264,7 @@ const HengoWelcome: FC = () => {
       <div className="w-full max-w-3xl space-y-3 px-3 sm:px-4">
         <div className="flex items-end justify-between px-1">
           <div>
-            <p className="text-xs font-bold text-foreground">Choose a conversation</p>
+            <p className="text-sm font-semibold text-foreground">Choose a conversation</p>
             <p className="mt-0.5 text-xs font-medium text-muted-foreground">
               Practice a situation you will actually use.
             </p>
@@ -610,8 +612,8 @@ export function ChatWindow({
       <HengoChatContext.Provider value={hengoContext}>
         <div
           className={cn(
-            "relative flex h-full min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden border-border/60 bg-card dark:bg-slate-950/40 dark:backdrop-blur-md",
-            compact ? "border-0 shadow-none" : "shadow-2xl md:rounded-3xl md:border",
+            "relative flex h-full min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden border-border bg-card",
+            compact ? "border-0" : "md:rounded-xl md:border",
           )}
         >
           <AnimatePresence>
@@ -697,7 +699,7 @@ export function ChatWindow({
                 )}
 
                 <div className="relative shrink-0">
-                  <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-background shadow-sm ring-1 ring-blue-500/15">
+                  <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-background ring-1 ring-border">
                     <Image
                       src="/hengo-icon.png"
                       alt=""
@@ -706,14 +708,17 @@ export function ChatWindow({
                       className="h-full w-full"
                     />
                   </div>
-                  <span className="absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 border-background bg-emerald-500" />
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 border-background bg-success"
+                  />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="truncate text-base font-semibold leading-none tracking-tight text-foreground">
                       {title}
                     </h3>
-                    <span className="hidden rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-300 sm:inline">
+                    <span className="hidden rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary sm:inline">
                       AI Coach
                     </span>
                   </div>
@@ -721,7 +726,7 @@ export function ChatWindow({
                     <span
                       className={cn(
                         "h-1.5 w-1.5 rounded-full",
-                        realtimeVoice.isActive ? "animate-pulse bg-blue-500" : "bg-emerald-500",
+                        realtimeVoice.isActive ? "animate-pulse bg-primary" : "bg-success",
                       )}
                     />
                     <p className="truncate text-xs font-medium text-muted-foreground">
@@ -734,11 +739,10 @@ export function ChatWindow({
               <div className="flex shrink-0 items-center gap-2">
                 {scenario && scenarioTurnCount >= 3 && !scenarioResult?.taskCompleted && (
                   <Button
-                    variant="outline"
                     size="sm"
                     onClick={() => void evaluateScenario()}
                     disabled={isEvaluatingScenario}
-                    className="h-11 items-center gap-1.5 rounded-lg border-emerald-500/40 bg-emerald-500/10 px-3 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
+                    className="h-11 px-3"
                   >
                     {isEvaluatingScenario ? "Checking…" : "End scenario"}
                   </Button>
@@ -748,11 +752,12 @@ export function ChatWindow({
                   variant="outline"
                   size="sm"
                   onClick={() => setIsTechnicalMode(!isTechnicalMode)}
+                  aria-pressed={isTechnicalMode}
                   className={cn(
-                    "hidden h-11 items-center gap-2 rounded-lg px-3 text-xs font-semibold transition-colors sm:flex",
+                    "hidden h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors sm:flex",
                     isTechnicalMode
-                      ? "border-blue-500/50 bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                      : "border-border/60 bg-background/50 text-muted-foreground",
+                      ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+                      : "text-muted-foreground",
                   )}
                 >
                   {isTechnicalMode ? <Terminal size={14} /> : <Briefcase size={14} />}
@@ -771,10 +776,10 @@ export function ChatWindow({
                   }
                   aria-pressed={realtimeVoice.isActive}
                   className={cn(
-                    "h-11 min-w-11 items-center gap-2 rounded-lg px-2.5 text-xs font-semibold transition-colors sm:px-3",
+                    "h-11 min-w-11 items-center gap-2 rounded-lg px-2.5 text-sm font-medium transition-colors sm:px-3",
                     realtimeVoice.isActive
                       ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "border-border/70 bg-background text-muted-foreground hover:border-blue-500/30 hover:text-foreground",
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {realtimeVoice.isActive ? <AudioLines size={14} /> : <Headphones size={14} />}
@@ -787,7 +792,7 @@ export function ChatWindow({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="hidden h-11 w-11 rounded-lg border border-border/60 bg-background/50 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95 sm:flex"
+                    className="hidden h-11 w-11 rounded-lg border border-border text-muted-foreground hover:text-foreground sm:flex"
                     onClick={onNewChat}
                     disabled={isStartingNewChat}
                     title="Start fresh"
@@ -854,11 +859,14 @@ export function ChatWindow({
             inert={realtimeVoice.isActive || undefined}
           >
             {isLoadingMessages && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-card/60 backdrop-blur-sm">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600 shadow-inner">
-                  <Sparkles size={24} className="animate-pulse" />
+              <div
+                role="status"
+                className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-card/80"
+              >
+                <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Sparkles aria-hidden="true" size={22} className="animate-pulse" />
                 </div>
-                <p className="text-xs font-semibold text-muted-foreground">Syncing History</p>
+                <p className="text-sm text-muted-foreground">Loading your conversation…</p>
               </div>
             )}
             <Thread components={compact ? COMPACT_THREAD_COMPONENTS : THREAD_COMPONENTS} />
