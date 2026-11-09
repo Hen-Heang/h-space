@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useId, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import {
+  ChevronDown,
   ExternalLink,
   FileText,
   Pencil,
@@ -26,6 +27,7 @@ import {
 import { ProjectAiAccess } from "@/components/notes/ProjectAiAccess"
 import { ProjectFormDialog } from "@/components/notes/ProjectFormDialog"
 import { Button } from "@/components/ui/button"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useNoteProjectMutations } from "@/hooks/useNoteProjects"
 import {
@@ -37,6 +39,7 @@ import {
   type ProjectInput,
 } from "@/lib/note-projects"
 import { selectRecentNotes } from "@/lib/notes-home"
+import { groupNotesBySection, selectKeyNotes, type NoteSection } from "@/lib/project-sections"
 import {
   filterNotesMeta,
   NOTE_TYPES,
@@ -86,6 +89,72 @@ function NoteList({ notes }: { notes: NoteMeta[] }) {
         </li>
       ))}
     </ul>
+  )
+}
+
+/** A pinned note as a compact card for the Start here view. */
+function KeyNoteCard({ note }: { note: NoteMeta }) {
+  return (
+    <Link
+      href={`/notes/${note.slug}`}
+      className="flex h-full min-h-20 flex-col gap-1 rounded-lg border border-border bg-background p-3 outline-none transition-colors hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <span className="line-clamp-2 text-sm font-semibold text-foreground">{note.title}</span>
+      {note.description && (
+        <span className="line-clamp-2 text-xs text-muted-foreground">{note.description}</span>
+      )}
+      <span className="mt-auto pt-1">
+        <NoteTypeChip noteType={note.noteType} />
+      </span>
+    </Link>
+  )
+}
+
+/**
+ * One collapsible section of a project's notes (notes grouped by category).
+ * Sections start open; collapsing is per visit, not saved.
+ */
+function SectionGroup({ section }: { section: NoteSection }) {
+  const headingId = useId()
+  return (
+    <Collapsible defaultOpen asChild>
+      <section aria-labelledby={headingId} className={cn(panel, "overflow-hidden")}>
+        <h3 id={headingId} className="m-0">
+          <CollapsibleTrigger className="group flex min-h-12 w-full items-center justify-between gap-2 px-4 text-left text-base font-semibold text-foreground outline-none hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+            <span className="flex min-w-0 items-baseline gap-2">
+              <span className="truncate">{section.label}</span>
+              <span className="text-sm font-normal tabular-nums text-muted-foreground">
+                {section.notes.length}
+              </span>
+            </span>
+            <ChevronDown
+              size={18}
+              aria-hidden="true"
+              className="shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180"
+            />
+          </CollapsibleTrigger>
+        </h3>
+        <CollapsibleContent>
+          <ul className="divide-y divide-border border-t border-border">
+            {section.notes.map((note) => (
+              <li key={note.slug}>
+                <NoteRow note={note} />
+              </li>
+            ))}
+          </ul>
+        </CollapsibleContent>
+      </section>
+    </Collapsible>
+  )
+}
+
+function SectionList({ sections }: { sections: NoteSection[] }) {
+  return (
+    <div className="space-y-3">
+      {sections.map((section) => (
+        <SectionGroup key={section.key} section={section} />
+      ))}
+    </div>
   )
 }
 
@@ -139,6 +208,10 @@ export function ProjectWorkspace({ project, notes }: { project: Project; notes: 
 
   const projectNotes = useMemo(() => notesInProject(notes, project.id), [notes, project.id])
   const recentNotes = useMemo(() => selectRecentNotes(projectNotes, 3), [projectNotes])
+  const keyNotes = useMemo(() => selectKeyNotes(projectNotes), [projectNotes])
+  const sections = useMemo(() => groupNotesBySection(projectNotes), [projectNotes])
+  // A lone "Unsorted" section means no note has a category yet — grouping adds nothing.
+  const hasSections = sections.some((section) => section.key !== "")
   const decisions = useMemo(() => selectDecisionNotes(notes, project.id), [notes, project.id])
   const filteredNotes = useMemo(
     () => sortNotesMeta(filterNotesMeta(projectNotes, { noteType: typeFilter, query })),
@@ -260,60 +333,113 @@ export function ProjectWorkspace({ project, notes }: { project: Project; notes: 
         </div>
 
         {/* Overview */}
-        <TabsContent value="overview" className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <TabsContent
+          value="overview"
+          className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]"
+        >
           <div className="min-w-0 space-y-6">
-            <section aria-labelledby="ws-purpose" className={cn(panel, "space-y-2 p-4")}>
-              <h3 id="ws-purpose" className={cardTitle}>
-                Purpose
-              </h3>
-              {project.description ? (
-                <p className="text-sm text-foreground">{project.description}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No description yet.{" "}
-                  <button
-                    type="button"
-                    onClick={() => setEditOpen(true)}
-                    className="min-h-11 font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    Add one
-                  </button>
-                </p>
-              )}
-            </section>
-
-            <section aria-labelledby="ws-recent" className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <h3 id="ws-recent" className={cardTitle}>
-                  Recently updated notes
+            <section aria-labelledby="ws-start" className={cn(panel, "space-y-3 p-4")}>
+              <div className="space-y-1">
+                <h3 id="ws-start" className={cardTitle}>
+                  Start here
                 </h3>
-                {projectNotes.length > 3 && (
-                  <button
-                    type="button"
-                    onClick={() => setTab("notes")}
-                    className="min-h-11 text-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    All {projectNotes.length} notes
-                  </button>
+                {/* The purpose itself is in the header; only prompt for it when missing. */}
+                {project.description ? (
+                  <p className="text-sm text-muted-foreground">Key notes to read first.</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No purpose written yet.{" "}
+                    <button
+                      type="button"
+                      onClick={() => setEditOpen(true)}
+                      className="min-h-11 font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      Add one
+                    </button>
+                  </p>
                 )}
               </div>
-              {recentNotes.length > 0 ? (
-                <NoteList notes={recentNotes} />
-              ) : (
-                <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed border-border px-4 py-6">
+              <div>
+                {keyNotes.length > 0 ? (
+                  <ul className="grid gap-2 sm:grid-cols-2">
+                    {keyNotes.map((note) => (
+                      <li key={note.slug}>
+                        <KeyNoteCard note={note} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
                   <p className="text-sm text-muted-foreground">
-                    No notes in this project yet. New notes you start here are filed in it, and you
-                    can move an existing note in from its editor.
+                    Pin the notes you open most, such as the architecture overview or a guideline,
+                    and they stay here.
                   </p>
-                  <Button asChild className="h-11 gap-1.5">
-                    <Link href={newNoteHref(project.id)}>
-                      <Plus size={16} aria-hidden="true" />
-                      New note
-                    </Link>
-                  </Button>
-                </div>
-              )}
+                )}
+              </div>
             </section>
+
+            {hasSections ? (
+              <section aria-labelledby="ws-sections" className="space-y-2">
+                <h3 id="ws-sections" className={cardTitle}>
+                  Notes by section
+                </h3>
+                <SectionList sections={sections} />
+              </section>
+            ) : (
+              <section aria-labelledby="ws-recent" className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 id="ws-recent" className={cardTitle}>
+                    Recently updated notes
+                  </h3>
+                  {projectNotes.length > 3 && (
+                    <button
+                      type="button"
+                      onClick={() => setTab("notes")}
+                      className="min-h-11 text-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      All {projectNotes.length} notes
+                    </button>
+                  )}
+                </div>
+                {recentNotes.length > 0 ? (
+                  <>
+                    <NoteList notes={recentNotes} />
+                    <p className="text-sm text-muted-foreground">
+                      Tip: give notes a category such as Architecture, Guides or Reference and they
+                      are grouped into sections here.
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed border-border px-4 py-6">
+                    <p className="text-sm text-muted-foreground">
+                      No notes in this project yet. New notes you start here are filed in it, and
+                      you can move an existing note in from its editor.
+                    </p>
+                    <Button asChild className="h-11 gap-1.5">
+                      <Link href={newNoteHref(project.id)}>
+                        <Plus size={16} aria-hidden="true" />
+                        New note
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </section>
+            )}
+          </div>
+
+          <div className="h-fit min-w-0 space-y-4">
+            <aside aria-labelledby="ws-details" className={cn(panel, "space-y-3 p-4")}>
+              <h3 id="ws-details" className={cardTitle}>
+                Details
+              </h3>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                {details.map((d) => (
+                  <div key={d.label} className="contents">
+                    <dt className="text-muted-foreground">{d.label}</dt>
+                    <dd className="text-foreground">{d.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </aside>
 
             {decisions.length > 0 && (
               <section
@@ -334,21 +460,30 @@ export function ProjectWorkspace({ project, notes }: { project: Project; notes: 
                 )}
               </section>
             )}
-          </div>
 
-          <aside aria-labelledby="ws-details" className={cn(panel, "h-fit space-y-3 p-4")}>
-            <h3 id="ws-details" className={cardTitle}>
-              Details
-            </h3>
-            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-              {details.map((d) => (
-                <div key={d.label} className="contents">
-                  <dt className="text-muted-foreground">{d.label}</dt>
-                  <dd className="text-foreground">{d.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </aside>
+            {hasSections && recentNotes.length > 0 && (
+              <section aria-labelledby="ws-recent-side" className={cn(panel, "space-y-1 p-4")}>
+                <h3 id="ws-recent-side" className={cardTitle}>
+                  Recently updated
+                </h3>
+                <ul>
+                  {recentNotes.map((note) => (
+                    <li key={note.slug}>
+                      <Link
+                        href={`/notes/${note.slug}`}
+                        className="flex min-h-11 items-center justify-between gap-2 rounded-md text-sm text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <span className="truncate">{note.title}</span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {updatedLabel(note.updatedAt)}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </div>
         </TabsContent>
 
         {/* Notes */}
@@ -391,10 +526,15 @@ export function ProjectWorkspace({ project, notes }: { project: Project; notes: 
           </div>
           <p role="status" className="text-sm text-muted-foreground">
             {filteredNotes.length} {filteredNotes.length === 1 ? "note" : "notes"}
-            {notesFiltered ? ` of ${projectNotes.length}` : ""} · pinned first
+            {notesFiltered ? ` of ${projectNotes.length}` : ""}
+            {hasSections && !notesFiltered ? " · grouped by section" : " · pinned first"}
           </p>
           {filteredNotes.length > 0 ? (
-            <NoteList notes={filteredNotes} />
+            hasSections && !notesFiltered ? (
+              <SectionList sections={sections} />
+            ) : (
+              <NoteList notes={filteredNotes} />
+            )
           ) : projectNotes.length === 0 ? (
             <EmptyState
               surface

@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { renderMarkdown } from "@/lib/notes-markdown"
 import { useNoteProjects } from "@/hooks/useNoteProjects"
 import { isReservedNoteSlug, NOTE_TYPES, validateNoteInput, type NoteType } from "@/lib/notes"
+import { PROJECT_SECTIONS } from "@/lib/project-sections"
 import { slugify } from "@/lib/slug"
 import { cn } from "@/lib/utils"
 
@@ -285,12 +286,21 @@ export function NoteEditor({ mode, initial, onSave, onCancel }: NoteEditorProps)
             </div>
           )}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Category</label>
+            <label htmlFor="note-category" className="text-xs font-medium text-muted-foreground">
+              Category (project section)
+            </label>
             <Input
+              id="note-category"
+              list="note-category-suggestions"
               value={values.category}
               onChange={(e) => set({ category: e.target.value })}
-              placeholder="e.g. Backend, Interview prep"
+              placeholder="e.g. Architecture, Guides, Reference"
             />
+            <datalist id="note-category-suggestions">
+              {PROJECT_SECTIONS.map((section) => (
+                <option key={section} value={section} />
+              ))}
+            </datalist>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">

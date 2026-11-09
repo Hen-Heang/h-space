@@ -112,11 +112,73 @@ const goals = [
   }),
 ]
 
+const NOTE_PROJECT_ID = "44444444-4444-4444-8444-444444444444"
+
+const noteProjects = [
+  {
+    id: NOTE_PROJECT_ID,
+    user_id: USER_ID,
+    name: "Sample service onboarding",
+    description: "Learn how one request moves through a sample service before changing code.",
+    project_type: "learning",
+    status: "active",
+    tags: ["spring", "sql"],
+    repo_url: null,
+    start_date: iso(-14).slice(0, 10),
+    target_date: iso(14).slice(0, 10),
+    last_opened_at: iso(-1),
+    ai_access: false,
+    created_at: iso(-14),
+    updated_at: iso(-1),
+  },
+]
+
+function projectNote(
+  n: number,
+  title: string,
+  category: string | null,
+  extra: Record<string, unknown> = {},
+) {
+  return {
+    id: `55555555-5555-4555-8555-55555555555${n}`,
+    slug: `sample-note-${n}`,
+    title,
+    description: "Synthetic note used only for layout checks.",
+    icon: "",
+    category,
+    note_type: "technical",
+    tags: ["sample"],
+    pinned: false,
+    source_url: null,
+    goal_id: null,
+    task_id: null,
+    inbox_item_id: null,
+    project_id: NOTE_PROJECT_ID,
+    created_at: iso(-10),
+    updated_at: iso(-n),
+    ...extra,
+  }
+}
+
+const notes = [
+  projectNote(1, "Architecture overview — request flow from screen to database", "Architecture", {
+    pinned: true,
+  }),
+  projectNote(2, "Team coding guideline", "Guides", { pinned: true, note_type: "reference" }),
+  projectNote(3, "How to add a list screen", "How-to"),
+  projectNote(4, "SQL cheat sheet", "Reference", { note_type: "reference" }),
+  projectNote(5, "Which mapper owns paging?", "Open questions", { note_type: "idea" }),
+  projectNote(6, "Use the shared response envelope", "Decisions", { note_type: "decision" }),
+  projectNote(7, "Loose idea without a section", null, { note_type: "idea" }),
+]
+
 const fixtures: Record<string, unknown[]> = {
   goals,
   tasks,
   goal_members: [],
   goal_stars: [],
+  kori_note_projects: noteProjects,
+  kori_notes: notes,
 }
 
 async function installMocks(page: Page, signedIn = true) {
@@ -257,6 +319,7 @@ const ROUTES = [
   "/chat",
   "/notes",
   "/notes/new",
+  `/notes/projects/${NOTE_PROJECT_ID}`,
   "/ask-hengo",
   "/ask-hengo/memories",
   "/timeline",
