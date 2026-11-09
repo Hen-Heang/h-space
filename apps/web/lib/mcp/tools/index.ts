@@ -20,6 +20,7 @@ import { registerCreateGoalTool } from "./create-goal"
 import { registerUpdateGoalTool } from "./update-goal"
 import { registerCaptureReflectionTool } from "./capture-reflection"
 import { registerCaptureKoreanPhraseTool } from "./capture-korean-phrase"
+import { registerProjectKnowledgeReadTools, registerProjectKnowledgeWriteTools } from "./project-knowledge"
 
 export const READ_TOOL_NAMES = [
   "get_today_overview",
@@ -29,6 +30,9 @@ export const READ_TOOL_NAMES = [
   "get_goal_tasks",
   "get_learning_progress",
   "get_weekly_progress",
+  "list_knowledge_projects",
+  "list_project_notes",
+  "get_project_note",
 ] as const
 
 export const WRITE_TOOL_NAMES = [
@@ -39,6 +43,8 @@ export const WRITE_TOOL_NAMES = [
   "update_goal",
   "capture_reflection",
   "capture_korean_phrase",
+  "create_project_note",
+  "update_project_note",
 ] as const
 
 export function registerReadTools(server: McpServer, ctx: McpContext): void {
@@ -47,6 +53,7 @@ export function registerReadTools(server: McpServer, ctx: McpContext): void {
   registerTaskTools(server, ctx)
   registerLearningProgressTool(server, ctx)
   registerWeeklyProgressTool(server, ctx)
+  registerProjectKnowledgeReadTools(server, ctx)
 }
 
 /** Only ever called when ctx.writeEnabled is true — see lib/mcp/server.ts. */
@@ -58,4 +65,5 @@ export function registerWriteTools(server: McpServer, ctx: McpContext): void {
   registerUpdateGoalTool(server, ctx)
   registerCaptureReflectionTool(server, ctx)
   registerCaptureKoreanPhraseTool(server, ctx)
+  registerProjectKnowledgeWriteTools(server, ctx)
 }
