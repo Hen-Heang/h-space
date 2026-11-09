@@ -836,7 +836,7 @@ export default function HistoryPage() {
                   description="Ask the AI Coach to correct your Korean — each correction shows up here."
                   action={
                     <Button asChild variant="outline">
-                      <Link href="/chat?mode=corrections">Open AI Coach</Link>
+                      <Link href="/chat">Open AI Coach</Link>
                     </Button>
                   }
                 />
