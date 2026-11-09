@@ -23,6 +23,7 @@ import { authApi } from "@/lib/api"
 import { AuthApiError } from "@/lib/api/auth-http"
 import { EmailCodeSignIn } from "@/components/email-code-sign-in"
 import { GoogleSignInButton } from "@/components/google-sign-in-button"
+import { DEFAULT_AFTER_SIGN_IN, safeNextPath } from "@/lib/safe-next-path"
 import { cn } from "@/lib/utils"
 
 type SignInMethod = "password" | "email-code"
@@ -49,12 +50,16 @@ export default function LoginPage() {
   // verification; the form then asks for the authenticator code instead.
   const [mfaToken, setMfaToken] = useState<string | null>(null)
   const [mfaCode, setMfaCode] = useState("")
+  // Where to go once signed in: the page the auth gate sent us from
+  // (?next=, validated as a same-site path), else Home.
+  const [afterSignIn, setAfterSignIn] = useState(DEFAULT_AFTER_SIGN_IN)
 
-  // /register links here with ?method=email-code for password-free sign-up.
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("method") === "email-code") {
-      setMethod("email-code")
-    }
+    const params = new URLSearchParams(window.location.search)
+    // /register links here with ?method=email-code for password-free sign-up.
+    if (params.get("method") === "email-code") setMethod("email-code")
+    const next = safeNextPath(params.get("next"))
+    if (next) setAfterSignIn(next)
   }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -71,7 +76,7 @@ export default function LoginPage() {
         setPassword("")
         return
       }
-      router.push("/home")
+      router.push(afterSignIn)
     } catch (error) {
       setError(error instanceof Error ? error.message : "Sign-in failed. Try again.")
       setNeedsVerification(error instanceof AuthApiError && error.code === ACCOUNT_DISABLED)
@@ -118,7 +123,7 @@ export default function LoginPage() {
               setError("")
               setMfaToken(token)
             }}
-            redirectTo="/home"
+            redirectTo={afterSignIn}
           />
           <AuthDivider label="or sign in with" />
         </>
@@ -155,7 +160,7 @@ export default function LoginPage() {
 
       {!mfaToken && method === "email-code" ? (
         <EmailCodeSignIn
-          onSignedIn={() => router.push("/home")}
+          onSignedIn={() => router.push(afterSignIn)}
           onMfaRequired={(token) => {
             setError("")
             setMfaToken(token)
