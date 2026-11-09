@@ -22,6 +22,7 @@ export function PageSection({
   className,
   headingLevel = "h2",
   hideTitle = false,
+  headingClassName,
 }: {
   title: ReactNode
   description?: ReactNode
@@ -31,6 +32,8 @@ export function PageSection({
   headingLevel?: "h2" | "h3"
   /** Keep the heading for screen readers only (the content is self-explanatory). */
   hideTitle?: boolean
+  /** Overrides the heading's default size/colour (merged with tailwind-merge). */
+  headingClassName?: string
 }) {
   const headingId = useId()
   const Heading = headingLevel
@@ -49,6 +52,7 @@ export function PageSection({
             className={cn(
               "font-semibold tracking-tight text-foreground",
               headingLevel === "h2" ? "text-lg" : "text-base",
+              headingClassName,
             )}
           >
             {title}

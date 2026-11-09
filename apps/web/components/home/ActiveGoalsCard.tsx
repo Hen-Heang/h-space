@@ -35,7 +35,7 @@ export function ActiveGoalsCard() {
   const goals = selectActiveGoals(data)
 
   return (
-    <CompactSummary title="Active goals" action={{ href: "/goals", label: "View all" }}>
+    <CompactSummary title="Active goals" action={{ href: "/goals", label: "All goals" }}>
       {loading ? (
         <div className="space-y-2 py-1">
           <Skeleton className="h-12 w-full rounded-md" />

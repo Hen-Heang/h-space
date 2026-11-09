@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { AnimatePresence, motion } from "motion/react"
-import { CheckCircle2, Circle, Flame } from "lucide-react"
+import { CheckCircle2, Circle } from "lucide-react"
 
 import { CATEGORY_ICONS } from "@/components/habits/categoryMeta"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -26,13 +26,9 @@ function HabitCheckinRow({ habit }: { habit: Habit }) {
   const Icon = CATEGORY_ICONS[habit.category]
 
   return (
-    <motion.li
-      layout
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
-      className={HOME_ROW}
-    >
+    // No entrance animation: rows are simply there on page load. `layout`
+    // still smooths reflow when a row's content changes.
+    <motion.li layout className={HOME_ROW}>
       {/* Neutral category icon — one accent colour per screen, not one per habit. */}
       <Icon size={18} aria-hidden="true" className="shrink-0 text-muted-foreground" />
       <span
@@ -43,13 +39,13 @@ function HabitCheckinRow({ habit }: { habit: Habit }) {
       >
         {habit.label}
       </span>
+      {/* Plain text, not a flame: on Home the flame means the learning streak. */}
       {!loading && currentStreak > 0 && (
         <span
-          className="flex shrink-0 items-center gap-1 text-sm tabular-nums text-muted-foreground"
+          className="shrink-0 text-sm tabular-nums text-muted-foreground"
           aria-label={`${currentStreak}-day streak`}
         >
-          <Flame size={14} aria-hidden="true" />
-          {currentStreak}
+          {currentStreak === 1 ? "1 day" : `${currentStreak} days`}
         </span>
       )}
       <motion.button
@@ -62,7 +58,7 @@ function HabitCheckinRow({ habit }: { habit: Habit }) {
         }
         onClick={() => void toggleCheckin(today)}
         disabled={loading}
-        className="-my-1 flex size-11 shrink-0 items-center justify-center rounded-md outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+        className="-my-1 flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-primary focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
       >
         <AnimatePresence mode="wait" initial={false}>
           {doneToday ? (
@@ -83,7 +79,8 @@ function HabitCheckinRow({ habit }: { habit: Habit }) {
               exit={{ scale: 0.5, opacity: 0 }}
               transition={{ type: "spring", stiffness: 500, damping: 25 }}
             >
-              <Circle className="size-5 text-muted-foreground" aria-hidden="true" />
+              {/* Inherits the button's colour, so it turns accent on hover like task rows. */}
+              <Circle className="size-5" aria-hidden="true" />
             </motion.span>
           )}
         </AnimatePresence>
@@ -104,7 +101,7 @@ export function TodayHabitCheckins() {
   const remaining = Math.max(0, activeHabits.length - VISIBLE_LIMIT)
 
   return (
-    <CompactSummary title="Today's habits" action={{ href: "/growth/habits", label: "View all" }}>
+    <CompactSummary title="Today's habits" action={{ href: "/growth/habits", label: "All habits" }}>
       {loading ? (
         <div className="space-y-2 py-1">
           <Skeleton className="h-11 w-full rounded-md" />
