@@ -140,6 +140,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // stays focusable behind the keyboard.
   const showBottomNav = isMobile && !isChromeless && !isChatRoute && !isKeyboardOpen
   const showFloatingCoach = !isChromeless && !isChatRoute
+  // Finance has its own floating "+" (QuickAddTransaction in its layout), so
+  // the AI launcher steps aside there: one floating button per screen.
+  const hasPageFloatingAction = pathname === "/finance" || pathname.startsWith("/finance/")
 
   // Heights of the shell chrome that overlaps scrolled content, for pages'
   // sticky elements: `top-[var(--shell-header-h)]` stays below the sticky
@@ -279,6 +282,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             mobile={isMobile}
             bottomNavVisible={showBottomNav}
             keyboardOpen={isKeyboardOpen}
+            hideLauncher={hasPageFloatingAction}
           />
         )}
 

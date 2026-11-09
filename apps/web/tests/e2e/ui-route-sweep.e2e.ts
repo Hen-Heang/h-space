@@ -1,7 +1,17 @@
 import { expect, test, type Page } from "@playwright/test"
 import { financeFixture } from "./finance-fixtures"
 
-test.use({ screenshot: "off", trace: "off" })
+// `UI_SWEEP_TOUCH=1` emulates a phone (touch, mobile viewport meta, 3x pixels)
+// so `pointer: coarse` styles — the app's larger touch targets — apply, as on
+// an iPhone. Pair it with phone widths, e.g. UI_SWEEP_WIDTHS=430 for an
+// iPhone 15 Pro Max (430x932 CSS px).
+const touch = process.env.UI_SWEEP_TOUCH === "1"
+
+test.use({
+  screenshot: "off",
+  trace: "off",
+  ...(touch ? { hasTouch: true, isMobile: true, deviceScaleFactor: 3 } : {}),
+})
 
 // UI route sweep — opt-in (`UI_SWEEP=1`). Loads every signed-in route family
 // with a synthetic session and synthetic Supabase rows, then:
@@ -505,7 +515,7 @@ test.describe("UI route sweep", () => {
         for (const t of report.tiny) smallText.add(t)
 
         await page.screenshot({
-          path: `test-results/ui-sweep/${label}${dark ? "-dark" : ""}/${slug(route)}-${width}.png`,
+          path: `test-results/ui-sweep/${label}${dark ? "-dark" : ""}${touch ? "-touch" : ""}/${slug(route)}-${width}.png`,
           fullPage: true,
           scale: "css",
           animations: "disabled",

@@ -129,15 +129,22 @@ function Bucket({ health }: { health: FinanceBucketHealth }) {
 export function SpendingTrend({ data }: { data: DailySpendingPoint[] }) {
   const width = 620
   const height = 160
+  // Points stay this far (viewBox units) inside the left/right edges, so the
+  // 2.5px line and its round caps aren't cut off when the first or last day
+  // is a peak. 6 units is ≈2–4px at phone widths, wider than half the stroke.
+  const inset = 6
+  const span = width - inset * 2
   const max = Math.max(1, ...data.map((point) => point.amountKrw))
   const points = data.map((point, index) => ({
-    x: data.length <= 1 ? 0 : (index / (data.length - 1)) * width,
+    x: inset + (data.length <= 1 ? 0 : (index / (data.length - 1)) * span),
     y: height - (point.amountKrw / max) * (height - 12),
   }))
   const linePath = points
     .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
     .join(" ")
-  const areaPath = points.length > 0 ? `${linePath} L ${width} ${height} L 0 ${height} Z` : ""
+  const lastX = points.at(-1)?.x ?? inset
+  const areaPath =
+    points.length > 0 ? `${linePath} L ${lastX} ${height} L ${inset} ${height} Z` : ""
   const activeDays = data.filter((point) => point.amountKrw > 0).length
   const peak = data.reduce(
     (highest, point) => (point.amountKrw > highest.amountKrw ? point : highest),
