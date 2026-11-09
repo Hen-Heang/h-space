@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { noteProjectsApi, ProjectsUnavailableError, type ProjectInput } from "@/lib/api"
 import { getUserId } from "@/lib/auth-store"
-import type { Project } from "@/lib/note-projects"
+import type { Project, ProjectAiLevel } from "@/lib/note-projects"
 
 export const noteProjectsQueryKey = (userId?: string | null) => ["note-projects", userId] as const
 export const noteProjectQueryKey = (id: string) => ["note-project", id] as const
@@ -80,8 +80,9 @@ export function useNoteProjectMutations() {
 export const noteProjectAiAccessQueryKey = (id: string) => ["note-project-ai-access", id] as const
 
 /**
- * The project's "Allow AI access" switch. `enabled` is null while loading or
- * when the switch isn't set up on this database yet (callers hide it then).
+ * The project's AI permission level (Off / Read only / Read & edit). `access`
+ * is null while loading or when AI access isn't set up on this database yet
+ * (callers hide the control then).
  */
 export function useProjectAiAccess(id: string) {
   const queryClient = useQueryClient()
@@ -92,10 +93,11 @@ export function useProjectAiAccess(id: string) {
     retry: false,
   })
 
-  const setEnabled = useMutation({
-    mutationFn: (enabled: boolean) => noteProjectsApi.setAiAccess(id, enabled),
-    onSuccess: (enabled) => queryClient.setQueryData(noteProjectAiAccessQueryKey(id), enabled),
+  const setLevel = useMutation({
+    mutationFn: (level: ProjectAiLevel) =>
+      noteProjectsApi.setAiAccess(id, level, data?.readOnlyAvailable ?? false),
+    onSuccess: (access) => queryClient.setQueryData(noteProjectAiAccessQueryKey(id), access),
   })
 
-  return { enabled: isPending ? null : (data ?? null), setEnabled }
+  return { access: isPending ? null : (data ?? null), setLevel }
 }

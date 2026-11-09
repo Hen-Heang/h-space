@@ -1,17 +1,20 @@
 // Project knowledge tools for the existing H-Space Notes database.
 // This is deliberately not a Notion synchronizer.
 //
-// A project is available to AI only when the owner turned on its "Allow AI
-// access" switch in the app (kori_note_projects.ai_access) or its UUID is
-// listed in MCP_KNOWLEDGE_PROJECT_IDS (the original operator allowlist, kept
-// for compatibility). The default is deny-all; the caller's Supabase bearer
-// token and RLS still apply on EVERY query. The separate, existing
-// MCP_WRITE_ENABLED flag gates all write tools at registration time.
+// Each project has an AI permission level set by the owner in the app:
+//   Off        — ai_access = false: invisible to AI.
+//   Read only  — ai_access = true, ai_can_edit = false: list and read notes.
+//   Read & edit — ai_access = true, ai_can_edit = true: also create and edit.
+// A UUID in MCP_KNOWLEDGE_PROJECT_IDS (the original operator allowlist, kept
+// for compatibility) grants Read only. The default is deny-all; the caller's
+// Supabase bearer token and RLS still apply on EVERY query. The separate,
+// existing MCP_WRITE_ENABLED flag gates all write tools at registration time.
 //
-// No tool here can turn ai_access on for an existing project — only
-// create_knowledge_project sets it, on a brand-new (empty) project — and a
-// database trigger rejects connector tokens that try (migration
-// 20261109150000_note_projects_ai_access.sql).
+// No tool here can change a project's level — only create_knowledge_project
+// sets it, on a brand-new (empty) project — and database triggers reject
+// connector tokens that try, or that write notes outside a Read & edit project
+// (migrations 20261109150000_note_projects_ai_access.sql and
+// 20261109170000_note_projects_ai_edit_level.sql).
 //
 // Do not put employer-confidential data in an AI-accessible project.
 import { z } from "zod"
@@ -29,6 +32,8 @@ const projectSchema = z.object({
   projectType: z.string(),
   status: z.string(),
   updatedAt: z.string(),
+  /** False for Read only projects: create/update tools will refuse. */
+  aiCanEdit: z.boolean(),
 })
 const noteSummarySchema = z.object({
   id: z.string(),
@@ -93,7 +98,28 @@ async function switchedOnProjectIds(ctx: McpContext): Promise<string[]> {
   return ((data ?? []) as { id: string }[]).map((row) => row.id)
 }
 
-async function projectOwnedByCaller(ctx: McpContext, projectId: string): Promise<boolean> {
+/** What AI may do in a project: nothing, read its notes, or also edit them. */
+export type ProjectAiLevel = "none" | "read" | "edit"
+
+type AccessRow = { ai_access?: unknown; ai_can_edit?: unknown }
+
+/**
+ * Level from a project row. Before the ai_can_edit migration the column is
+ * absent, and an AI-accessible project keeps its old Read & edit behaviour.
+ */
+export function aiLevelOf(row: AccessRow, inEnv: boolean): ProjectAiLevel {
+  if (row.ai_access === true) {
+    if (!("ai_can_edit" in row)) return "edit"
+    return row.ai_can_edit === true ? "edit" : "read"
+  }
+  return inEnv ? "read" : "none"
+}
+
+/**
+ * The caller's AI level for one project. Missing, someone else's, and
+ * switched-off projects all come back "none", so callers can't tell them apart.
+ */
+async function projectAccess(ctx: McpContext, projectId: string): Promise<ProjectAiLevel> {
   const inEnv = envProjectIds().includes(projectId)
   const lookup = (columns: string) =>
     ctx.db
@@ -103,14 +129,30 @@ async function projectOwnedByCaller(ctx: McpContext, projectId: string): Promise
       .eq("user_id", ctx.userId)
       .maybeSingle()
 
-  let { data, error } = await lookup("id, ai_access")
+  // Newest schema first; fall back as migrations may not be applied yet.
+  let { data, error } = await lookup("id, ai_access, ai_can_edit")
+  if (error && isMissingSchemaError(error)) ({ data, error } = await lookup("id, ai_access"))
   if (error && isMissingSchemaError(error)) {
-    if (!inEnv) return false
+    if (!inEnv) return "none"
     ;({ data, error } = await lookup("id"))
   }
   if (error) throw new Error("Could not verify project access.")
-  if (!data) return false
-  return inEnv || (data as { ai_access?: unknown }).ai_access === true
+  if (!data) return "none"
+  return aiLevelOf(data as AccessRow, inEnv)
+}
+
+function readOnly() {
+  return {
+    isError: true as const,
+    content: [
+      {
+        type: "text" as const,
+        text:
+          "This project is Read only for AI apps. The owner can change it to Read & edit " +
+          "in the H-Space app.",
+      },
+    ],
+  }
 }
 
 function noteSummary(row: NoteRow) {
@@ -172,20 +214,36 @@ export function registerProjectKnowledgeReadTools(server: McpServer, ctx: McpCon
           structuredContent: { projects: [] },
         }
       }
-      const { data, error } = await ctx.db
-        .from("kori_note_projects")
-        .select("id, name, description, project_type, status, updated_at")
-        .in("id", ids)
-        .eq("user_id", ctx.userId)
-        .order("updated_at", { ascending: false })
+      const base = "id, name, description, project_type, status, updated_at"
+      const query = (columns: string) =>
+        ctx.db
+          .from("kori_note_projects")
+          .select(columns)
+          .in("id", ids)
+          .eq("user_id", ctx.userId)
+          .order("updated_at", { ascending: false })
+      let { data, error } = await query(`${base}, ai_access, ai_can_edit`)
+      if (error && isMissingSchemaError(error))
+        ({ data, error } = await query(`${base}, ai_access`))
+      if (error && isMissingSchemaError(error)) ({ data, error } = await query(base))
       if (error) throw new Error("Could not list knowledge projects.")
-      const projects = (data ?? []).map((row) => ({
+      const env = new Set(envProjectIds())
+      type ListRow = AccessRow & {
+        id: string
+        name: string
+        description: string | null
+        project_type: string
+        status: string
+        updated_at: string
+      }
+      const projects = ((data ?? []) as unknown as ListRow[]).map((row) => ({
         id: row.id,
         name: row.name,
         description: row.description ?? "",
         projectType: row.project_type,
         status: row.status,
         updatedAt: row.updated_at,
+        aiCanEdit: aiLevelOf(row, env.has(row.id)) === "edit",
       }))
       return {
         content: [{ type: "text" as const, text: projects.length + " approved projects." }],
@@ -214,7 +272,7 @@ export function registerProjectKnowledgeReadTools(server: McpServer, ctx: McpCon
       },
     },
     instrumentedTool(ctx, "read", "list_project_notes", async ({ projectId, limit }) => {
-      if (!(await projectOwnedByCaller(ctx, projectId))) return denied()
+      if ((await projectAccess(ctx, projectId)) === "none") return denied()
       const { data, error } = await ctx.db
         .from("kori_notes")
         .select(noteColumns)
@@ -257,7 +315,9 @@ export function registerProjectKnowledgeReadTools(server: McpServer, ctx: McpCon
         .maybeSingle()
       if (error) throw new Error("Could not read the note.")
       const row = data as NoteRow | null
-      if (!row?.project_id || !(await projectOwnedByCaller(ctx, row.project_id))) return denied()
+      if (!row?.project_id || (await projectAccess(ctx, row.project_id)) === "none") {
+        return denied()
+      }
       return {
         content: [{ type: "text" as const, text: "Read note: " + row.title }],
         structuredContent: { note: noteDetail(row) },
@@ -295,18 +355,25 @@ export function registerProjectKnowledgeWriteTools(server: McpServer, ctx: McpCo
       "write",
       "create_knowledge_project",
       async ({ name, description, projectType }) => {
-        const { data, error } = await ctx.db
-          .from("kori_note_projects")
-          .insert({
-            user_id: ctx.userId,
-            name,
-            description,
-            project_type: projectType,
-            status: "active",
-            ai_access: true,
-          })
-          .select("id, name, description, project_type, status, updated_at")
-          .single()
+        // A connector creates the project to write into it, so it starts at
+        // Read & edit; the owner can lower it in the app.
+        const insert = (row: Record<string, unknown>) =>
+          ctx.db
+            .from("kori_note_projects")
+            .insert({
+              user_id: ctx.userId,
+              name,
+              description,
+              project_type: projectType,
+              status: "active",
+              ai_access: true,
+              ...row,
+            })
+            .select("id, name, description, project_type, status, updated_at")
+            .single()
+        let { data, error } = await insert({ ai_can_edit: true })
+        // Before the ai_can_edit migration, ai_access alone meant Read & edit.
+        if (error && isMissingSchemaError(error)) ({ data, error } = await insert({}))
         if (error) {
           if (isMissingSchemaError(error)) {
             return {
@@ -321,6 +388,7 @@ export function registerProjectKnowledgeWriteTools(server: McpServer, ctx: McpCo
           }
           throw new Error("Could not create the project.")
         }
+        if (!data) throw new Error("Could not create the project.")
         const project = {
           id: data.id,
           name: data.name,
@@ -328,6 +396,7 @@ export function registerProjectKnowledgeWriteTools(server: McpServer, ctx: McpCo
           projectType: data.project_type,
           status: data.status,
           updatedAt: data.updated_at,
+          aiCanEdit: true,
         }
         return {
           content: [{ type: "text" as const, text: "Created project: " + project.name }],
@@ -364,7 +433,9 @@ export function registerProjectKnowledgeWriteTools(server: McpServer, ctx: McpCo
       "write",
       "create_project_note",
       async ({ projectId, title, content, noteType, tags }) => {
-        if (!(await projectOwnedByCaller(ctx, projectId))) return denied()
+        const level = await projectAccess(ctx, projectId)
+        if (level === "none") return denied()
+        if (level === "read") return readOnly()
         const slug = "note-" + crypto.randomUUID()
         const { data, error } = await ctx.db
           .from("kori_notes")
@@ -434,9 +505,10 @@ export function registerProjectKnowledgeWriteTools(server: McpServer, ctx: McpCo
           .eq("user_id", ctx.userId)
           .maybeSingle()
         if (readError) throw new Error("Could not verify note ownership.")
-        if (!existing?.project_id || !(await projectOwnedByCaller(ctx, existing.project_id))) {
-          return denied()
-        }
+        if (!existing?.project_id) return denied()
+        const level = await projectAccess(ctx, existing.project_id)
+        if (level === "none") return denied()
+        if (level === "read") return readOnly()
         const patch: Record<string, unknown> = { updated_at: new Date().toISOString() }
         if (title !== undefined) patch.title = title
         if (content !== undefined) patch.content = content

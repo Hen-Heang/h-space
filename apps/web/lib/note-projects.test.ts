@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  aiLevelFromRow,
+  aiLevelPatch,
+  PROJECT_AI_LEVELS,
   filterProjectsByStatus,
   MAX_PROJECT_NAME_LENGTH,
   MAX_PROJECT_TAGS,
@@ -162,5 +165,38 @@ describe("project selection", () => {
       makeNote({ slug: "loose", noteType: "decision", projectId: null }),
     ]
     expect(selectDecisionNotes(notes, "p1").map((n) => n.slug)).toEqual(["d2", "d1"])
+  })
+})
+
+describe("AI permission level", () => {
+  it("reads the level from the stored columns", () => {
+    expect(aiLevelFromRow({ ai_access: false, ai_can_edit: false })).toBe("off")
+    expect(aiLevelFromRow({ ai_access: false, ai_can_edit: true })).toBe("off")
+    expect(aiLevelFromRow({ ai_access: true, ai_can_edit: false })).toBe("read")
+    expect(aiLevelFromRow({ ai_access: true, ai_can_edit: true })).toBe("edit")
+    expect(aiLevelFromRow({ ai_access: null })).toBe("off")
+  })
+
+  it("keeps the old Read & edit meaning before the ai_can_edit column exists", () => {
+    expect(aiLevelFromRow({ ai_access: true })).toBe("edit")
+    expect(aiLevelFromRow({ ai_access: false })).toBe("off")
+  })
+
+  it("writes both columns, and Off clears edit", () => {
+    expect(aiLevelPatch("off", true)).toEqual({ ai_access: false, ai_can_edit: false })
+    expect(aiLevelPatch("read", true)).toEqual({ ai_access: true, ai_can_edit: false })
+    expect(aiLevelPatch("edit", true)).toEqual({ ai_access: true, ai_can_edit: true })
+  })
+
+  it("only writes ai_access without the edit column, and refuses Read only", () => {
+    expect(aiLevelPatch("off", false)).toEqual({ ai_access: false })
+    expect(aiLevelPatch("edit", false)).toEqual({ ai_access: true })
+    expect(() => aiLevelPatch("read", false)).toThrow()
+  })
+
+  it("round-trips every level", () => {
+    for (const { value } of PROJECT_AI_LEVELS) {
+      expect(aiLevelFromRow(aiLevelPatch(value, true))).toBe(value)
+    }
   })
 })

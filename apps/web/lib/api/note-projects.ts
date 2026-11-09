@@ -1,8 +1,12 @@
 import { supabase } from "@/lib/supabase"
 import { requireUserId } from "@/lib/auth-store"
 import {
+  aiLevelFromRow,
+  aiLevelPatch,
   normalizeProjectInput,
   type Project,
+  type ProjectAiAccessRow,
+  type ProjectAiLevel,
   type ProjectInput,
   type ProjectStatus,
   type ProjectType,
@@ -131,33 +135,48 @@ export const noteProjectsApi = {
   },
 
   /**
-   * The project's "Allow AI access" switch (kori_note_projects.ai_access),
-   * read separately so the rest of Projects keeps working before that
-   * migration is applied: `null` means the switch isn't set up yet.
+   * The project's AI permission level (kori_note_projects.ai_access +
+   * ai_can_edit), read separately so the rest of Projects keeps working before
+   * those migrations are applied. `null` means AI access isn't set up yet;
+   * `readOnlyAvailable` is false until the ai_can_edit column exists.
    */
-  getAiAccess: async (id: string): Promise<boolean | null> => {
-    const { data, error } = await supabase
-      .from("kori_note_projects")
-      .select("ai_access")
-      .eq("id", id)
-      .single()
+  getAiAccess: async (id: string): Promise<ProjectAiAccess | null> => {
+    const read = (columns: string) =>
+      supabase.from("kori_note_projects").select(columns).eq("id", id).single()
+    let readOnlyAvailable = true
+    let { data, error } = await read("ai_access, ai_can_edit")
+    if (error && isMissingSchemaError(error)) {
+      readOnlyAvailable = false
+      ;({ data, error } = await read("ai_access"))
+    }
     if (error) {
       if (isMissingSchemaError(error)) return null
       throw error
     }
-    return (data as { ai_access: boolean }).ai_access === true
+    return { level: aiLevelFromRow(data as ProjectAiAccessRow), readOnlyAvailable }
   },
 
-  /** Turns AI (MCP connector) access to this project's notes on or off. */
-  setAiAccess: async (id: string, enabled: boolean): Promise<boolean> => {
+  /** Sets AI (MCP connector) access to this project's notes: Off, Read only, Read & edit. */
+  setAiAccess: async (
+    id: string,
+    level: ProjectAiLevel,
+    readOnlyAvailable: boolean,
+  ): Promise<ProjectAiAccess> => {
     requireUserId()
+    const columns = readOnlyAvailable ? "ai_access, ai_can_edit" : "ai_access"
     const { data, error } = await supabase
       .from("kori_note_projects")
-      .update({ ai_access: enabled })
+      .update(aiLevelPatch(level, readOnlyAvailable))
       .eq("id", id)
-      .select("ai_access")
+      .select(columns)
       .single()
     if (error) throw error
-    return (data as { ai_access: boolean }).ai_access === true
+    return { level: aiLevelFromRow(data as ProjectAiAccessRow), readOnlyAvailable }
   },
+}
+
+export interface ProjectAiAccess {
+  level: ProjectAiLevel
+  /** False until the ai_can_edit migration is applied (Off / Read & edit only). */
+  readOnlyAvailable: boolean
 }

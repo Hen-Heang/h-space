@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
+  aiLevelOf,
   registerProjectKnowledgeReadTools,
   registerProjectKnowledgeWriteTools,
 } from "./project-knowledge"
@@ -23,6 +24,9 @@ const NOTE_ROW = {
   source_url: null,
   updated_at: "2026-11-09T00:00:00Z",
 }
+
+/** A user-owned project set to Read & edit in the app. */
+const EDITABLE_PROJECT = { id: PROJECT_ID, ai_access: true, ai_can_edit: true }
 
 /** fakeQuery that also records .eq() filters and .update() patches. */
 function recordingQuery(result: { data: unknown; error: unknown }) {
@@ -215,14 +219,14 @@ describe("project knowledge MCP", () => {
   })
 
   it("updates only the caller's note, pinned to its project", async () => {
-    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", PROJECT_ID)
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", "")
     const notes = recordingQuery({ data: NOTE_ROW, error: null })
     const { fakeServer, tools } = captureRegisteredTools()
     registerProjectKnowledgeWriteTools(
       fakeServer,
       fakeContext(
         fakeDb({
-          kori_note_projects: fakeQuery({ data: { id: PROJECT_ID }, error: null }),
+          kori_note_projects: fakeQuery({ data: EDITABLE_PROJECT, error: null }),
           kori_notes: notes.query,
         }),
         { writeEnabled: true },
@@ -242,8 +246,8 @@ describe("project knowledge MCP", () => {
     expect(notes.eqs).toContainEqual(["project_id", PROJECT_ID])
   })
 
-  it("creates a note in an approved, user-owned project", async () => {
-    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", PROJECT_ID)
+  it("creates a note in a Read & edit, user-owned project", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", "")
     const { fakeServer, tools } = captureRegisteredTools()
     const notes = fakeQuery({
       data: {
@@ -265,7 +269,7 @@ describe("project knowledge MCP", () => {
       fakeServer,
       fakeContext(
         fakeDb({
-          kori_note_projects: fakeQuery({ data: { id: PROJECT_ID }, error: null }),
+          kori_note_projects: fakeQuery({ data: EDITABLE_PROJECT, error: null }),
           kori_notes: notes,
         }),
         { writeEnabled: true },
@@ -331,7 +335,7 @@ describe("project knowledge MCP — in-app AI access switch", () => {
     )
     const result = await tools.get("get_project_note")!.handler({ noteId: NOTE_ID })
     expect(result.isError).toBeFalsy()
-    expect(projects.selects).toContain("id, ai_access")
+    expect(projects.selects).toContain("id, ai_access, ai_can_edit")
   })
 
   it("refuses a project whose switch is off, with the standard denial", async () => {
@@ -410,8 +414,12 @@ describe("project knowledge MCP — in-app AI access switch", () => {
         project_type: "work_reference",
         status: "active",
         ai_access: true,
+        ai_can_edit: true,
       },
     ])
+    expect(
+      (result.structuredContent as { project: { aiCanEdit: boolean } }).project.aiCanEdit,
+    ).toBe(true)
     expect((result.structuredContent as { project: { id: string } }).project.id).toBe(PROJECT_ID)
   })
 
@@ -433,13 +441,168 @@ describe("project knowledge MCP — in-app AI access switch", () => {
     expect(result.content[0].text).toMatch(/isn't set up/)
   })
 
+  it("create_knowledge_project still works before the ai_can_edit column exists", async () => {
+    const inserts: Record<string, unknown>[] = []
+    const results = [
+      { data: null, error: { code: "PGRST204" } }, // ai_can_edit unknown
+      { data: PROJECT_ROW, error: null },
+    ]
+    const projects = fakeQuery({ data: null, error: null })
+    projects.insert = (row: Record<string, unknown>) => {
+      inserts.push(row)
+      return projects
+    }
+    projects.single = () => Promise.resolve(results.shift()!)
+    const { fakeServer, tools } = captureRegisteredTools()
+    registerProjectKnowledgeWriteTools(
+      fakeServer,
+      fakeContext(fakeDb({ kori_note_projects: projects }), { writeEnabled: true }),
+    )
+    const result = await tools.get("create_knowledge_project")!.handler({
+      name: "Work reviews",
+      description: "",
+      projectType: "personal",
+    })
+    expect(result.isError).toBeFalsy()
+    expect(inserts).toHaveLength(2)
+    expect(inserts[0]).toHaveProperty("ai_can_edit", true)
+    expect(inserts[1]).not.toHaveProperty("ai_can_edit")
+  })
+
   it("no tool can switch AI access on for an existing project", async () => {
     vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", PROJECT_ID)
     const { fakeServer, tools } = captureRegisteredTools()
     registerProjectKnowledgeReadTools(fakeServer, fakeContext(fakeDb({})))
     registerProjectKnowledgeWriteTools(fakeServer, fakeContext(fakeDb({}), { writeEnabled: true }))
     for (const tool of tools.values()) {
-      expect(JSON.stringify(tool.config.inputSchema ?? {})).not.toMatch(/ai_?access/i)
+      expect(JSON.stringify(tool.config.inputSchema ?? {})).not.toMatch(/ai_?access|can_?edit/i)
     }
+  })
+})
+
+describe("project knowledge MCP — AI permission levels", () => {
+  const READ_ONLY_PROJECT = { id: PROJECT_ID, ai_access: true, ai_can_edit: false }
+
+  function writeTools(project: unknown, notes: ReturnType<typeof recordingQuery>) {
+    const { fakeServer, tools } = captureRegisteredTools()
+    registerProjectKnowledgeWriteTools(
+      fakeServer,
+      fakeContext(
+        fakeDb({
+          kori_note_projects: fakeQuery({ data: project, error: null }),
+          kori_notes: notes.query,
+        }),
+        { writeEnabled: true },
+      ),
+    )
+    return tools
+  }
+
+  it("maps project rows to levels", () => {
+    expect(aiLevelOf({ ai_access: false, ai_can_edit: true }, false)).toBe("none")
+    expect(aiLevelOf({ ai_access: true, ai_can_edit: false }, false)).toBe("read")
+    expect(aiLevelOf({ ai_access: true, ai_can_edit: true }, false)).toBe("edit")
+    // Before the ai_can_edit migration, ai_access alone kept Read & edit.
+    expect(aiLevelOf({ ai_access: true }, false)).toBe("edit")
+    // The env allowlist only ever grants reading.
+    expect(aiLevelOf({ ai_access: false, ai_can_edit: false }, true)).toBe("read")
+    expect(aiLevelOf({}, true)).toBe("read")
+    expect(aiLevelOf({}, false)).toBe("none")
+  })
+
+  it("lets AI read a Read only project", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", "")
+    const { fakeServer, tools } = captureRegisteredTools()
+    registerProjectKnowledgeReadTools(
+      fakeServer,
+      fakeContext(
+        fakeDb({
+          kori_note_projects: fakeQuery({ data: READ_ONLY_PROJECT, error: null }),
+          kori_notes: fakeQuery({ data: [NOTE_ROW], error: null }),
+        }),
+      ),
+    )
+    const result = await tools.get("list_project_notes")!.handler({
+      projectId: PROJECT_ID,
+      limit: 20,
+    })
+    expect(result.isError).toBeFalsy()
+  })
+
+  it("refuses to create a note in a Read only project without writing", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", "")
+    const notes = recordingQuery({ data: NOTE_ROW, error: null })
+    let inserted = false
+    notes.query.insert = () => {
+      inserted = true
+      return notes.query
+    }
+    const result = await writeTools(READ_ONLY_PROJECT, notes).get("create_project_note")!.handler({
+      projectId: PROJECT_ID,
+      title: "Fictional",
+      content: "Synthetic body",
+      noteType: "technical",
+      tags: [],
+    })
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toMatch(/Read only/)
+    expect(inserted).toBe(false)
+  })
+
+  it("refuses to update a note in a Read only project without writing", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", "")
+    const notes = recordingQuery({ data: NOTE_ROW, error: null })
+    const result = await writeTools(READ_ONLY_PROJECT, notes).get("update_project_note")!.handler({
+      noteId: NOTE_ID,
+      title: "Changed",
+    })
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toMatch(/Read only/)
+    expect(notes.updates).toHaveLength(0)
+  })
+
+  it("treats an env-allowlisted project as Read only", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", PROJECT_ID)
+    const notes = recordingQuery({ data: NOTE_ROW, error: null })
+    const result = await writeTools({ id: PROJECT_ID, ai_access: false, ai_can_edit: false }, notes)
+      .get("update_project_note")!
+      .handler({ noteId: NOTE_ID, title: "Changed" })
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toMatch(/Read only/)
+    expect(notes.updates).toHaveLength(0)
+  })
+
+  it("reports each listed project's edit permission", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", "")
+    const row = (id: string, aiCanEdit: boolean) => ({
+      id,
+      name: "Fictional " + id.slice(0, 4),
+      description: "",
+      project_type: "learning",
+      status: "active",
+      updated_at: "2026-11-09T00:00:00Z",
+      ai_access: true,
+      ai_can_edit: aiCanEdit,
+    })
+    const { fakeServer, tools } = captureRegisteredTools()
+    registerProjectKnowledgeReadTools(
+      fakeServer,
+      fakeContext(
+        fakeDb({
+          kori_note_projects: fakeQuery({
+            data: [row(PROJECT_ID, true), row(OTHER_PROJECT_ID, false)],
+            error: null,
+          }),
+        }),
+      ),
+    )
+    const result = await tools.get("list_knowledge_projects")!.handler({})
+    const projects = (
+      result.structuredContent as { projects: { id: string; aiCanEdit: boolean }[] }
+    ).projects
+    expect(projects.map((p) => [p.id, p.aiCanEdit])).toEqual([
+      [PROJECT_ID, true],
+      [OTHER_PROJECT_ID, false],
+    ])
   })
 })
