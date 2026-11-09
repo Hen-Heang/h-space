@@ -13,10 +13,25 @@ Project Workspace (/notes/projects/[id]). It does not create a new note editor o
 ## MCP tools
 
 Read: list_knowledge_projects, list_project_notes, get_project_note.
-Write: create_project_note, update_project_note, only when MCP_WRITE_ENABLED=true.
+Write: create_knowledge_project, create_project_note, update_project_note, only when MCP_WRITE_ENABLED=true.
 No note deletion, cross-project transfer, bulk edits, or AI-generated changes without a direct user request.
 
-## Explicit project allowlist
+## Which projects AI can reach
+
+A project is AI-accessible when EITHER:
+
+1. its **Allow AI access** switch is on (Project page in Notes; column
+   `kori_note_projects.ai_access`, default off; migration
+   `20261109150000_note_projects_ai_access.sql`), OR
+2. its UUID is in the env allowlist below (the original gate, kept for compatibility).
+
+`create_knowledge_project` creates a new, empty project with the switch already on. No MCP tool
+can turn the switch on for an existing project, and a database trigger rejects any change to
+`ai_access` made with a connector token (a JWT carrying `client_id`), because an MCP token is a
+full Supabase user token that could otherwise call the data API directly. Until the migration is
+applied, the switch is hidden in the app and only the env allowlist applies.
+
+### Env allowlist
 
 Set the server-side environment variable MCP_KNOWLEDGE_PROJECT_IDS to a comma-separated
 list of UUIDs for the projects whose notes are intentionally accessible to an AI client.
@@ -25,8 +40,7 @@ Example using a FAKE UUID:
 
     MCP_KNOWLEDGE_PROJECT_IDS=11111111-1111-4111-8111-111111111111
 
-This is an operator-controlled safety gate. A later improvement should add a per-project
-'Allow AI access' opt-in in the UI (off by default), instead of managing IDs in environment values.
+This is an operator-controlled safety gate; the per-project switch above is the everyday way.
 Never put employer-confidential code, customer records, credentials, private network addresses,
 unapproved internal documents or business details in an AI-approved personal project.
 

@@ -100,6 +100,7 @@ describe("registerWriteTools", () => {
         "create_task",
         "update_goal",
         "update_task",
+        "create_knowledge_project",
         "create_project_note",
         "update_project_note",
       ].sort(),

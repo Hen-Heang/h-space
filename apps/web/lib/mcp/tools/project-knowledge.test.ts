@@ -282,3 +282,164 @@ describe("project knowledge MCP", () => {
     expect((result.structuredContent as { created: boolean }).created).toBe(true)
   })
 })
+
+describe("project knowledge MCP — in-app AI access switch", () => {
+  const PROJECT_ROW = {
+    id: PROJECT_ID,
+    name: "Work reviews",
+    description: "",
+    project_type: "work_reference",
+    status: "active",
+    updated_at: "2026-11-09T00:00:00Z",
+  }
+
+  /** A kori_note_projects fake whose maybeSingle() answers in sequence. */
+  function sequencedProjects(...results: { data: unknown; error: unknown }[]) {
+    const query = fakeQuery({ data: [], error: null })
+    const selects: string[] = []
+    query.select = (columns: string) => {
+      selects.push(columns)
+      return query
+    }
+    query.maybeSingle = () => Promise.resolve(results.shift() ?? { data: null, error: null })
+    return { query, selects }
+  }
+
+  it("lists a switched-on project with no env allowlist", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", "")
+    const { fakeServer, tools } = captureRegisteredTools()
+    registerProjectKnowledgeReadTools(
+      fakeServer,
+      fakeContext(fakeDb({ kori_note_projects: fakeQuery({ data: [PROJECT_ROW], error: null }) })),
+    )
+    const result = await tools.get("list_knowledge_projects")!.handler({})
+    expect((result.structuredContent as { projects: { id: string }[] }).projects).toHaveLength(1)
+  })
+
+  it("reads notes in a switched-on, user-owned project", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", "")
+    const projects = sequencedProjects({ data: { id: PROJECT_ID, ai_access: true }, error: null })
+    const { fakeServer, tools } = captureRegisteredTools()
+    registerProjectKnowledgeReadTools(
+      fakeServer,
+      fakeContext(
+        fakeDb({
+          kori_note_projects: projects.query,
+          kori_notes: fakeQuery({ data: NOTE_ROW, error: null }),
+        }),
+      ),
+    )
+    const result = await tools.get("get_project_note")!.handler({ noteId: NOTE_ID })
+    expect(result.isError).toBeFalsy()
+    expect(projects.selects).toContain("id, ai_access")
+  })
+
+  it("refuses a project whose switch is off, with the standard denial", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", "")
+    const projects = sequencedProjects({ data: { id: PROJECT_ID, ai_access: false }, error: null })
+    let inserted = false
+    const notes = fakeQuery({ data: [], error: null })
+    notes.insert = () => {
+      inserted = true
+      return notes
+    }
+    const { fakeServer, tools } = captureRegisteredTools()
+    registerProjectKnowledgeWriteTools(
+      fakeServer,
+      fakeContext(fakeDb({ kori_note_projects: projects.query, kori_notes: notes }), {
+        writeEnabled: true,
+      }),
+    )
+    const result = await tools.get("create_project_note")!.handler({
+      projectId: PROJECT_ID,
+      title: "Fictional review",
+      content: "Synthetic body",
+      noteType: "technical",
+      tags: [],
+    })
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toMatch(/not found/)
+    expect(inserted).toBe(false)
+  })
+
+  it("falls back to the env allowlist when the ai_access column doesn't exist yet", async () => {
+    const missingColumn = { data: null, error: { code: "42703" } }
+    const owned = { data: { id: PROJECT_ID }, error: null }
+    const read = async (envIds: string) => {
+      vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", envIds)
+      const projects = sequencedProjects(missingColumn, owned)
+      const { fakeServer, tools } = captureRegisteredTools()
+      registerProjectKnowledgeReadTools(
+        fakeServer,
+        fakeContext(
+          fakeDb({
+            kori_note_projects: projects.query,
+            kori_notes: fakeQuery({ data: [NOTE_ROW], error: null }),
+          }),
+        ),
+      )
+      return tools.get("list_project_notes")!.handler({ projectId: PROJECT_ID, limit: 20 })
+    }
+    expect((await read(PROJECT_ID)).isError).toBeFalsy()
+    expect((await read("")).isError).toBe(true)
+  })
+
+  it("create_knowledge_project creates an owned, switched-on, empty project", async () => {
+    const inserts: Record<string, unknown>[] = []
+    const projects = fakeQuery({ data: PROJECT_ROW, error: null })
+    projects.insert = (row: Record<string, unknown>) => {
+      inserts.push(row)
+      return projects
+    }
+    const { fakeServer, tools } = captureRegisteredTools()
+    registerProjectKnowledgeWriteTools(
+      fakeServer,
+      fakeContext(fakeDb({ kori_note_projects: projects }), { writeEnabled: true }),
+    )
+    const result = await tools.get("create_knowledge_project")!.handler({
+      name: "Work reviews",
+      description: "",
+      projectType: "work_reference",
+    })
+    expect(result.isError).toBeFalsy()
+    expect(inserts).toEqual([
+      {
+        user_id: "user-1",
+        name: "Work reviews",
+        description: "",
+        project_type: "work_reference",
+        status: "active",
+        ai_access: true,
+      },
+    ])
+    expect((result.structuredContent as { project: { id: string } }).project.id).toBe(PROJECT_ID)
+  })
+
+  it("create_knowledge_project explains when the switch isn't set up yet", async () => {
+    const { fakeServer, tools } = captureRegisteredTools()
+    registerProjectKnowledgeWriteTools(
+      fakeServer,
+      fakeContext(
+        fakeDb({ kori_note_projects: fakeQuery({ data: null, error: { code: "PGRST204" } }) }),
+        { writeEnabled: true },
+      ),
+    )
+    const result = await tools.get("create_knowledge_project")!.handler({
+      name: "Work reviews",
+      description: "",
+      projectType: "personal",
+    })
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toMatch(/isn't set up/)
+  })
+
+  it("no tool can switch AI access on for an existing project", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", PROJECT_ID)
+    const { fakeServer, tools } = captureRegisteredTools()
+    registerProjectKnowledgeReadTools(fakeServer, fakeContext(fakeDb({})))
+    registerProjectKnowledgeWriteTools(fakeServer, fakeContext(fakeDb({}), { writeEnabled: true }))
+    for (const tool of tools.values()) {
+      expect(JSON.stringify(tool.config.inputSchema ?? {})).not.toMatch(/ai_?access/i)
+    }
+  })
+})
