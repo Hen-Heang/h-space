@@ -9,6 +9,7 @@ import { userApi } from "@/lib/api"
 import { isAuthenticated, getUserId, onAuthChange } from "@/lib/auth-store"
 import { hasCompletedOnboarding, markOnboardingComplete } from "@/lib/onboarding-store"
 import { recordLastVisited, type WorkspaceId } from "@/lib/last-visited"
+import { loginHref } from "@/lib/safe-next-path"
 import { sectionRoutePrefixes } from "@/lib/navigation"
 
 // The route layout owns only what has to live at the route boundary: the auth
@@ -33,14 +34,18 @@ export default function MainLayout({ children }: Readonly<{ children: React.Reac
 
   useEffect(() => {
     if (!mounted) return
+    // Carry the current page so sign-in can return to it — e.g. an MCP
+    // connector's /oauth/consent?authorization_id=… (lib/safe-next-path.ts).
+    const toLogin = () =>
+      router.replace(loginHref(`${window.location.pathname}${window.location.search}`))
     if (!isAuthenticated()) {
-      router.replace("/login")
+      toLogin()
       return
     }
     // The session can also end mid-visit: a rejected token refresh, or a
     // sign-out in another tab.
     return onAuthChange(() => {
-      if (!isAuthenticated()) router.replace("/login")
+      if (!isAuthenticated()) toLogin()
     })
   }, [mounted, router])
 

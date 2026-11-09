@@ -179,7 +179,8 @@ function ConsentCard() {
         </CardTitle>
         <CardDescription>
           This connector will be able to act on your Hengo account as you, using your own sign-in.
-          You can revoke access at any time from Supabase&apos;s connected-apps settings.
+          Its access stays until it&apos;s revoked — removing a connector from inside H-Space
+          isn&apos;t available yet, so only approve connectors you trust.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
