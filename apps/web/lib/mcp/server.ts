@@ -35,7 +35,7 @@ export const MCP_SERVER_TITLE = "Hengo"
  * set or a tool's contract changes, and stays put for unrelated app releases —
  * so a client can reason about what it is talking to.
  */
-export const MCP_SERVER_VERSION = "0.1.0"
+export const MCP_SERVER_VERSION = "0.2.0"
 
 /**
  * Which tools a connection has. `foundation` is the auth-less probe case
@@ -71,12 +71,14 @@ const INSTRUCTIONS_MODE: Record<McpSurface, string> = {
     "Read-only: write tools are turned off on this deployment, so nothing can be created or " +
     "changed through this server.",
   "read-write":
-    "Write tools can create or update the user's tasks and goals and capture reflections or Korean " +
-    "phrases — use them only when the user asks. No tool deletes anything.",
+    "Write tools can create or update the user's tasks and goals, capture reflections or Korean " +
+    "phrases, and edit notes in explicitly approved knowledge projects — use them only when the " +
+    "user asks. No tool deletes anything.",
 }
 
 const INSTRUCTIONS_SCOPE =
-  "This server cannot read notes, the inbox, journal entries, finances or saved credentials."
+  "Project notes are available only for IDs explicitly allowlisted by the owner. " +
+  "The server cannot read other notes, inbox items, journal entries, finances or saved credentials."
 
 /**
  * Sent to the client at initialize. The first ~512 characters carry the
