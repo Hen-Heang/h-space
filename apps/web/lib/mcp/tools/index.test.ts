@@ -7,7 +7,7 @@ import { captureRegisteredTools, fakeContext, fakeDb, fakeQuery } from "./test-s
 // McpServer/transport.
 
 describe("registerReadTools", () => {
-  it("registers exactly the seven read tools, each read-only and non-destructive", () => {
+  it("registers all read tools as read-only and non-destructive", () => {
     const { fakeServer, tools } = captureRegisteredTools()
     registerReadTools(fakeServer, fakeContext(fakeDb({})))
 
@@ -20,6 +20,9 @@ describe("registerReadTools", () => {
         "get_weekly_progress",
         "list_goals",
         "list_tasks",
+        "list_knowledge_projects",
+        "list_project_notes",
+        "get_project_note",
       ].sort(),
     )
     for (const tool of tools.values()) {
@@ -84,7 +87,7 @@ describe("registerReadTools", () => {
 })
 
 describe("registerWriteTools", () => {
-  it("registers exactly the seven write tools, each non-read-only and non-destructive", () => {
+  it("registers all write tools as non-read-only and non-destructive", () => {
     const { fakeServer, tools } = captureRegisteredTools()
     registerWriteTools(fakeServer, fakeContext(fakeDb({}), { writeEnabled: true }))
 
@@ -97,6 +100,8 @@ describe("registerWriteTools", () => {
         "create_task",
         "update_goal",
         "update_task",
+        "create_project_note",
+        "update_project_note",
       ].sort(),
     )
     for (const tool of tools.values()) {
