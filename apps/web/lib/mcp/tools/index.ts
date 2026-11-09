@@ -20,7 +20,10 @@ import { registerCreateGoalTool } from "./create-goal"
 import { registerUpdateGoalTool } from "./update-goal"
 import { registerCaptureReflectionTool } from "./capture-reflection"
 import { registerCaptureKoreanPhraseTool } from "./capture-korean-phrase"
-import { registerProjectKnowledgeReadTools, registerProjectKnowledgeWriteTools } from "./project-knowledge"
+import {
+  registerProjectKnowledgeReadTools,
+  registerProjectKnowledgeWriteTools,
+} from "./project-knowledge"
 
 export const READ_TOOL_NAMES = [
   "get_today_overview",

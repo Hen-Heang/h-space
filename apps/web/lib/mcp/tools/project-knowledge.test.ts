@@ -1,9 +1,44 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { registerProjectKnowledgeReadTools, registerProjectKnowledgeWriteTools } from "./project-knowledge"
+import {
+  registerProjectKnowledgeReadTools,
+  registerProjectKnowledgeWriteTools,
+} from "./project-knowledge"
 import { captureRegisteredTools, fakeContext, fakeDb, fakeQuery } from "./test-support"
 
 const PROJECT_ID = "11111111-1111-4111-8111-111111111111"
 const NOTE_ID = "22222222-2222-4222-8222-222222222222"
+const OTHER_PROJECT_ID = "33333333-3333-4333-8333-333333333333"
+
+// Synthetic data only.
+const NOTE_ROW = {
+  id: NOTE_ID,
+  user_id: "user-1",
+  project_id: PROJECT_ID,
+  slug: "note-existing",
+  title: "Fictional note",
+  description: "",
+  content: "Synthetic body",
+  note_type: "technical",
+  tags: [],
+  source_url: null,
+  updated_at: "2026-11-09T00:00:00Z",
+}
+
+/** fakeQuery that also records .eq() filters and .update() patches. */
+function recordingQuery(result: { data: unknown; error: unknown }) {
+  const query = fakeQuery(result)
+  const eqs: [string, unknown][] = []
+  const updates: Record<string, unknown>[] = []
+  query.eq = (column: string, value: unknown) => {
+    eqs.push([column, value])
+    return query
+  }
+  query.update = (patch: Record<string, unknown>) => {
+    updates.push(patch)
+    return query
+  }
+  return { query, eqs, updates }
+}
 
 afterEach(() => vi.unstubAllEnvs())
 
@@ -21,7 +56,8 @@ describe("project knowledge MCP", () => {
     const { fakeServer, tools } = captureRegisteredTools()
     registerProjectKnowledgeReadTools(fakeServer, fakeContext(fakeDb({})))
     const result = await tools.get("list_project_notes")!.handler({
-      projectId: PROJECT_ID, limit: 20,
+      projectId: PROJECT_ID,
+      limit: 20,
     })
     expect(result.isError).toBe(true)
     expect(result.structuredContent).toBeUndefined()
@@ -31,19 +67,31 @@ describe("project knowledge MCP", () => {
     vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", PROJECT_ID)
     const { fakeServer, tools } = captureRegisteredTools()
     const projects = fakeQuery({
-      data: [{
-        id: PROJECT_ID, name: "Backend Study", description: "Practice",
-        project_type: "learning", status: "active", updated_at: "2026-11-09T00:00:00Z",
-      }],
+      data: [
+        {
+          id: PROJECT_ID,
+          name: "Backend Study",
+          description: "Practice",
+          project_type: "learning",
+          status: "active",
+          updated_at: "2026-11-09T00:00:00Z",
+        },
+      ],
       error: null,
     })
-    registerProjectKnowledgeReadTools(fakeServer, fakeContext(fakeDb({
-      kori_note_projects: projects,
-    })))
+    registerProjectKnowledgeReadTools(
+      fakeServer,
+      fakeContext(
+        fakeDb({
+          kori_note_projects: projects,
+        }),
+      ),
+    )
     const result = await tools.get("list_knowledge_projects")!.handler({})
     expect(result.isError).toBeFalsy()
-    expect((result.structuredContent as { projects: { id: string }[] }).projects[0].id)
-      .toBe(PROJECT_ID)
+    expect((result.structuredContent as { projects: { id: string }[] }).projects[0].id).toBe(
+      PROJECT_ID,
+    )
   })
 
   it("refuses writes outside explicitly approved projects", async () => {
@@ -55,15 +103,143 @@ describe("project knowledge MCP", () => {
       return notes
     }
     const { fakeServer, tools } = captureRegisteredTools()
-    registerProjectKnowledgeWriteTools(fakeServer, fakeContext(fakeDb({
-      kori_notes: notes,
-    }), { writeEnabled: true }))
+    registerProjectKnowledgeWriteTools(
+      fakeServer,
+      fakeContext(
+        fakeDb({
+          kori_notes: notes,
+        }),
+        { writeEnabled: true },
+      ),
+    )
     const result = await tools.get("create_project_note")!.handler({
-      projectId: PROJECT_ID, title: "Mock Notes",
-      content: "Fictional example only", noteType: "technical", tags: [],
+      projectId: PROJECT_ID,
+      title: "Mock Notes",
+      content: "Fictional example only",
+      noteType: "technical",
+      tags: [],
     })
     expect(result.isError).toBe(true)
     expect(inserted).toBe(false)
+  })
+
+  it("refuses an allowlisted project the caller does not own", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", PROJECT_ID)
+    const { fakeServer, tools } = captureRegisteredTools()
+    // Another user's project: the user_id filter (and RLS) returns no row.
+    registerProjectKnowledgeReadTools(
+      fakeServer,
+      fakeContext(
+        fakeDb({
+          kori_note_projects: fakeQuery({ data: null, error: null }),
+          kori_notes: fakeQuery({ data: [NOTE_ROW], error: null }),
+        }),
+      ),
+    )
+    const result = await tools.get("list_project_notes")!.handler({
+      projectId: PROJECT_ID,
+      limit: 20,
+    })
+    expect(result.isError).toBe(true)
+    expect(result.structuredContent).toBeUndefined()
+  })
+
+  it("gives the same denial for a missing note and a note outside the allowlist", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", OTHER_PROJECT_ID)
+    const read = async (note: unknown) => {
+      const { fakeServer, tools } = captureRegisteredTools()
+      registerProjectKnowledgeReadTools(
+        fakeServer,
+        fakeContext(
+          fakeDb({
+            kori_note_projects: fakeQuery({ data: { id: PROJECT_ID }, error: null }),
+            kori_notes: fakeQuery({ data: note, error: null }),
+          }),
+        ),
+      )
+      return tools.get("get_project_note")!.handler({ noteId: NOTE_ID })
+    }
+    const missing = await read(null) // e.g. another user's note, hidden by RLS
+    const notApproved = await read(NOTE_ROW)
+    const unfiled = await read({ ...NOTE_ROW, project_id: null })
+    for (const result of [missing, notApproved, unfiled]) {
+      expect(result.isError).toBe(true)
+      expect(result.structuredContent).toBeUndefined()
+    }
+    // No existence oracle: every denial reads identically.
+    expect(notApproved.content).toEqual(missing.content)
+    expect(unfiled.content).toEqual(missing.content)
+  })
+
+  it("reads a note in an approved, user-owned project", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", PROJECT_ID)
+    const { fakeServer, tools } = captureRegisteredTools()
+    const notes = recordingQuery({ data: NOTE_ROW, error: null })
+    registerProjectKnowledgeReadTools(
+      fakeServer,
+      fakeContext(
+        fakeDb({
+          kori_note_projects: fakeQuery({ data: { id: PROJECT_ID }, error: null }),
+          kori_notes: notes.query,
+        }),
+      ),
+    )
+    const result = await tools.get("get_project_note")!.handler({ noteId: NOTE_ID })
+    expect(result.isError).toBeFalsy()
+    expect((result.structuredContent as { note: { content: string } }).note.content).toBe(
+      NOTE_ROW.content,
+    )
+    expect(notes.eqs).toContainEqual(["user_id", "user-1"])
+  })
+
+  it("refuses updates to a note outside the allowlist without writing", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", OTHER_PROJECT_ID)
+    const notes = recordingQuery({ data: NOTE_ROW, error: null })
+    const { fakeServer, tools } = captureRegisteredTools()
+    registerProjectKnowledgeWriteTools(
+      fakeServer,
+      fakeContext(
+        fakeDb({
+          kori_note_projects: fakeQuery({ data: { id: PROJECT_ID }, error: null }),
+          kori_notes: notes.query,
+        }),
+        { writeEnabled: true },
+      ),
+    )
+    const result = await tools.get("update_project_note")!.handler({
+      noteId: NOTE_ID,
+      title: "Changed",
+    })
+    expect(result.isError).toBe(true)
+    expect(notes.updates).toHaveLength(0)
+  })
+
+  it("updates only the caller's note, pinned to its project", async () => {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", PROJECT_ID)
+    const notes = recordingQuery({ data: NOTE_ROW, error: null })
+    const { fakeServer, tools } = captureRegisteredTools()
+    registerProjectKnowledgeWriteTools(
+      fakeServer,
+      fakeContext(
+        fakeDb({
+          kori_note_projects: fakeQuery({ data: { id: PROJECT_ID }, error: null }),
+          kori_notes: notes.query,
+        }),
+        { writeEnabled: true },
+      ),
+    )
+    const result = await tools.get("update_project_note")!.handler({
+      noteId: NOTE_ID,
+      title: "Changed",
+    })
+    expect(result.isError).toBeFalsy()
+    expect(notes.updates).toHaveLength(1)
+    expect(notes.updates[0]).toMatchObject({ title: "Changed" })
+    // Never moves a note or touches its owner.
+    expect(notes.updates[0]).not.toHaveProperty("project_id")
+    expect(notes.updates[0]).not.toHaveProperty("user_id")
+    expect(notes.eqs).toContainEqual(["user_id", "user-1"])
+    expect(notes.eqs).toContainEqual(["project_id", PROJECT_ID])
   })
 
   it("creates a note in an approved, user-owned project", async () => {
@@ -71,20 +247,36 @@ describe("project knowledge MCP", () => {
     const { fakeServer, tools } = captureRegisteredTools()
     const notes = fakeQuery({
       data: {
-        id: NOTE_ID, user_id: "user-1", project_id: PROJECT_ID,
-        slug: "note-new", title: "SQL Learning", description: "",
-        content: "How LEFT JOIN works", note_type: "technical",
-        tags: ["sql"], source_url: null, updated_at: "2026-11-09T00:00:00Z",
+        id: NOTE_ID,
+        user_id: "user-1",
+        project_id: PROJECT_ID,
+        slug: "note-new",
+        title: "SQL Learning",
+        description: "",
+        content: "How LEFT JOIN works",
+        note_type: "technical",
+        tags: ["sql"],
+        source_url: null,
+        updated_at: "2026-11-09T00:00:00Z",
       },
       error: null,
     })
-    registerProjectKnowledgeWriteTools(fakeServer, fakeContext(fakeDb({
-      kori_note_projects: fakeQuery({ data: { id: PROJECT_ID }, error: null }),
-      kori_notes: notes,
-    }), { writeEnabled: true }))
+    registerProjectKnowledgeWriteTools(
+      fakeServer,
+      fakeContext(
+        fakeDb({
+          kori_note_projects: fakeQuery({ data: { id: PROJECT_ID }, error: null }),
+          kori_notes: notes,
+        }),
+        { writeEnabled: true },
+      ),
+    )
     const result = await tools.get("create_project_note")!.handler({
-      projectId: PROJECT_ID, title: "SQL Learning",
-      content: "How LEFT JOIN works", noteType: "technical", tags: ["sql"],
+      projectId: PROJECT_ID,
+      title: "SQL Learning",
+      content: "How LEFT JOIN works",
+      noteType: "technical",
+      tags: ["sql"],
     })
     expect(result.isError).toBeFalsy()
     expect((result.structuredContent as { created: boolean }).created).toBe(true)

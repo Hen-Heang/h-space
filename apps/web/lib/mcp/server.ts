@@ -71,9 +71,9 @@ const INSTRUCTIONS_MODE: Record<McpSurface, string> = {
     "Read-only: write tools are turned off on this deployment, so nothing can be created or " +
     "changed through this server.",
   "read-write":
-    "Write tools can create or update the user's tasks and goals, capture reflections or Korean " +
-    "phrases, and edit notes in explicitly approved knowledge projects — use them only when the " +
-    "user asks. No tool deletes anything.",
+    "Write tools are on — use them only when the user asks. No tool deletes anything. They can " +
+    "create or update the user's tasks and goals, capture reflections or Korean phrases, and " +
+    "create or edit notes in owner-approved knowledge projects.",
 }
 
 const INSTRUCTIONS_SCOPE =
