@@ -257,7 +257,7 @@ describe("tools/list", () => {
       expect(names).toContain("get_hengo_server_info")
       expect(names).toContain("list_goals")
       expect(names).not.toContain("create_task")
-      expect(names).toHaveLength(8) // 1 foundation + 7 read tools
+      expect(names).toHaveLength(1 + READ_TOOL_NAMES.length)
     } finally {
       await handler.close()
     }
@@ -269,7 +269,7 @@ describe("tools/list", () => {
       const names = await listToolNames(handler)
       expect(names).toContain("create_task")
       expect(names).toContain("capture_reflection")
-      expect(names).toHaveLength(15) // 1 foundation + 7 read + 7 write
+      expect(names).toHaveLength(1 + READ_TOOL_NAMES.length + WRITE_TOOL_NAMES.length)
     } finally {
       await handler.close()
     }
