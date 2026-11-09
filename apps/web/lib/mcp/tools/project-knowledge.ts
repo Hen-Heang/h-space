@@ -155,6 +155,45 @@ function readOnly() {
   }
 }
 
+/** Project-name comparison key: case-, width- and whitespace-insensitive. */
+export function projectNameKey(name: string): string {
+  return name.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase()
+}
+
+/**
+ * Refusal for create_knowledge_project when the caller already has a project
+ * with that name, or null when the name is free. A project the AI can see is
+ * named with its id so the AI reuses it. A hidden (AI access Off) project is
+ * acknowledged without its id: the AI chose this name itself, so this tells it
+ * only that the name is taken, and points the user at the in-app setting —
+ * otherwise it would create a confusing duplicate next to the real project.
+ */
+async function duplicateProjectRefusal(ctx: McpContext, name: string) {
+  const { data, error } = await ctx.db
+    .from("kori_note_projects")
+    .select("id, name")
+    .eq("user_id", ctx.userId)
+  if (error) {
+    // Not set up on this deployment: the insert below reports that.
+    if (isMissingSchemaError(error)) return null
+    throw new Error("Could not check existing projects.")
+  }
+  const key = projectNameKey(name)
+  const match = (Array.isArray(data) ? (data as { id: string; name: string }[]) : []).find(
+    (row) => projectNameKey(row.name) === key,
+  )
+  if (!match) return null
+
+  const text =
+    (await projectAccess(ctx, match.id)) === "none"
+      ? `A project named "${match.name}" already exists, but it isn't open to AI apps. ` +
+        "Don't create another one: ask the user to set that project's AI access to Read & edit " +
+        "in H-Space (Notes → the project → AI access), then use it."
+      : `A project named "${match.name}" already exists (id ${match.id}). ` +
+        "Use it instead of creating a new one."
+  return { isError: true as const, content: [{ type: "text" as const, text }] }
+}
+
 function noteSummary(row: NoteRow) {
   return {
     id: row.id,
@@ -334,7 +373,8 @@ export function registerProjectKnowledgeWriteTools(server: McpServer, ctx: McpCo
       description:
         "Create a new, empty H-Space Notes project with AI access turned on, only when the user " +
         "asks for a new project. Call list_knowledge_projects first and reuse an existing project " +
-        "if one fits. It cannot open an existing project to AI — the owner does that in the app.",
+        "if one fits. Refuses a name the user already uses. It cannot open an existing project " +
+        "to AI — the owner does that in the app.",
       inputSchema: z.object({
         name: z.string().trim().min(1).max(120),
         description: z.string().trim().max(500).default(""),
@@ -355,6 +395,8 @@ export function registerProjectKnowledgeWriteTools(server: McpServer, ctx: McpCo
       "write",
       "create_knowledge_project",
       async ({ name, description, projectType }) => {
+        const duplicate = await duplicateProjectRefusal(ctx, name)
+        if (duplicate) return duplicate
         // A connector creates the project to write into it, so it starts at
         // Read & edit; the owner can lower it in the app.
         const insert = (row: Record<string, unknown>) =>
