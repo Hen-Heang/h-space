@@ -76,3 +76,26 @@ export function useNoteProjectMutations() {
 
   return { create, update, markOpened }
 }
+
+export const noteProjectAiAccessQueryKey = (id: string) => ["note-project-ai-access", id] as const
+
+/**
+ * The project's "Allow AI access" switch. `enabled` is null while loading or
+ * when the switch isn't set up on this database yet (callers hide it then).
+ */
+export function useProjectAiAccess(id: string) {
+  const queryClient = useQueryClient()
+  const { data, isPending } = useQuery({
+    queryKey: noteProjectAiAccessQueryKey(id),
+    queryFn: () => noteProjectsApi.getAiAccess(id),
+    enabled: Boolean(id),
+    retry: false,
+  })
+
+  const setEnabled = useMutation({
+    mutationFn: (enabled: boolean) => noteProjectsApi.setAiAccess(id, enabled),
+    onSuccess: (enabled) => queryClient.setQueryData(noteProjectAiAccessQueryKey(id), enabled),
+  })
+
+  return { enabled: isPending ? null : (data ?? null), setEnabled }
+}

@@ -73,11 +73,11 @@ const INSTRUCTIONS_MODE: Record<McpSurface, string> = {
   "read-write":
     "Write tools are on — use them only when the user asks. No tool deletes anything. They can " +
     "create or update the user's tasks and goals, capture reflections or Korean phrases, and " +
-    "create or edit notes in owner-approved knowledge projects.",
+    "create notes projects and create or edit notes in owner-approved knowledge projects.",
 }
 
 const INSTRUCTIONS_SCOPE =
-  "Project notes are available only for IDs explicitly allowlisted by the owner. " +
+  "Project notes are available only in projects the owner opened to AI access. " +
   "The server cannot read other notes, inbox items, journal entries, finances or saved credentials."
 
 /**

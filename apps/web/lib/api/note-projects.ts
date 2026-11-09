@@ -129,4 +129,35 @@ export const noteProjectsApi = {
       .eq("id", id)
     if (error) rethrow(error)
   },
+
+  /**
+   * The project's "Allow AI access" switch (kori_note_projects.ai_access),
+   * read separately so the rest of Projects keeps working before that
+   * migration is applied: `null` means the switch isn't set up yet.
+   */
+  getAiAccess: async (id: string): Promise<boolean | null> => {
+    const { data, error } = await supabase
+      .from("kori_note_projects")
+      .select("ai_access")
+      .eq("id", id)
+      .single()
+    if (error) {
+      if (isMissingSchemaError(error)) return null
+      throw error
+    }
+    return (data as { ai_access: boolean }).ai_access === true
+  },
+
+  /** Turns AI (MCP connector) access to this project's notes on or off. */
+  setAiAccess: async (id: string, enabled: boolean): Promise<boolean> => {
+    requireUserId()
+    const { data, error } = await supabase
+      .from("kori_note_projects")
+      .update({ ai_access: enabled })
+      .eq("id", id)
+      .select("ai_access")
+      .single()
+    if (error) throw error
+    return (data as { ai_access: boolean }).ai_access === true
+  },
 }

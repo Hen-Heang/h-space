@@ -23,6 +23,7 @@ import {
   ProjectTile,
   updatedLabel,
 } from "@/components/notes/project-ui"
+import { ProjectAiAccess } from "@/components/notes/ProjectAiAccess"
 import { ProjectFormDialog } from "@/components/notes/ProjectFormDialog"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -232,6 +233,8 @@ export function ProjectWorkspace({ project, notes }: { project: Project; notes: 
           </Button>
         </div>
       </header>
+
+      <ProjectAiAccess projectId={project.id} />
 
       <Tabs value={tab} onValueChange={setTab} className="gap-5">
         <div className="no-scrollbar -mx-1 overflow-x-auto border-b border-border px-1">

@@ -46,6 +46,7 @@ export const WRITE_TOOL_NAMES = [
   "update_goal",
   "capture_reflection",
   "capture_korean_phrase",
+  "create_knowledge_project",
   "create_project_note",
   "update_project_note",
 ] as const
