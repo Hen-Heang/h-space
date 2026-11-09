@@ -26,13 +26,13 @@ export function LearningWidget({
   const completed = items.filter((item) => item.status === "completed").length
   const allDone = items.length > 0 && completed === items.length
   const pct = items.length > 0 ? Math.round((completed / items.length) * 100) : 0
+  // One name per destination: /learn is always "Open Learning". "Start
+  // practice" is the only accent link — it's something left to do today.
   const action = loading
     ? undefined
-    : error || !mission
+    : error || !mission || allDone || items.length === 0
       ? { href: "/learn", label: "Open Learning" }
-      : allDone
-        ? { href: "/learn", label: "Go to Learning" }
-        : { href: "/practice", label: "Start practice" }
+      : { href: "/practice", label: "Start practice", emphasis: true }
 
   return (
     <CompactSummary title="Korean practice" action={action}>

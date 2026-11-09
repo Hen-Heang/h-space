@@ -5,6 +5,7 @@ import { ArrowUpRight, BrainCircuit, Plus } from "lucide-react"
 
 import { ActiveGoalsCard } from "@/components/home/ActiveGoalsCard"
 import { ContinueCard } from "@/components/home/ContinueCard"
+import { HOME_LINK } from "@/components/home/home-primitives"
 import { LearningWidget } from "@/components/home/LearningWidget"
 import { QuickAccess } from "@/components/home/QuickAccess"
 import { TodayHabitCheckins } from "@/components/home/TodayHabitCheckins"
@@ -34,8 +35,8 @@ function getTodayLabel() {
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 //
-// Home leads with the day's work, then compact progress, recent destinations,
-// and a few app shortcuts. Widgets read existing query caches; there is no
+// Home leads with the day's work, then compact progress, a few app shortcuts,
+// and recent destinations. Widgets read existing query caches; there is no
 // dashboard-specific endpoint or table.
 
 export default function HomePage() {
@@ -71,11 +72,8 @@ export default function HomePage() {
       <PageSection
         title="Today"
         action={
-          <Link
-            href="/goals/tasks"
-            className="inline-flex min-h-11 items-center rounded-md text-sm font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            View all tasks
+          <Link href="/goals/tasks" className={HOME_LINK}>
+            All tasks
           </Link>
         }
       >
@@ -97,15 +95,10 @@ export default function HomePage() {
         </div>
       </PageSection>
 
-      <ContinueCard />
-
       <PageSection
         title="My Apps"
         action={
-          <Link
-            href="/apps"
-            className="inline-flex min-h-11 items-center gap-1 rounded-md text-sm font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-          >
+          <Link href="/apps" className={HOME_LINK}>
             Browse apps
             <ArrowUpRight size={15} aria-hidden="true" />
           </Link>
@@ -113,6 +106,10 @@ export default function HomePage() {
       >
         <QuickAccess />
       </PageSection>
+
+      {/* Last on purpose: it reads localStorage, so it can only appear after
+          hydration. At the bottom it never pushes other content down. */}
+      <ContinueCard />
     </div>
   )
 }

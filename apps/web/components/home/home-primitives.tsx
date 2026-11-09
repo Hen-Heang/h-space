@@ -3,26 +3,41 @@ import { ArrowUpRight, Star, type LucideIcon } from "lucide-react"
 
 import { PageSection } from "@/components/ui/page-section"
 
-/** A quiet sub-section used for Home's goals, habits, and learning summaries. */
+/**
+ * Home's navigation links ("All tasks", "All goals", …). Muted on purpose:
+ * the accent colour is kept for things you act on here (checking off a task
+ * or habit, starting practice), not for links to other pages.
+ */
+export const HOME_LINK =
+  "inline-flex min-h-11 items-center gap-1 rounded-md text-sm font-medium text-muted-foreground outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+
+/** The accent version, for a link that is the next thing to do (e.g. "Start practice"). */
+const HOME_ACTION_LINK =
+  "inline-flex min-h-11 items-center gap-1 rounded-md text-sm font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+
+/**
+ * A quiet sub-section used for Home's goals, habits, and learning summaries.
+ * Its heading is smaller and muted, a step below the page's section headings
+ * and visibly different from the 16px row text beneath it.
+ */
 export function CompactSummary({
   title,
   action,
   children,
 }: {
   title: string
-  action?: { href: string; label: string }
+  /** `emphasis` marks the link as the next thing to do rather than navigation. */
+  action?: { href: string; label: string; emphasis?: boolean }
   children: React.ReactNode
 }) {
   return (
     <PageSection
       title={title}
       headingLevel="h3"
+      headingClassName="text-sm font-medium tracking-normal text-muted-foreground"
       action={
         action ? (
-          <Link
-            href={action.href}
-            className="inline-flex min-h-11 items-center rounded-md text-sm font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-          >
+          <Link href={action.href} className={action.emphasis ? HOME_ACTION_LINK : HOME_LINK}>
             {action.label}
           </Link>
         ) : undefined
