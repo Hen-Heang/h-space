@@ -9,8 +9,6 @@
 import { Suspense, useCallback, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { CircleCheck, KeyRound, Loader2, PenLine, ShieldOff } from "lucide-react"
-import type { OAuthAuthorizationDetails } from "@supabase/supabase-js"
-
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -21,37 +19,42 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { ErrorBanner } from "@/components/ui/error-banner"
-import { supabase } from "@/lib/supabase"
+import {
+  decideConsent,
+  getConsentAuthorization,
+  isConsentRedirect,
+  safeConsentRedirect,
+  type ConsentAuthorizationDetails,
+} from "@/lib/mcp-consent"
 
 // Plain-language, specific permission lines — never "full access" (AGENTS.md
 // domain-neutrality rule extends to any user-facing copy naming what a
 // connector can touch). Kept in sync by hand with the tool set registered in
-// lib/mcp/tools/*: seven read tools always available, seven write tools only
-// when the server has MCP_WRITE_ENABLED=true. Supabase's OAuth server has no
+// lib/mcp/tools/* (READ_TOOL_NAMES always available, WRITE_TOOL_NAMES only
+// when the server has MCP_WRITE_ENABLED=true; project notes only for ids in
+// MCP_KNOWLEDGE_PROJECT_IDS). Supabase's OAuth server has no
 // custom read/write scope to gate this on (design doc §4.2), so both lines
 // are shown for every connector — write tools may simply be absent from the
 // connector's own tool list if the deployment has writes disabled.
 const READ_PERMISSIONS = [
   "View your goals, tasks, and today's overview",
   "View your Korean-learning and weekly progress stats",
+  "Read notes in the projects you have approved for AI access (none by default)",
 ]
 const WRITE_PERMISSIONS = [
   "Create and update tasks and goals, and mark tasks complete",
   "Capture a reflection note or save a Korean word or phrase you mention",
+  "Create and edit notes in the projects you have approved for AI access",
 ]
 
 type ConsentState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
   | { kind: "redirecting" }
-  | { kind: "ready"; details: OAuthAuthorizationDetails; submitting: "approve" | "deny" | null }
+  | { kind: "ready"; details: ConsentAuthorizationDetails; submitting: "approve" | "deny" | null }
   | { kind: "denied" }
 
-function isAuthorizationDetails(
-  data: OAuthAuthorizationDetails | { redirect_url: string },
-): data is OAuthAuthorizationDetails {
-  return "authorization_id" in data
-}
+const BAD_REDIRECT = "The connector returned an invalid address. Start the connection again."
 
 function ConsentCard() {
   const searchParams = useSearchParams()
@@ -63,23 +66,25 @@ function ConsentCard() {
     // synchronize via an effect — handled directly below, before this runs.
     if (!authorizationId) return
     let cancelled = false
-    supabase.auth.oauth.getAuthorizationDetails(authorizationId).then(({ data, error }) => {
+    getConsentAuthorization(authorizationId).then(({ data, error }) => {
       if (cancelled) return
-      if (error || !data) {
-        setState({
-          kind: "error",
-          message: error?.message || "This authorization link is invalid or has expired.",
-        })
+      if (error !== null) {
+        setState({ kind: "error", message: error })
         return
       }
-      if (isAuthorizationDetails(data)) {
+      if (!isConsentRedirect(data)) {
         setState({ kind: "ready", details: data, submitting: null })
         return
       }
       // Already consented for these scopes (or just approved/denied) —
       // Supabase hands back a ready-to-use redirect rather than asking again.
+      const target = safeConsentRedirect(data.redirect_url)
+      if (!target) {
+        setState({ kind: "error", message: BAD_REDIRECT })
+        return
+      }
       setState({ kind: "redirecting" })
-      window.location.href = data.redirect_url
+      window.location.href = target
     })
     return () => {
       cancelled = true
@@ -91,24 +96,21 @@ function ConsentCard() {
       if (state.kind !== "ready") return
       const { details } = state
       setState({ kind: "ready", details, submitting: decision })
-      const call =
-        decision === "approve"
-          ? supabase.auth.oauth.approveAuthorization
-          : supabase.auth.oauth.denyAuthorization
-      const { data, error } = await call(details.authorization_id, { skipBrowserRedirect: true })
-      if (error || !data) {
-        setState({
-          kind: "error",
-          message:
-            error?.message || "Something went wrong recording your decision. Please try again.",
-        })
+      const { data, error } = await decideConsent(details.authorization_id, decision)
+      if (error !== null) {
+        setState({ kind: "error", message: error })
         return
       }
       if (decision === "deny") {
         setState({ kind: "denied" })
         return
       }
-      window.location.href = data.redirect_url
+      const target = safeConsentRedirect(data.redirect_url)
+      if (!target) {
+        setState({ kind: "error", message: BAD_REDIRECT })
+        return
+      }
+      window.location.href = target
     },
     [state],
   )
@@ -172,7 +174,9 @@ function ConsentCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Let &ldquo;{details.client.name}&rdquo; connect to Hengo?</CardTitle>
+        <CardTitle>
+          Let &ldquo;{details.client.name || "this connector"}&rdquo; connect to Hengo?
+        </CardTitle>
         <CardDescription>
           This connector will be able to act on your Hengo account as you, using your own sign-in.
           You can revoke access at any time from Supabase&apos;s connected-apps settings.
