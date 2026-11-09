@@ -49,15 +49,34 @@ export function safeUrl(
   return schemes.has(scheme[1].toLowerCase()) ? trimmed : null
 }
 
-function slugifyHeading(text: string): string {
+/**
+ * A heading's anchor id. Keeps letters, combining marks and digits from any
+ * script, so Korean and Khmer headings get real ids instead of "" (marks
+ * matter for Khmer, whose vowel signs are combining characters). The id is
+ * only ever used as an attribute value and with getElementById, never in a
+ * CSS selector, so non-ASCII and leading digits are fine.
+ */
+export function slugifyHeading(text: string): string {
   return text
+    .normalize("NFKC")
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/[^\p{L}\p{M}\p{N}]+/gu, "-")
     .replace(/(^-|-$)/g, "")
 }
 
 export function renderMarkdown(content: string): string {
+  // Ids must be unique per note: two "## Example" headings become
+  // "example" and "example-2"; a heading with no letters becomes "section".
+  const usedIds = new Set<string>()
+  const uniqueHeadingId = (text: string) => {
+    const base = slugifyHeading(text) || "section"
+    let id = base
+    for (let n = 2; usedIds.has(id); n += 1) id = `${base}-${n}`
+    usedIds.add(id)
+    return id
+  }
+
   const renderer = new Renderer()
 
   // Raw HTML (block or inline) is shown as literal text.
@@ -93,7 +112,7 @@ export function renderMarkdown(content: string): string {
     const inner = this.parser.parseInline(tokens)
     if (depth === 2 || depth === 3) {
       const rawText = tokens.map((t) => ("raw" in t ? t.raw : "")).join("")
-      return `<h${depth} id="${escapeHtml(slugifyHeading(rawText))}">${inner}</h${depth}>`
+      return `<h${depth} id="${escapeHtml(uniqueHeadingId(rawText))}">${inner}</h${depth}>`
     }
     return `<h${depth}>${inner}</h${depth}>`
   }

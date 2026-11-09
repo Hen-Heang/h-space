@@ -4,12 +4,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 const selectCalls = vi.hoisted(() => [] as string[])
 const responses = vi.hoisted(() => [] as { data: unknown; error: unknown }[])
 const insertPayloads = vi.hoisted(() => [] as Record<string, unknown>[])
+const updatePayloads = vi.hoisted(() => [] as Record<string, unknown>[])
+const eqCalls = vi.hoisted(() => [] as [string, unknown][])
 
 vi.mock("@/lib/supabase", () => {
   const chain = (result: () => { data: unknown; error: unknown }) => {
     const self: Record<string, unknown> = {}
-    for (const name of ["order", "textSearch", "limit", "eq", "single", "select"]) {
+    for (const name of ["order", "textSearch", "limit", "single", "maybeSingle", "select"]) {
       self[name] = () => self
+    }
+    self.eq = (column: string, value: unknown) => {
+      eqCalls.push([column, value])
+      return self
     }
     self.then = (resolve: (v: unknown) => unknown) => resolve(result())
     return self
@@ -28,13 +34,17 @@ vi.mock("@/lib/supabase", () => {
             error: null,
           }))
         },
+        update: (payload: Record<string, unknown>) => {
+          updatePayloads.push(payload)
+          return chain(() => responses.shift() ?? { data: null, error: null })
+        },
       }),
     },
   }
 })
 vi.mock("@/lib/auth-store", () => ({ requireUserId: () => "user-1" }))
 
-import { notesApi, resetNotesSchemaCache } from "./notes"
+import { NoteConflictError, notesApi, resetNotesSchemaCache } from "./notes"
 
 const row = {
   id: "n1",
@@ -58,7 +68,52 @@ beforeEach(() => {
   selectCalls.length = 0
   responses.length = 0
   insertPayloads.length = 0
+  updatePayloads.length = 0
+  eqCalls.length = 0
   resetNotesSchemaCache()
+})
+
+describe("notesApi.update version check", () => {
+  const version = "2026-11-09T01:00:00.123456+00:00"
+
+  it("only updates the version the editor opened, when one is given", async () => {
+    responses.push({ data: { ...row, title: "B" }, error: null })
+    const note = await notesApi.update("a", { title: "B" }, { expectedUpdatedAt: version })
+    expect(eqCalls).toEqual([
+      ["slug", "a"],
+      ["updated_at", version],
+    ])
+    expect(note.title).toBe("B")
+    expect(updatePayloads[0].updated_at).not.toBe(version)
+  })
+
+  it("throws NoteConflictError when that version no longer exists", async () => {
+    responses.push({ data: null, error: null })
+    await expect(
+      notesApi.update("a", { content: "mine" }, { expectedUpdatedAt: version }),
+    ).rejects.toBeInstanceOf(NoteConflictError)
+  })
+
+  it("updates without a version filter when none is given (pin toggle)", async () => {
+    responses.push({ data: { ...row, pinned: true }, error: null })
+    await notesApi.togglePinned("a", true)
+    expect(eqCalls).toEqual([["slug", "a"]])
+  })
+
+  it("reports a missing note as not found, not as a conflict", async () => {
+    responses.push({ data: null, error: null })
+    const result = notesApi.update("gone", { title: "B" })
+    await expect(result).rejects.toThrow("Note not found.")
+    await expect(result).rejects.not.toBeInstanceOf(NoteConflictError)
+  })
+
+  it("rethrows database errors", async () => {
+    const dbError = { code: "23505", message: "duplicate key" }
+    responses.push({ data: null, error: dbError })
+    await expect(notesApi.update("a", { title: "B" }, { expectedUpdatedAt: version })).rejects.toBe(
+      dbError,
+    )
+  })
 })
 
 describe("notesApi project_id compatibility", () => {

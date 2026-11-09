@@ -75,8 +75,16 @@ export function useNoteMutations() {
   })
 
   const update = useMutation({
-    mutationFn: ({ slug, data }: { slug: string; data: Partial<NoteInput> }) =>
-      notesApi.update(slug, data),
+    mutationFn: ({
+      slug,
+      data,
+      expectedUpdatedAt,
+    }: {
+      slug: string
+      data: Partial<NoteInput>
+      /** Refuse the save if the note changed since this version (see notesApi.update). */
+      expectedUpdatedAt?: string
+    }) => notesApi.update(slug, data, { expectedUpdatedAt }),
     onSuccess: (_res, { slug }) => {
       invalidateList()
       queryClient.invalidateQueries({ queryKey: noteQueryKey(slug) })

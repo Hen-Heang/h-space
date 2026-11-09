@@ -10,10 +10,13 @@ export function TagEditor({
   tags,
   onChange,
   placeholder = "Add tags…",
+  id,
 }: {
   tags: string[]
   onChange: (tags: string[]) => void
   placeholder?: string
+  /** Id for the text input, so a visible `<label htmlFor>` can name it. */
+  id?: string
 }) {
   const [input, setInput] = useState("")
 
@@ -43,7 +46,9 @@ export function TagEditor({
         </span>
       ))}
       <input
-        aria-label="Add tags"
+        id={id}
+        // A visible label (via `id`) names the input; otherwise fall back to this.
+        aria-label={id ? undefined : "Add tags"}
         value={input}
         onChange={(e) => {
           if (e.target.value.endsWith(",")) {

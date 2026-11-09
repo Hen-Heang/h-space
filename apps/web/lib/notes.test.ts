@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest"
 
 import {
   filterNotesMeta,
+  generatedNoteSlug,
   isNoteInputValid,
+  noteSlugFromTitle,
   MAX_NOTE_CONTENT_LENGTH,
   MAX_NOTE_TITLE_LENGTH,
   sortNotesMeta,
@@ -126,5 +128,31 @@ describe("isReservedNoteSlug", () => {
     expect(isReservedNoteSlug("new")).toBe(true)
     expect(isReservedNoteSlug(" Projects ")).toBe(true)
     expect(isReservedNoteSlug("project-notes")).toBe(false)
+  })
+})
+
+describe("generatedNoteSlug", () => {
+  it("uses the local date and four base-36 characters", () => {
+    const values = [0, 0.5, 0.99, 0.1]
+    const slug = generatedNoteSlug(new Date(2026, 10, 9, 23, 30), () => values.shift() ?? 0)
+    expect(slug).toBe("note-20261109-0iz3")
+  })
+
+  it("always produces a valid, non-reserved slug", () => {
+    for (let i = 0; i < 50; i += 1) {
+      expect(generatedNoteSlug()).toMatch(/^note-\d{8}-[a-z0-9]{4}$/)
+    }
+  })
+})
+
+describe("noteSlugFromTitle", () => {
+  it("slugifies titles with ASCII letters or digits", () => {
+    expect(noteSlugFromTitle("Spring Boot tips", "fallback")).toBe("spring-boot-tips")
+    expect(noteSlugFromTitle("Java 공부 2", "fallback")).toBe("java-2")
+  })
+
+  it("falls back for Korean and Khmer titles", () => {
+    expect(noteSlugFromTitle("한국어 공부", "note-20261109-abcd")).toBe("note-20261109-abcd")
+    expect(noteSlugFromTitle("ការសិក្សា", "note-20261109-abcd")).toBe("note-20261109-abcd")
   })
 })

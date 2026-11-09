@@ -388,6 +388,16 @@ AI route with no table access of its own:
 - [x] `components/notes/NoteEditor.tsx` — note type select, category field decoupled from icon, chip-based
       multi-tag editor, source URL field, pin toggle, Write/Preview tabs (reuses `renderMarkdown`), autosave
       draft protection (localStorage, restorable/discardable banner)
+  - Drafts (2026-11-09, `lib/note-drafts.ts`): a draft exists only while there are unsaved changes, and
+    Cancel asks before discarding them. Edit drafts store the note's `updated_at` they started from and
+    are restored automatically only if the note is unchanged; otherwise the editor asks. A new note
+    started in a project uses its own draft key (`hengo-note-draft:new:<projectId>`).
+  - Saving an edit passes `expectedUpdatedAt` to `notesApi.update`, which refuses with
+    `NoteConflictError` if the note changed since Edit was pressed (another device, or the MCP
+    connector's `update_project_note`), instead of overwriting it.
+  - Slugs stay ASCII. A title with no ASCII letters or digits (Korean, Khmer) gets
+    `note-YYYYMMDD-xxxx` (`generatedNoteSlug`); heading ids keep any script's letters and are
+    de-duplicated per note (`lib/notes-markdown.ts`).
 - [x] `components/notes/NoteView.tsx`, `NoteCard.tsx`, `NoteActions.tsx` — pin toggle, note type badge,
       created/updated timestamps, source URL link, tag chips
 - [x] `components/notes/NoteSearch.tsx` — note type + pinned filters; server-side content search when a

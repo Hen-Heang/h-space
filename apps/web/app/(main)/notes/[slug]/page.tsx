@@ -22,6 +22,10 @@ export default function NotePage() {
   const { note, loading, error } = useNote(slug)
   const { update, remove, togglePinned } = useNoteMutations()
   const [isEditing, setIsEditing] = useState(false)
+  // The note's version when Edit was pressed. Saving is refused if the note
+  // has changed since (another device, or the AI connector), and a local
+  // draft from an older version isn't applied without asking.
+  const [editBaseUpdatedAt, setEditBaseUpdatedAt] = useState<string | null>(null)
 
   const html = useMemo(() => (note ? renderMarkdown(note.content) : ""), [note])
 
@@ -67,10 +71,12 @@ export default function NotePage() {
         <NoteEditor
           mode="edit"
           initial={initial}
+          baseUpdatedAt={editBaseUpdatedAt}
           onCancel={() => setIsEditing(false)}
           onSave={async (values) => {
             await update.mutateAsync({
               slug: note.slug,
+              expectedUpdatedAt: editBaseUpdatedAt ?? undefined,
               data: {
                 title: values.title,
                 description: values.description,
@@ -101,7 +107,10 @@ export default function NotePage() {
       slug={note.slug}
       note={note}
       html={html}
-      onEdit={() => setIsEditing(true)}
+      onEdit={() => {
+        setEditBaseUpdatedAt(note.updatedAt ?? null)
+        setIsEditing(true)
+      }}
       onTogglePin={async () => {
         await togglePinned.mutateAsync({ slug: note.slug, pinned: !note.pinned })
       }}

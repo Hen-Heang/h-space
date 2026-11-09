@@ -3,6 +3,8 @@
 // lib/api/notes.ts (which imports the types from here, matching the
 // lib/tasks.ts + lib/api/goals.ts convention).
 
+import { slugify } from "./slug"
+
 export type NoteType = "technical" | "korean" | "personal" | "decision" | "idea" | "reference"
 
 export const NOTE_TYPES: { value: NoteType; label: string }[] = [
@@ -66,6 +68,28 @@ export const RESERVED_NOTE_SLUGS = ["new", "projects"] as const
 
 export function isReservedNoteSlug(slug: string): boolean {
   return (RESERVED_NOTE_SLUGS as readonly string[]).includes(slug.trim().toLowerCase())
+}
+
+/**
+ * A slug for a note whose title has no ASCII letters or digits (a Korean or
+ * Khmer title slugifies to ""): `note-YYYYMMDD-xxxx`, from the local date and
+ * four random base-36 characters. Slugs stay ASCII so URLs, the MCP tools and
+ * the reserved-slug check keep working unchanged.
+ */
+export function generatedNoteSlug(now: Date = new Date(), random: () => number = Math.random) {
+  const date = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("")
+  let suffix = ""
+  for (let i = 0; i < 4; i += 1) suffix += Math.floor(random() * 36).toString(36)
+  return `note-${date}-${suffix}`
+}
+
+/** The slug the editor suggests for a title, or `fallback` when it has none. */
+export function noteSlugFromTitle(title: string, fallback: string): string {
+  return slugify(title) || fallback
 }
 
 export interface NoteValidationErrors {
