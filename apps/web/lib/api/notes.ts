@@ -86,6 +86,14 @@ function toNote(row: NoteRow): Note {
   return { ...toMeta(row), content: row.content }
 }
 
+/** The note changed (or was deleted) after the editor loaded it. */
+export class NoteConflictError extends Error {
+  constructor() {
+    super("This note was changed or deleted somewhere else after you opened it.")
+    this.name = "NoteConflictError"
+  }
+}
+
 export const notesApi = {
   list: async (): Promise<NoteMeta[]> => {
     const rows = await selectMeta((columns) =>
@@ -149,8 +157,18 @@ export const notesApi = {
     return toNote(row as NoteRow)
   },
 
-  update: async (slug: string, data: Partial<NoteInput>): Promise<Note> => {
-    const { data: row, error } = await supabase
+  /**
+   * With `expectedUpdatedAt`, the update only applies if the note is still at
+   * that version, and throws `NoteConflictError` otherwise — so saving an
+   * editor that was opened before another change (a second device, or the
+   * MCP connector's update_project_note) never silently replaces it.
+   */
+  update: async (
+    slug: string,
+    data: Partial<NoteInput>,
+    options: { expectedUpdatedAt?: string } = {},
+  ): Promise<Note> => {
+    let query = supabase
       .from("kori_notes")
       .update({
         ...(data.slug !== undefined ? { slug: data.slug } : {}),
@@ -170,9 +188,15 @@ export const notesApi = {
         updated_at: new Date().toISOString(),
       })
       .eq("slug", slug)
-      .select()
-      .single()
+    if (options.expectedUpdatedAt) query = query.eq("updated_at", options.expectedUpdatedAt)
+    const { data: row, error } = await query.select().maybeSingle()
     if (error) throw error
+    if (!row) {
+      // RLS hides other users' notes, so "no row" is either a stale version
+      // (when we asked for one) or a note that no longer exists.
+      if (options.expectedUpdatedAt) throw new NoteConflictError()
+      throw new Error("Note not found.")
+    }
     return toNote(row as NoteRow)
   },
 

@@ -111,6 +111,29 @@ describe("renderMarkdown — normal notes", () => {
     expect(root.querySelector("h3")?.id).toBe("next-steps")
   })
 
+  it("gives Korean and Khmer headings real ids", () => {
+    const root = parse("## 한국어 공부\n\n### ការសិក្សា ភាសា\n\n## Spring 설정 2")
+    const ids = Array.from(root.querySelectorAll("h2, h3")).map((h) => h.id)
+    expect(ids).toEqual(["한국어-공부", "ការសិក្សា-ភាសា", "spring-설정-2"])
+  })
+
+  it("numbers duplicate headings so every id is unique", () => {
+    const root = parse("## Example\n\n## Example\n\n### Example\n\n## Example 2")
+    const ids = Array.from(root.querySelectorAll("h2, h3")).map((h) => h.id)
+    expect(ids).toEqual(["example", "example-2", "example-3", "example-2-2"])
+  })
+
+  it("uses 'section' for a heading with no letters or digits", () => {
+    const root = parse("## 🎉\n\n## ---!")
+    const ids = Array.from(root.querySelectorAll("h2")).map((h) => h.id)
+    expect(ids).toEqual(["section", "section-2"])
+  })
+
+  it("starts numbering again for each note", () => {
+    expect(parse("## Intro").querySelector("h2")?.id).toBe("intro")
+    expect(parse("## Intro").querySelector("h2")?.id).toBe("intro")
+  })
+
   it("wraps code blocks for CodeCopy", () => {
     const wrapper = parse("```ts\nconst a = 1\n```").querySelector(".shiki-wrapper")
     expect(wrapper?.getAttribute("data-lang")).toBe("ts")

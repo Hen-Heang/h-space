@@ -13,17 +13,15 @@ export function TableOfContents({ html, mobile = false }: { html: string; mobile
     const doc = parser.parseFromString(html, "text/html")
     const headings = Array.from(doc.querySelectorAll("h2, h3"))
 
-    return headings.map((heading) => ({
-      id:
-        heading.id ||
-        heading.textContent
-          ?.toLowerCase()
-          .trim()
-          .replace(/[^a-z0-9]+/g, "-") ||
-        "",
-      text: heading.textContent || "",
-      level: parseInt(heading.tagName.substring(1)),
-    }))
+    // renderMarkdown gives every h2/h3 a unique id; one without an id can't
+    // be jumped to, so it's left out rather than linked to "#".
+    return headings
+      .filter((heading) => heading.id)
+      .map((heading) => ({
+        id: heading.id,
+        text: heading.textContent || "",
+        level: parseInt(heading.tagName.substring(1)),
+      }))
   }, [html])
 
   useEffect(() => {
