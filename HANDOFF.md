@@ -20,6 +20,7 @@
   - `pnpm build` — passed.
   - GitHub Actions still can't run (billing lock: jobs fail with 0 steps). Vercel previews built every PR.
   - Each PR was checked rendered with Playwright at 390/1280, light and dark, synthetic data, all network mocked. Not done: a physical iPhone/Android install of the new icon, a real push showing the badge, real AI sentence results and audio in Memory Lab, a social-site preview of the share image.
+- **PR #106 (`fix/pr-validation`)** began as a combined integration of #98–#104; since those merged individually, after merging `main` it only adds: History's empty-state "Open AI Coach" now opens `/chat` (not `?mode=corrections`, which opens an empty review that can't create a first correction), and Prettier fixes in `apps/web/docs/design-system.md` and `apps/web/scripts/generate-app-icons.mjs`.
 - **Untracked, not ours:** `test-results/` at the repo root.
 
 ## Current focus
