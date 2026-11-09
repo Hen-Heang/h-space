@@ -106,9 +106,13 @@ export default function InboxPage() {
             icon={Inbox}
             title={items.length === 0 ? "Nothing captured yet" : "Nothing matches these filters"}
             description={
-              items.length === 0
-                ? "Use Quick capture (⌘K, or the button above) to jot down your first thought."
-                : undefined
+              items.length === 0 ? (
+                <>
+                  Use Quick capture above to jot down your first thought.
+                  {/* Keyboard shortcut only where there's a keyboard and pointer. */}
+                  <span className="[@media(pointer:coarse)]:hidden"> Or press ⌘K / Ctrl+K.</span>
+                </>
+              ) : undefined
             }
           />
         ) : (

@@ -297,7 +297,9 @@ export function NotesHome({
               aria-label="Search notes and projects"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search projects, notes, descriptions and tags"
+              // Short enough to fit a 320px phone; the helper text below the
+              // filters says what else is searched.
+              placeholder="Search notes and projects"
               className="h-12 w-full rounded-xl border border-border bg-card pr-12 pl-11 text-base text-foreground outline-none placeholder:text-muted-foreground/80 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 sm:text-sm [&::-webkit-search-cancel-button]:hidden"
             />
             {query && (

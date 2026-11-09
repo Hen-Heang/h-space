@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useNoteProjectMutations } from "@/hooks/useNoteProjects"
+import { edgeFadeStyle, useScrollEdges } from "@/hooks/useScrollEdges"
 import {
   notesInProject,
   projectStatusLabel,
@@ -194,6 +195,7 @@ export function ProjectWorkspace({ project, notes }: { project: Project; notes: 
   const { update, markOpened } = useNoteProjectMutations()
   const [editOpen, setEditOpen] = useState(false)
   const [tab, setTab] = useState("overview")
+  const [tabsScrollerRef, tabsEdges] = useScrollEdges()
   const [query, setQuery] = useState("")
   const [typeFilter, setTypeFilter] = useState<NoteType | "all">("all")
 
@@ -310,7 +312,13 @@ export function ProjectWorkspace({ project, notes }: { project: Project; notes: 
       <ProjectAiAccess projectId={project.id} />
 
       <Tabs value={tab} onValueChange={setTab} className="gap-5">
-        <div className="no-scrollbar -mx-1 overflow-x-auto border-b border-border px-1">
+        {/* On narrow screens the tabs scroll sideways; the edge that hides
+            more tabs fades out so it's clear the row continues. */}
+        <div
+          ref={tabsScrollerRef}
+          style={edgeFadeStyle(tabsEdges)}
+          className="no-scrollbar -mx-1 overflow-x-auto border-b border-border px-1"
+        >
           <TabsList variant="line" aria-label="Project sections" className="h-11! min-w-max gap-1">
             <TabsTrigger value="overview" className="h-11 px-3">
               Overview

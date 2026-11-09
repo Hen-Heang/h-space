@@ -7,6 +7,7 @@ import Link from "next/link"
 import { LoaderCircle, Maximize2, Sparkles, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { useHideOnScroll } from "@/hooks/useHideOnScroll"
 import { HENGO_COACH_OPEN_EVENT } from "@/lib/hengo-coach-bus"
 import { cn } from "@/lib/utils"
 
@@ -32,6 +33,12 @@ type FloatingAiCoachProps = {
   mobile: boolean
   bottomNavVisible: boolean
   keyboardOpen: boolean
+  /**
+   * Mobile: hide the floating launcher because the page has its own floating
+   * action (e.g. Finance's "+"); one floating button per screen. The panel
+   * stays mounted, and the AI Assistant is still reachable from More.
+   */
+  hideLauncher?: boolean
 }
 
 /**
@@ -39,9 +46,18 @@ type FloatingAiCoachProps = {
  * after the first open, then stay mounted so closing the window does not reset a
  * draft or interrupt a streaming response.
  */
-export function FloatingAiCoach({ mobile, bottomNavVisible, keyboardOpen }: FloatingAiCoachProps) {
+export function FloatingAiCoach({
+  mobile,
+  bottomNavVisible,
+  keyboardOpen,
+  hideLauncher = false,
+}: FloatingAiCoachProps) {
   const [open, setOpen] = useState(false)
   const [hasOpened, setHasOpened] = useState(false)
+  const showLauncher = mobile && !open && !keyboardOpen && !hideLauncher
+  // Slides away while scrolling down so it doesn't cover what's being read,
+  // and comes back on the first scroll up.
+  const [launcherScrolledAway, revealLauncher] = useHideOnScroll(showLauncher)
   const launcherRef = useRef<HTMLButtonElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
 
@@ -150,20 +166,24 @@ export function FloatingAiCoach({ mobile, bottomNavVisible, keyboardOpen }: Floa
           rendering a second launcher here — so this floating button is
           mobile-only: one assistant launcher per screen size. Hengo Coach
           stays the assistant's internal name (events, routes, prompts). */}
-      {mobile && !open && !keyboardOpen && (
+      {showLauncher && (
         <Button
           ref={launcherRef}
           type="button"
           size="icon"
           onClick={openCoach}
+          // Never focused while scrolled away: keyboard focus brings it back.
+          onFocus={revealLauncher}
           aria-label="Open AI Assistant"
           aria-controls={PANEL_ID}
           aria-expanded={false}
+          data-scrolled-away={launcherScrolledAway || undefined}
           className={cn(
-            "fixed right-4 z-40 size-14 rounded-full shadow-lg shadow-primary/30",
+            "fixed right-4 z-40 size-14 rounded-full shadow-lg shadow-primary/30 transition-[translate,opacity] duration-200 ease-out motion-reduce:transition-none",
             bottomNavVisible
               ? "bottom-[calc(4.75rem+env(safe-area-inset-bottom))]"
               : "bottom-[max(0.75rem,env(safe-area-inset-bottom))]",
+            launcherScrolledAway && "pointer-events-none translate-x-24 opacity-0",
           )}
         >
           <Sparkles data-icon="inline-start" className="size-5" aria-hidden="true" />
