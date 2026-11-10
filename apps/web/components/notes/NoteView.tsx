@@ -68,12 +68,10 @@ export function NoteView({ slug, note, html, onEdit, onTogglePin, onDelete }: No
       <ReadingProgress />
       <CodeCopy />
 
-      {/* Floating nav — appears after scrolling. Stacked above the shell's
-          floating AI Assistant button (right-4, size-14, just above the bottom
-          nav or the screen edge) instead of on top of it; --shell-bottom-nav-h
-          already includes the iPhone home-indicator inset. */}
+      {/* Floating nav — appears after scrolling, in the bottom-right corner
+          just above the bottom nav (or the home indicator when it's hidden). */}
       {showFloatingNav && (
-        <div className="fixed right-4 bottom-[calc(var(--shell-bottom-nav-h,0px)+5rem)] z-40 flex flex-col items-end gap-2.5">
+        <div className="fixed right-4 bottom-[calc(var(--shell-bottom-nav-h,0px)+max(0.75rem,calc(env(safe-area-inset-bottom)-var(--shell-bottom-nav-h,0px))))] z-40 flex flex-col items-end gap-2.5">
           <button
             onClick={() => {
               setShowMobileToc(true)

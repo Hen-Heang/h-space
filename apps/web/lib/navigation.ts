@@ -161,40 +161,54 @@ export const settingsItem: NavItem = {
   keywords: ["preferences", "account", "profile", "theme"],
 }
 
-// AI Coach and its mode variants are preserved routes (Chat, Analyze,
-// Generate, Corrections all still work), but no longer get their own primary
-// sidebar/rail presence. "Hengo Coach" is the one AI identity used everywhere
-// (desktop header button, mobile floating launcher) — this item's `label` is
-// what those surfaces render, so renaming the assistant only ever happens
-// here.
+// "Ask Hengo" is the assistant's one name in the chrome: the top-bar button
+// on desktop and mobile (components/layout/AskHengoButton) and the "ai"
+// section's label. It opens General chat; the other modes are switched to
+// inside `/chat`. There is no sidebar/rail/More entry and no floating
+// launcher — the top bar is the single entry point.
+export const ASK_HENGO_LABEL = "Ask Hengo"
+export const ASK_HENGO_HREF = "/chat"
+
+// General chat — the default assistant mode. The ids and routes are stored
+// state and bookmarks: `ai-chat` / `/chat` stay as they are.
 export const aiCoachItem: NavItem = {
   id: "ai-chat",
-  href: "/chat",
-  label: "Hengo Coach",
-  shortLabel: "Coach",
+  href: ASK_HENGO_HREF,
+  label: "General chat",
+  shortLabel: "Chat",
   icon: MessageCircle,
   color: "text-teal-500",
-  description: "Practice, analyze, plan, or get support",
-  keywords: ["ai", "coach", "hengo", "chat", "ask", "assistant", "korean", "speaking"],
+  description: "Ask questions, draft replies, and brainstorm",
+  keywords: ["ask hengo", "ai", "coach", "hengo", "chat", "ask", "assistant", "korean", "speaking"],
   // Bare /chat only — the mode variants below own their own active state.
   match: { pathname: "/chat", absentQuery: ["mode"] },
   showInSidebar: false,
 }
 
-// A distinct *mode* of Hengo Coach ("My Data") that answers from the user's
-// own notes, goals, habits, and journal — not a second competing assistant
-// identity. Kept as its own destination (searchable, linkable) rather than
-// folded into the generic coach entry point because it answers a different
-// question ("what do I know") than the coach's general help.
+// Search my workspace — the assistant's mode that answers from the user's
+// own saved data (memory mode, `app/api/ai/memory/ask`). Kept as its own
+// destination (searchable, linkable) because it answers a different question
+// ("what have I saved") than General chat. Id and route are unchanged.
 export const askHengoItem: NavItem = {
   id: "memory-ask-hengo",
   href: "/chat?mode=memory",
-  label: "Ask Hengo",
-  shortLabel: "Ask Hengo",
+  label: "Search my workspace",
+  shortLabel: "Search workspace",
   icon: BrainCircuit,
   color: "text-sky-500",
-  description: "Ask about your notes, goals, habits, and journal",
-  keywords: ["memory", "ask", "second brain", "recall", "remember", "search"],
+  description: "Ask about your saved notes, inbox captures, and journal",
+  keywords: [
+    "ask hengo",
+    "memory",
+    "ask",
+    "second brain",
+    "recall",
+    "remember",
+    "search",
+    "workspace",
+    "notes",
+    "inbox",
+  ],
   match: { pathname: "/chat", query: { mode: "memory" } },
   showInSidebar: false,
 }
@@ -679,11 +693,11 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    // AI Assistant: the general Hengo Coach chat, its modes, and Ask Hengo
-    // (answers from your own data). All share `/chat`; `NavMatch` query rules
-    // keep exactly one of them active.
+    // Ask Hengo: General chat, Search my workspace, and the Korean tools.
+    // All share `/chat`; `NavMatch` query rules keep exactly one of them
+    // active. The id stays "ai" (stored last-visited state).
     id: "ai",
-    label: "AI Assistant",
+    label: ASK_HENGO_LABEL,
     icon: Bot,
     color: "text-teal-500",
     href: aiCoachItem.href,
@@ -760,7 +774,7 @@ function section(id: NavSectionId): NavSection {
 // decides visibility itself:
 //
 //   1. `workspaceNavItems` + `toolNavItems` — the global sidebar / tablet rail:
-//      six workspaces including Finance, the AI Assistant, and Settings.
+//      six workspaces including Finance, plus Settings.
 //   2. `workspaceTabs` — each workspace's local navigation, rendered inside the
 //      workspace by `WorkspaceTabs` (Planner: Tasks · Goals · Calendar · …).
 //   3. `mobileNavItems` — the four mobile bottom-bar tabs before "More".
@@ -807,14 +821,11 @@ export const workspaceNavItems: NavItem[] = [
 ]
 
 /**
- * The global sidebar's TOOLS group. "AI Assistant" is the one AI identity in
- * the chrome; Hengo Coach and its modes stay the assistant's internal names.
- * Section-wide match so every `/chat?mode=…` keeps it lit.
+ * The global sidebar's TOOLS group. The assistant isn't listed: its one entry
+ * point is the "Ask Hengo" button in the top bar, which is on every page that
+ * shows this sidebar, so a second link here would do the same thing.
  */
-export const toolNavItems: NavItem[] = [
-  workspaceEntry("ai", { shortLabel: "AI", description: aiCoachItem.description }),
-  settingsItem,
-]
+export const toolNavItems: NavItem[] = [settingsItem]
 
 /** Mobile bottom bar: four tabs; the fifth slot is the "More" sheet trigger. */
 export const mobileNavItems: NavItem[] = ["nav-today", "nav-plan", "nav-learn", "nav-finance"].map(
@@ -839,7 +850,7 @@ export function isMoreRoute(pathname: string, searchParams?: NavSearchParams): b
 
 /**
  * Local navigation inside each workspace. Workspaces without an entry
- * (Overview, AI Assistant) navigate with their own page content — the chat's
+ * (Overview, Ask Hengo) navigate with their own page content — the chat's
  * mode switcher. Learning's tabs are its everyday areas; the rest of the
  * workspace (Foundations, Reading, Scenarios, Exam Prep, History) is the
  * Learning Hub's Library list. `WorkspaceTabs` matches without search params,

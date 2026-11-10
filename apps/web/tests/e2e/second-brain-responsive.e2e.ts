@@ -71,7 +71,8 @@ test.describe("authenticated second-brain journey at 428 × 926", () => {
     await page.getByRole("button", { name: "Save entry" }).click()
 
     await page.goto("/ask-hengo")
-    await expect(page.getByRole("heading", { name: "Ask Hengo" })).toBeVisible()
+    // /ask-hengo opens the assistant's Search my workspace mode.
+    await expect(page.getByRole("heading", { name: "Search my workspace" })).toBeVisible()
     await expect(page.getByPlaceholder(/Ask about your notes/)).toBeVisible()
     await expectNoDocumentOverflow(page)
 

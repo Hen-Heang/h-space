@@ -366,10 +366,9 @@ export function AllTasksView({
           inset); it used to be bottom-0 at z-30, i.e. under the z-40 nav.
           Bottom padding: with the nav showing, the nav already clears the
           home indicator, so the calc goes negative and 0.75rem wins; when the
-          keyboard hides the nav the variable is 0px and the inset applies.
-          The right padding leaves room for the shell's floating AI button. */}
+          keyboard hides the nav the variable is 0px and the inset applies. */}
       {isMobile && (
-        <div className="fixed inset-x-0 bottom-[var(--shell-bottom-nav-h,0px)] z-30 border-t border-border bg-background/95 pt-3 pr-[calc(5rem+env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] pb-[max(0.75rem,calc(env(safe-area-inset-bottom)-var(--shell-bottom-nav-h,0px)))] backdrop-blur">
+        <div className="fixed inset-x-0 bottom-[var(--shell-bottom-nav-h,0px)] z-30 border-t border-border bg-background/95 pt-3 pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] pb-[max(0.75rem,calc(env(safe-area-inset-bottom)-var(--shell-bottom-nav-h,0px)))] backdrop-blur">
           <Button
             onClick={onAddTask}
             className="h-12 w-full gap-2 rounded-lg text-sm font-semibold"

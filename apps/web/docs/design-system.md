@@ -136,7 +136,7 @@ task, goal, habit, and recent-destination groups; the full catalog remains at
 
 `Card` and `Button` lost their drop shadows in Phase 1, so every existing card
 already reads flatter. Elevated shadows remain only on overlays (dialogs,
-popovers, menus, the floating AI button).
+popovers, menus, floating action buttons).
 
 ## 6. Icons
 
@@ -207,11 +207,12 @@ UI_SWEEP=1 UI_SWEEP_LABEL=after PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 \
 - Safe areas: the shell applies `env(safe-area-inset-*)`. Fixed elements a page
   adds must do the same. Left/right `Sheet`s pad their top for the status bar
   themselves; full-height custom panels need `env(safe-area-inset-top)`.
-- The floating AI Assistant button owns the bottom-right corner (`right-4`,
-  `size-14`, just above the bottom nav). A sticky or fixed bottom bar leaves
-  that lane free (`pr-[calc(5rem+env(safe-area-inset-right))]`); another
-  floating button stacks above it at
-  `bottom-[calc(var(--shell-bottom-nav-h,0px)+5rem)]`.
+- There is no floating AI button: the assistant opens from the "Ask Hengo"
+  button in the top bar. A page's own floating action (Finance's "Add
+  transaction", Calendar's "Add task") owns the bottom-right corner at
+  `right-4`, 0.75rem above the bottom nav:
+  `bottom-[calc(var(--shell-bottom-nav-h,0px)+max(0.75rem,calc(env(safe-area-inset-bottom)-var(--shell-bottom-nav-h,0px))))]`.
+  One floating button per screen.
 - iOS zooms into a focused field under 16px. On touch screens `globals.css`
   lifts `text-xs`/`text-sm` and inherited small sizes on inputs, textareas and
   selects to 16px; still give new fields `text-base` or `text-body`.

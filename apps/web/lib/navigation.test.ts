@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  ASK_HENGO_HREF,
+  ASK_HENGO_LABEL,
   aiCoachItem,
   allNavItems,
   askHengoItem,
@@ -58,7 +60,7 @@ describe("nav model integrity", () => {
       "Growth",
       "Notes",
       "My Apps",
-      "AI Assistant",
+      "Ask Hengo",
     ])
   })
 
@@ -283,9 +285,9 @@ describe("global sidebar: workspaces and tools", () => {
     ])
   })
 
-  it("lists the AI Assistant and Settings as tools", () => {
-    expect(toolNavItems.map((i) => i.label)).toEqual(["AI Assistant", "Settings"])
-    expect(toolNavItems.map((i) => i.href)).toEqual(["/chat", "/settings"])
+  it("lists only Settings as a tool — Ask Hengo lives in the top bar", () => {
+    expect(toolNavItems.map((i) => i.label)).toEqual(["Settings"])
+    expect(toolNavItems.map((i) => i.href)).toEqual(["/settings"])
   })
 
   it("never puts a workspace's child page in the global sidebar", () => {
@@ -319,8 +321,6 @@ describe("global sidebar: workspaces and tools", () => {
       ["/growth", "nav-grow"],
       ["/growth/recovery/log", "nav-grow"],
       ["/statistics", "nav-grow"],
-      ["/chat", "nav-ai"],
-      ["/chat", "nav-ai", "mode=analyze"],
       ["/settings/reminders", "settings"],
     ]
     const entries = [...workspaceNavItems, ...toolNavItems]
@@ -448,12 +448,7 @@ describe("mobile bottom bar + More", () => {
   })
 
   it("leads the More sheet with every workspace and tool that has no tab", () => {
-    expect(moreNavItems.map((i) => i.label)).toEqual([
-      "Notes",
-      "Growth",
-      "AI Assistant",
-      "Settings",
-    ])
+    expect(moreNavItems.map((i) => i.label)).toEqual(["Notes", "Growth", "Settings"])
   })
 
   it("lights exactly one tab on tab-owned routes and More nowhere there", () => {
@@ -508,7 +503,7 @@ describe("mobile bottom bar + More", () => {
   })
 })
 
-describe("AI Assistant routes", () => {
+describe("Ask Hengo routes", () => {
   it("keeps Chat, Analyze, Generate and Corrections as real hub-child routes", () => {
     for (const id of ["ai-chat", "ai-analyze", "ai-generate", "ai-corrections"]) {
       const item = navItem(id)
@@ -517,8 +512,22 @@ describe("AI Assistant routes", () => {
     }
   })
 
-  it("resolves Hengo Coach and its mode variants by title", () => {
-    expect(getActiveNavItem("/chat")?.label).toBe("Hengo Coach")
+  it("opens the top-bar entry point on General chat", () => {
+    expect(ASK_HENGO_LABEL).toBe("Ask Hengo")
+    expect(ASK_HENGO_HREF).toBe("/chat")
+    expect(getActiveNavItem(ASK_HENGO_HREF)?.id).toBe("ai-chat")
+    expect(navSections.find((s) => s.id === "ai")?.label).toBe("Ask Hengo")
+  })
+
+  it("has no sidebar, rail or More entry for the assistant — the top bar is the one entry point", () => {
+    for (const item of [...workspaceNavItems, ...toolNavItems, ...moreNavItems]) {
+      expect(linkPath(item.href)).not.toBe("/chat")
+    }
+  })
+
+  it("resolves General chat, Search my workspace and the tools by title", () => {
+    expect(getActiveNavItem("/chat")?.label).toBe("General chat")
+    expect(getActiveNavItem("/chat", "mode=memory")?.label).toBe("Search my workspace")
     expect(getActiveNavItem("/chat", "mode=analyze")?.label).toBe("Analyze")
     expect(getActiveNavItem("/chat", "mode=generate")?.label).toBe("Generate")
   })
@@ -528,7 +537,7 @@ describe("AI Assistant routes", () => {
     expect(askHengoItem.href).toBe("/chat?mode=memory")
   })
 
-  it("puts Ask Hengo next to Hengo Coach, active only for ?mode=memory", () => {
+  it("puts Search my workspace next to General chat, active only for ?mode=memory", () => {
     const ai = navSections.find((s) => s.id === "ai")!
     expect(ai.items.map((i) => i.id).slice(0, 2)).toEqual(["ai-chat", "memory-ask-hengo"])
     expect(active("/chat", "memory-ask-hengo", "mode=memory")).toBe(true)

@@ -32,8 +32,8 @@ function TabLabel({ active, children }: { active: boolean; children: React.React
 
 /**
  * Mobile bottom bar: Home · Plan · Learn · Apps (`mobileNavItems`) plus a
- * "More" trigger that opens `MoreSheet` (Notes, Growth, AI Assistant,
- * Settings, and every page by workspace). More reads as current on any route
+ * "More" trigger that opens `MoreSheet` (Notes, Growth, Settings, and
+ * every page by workspace). More reads as current on any route
  * none of the four tabs owns.
  *
  * The bar is a floating glass capsule (translucent fill, heavy blur, a

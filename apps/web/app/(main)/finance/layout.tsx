@@ -11,7 +11,7 @@ import "./luyra-theme.css"
 // only.
 //
 // pb-16 keeps the last row of every Finance page scrollable clear of the
-// floating "Add transaction" button (and, on phones, the AI launcher below it).
+// floating "Add transaction" button.
 export default function FinanceLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="luyra mx-auto flex w-full max-w-4xl flex-col gap-6 pb-16">

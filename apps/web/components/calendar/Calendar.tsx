@@ -541,14 +541,13 @@ export function Calendar({
       ) : isMobile ? (
         <div className="flex h-full min-h-0 flex-col">
           {viewBody}
-          {/* The floating AI button owns the bottom-right corner; a page's own
-              floating button stacks above it (docs/design-system.md §8), the
-              same way Finance's quick-add does. It used to sit in the same
-              spot, under the AI button, so "Add task" couldn't be tapped. */}
+          {/* The page's floating button owns the bottom-right corner, just
+              above the bottom nav — the same spot as Finance's quick-add. The
+              shell has no floating AI launcher (Ask Hengo is in the top bar). */}
           <button
             type="button"
             onClick={openAddDialog}
-            className="fixed right-5 bottom-[calc(var(--shell-bottom-nav-h,0px)+5rem)] z-40 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-95"
+            className="fixed right-4 bottom-[calc(var(--shell-bottom-nav-h,0px)+max(0.75rem,calc(env(safe-area-inset-bottom)-var(--shell-bottom-nav-h,0px))))] z-40 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-95"
             aria-label="Add task"
           >
             <Plus aria-hidden="true" className="size-6" />

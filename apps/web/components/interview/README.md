@@ -92,5 +92,5 @@ The shared question bank seeds in `supabase/seed/` (`kori_interview_questions.sq
 
 ## Implementation notes
 
-- **Session action bars** (`StickyActionBar`): on phones the main actions are `position: fixed` above the bottom nav, leaving room for the floating AI Assistant button, and only once there's an answer to act on. `position: sticky` doesn't work inside the app shell: `<main>` has `overflow-x-hidden`, which makes it a scroll container. Fixing that in the shell is a separate, app-wide decision (several other pages have sticky elements that would start sticking).
+- **Session action bars** (`StickyActionBar`): on phones the main actions are `position: fixed` above the bottom nav, and only once there's an answer to act on. `position: sticky` doesn't work inside the app shell: `<main>` has `overflow-x-hidden`, which makes it a scroll container. Fixing that in the shell is a separate, app-wide decision (several other pages have sticky elements that would start sticking).
 - **E2E against a dev server**: run the interview specs with `--workers=1`; several browsers in parallel overload `next dev` and time out.

@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState, type CSSProperties } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 
 import { QuickSwitcher } from "@/components/app/quick-switcher"
-import { FloatingAiCoach } from "@/components/chat/FloatingAiCoach"
 import { QuickCaptureDialog } from "@/components/inbox/QuickCaptureDialog"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useMobileKeyboard } from "@/hooks/useMobileKeyboard"
@@ -134,15 +133,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Chat renders its own compact top bar (mode switcher + a "Back to home"
   // button), so the shell header would be a second one — but the escape route
-  // is still always visible, which is what matters.
+  // is still always visible, which is what matters. The assistant itself is
+  // opened from the "Ask Hengo" button in both top bars; there is no floating
+  // launcher.
   const showMobileHeader = isMobile && !isChromeless && !isChatRoute
   // Unmounted (not just hidden) when the keyboard is up, so nothing inside
   // stays focusable behind the keyboard.
   const showBottomNav = isMobile && !isChromeless && !isChatRoute && !isKeyboardOpen
-  const showFloatingCoach = !isChromeless && !isChatRoute
-  // Finance has its own floating "+" (QuickAddTransaction in its layout), so
-  // the AI launcher steps aside there: one floating button per screen.
-  const hasPageFloatingAction = pathname === "/finance" || pathname.startsWith("/finance/")
 
   // Heights of the shell chrome that overlaps scrolled content, for pages'
   // sticky elements: `top-[var(--shell-header-h)]` stays below the sticky
@@ -274,17 +271,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             one QuickSwitcher is mounted at a time (the desktop header owns the
             other), so the ⌘K / "/" shortcuts never open two dialogs. */}
         {isMobile && <QuickSwitcher hideTrigger open={searchOpen} onOpenChange={setSearchOpen} />}
-
-        {/* The global AI action now owns the floating surface. It is omitted on
-            immersive routes and keeps itself clear of the mobile bottom bar. */}
-        {showFloatingCoach && (
-          <FloatingAiCoach
-            mobile={isMobile}
-            bottomNavVisible={showBottomNav}
-            keyboardOpen={isKeyboardOpen}
-            hideLauncher={hasPageFloatingAction}
-          />
-        )}
 
         {/* One shared instance: command palette and both top bars dispatch the
             open event, so Quick Capture keeps one form and mutation path. */}

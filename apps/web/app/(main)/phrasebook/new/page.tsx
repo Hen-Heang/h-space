@@ -471,10 +471,7 @@ function NewPhraseCardInner() {
           />
         </div>
 
-        {/* mr-16 keeps the bar clear of the shell's floating AI Assistant
-            button (right-4, size-14) until the form column is narrow enough
-            on wide screens to leave that corner free. */}
-        <div className="sticky bottom-[calc(var(--shell-bottom-nav-h,0px)+1rem)] z-10 mr-16 rounded-2xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur-xl xl:mr-0 dark:bg-slate-900/90">
+        <div className="sticky bottom-[calc(var(--shell-bottom-nav-h,0px)+1rem)] z-10 rounded-2xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur-xl dark:bg-slate-900/90">
           <Button type="submit" disabled={saving} className="h-12 w-full">
             {saving ? "Saving..." : isEdit ? "Save changes" : "Create card"}
           </Button>

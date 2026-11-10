@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronLeft,
   History,
+  Languages,
   MessageCircle,
   PanelLeft,
   RotateCcw,
@@ -28,6 +29,7 @@ import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
@@ -36,16 +38,25 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { useConversations } from "@/hooks/useConversations"
 import { useSessionTimer } from "@/hooks/useSessionTimer"
 import { chatApi, scenarioApi } from "@/lib/api"
+import { aiModeHref, isAiMode, resolveAiMode, type AiMode } from "@/lib/chat-modes"
+import { ASK_HENGO_LABEL, aiCoachItem, askHengoItem } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
-type AiMode = "chat" | "analyze" | "generate" | "corrections" | "memory"
+type ModeOption = { id: AiMode; label: string; icon: typeof MessageCircle }
 
-const MODES: { id: AiMode; label: string; icon: typeof MessageCircle }[] = [
-  { id: "chat", label: "Coach", icon: MessageCircle },
+// The two assistant modes, always visible as a switch at the top. "chat" is
+// the default (bare /chat); "memory" is Search my workspace (?mode=memory).
+const ASSISTANT_MODES: ModeOption[] = [
+  { id: "chat", label: aiCoachItem.label, icon: MessageCircle },
+  { id: "memory", label: askHengoItem.label, icon: BrainCircuit },
+]
+
+// Korean coaching tools — kept, with their ?mode= links, behind one menu so
+// the two assistant modes stay the obvious choice.
+const KOREAN_TOOLS: ModeOption[] = [
   { id: "analyze", label: "Analyze", icon: ScanText },
   { id: "generate", label: "Write", icon: Wand2 },
   { id: "corrections", label: "Review", icon: RotateCcw },
-  { id: "memory", label: "My Data", icon: BrainCircuit },
 ]
 
 export default function ChatPage() {
@@ -67,33 +78,25 @@ function ChatPageContent() {
   // instead of the usual "most recent or new" bootstrap.
   const deepLinkConversationId = searchParams.get("conversationId") ?? undefined
 
-  // A ?prompt= deep link is a correction/chat request, so it always lands on Chat.
-  const queryMode = searchParams.get("mode")
-  const [mode, setMode] = useState<AiMode>(
-    !initialDraft &&
-      (queryMode === "analyze" ||
-        queryMode === "generate" ||
-        queryMode === "corrections" ||
-        queryMode === "memory")
-      ? (queryMode as AiMode)
-      : "chat",
-  )
-  const currentMode = MODES.find((m) => m.id === mode) ?? MODES[0]
-  const CurrentModeIcon = currentMode.icon
+  // The URL is the mode's single source of truth, so a link to /chat (the
+  // top bar's Ask Hengo) or /chat?mode=… always shows that mode, even when
+  // the page is already open in another one. A ?prompt= deep link is a
+  // chat request, so it always lands on General chat.
+  const mode = resolveAiMode(searchParams)
+  const activeTool = KOREAN_TOOLS.find((m) => m.id === mode)
+  const ActiveToolIcon = activeTool?.icon
 
-  // Keep the URL in sync with the active mode, so refreshing, sharing a link,
-  // or navigating via the sidebar's Chat/Analyze/Generate/Corrections links
-  // all land on the right tab (and the one-shot ?prompt=/?category= deep-link
-  // params get cleaned up once consumed above).
+  const setMode = useCallback(
+    (next: AiMode) => router.replace(aiModeHref(next), { scroll: false }),
+    [router],
+  )
+
+  // One-shot: drop the consumed ?prompt=/?category=/?conversationId= params
+  // (and any unknown ?mode=) so a refresh or shared link just names the mode.
   useEffect(() => {
-    const params = new URLSearchParams()
-    if (mode !== "chat") params.set("mode", mode)
-    const query = params.toString()
-    router.replace(query ? `/chat?${query}` : "/chat", { scroll: false })
-    // Intentionally mode-only: this reflects mode changes into the URL, it
-    // shouldn't re-run when router identity changes.
+    router.replace(aiModeHref(mode), { scroll: false })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode])
+  }, [])
 
   const {
     conversations,
@@ -270,8 +273,8 @@ function ChatPageContent() {
 
   return (
     <div className={cn("flex flex-col", containerHeight)}>
-      {/* ── AI workspace mode bar (back + Chat / Analyze / Generate) ── */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-border/40 bg-background/75 px-3 pt-[max(0.65rem,env(safe-area-inset-top))] pb-2.5 backdrop-blur-xl sm:px-5">
+      {/* ── Assistant bar: back · General chat | Search my workspace · Korean tools ── */}
+      <div className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-2 border-b border-border/40 bg-background/75 px-3 pt-[max(0.65rem,env(safe-area-inset-top))] pb-2.5 backdrop-blur-xl sm:px-5">
         <Button
           type="button"
           variant="ghost"
@@ -298,45 +301,21 @@ function ChatPageContent() {
           </Button>
         )}
 
-        {/* Phones: one menu button naming the current mode. Five 44px modes
-            don't fit between back and history at 320px, and a mode scrolled
-            off the edge is a hidden mode. */}
-        <div className="flex min-w-0 flex-1 justify-center sm:hidden">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                className="min-h-11 max-w-full gap-2 rounded-lg px-3 text-sm font-semibold"
-              >
-                <CurrentModeIcon size={16} aria-hidden="true" className="shrink-0" />
-                <span className="sr-only">Mode: </span>
-                <span className="truncate">{currentMode.label}</span>
-                <ChevronDown size={16} aria-hidden="true" className="shrink-0" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="min-w-48">
-              <DropdownMenuRadioGroup
-                value={mode}
-                onValueChange={(value) => setMode(value as AiMode)}
-              >
-                {MODES.map(({ id, label, icon: Icon }) => (
-                  <DropdownMenuRadioItem key={id} value={id} className="min-h-11">
-                    <Icon size={16} aria-hidden="true" />
-                    {label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        {/* Phones: the assistant's name on the first row; the mode switch
+            takes its own full-width row below so both labels stay readable. */}
+        <p className="min-w-0 flex-1 truncate text-base font-semibold text-foreground sm:hidden">
+          {ASK_HENGO_LABEL}
+        </p>
 
-        {/* From sm: the segmented control, which fits. min-w-0 + its own
-            sideways scroll keep it from ever pushing the history button off
-            the screen. */}
-        <div className="no-scrollbar hidden min-w-0 flex-1 items-center overflow-x-auto sm:flex">
-          <div className="mx-auto flex min-w-max items-center gap-0.5 rounded-lg border border-border bg-muted/35 p-1">
-            {MODES.map(({ id, label, icon: Icon }) => {
+        {/* The mode switch. Text labels on every width; the filled segment is
+            the active mode (also announced via aria-pressed). */}
+        <div className="order-last flex basis-full justify-center sm:order-none sm:min-w-0 sm:flex-1 sm:basis-auto">
+          <div
+            role="group"
+            aria-label="Assistant mode"
+            className="flex w-full items-center gap-0.5 rounded-lg border border-border bg-muted/35 p-1 sm:w-auto"
+          >
+            {ASSISTANT_MODES.map(({ id, label, icon: Icon }) => {
               const active = mode === id
               return (
                 <Button
@@ -345,10 +324,9 @@ function ChatPageContent() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setMode(id)}
-                  aria-current={active ? "true" : undefined}
-                  aria-label={label}
+                  aria-pressed={active}
                   className={cn(
-                    "relative min-h-11 min-w-11 items-center gap-1.5 overflow-hidden rounded-lg border-0 px-2.5 text-xs font-semibold shadow-none transition-colors active:scale-95 sm:px-3.5",
+                    "relative min-h-11 flex-1 items-center gap-1.5 overflow-hidden rounded-md border-0 px-3 text-sm font-semibold shadow-none transition-colors active:scale-95 sm:flex-none sm:px-4",
                     active
                       ? "bg-transparent text-primary-foreground hover:bg-transparent hover:text-primary-foreground"
                       : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
@@ -357,14 +335,18 @@ function ChatPageContent() {
                   {active && (
                     <motion.span
                       layoutId="ai-mode-pill"
-                      className="absolute inset-0 z-0 rounded-lg bg-primary"
+                      className="absolute inset-0 z-0 rounded-md bg-primary"
                       transition={{ type: "spring", stiffness: 400, damping: 32 }}
                     />
                   )}
-                  <Icon size={14} className="relative z-10 shrink-0" />
-                  {/* On phones only the active tab shows its label so the 4-mode
-                      bar fits; every tab keeps its label from sm up. */}
-                  <span className={cn("relative z-10", active ? "inline" : "hidden", "sm:inline")}>
+                  {/* Phones drop the icon and let the label wrap rather than
+                      truncate it — the mode's name must stay readable. */}
+                  <Icon
+                    size={15}
+                    aria-hidden="true"
+                    className="relative z-10 hidden shrink-0 sm:block"
+                  />
+                  <span className="relative z-10 whitespace-normal text-center leading-tight sm:whitespace-nowrap">
                     {label}
                   </span>
                 </Button>
@@ -373,8 +355,60 @@ function ChatPageContent() {
           </div>
         </div>
 
+        {/* Korean coaching tools (Analyze / Write / Review) — still one tap
+            away and still linkable via ?mode=. Names the tool when one is
+            open, so the active mode is always visible in this bar. */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              className={cn(
+                "min-h-11 shrink-0 gap-1.5 rounded-lg px-3 text-sm font-semibold",
+                activeTool && "border-primary/50 bg-primary/10 text-primary hover:bg-primary/15",
+              )}
+            >
+              {ActiveToolIcon ? (
+                <ActiveToolIcon size={15} aria-hidden="true" />
+              ) : (
+                <Languages size={15} aria-hidden="true" />
+              )}
+              {activeTool ? (
+                <>
+                  <span className="sr-only">Korean tool: </span>
+                  {activeTool.label}
+                </>
+              ) : (
+                <>
+                  {/* "Tools" on phones leaves room for the assistant's name;
+                      the menu inside is headed "Korean tools". */}
+                  <span className="sm:hidden">Tools</span>
+                  <span className="hidden sm:inline">Korean tools</span>
+                </>
+              )}
+              <ChevronDown size={15} aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-48">
+            <DropdownMenuLabel>Korean tools</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={activeTool?.id ?? ""}
+              onValueChange={(value) => {
+                if (isAiMode(value)) setMode(value)
+              }}
+            >
+              {KOREAN_TOOLS.map(({ id, label, icon: Icon }) => (
+                <DropdownMenuRadioItem key={id} value={id} className="min-h-11">
+                  <Icon size={16} aria-hidden="true" />
+                  {label}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         {/* Mobile chat-history trigger; keeps the segmented control centered. */}
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center md:hidden">
           {mode === "chat" && (
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
               <SheetTrigger asChild>
@@ -414,7 +448,7 @@ function ChatPageContent() {
               <ChatWindow
                 key={conversationId ?? "new"}
                 title="Hengo"
-                subtitle={conversationId ? "Ready to practice Korean" : "Connecting…"}
+                subtitle={conversationId ? "Ask, draft, or brainstorm" : "Connecting…"}
                 conversationId={conversationId ?? undefined}
                 initialDraft={initialDraft}
                 onNewChat={startNewChat}
@@ -430,10 +464,17 @@ function ChatPageContent() {
             <div className="mx-auto w-full max-w-2xl space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-semibold text-foreground">Ask Hengo</h2>
+                  {/* From md the shell header's h1 already names the mode, so
+                      the visible title would say it twice. */}
+                  <h2 className="text-xl font-semibold text-foreground md:sr-only">
+                    {askHengoItem.label}
+                  </h2>
+                  {/* Keep in step with lib/server/memory-retrieval.ts — the
+                      sources it actually reads. */}
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Answers come only from your own notes, journal, goals, and activity — never
-                    invented. Every claim links back to where it came from.
+                    Searches your saved notes, inbox captures, and journal entries, and also uses
+                    your approved memories, goals, completed tasks, and logged activity. Answers
+                    come only from these and link back to where they came from.
                   </p>
                 </div>
                 <Button asChild variant="outline" size="sm" className="shrink-0">

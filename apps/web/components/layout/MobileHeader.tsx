@@ -13,6 +13,7 @@ import {
   type NavSearchParams,
 } from "@/lib/navigation"
 
+import { AskHengoButton } from "./AskHengoButton"
 import { useMobileHeaderTitleValue } from "./mobile-header-title"
 
 const ACTION_BUTTON =
@@ -74,6 +75,10 @@ export function MobileHeader({
       >
         {title}
       </h1>
+
+      {/* The assistant's one entry point, labelled at every width. 36px tall
+          to fit the bar; the after: layer grows the tap target to 44px. */}
+      <AskHengoButton className="mr-1 px-2.5 after:absolute after:-inset-y-1 after:inset-x-0 after:content-['']" />
 
       <button type="button" onClick={onOpenSearch} aria-label="Search" className={ACTION_BUTTON}>
         <Search size={20} />

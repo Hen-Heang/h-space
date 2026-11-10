@@ -280,18 +280,22 @@ test.describe("Finance navigation", () => {
 })
 
 test.describe("Finance add button", () => {
-  test("stacks above the AI launcher on phones without overlapping it", async ({ page }) => {
+  test("sits just above the bottom nav on phones, with no AI launcher beside it", async ({
+    page,
+  }) => {
     await installSession(page)
     await page.setViewportSize(viewport(375))
     await page.goto("/finance")
     const add = page.getByRole("button", { name: "Add transaction" })
-    const ai = page.getByRole("button", { name: "Open AI Assistant" })
     await expect(add).toBeVisible({ timeout: 60_000 })
-    await expect(ai).toBeVisible()
+    // Ask Hengo is in the top bar; there is no floating launcher any more.
+    await expect(page.getByRole("button", { name: "Open AI Assistant" })).toHaveCount(0)
+    await expect(page.getByRole("banner").getByRole("link", { name: "Ask Hengo" })).toBeVisible()
     const a = (await add.boundingBox())!
-    const b = (await ai.boundingBox())!
-    // The Add button sits fully above the AI launcher.
-    expect(a.y + a.height).toBeLessThanOrEqual(b.y)
+    const nav = (await page.getByRole("navigation", { name: "Primary" }).boundingBox())!
+    // Clears the bottom nav, and isn't left floating far above it.
+    expect(a.y + a.height).toBeLessThanOrEqual(nav.y)
+    expect(nav.y - (a.y + a.height)).toBeLessThan(32)
 
     // It opens the transaction sheet, and Escape returns focus to it.
     await add.click()
