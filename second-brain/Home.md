@@ -47,7 +47,7 @@ flowchart LR
 - **Inbox/**: quick captures. Sort them into a folder later.
 - **Work & Projects/**: project notes and development lessons
 - **Learning/**: Java, Spring Boot, SQL, AI-assisted development, Korean
-- **Daily Notes/**: one note per day
+- **Daily Notes/**: one note per days 
 - **Templates/**: [[Templates/Daily Note|Daily Note]], [[Templates/Development Lesson|Development Lesson]]
 
 ## Work
