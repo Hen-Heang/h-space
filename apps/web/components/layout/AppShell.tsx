@@ -232,8 +232,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 // overflow-x-clip, not -hidden: "hidden" makes <main> a scroll
                 // container (overflow-y computes to auto) that never scrolls,
                 // so every position: sticky inside it silently did nothing.
-                // "clip" still stops sideways overflow. The calendar's
-                // overflow-y-hidden turns clip back into hidden, as before.
+                // "clip" still stops sideways overflow. The calendar adds
+                // overflow-y-hidden (older Chrome then computes x as "hidden",
+                // Chrome 157 keeps "clip"; both clip and neither scrolls).
                 "min-h-0 flex-1 overflow-x-clip outline-none",
                 // The max() keeps content clear of the notch / rounded corners
                 // when a phone is turned sideways; the insets are 0 otherwise.

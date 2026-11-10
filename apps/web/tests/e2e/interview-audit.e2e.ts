@@ -181,7 +181,10 @@ test("practice actions stay pinned within reach on a small phone", async ({ page
 test("home is usable with the keyboard alone", async ({ page }) => {
   await installMocks(page, "light")
   await page.goto("/interview")
-  await expect(page.getByText("Today's practice")).toBeVisible({ timeout: 60_000 })
+  // The heading, not getByText: "Finish today's practice to see…" also matches the text.
+  await expect(page.getByRole("heading", { name: "Today's practice" })).toBeVisible({
+    timeout: 60_000,
+  })
   // Tab until the primary action has focus; it must be reachable and show focus.
   let reached = false
   for (let i = 0; i < 60 && !reached; i += 1) {
