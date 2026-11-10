@@ -23,9 +23,8 @@
 2. **Finance:** owner reviews and merges the D–F PR, then tries adding a transaction on a real iPhone (keyboard over the sheet, Safari toolbar, safe areas). Follow-ups in `finance-redesign.md` §7: `FinanceProgress` `div` inside row buttons, unused `hashSeriesColor`, no error on a failed budget removal, sheet-to-sheet focus return, `UI_SWEEP=1` route sweep, and fix the Playwright `webServer` command.
 3. **MCP live (from #111):** confirm whether the token hook is applied and the Vercel `MCP_*` env is set; then register ChatGPT as a second client. Note the project-knowledge tools are now off with Notes.
 4. **Connected apps** (Settings → Security): list and revoke connector grants via Supabase `GET`/`DELETE /user/oauth/grants`.
-5. **Stale e2e specs (found 2026-11-10, also failing on `main`):** 21 Playwright tests in `interview-*`, `work-korean`, `shell-sticky` (calendar) and `responsive-public` (registration step two) look for copy the pages no longer show — update or retire them.
-6. **UI audit follow-ups (unchanged):** History "★" filters never match; `UnitEditor` `FieldLabel` is a `<p>`; sign-in tiles one colour per app; `public/app-process.png` artwork; Phase 6 sweep; remaining restyles (Chat leftovers, Interview, Roadmap, Recovery, vocab components).
-7. **Carried over:** native-speaker pass on `lib/korean-phrasebook/work-seed.ts`; Planner slices 3–10; second-brain T2–T7; long-term MCP auth via h-space-api (#36); generic-error treatment for `chat/stream`, `goals/coach`, `memory/ask`, `recovery-coach`; independent H-Vault security audit and restore drill.
+5. **UI audit follow-ups (unchanged):** History "★" filters never match; `UnitEditor` `FieldLabel` is a `<p>`; sign-in tiles one colour per app; `public/app-process.png` artwork; Phase 6 sweep; remaining restyles (Chat leftovers, Interview, Roadmap, Recovery, vocab components).
+6. **Carried over:** native-speaker pass on `lib/korean-phrasebook/work-seed.ts`; Planner slices 3–10; second-brain T2–T7; long-term MCP auth via h-space-api (#36); generic-error treatment for `chat/stream`, `goals/coach`, `memory/ask`, `recovery-coach`; independent H-Vault security audit and restore drill.
 
 ## Notes for the next session
 
