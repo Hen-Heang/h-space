@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Pencil, Star, Trash2, Loader2 } from "lucide-react"
+import { Link2, Loader2, MoreHorizontal, Pencil, Pin, PinOff, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { ReminderButton } from "@/components/reminders/ReminderButton"
 import {
@@ -13,9 +14,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 interface NoteActionsProps {
@@ -29,6 +37,12 @@ interface NoteActionsProps {
   noteTitle?: string
 }
 
+const iconButton = "size-11 text-muted-foreground hover:text-foreground"
+
+/**
+ * The reader's toolbar: Edit, a Pin/Unpin icon, and a More menu holding
+ * "Copy link" and "Delete note" (which still asks for confirmation).
+ */
 export function NoteActions({
   pinned = false,
   onEdit,
@@ -64,8 +78,29 @@ export function NoteActions({
     }
   }
 
+  const copyLink = async () => {
+    if (!noteSlug) return
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/notes/${noteSlug}`)
+      toast.success("Link copied")
+    } catch {
+      toast.error("Couldn't copy the link.")
+    }
+  }
+
+  const pinLabel = pinned ? "Unpin note" : "Pin note"
+
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1">
+      <Button
+        type="button"
+        variant="outline"
+        className="mr-1 h-11 gap-1.5 px-3 sm:px-4"
+        onClick={onEdit}
+      >
+        <Pencil aria-hidden="true" />
+        Edit
+      </Button>
       {noteId && (
         <ReminderButton
           entityType="note"
@@ -75,44 +110,68 @@ export function NoteActions({
         />
       )}
       {onTogglePin && (
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-sm"
-          onClick={handleTogglePin}
-          disabled={isPinning}
-          aria-pressed={pinned}
-          aria-label={pinned ? "Unpin note" : "Pin note"}
-          className={cn(
-            "hover:border-blue-500/50",
-            pinned ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground",
-          )}
-        >
-          <Star size={14} className={pinned ? "fill-current" : ""} />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleTogglePin}
+              disabled={isPinning}
+              aria-pressed={pinned}
+              aria-label={pinLabel}
+              className={cn(iconButton, pinned && "text-primary hover:text-primary")}
+            >
+              <Pin aria-hidden="true" className={pinned ? "fill-current" : undefined} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{pinLabel}</TooltipContent>
+        </Tooltip>
       )}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={onEdit}
-        className="text-muted-foreground hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400"
-      >
-        <Pencil size={14} />
-        Edit
-      </Button>
-      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <AlertDialogTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            aria-label="Delete note"
-            className="text-muted-foreground hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-500"
+      <DropdownMenu>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="More actions"
+                className={iconButton}
+              >
+                <MoreHorizontal aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>More actions</TooltipContent>
+        </Tooltip>
+        <DropdownMenuContent align="end" className="min-w-48 rounded-xl">
+          {noteSlug && (
+            <DropdownMenuItem className="min-h-11 rounded-lg px-2.5" onSelect={copyLink}>
+              <Link2 aria-hidden="true" />
+              Copy link
+            </DropdownMenuItem>
+          )}
+          {onTogglePin && (
+            // Also here so the menu alone covers every action.
+            <DropdownMenuItem className="min-h-11 rounded-lg px-2.5" onSelect={handleTogglePin}>
+              {pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />}
+              {pinLabel}
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            className="min-h-11 rounded-lg px-2.5"
+            onSelect={() => setShowConfirm(true)}
           >
-            <Trash2 size={14} />
-          </Button>
-        </AlertDialogTrigger>
+            <Trash2 aria-hidden="true" />
+            Delete note
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this note?</AlertDialogTitle>

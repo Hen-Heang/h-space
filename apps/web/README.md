@@ -27,7 +27,7 @@ preserved inside it as **Hengo Learning**.
 
 > ### Hengo Learning — focused Korean learning inside H-Space
 >
-> Hengo Learning retains the existing Korean-learning routes, data, and functionality. It is the Learning workspace of the hub. The desktop sidebar and tablet rail list six workspaces — **Overview · Planner · Learning · Notes · My Apps · Growth** — plus the **AI Assistant** and **Settings**; each workspace's own pages are local tabs inside it. The mobile bottom bar is **Home · Plan · Learn · Apps · More** (More opens Notes, Growth, the AI Assistant, Settings, and every page by workspace).
+> Hengo Learning retains the existing Korean-learning routes, data, and functionality. It is the Learning workspace of the hub. The desktop sidebar and tablet rail list six workspaces — **Overview · Planner · Learning · Notes · My Apps · Growth** — plus **Settings**; the assistant is opened from the **Ask Hengo** button in the top bar; each workspace's own pages are local tabs inside it. The mobile bottom bar is **Home · Plan · Notes · Finance · More** (More opens Learning, Growth, Settings, and every page by workspace).
 >
 > This README still documents the full V1 feature set below, and that documentation remains accurate as an _implementation_ reference — the productivity, growth, second-brain, progress, general-AI, and K-Specialist exam-prep features all still exist and still work by direct URL. Goals, Notes, and Progress have mobile/tablet tabs again, and every section is listed in the desktop sidebar; pages without a tab of their own are reached from those hubs or the ⌘K Quick Switcher. Nothing was deleted, and all data is intact.
 >

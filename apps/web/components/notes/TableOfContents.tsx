@@ -4,7 +4,19 @@ import { useEffect, useMemo, useState } from "react"
 import { List } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export function TableOfContents({ html, mobile = false }: { html: string; mobile?: boolean }) {
+export function TableOfContents({
+  html,
+  mobile = false,
+  onNavigate,
+}: {
+  html: string
+  mobile?: boolean
+  /**
+   * Called when a heading is chosen. The phone sheet closes here; the scroll
+   * waits for the sheet to let go of the page (its scroll lock).
+   */
+  onNavigate?: () => void
+}) {
   const [activeId, setActiveId] = useState<string>("")
 
   const toc = useMemo(() => {
@@ -46,11 +58,13 @@ export function TableOfContents({ html, mobile = false }: { html: string; mobile
   if (toc.length === 0) return null
 
   return (
-    <nav className={mobile ? "w-full p-4" : "p-4"}>
-      <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-        <List size={14} />
-        Table of Contents
-      </div>
+    <nav aria-label="Contents" className={mobile ? "w-full px-4 pb-4" : "p-4"}>
+      {!mobile && (
+        <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+          <List size={14} aria-hidden="true" />
+          Contents
+        </div>
+      )}
 
       <ul className="relative space-y-1">
         <div className="absolute bottom-0 left-0 top-0 w-px bg-border" />
@@ -74,11 +88,19 @@ export function TableOfContents({ html, mobile = false }: { html: string; mobile
               href={`#${item.id}`}
               onClick={(event) => {
                 event.preventDefault()
-                document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" })
                 setActiveId(item.id)
+                const scroll = () =>
+                  document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" })
+                if (onNavigate) {
+                  onNavigate()
+                  window.setTimeout(scroll, 250)
+                } else {
+                  scroll()
+                }
               }}
               className={cn(
-                "block py-1.5 text-xs font-medium transition-colors hover:text-foreground",
+                "block py-1.5 font-medium transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+                mobile ? "flex min-h-11 items-center text-sm" : "text-xs",
                 activeId === item.id ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground",
               )}
             >

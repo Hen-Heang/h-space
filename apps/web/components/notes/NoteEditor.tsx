@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Eye, Loader2, Pencil, Save, Star, X } from "lucide-react"
+import { ChevronDown, Eye, FolderOpen, Loader2, Pencil, Pin, Save } from "lucide-react"
 
 import {
   AlertDialog,
@@ -24,7 +24,9 @@ import {
 } from "@/components/ui/select"
 import { TagEditor } from "@/components/ui/tag-editor"
 import { Textarea } from "@/components/ui/textarea"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { getApiErrorMessage, NoteConflictError } from "@/lib/api"
+import { CodeCopy } from "@/components/notes/CodeCopy"
 import { renderMarkdown } from "@/lib/notes-markdown"
 import { useNoteProjects } from "@/hooks/useNoteProjects"
 import {
@@ -97,12 +99,15 @@ export function NoteEditor({
   const [pendingDraft, setPendingDraft] = useState<NoteEditorValues | null>(null)
   const [draftStorageFailed, setDraftStorageFailed] = useState(false)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
+  // Secondary fields start closed; a save error in one of them opens them.
+  const [detailsOpen, setDetailsOpen] = useState(false)
   // Used when the title has no ASCII letters (e.g. Korean or Khmer); fixed for
   // this editor session so the slug doesn't change on every keystroke.
   const [fallbackSlug] = useState(() => generatedNoteSlug())
   // While creating, the slug follows the title until the user edits it.
   const [slugEdited, setSlugEdited] = useState(mode === "edit")
   const initialRef = useRef(initial)
+  const titleRef = useRef<HTMLTextAreaElement>(null)
   const baseUpdatedAt = mode === "edit" ? baseUpdatedAtProp : null
   const draftKey = noteDraftKey(mode, initial.slug, initial.projectId)
   const dirty = !sameDraftValues(values, initialRef.current)
@@ -111,6 +116,9 @@ export function NoteEditor({
   // rather than silently reading as "No project".
   const projectMissing =
     Boolean(values.projectId) && !projects.some((p) => p.id === values.projectId)
+  const selectedProjectLabel = !values.projectId
+    ? "No project"
+    : (projects.find((p) => p.id === values.projectId)?.name ?? "Current project")
 
   function removeStoredDraft() {
     try {
@@ -172,6 +180,20 @@ export function NoteEditor({
     return () => clearTimeout(timer)
   }, [values, dirty, draftKey, baseUpdatedAt, pendingDraft])
 
+  // The title is a one-row textarea that grows to fit long or wrapped titles
+  // (iOS Safari has no `field-sizing`), including after a rotation.
+  useEffect(() => {
+    const el = titleRef.current
+    if (!el) return
+    const fit = () => {
+      el.style.height = "auto"
+      el.style.height = `${el.scrollHeight}px`
+    }
+    fit()
+    window.addEventListener("resize", fit)
+    return () => window.removeEventListener("resize", fit)
+  }, [values.title])
+
   function discardDraft() {
     setValues(initialRef.current)
     setDraftRestored(false)
@@ -209,6 +231,7 @@ export function NoteEditor({
 
   const handleSave = async () => {
     if (Object.keys(errors).length > 0) {
+      if (!errors.title && !errors.content) setDetailsOpen(true)
       setError(errors.title || errors.content || errors.sourceUrl || "Fix the highlighted fields.")
       return
     }
@@ -218,12 +241,15 @@ export function NoteEditor({
       slug = slugify(values.slug)
       if (!slug) {
         if (values.slug.trim()) {
+          setDetailsOpen(true)
           return setError("Use English letters, numbers and dashes in the URL.")
         }
         slug = noteSlugFromTitle(values.title, fallbackSlug)
       }
-      if (isReservedNoteSlug(slug))
+      if (isReservedNoteSlug(slug)) {
+        setDetailsOpen(true)
         return setError(`"${slug}" is reserved. Choose a different URL.`)
+      }
     }
     setError("")
     setIsSaving(true)
@@ -236,6 +262,7 @@ export function NoteEditor({
           "This note was changed or deleted somewhere else after you opened it, so it wasn't saved. Your changes are still here. Copy what you need, then reload to see the latest version.",
         )
       } else if (isDuplicateSlugError(err)) {
+        setDetailsOpen(true)
         setError(`Another note already uses /notes/${slug}. Change the URL and save again.`)
       } else {
         setError(getApiErrorMessage(err, "Couldn't save the note. Try again."))
@@ -245,8 +272,16 @@ export function NoteEditor({
     }
   }
 
+  const detailsSummary = [
+    NOTE_TYPES.find((t) => t.value === values.noteType)?.label ?? "Note",
+    values.category ? `#${values.category}` : "",
+    values.tags.length > 0
+      ? `${values.tags.length} ${values.tags.length === 1 ? "tag" : "tags"}`
+      : "",
+  ].filter(Boolean)
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Draft notices use neutral surface tokens: they're information, not
           errors. The action that keeps work is outlined; discarding is quieter. */}
       {pendingDraft && (
@@ -263,15 +298,14 @@ export function NoteEditor({
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={applyPendingDraft}>
+            <Button type="button" variant="outline" className="h-11" onClick={applyPendingDraft}>
               Use these changes
             </Button>
             <Button
               type="button"
               variant="ghost"
-              size="sm"
               onClick={discardPendingDraft}
-              className="text-muted-foreground"
+              className="h-11 text-muted-foreground"
             >
               Discard changes
             </Button>
@@ -282,80 +316,240 @@ export function NoteEditor({
       {draftRestored && (
         <div
           role="status"
-          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted px-4 py-2 text-sm text-foreground"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted px-4 py-1.5 text-sm text-foreground"
         >
           <span>Restored your unsaved changes from last time.</span>
           <Button
             type="button"
             variant="ghost"
-            size="sm"
             onClick={discardDraft}
-            className="text-muted-foreground"
+            className="h-11 text-muted-foreground"
           >
             Discard changes
           </Button>
         </div>
       )}
 
-      <div className="flex flex-col gap-4 rounded-lg border border-border/60 bg-card/50 p-4 sm:p-5">
-        <div className="flex flex-col gap-4 sm:flex-row">
-          <div className="flex-1 space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <input
-                aria-label="Note icon key"
+      {/* Title, with the pin beside it */}
+      <div className="flex items-start gap-2">
+        <textarea
+          ref={titleRef}
+          aria-label="Note title"
+          rows={1}
+          value={values.title}
+          onChange={(e) => {
+            // A title is one line; pasted line breaks become spaces.
+            const title = e.target.value.replace(/\r?\n/g, " ")
+            set({
+              title,
+              // While creating, the slug follows the title until the user edits it.
+              ...(mode === "create" && !slugEdited
+                ? { slug: title.trim() ? noteSlugFromTitle(title, fallbackSlug) : "" }
+                : {}),
+            })
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.preventDefault()
+          }}
+          placeholder="Note title"
+          aria-invalid={Boolean(error && errors.title) || undefined}
+          className="min-h-11 min-w-0 flex-1 resize-none bg-transparent py-1.5 text-2xl leading-tight font-semibold [overflow-wrap:anywhere] text-foreground placeholder:text-muted-foreground/50 focus:outline-none sm:text-3xl"
+        />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => set({ pinned: !values.pinned })}
+              aria-pressed={values.pinned}
+              aria-label={values.pinned ? "Unpin note" : "Pin note"}
+              className={cn(
+                "flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                values.pinned
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
+              )}
+            >
+              <Pin size={18} aria-hidden="true" className={values.pinned ? "fill-current" : ""} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {values.pinned ? "Pinned to the top of Notes" : "Pin to the top of Notes"}
+          </TooltipContent>
+        </Tooltip>
+      </div>
+
+      {/* Note details: always says where the note goes; the rest opens on demand. */}
+      <div className="rounded-lg border border-border bg-card">
+        <button
+          type="button"
+          aria-expanded={detailsOpen}
+          aria-controls="note-details"
+          onClick={() => setDetailsOpen((v) => !v)}
+          className="flex min-h-12 w-full items-center gap-3 rounded-lg px-4 py-2 text-left outline-none hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        >
+          <span className="shrink-0 text-sm font-semibold text-foreground">Note details</span>
+          <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+            {!projectsUnavailable && (
+              <>
+                <FolderOpen size={14} aria-hidden="true" className="mr-1 inline align-[-2px]" />
+                <span className="font-medium text-foreground/80">{selectedProjectLabel}</span>
+                {" · "}
+              </>
+            )}
+            {detailsSummary.join(" · ")}
+          </span>
+          <ChevronDown
+            size={18}
+            aria-hidden="true"
+            className={cn(
+              "shrink-0 text-muted-foreground transition-transform",
+              detailsOpen && "rotate-180",
+            )}
+          />
+        </button>
+
+        {/* Kept mounted while closed so a failed save can point at these fields. */}
+        <div
+          id="note-details"
+          hidden={!detailsOpen}
+          className="space-y-4 border-t border-border p-4"
+        >
+          <div className="space-y-1.5">
+            <label htmlFor="note-description" className="text-xs font-medium text-muted-foreground">
+              Short description
+            </label>
+            <Input
+              id="note-description"
+              value={values.description}
+              onChange={(e) => set({ description: e.target.value })}
+              placeholder="Shown in lists and search results"
+              className="h-11"
+            />
+          </div>
+
+          <div
+            className={cn(
+              "grid grid-cols-1 gap-3",
+              projectsUnavailable ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3",
+            )}
+          >
+            {!projectsUnavailable && (
+              <div className="space-y-1.5">
+                <label htmlFor="note-project" className="text-xs font-medium text-muted-foreground">
+                  Project
+                </label>
+                <Select
+                  value={values.projectId || NO_PROJECT_VALUE}
+                  onValueChange={(value) =>
+                    set({ projectId: value === NO_PROJECT_VALUE ? "" : value })
+                  }
+                >
+                  <SelectTrigger id="note-project" className="h-11! w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_PROJECT_VALUE}>No project</SelectItem>
+                    {projectMissing && (
+                      <SelectItem value={values.projectId}>Current project</SelectItem>
+                    )}
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <label htmlFor="note-type" className="text-xs font-medium text-muted-foreground">
+                Type
+              </label>
+              <Select
+                value={values.noteType}
+                onValueChange={(value) => set({ noteType: value as NoteType })}
+              >
+                <SelectTrigger id="note-type" className="h-11! w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {NOTE_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="note-category" className="text-xs font-medium text-muted-foreground">
+                Category (project section)
+              </label>
+              <Input
+                id="note-category"
+                list="note-category-suggestions"
+                value={values.category}
+                onChange={(e) => set({ category: e.target.value })}
+                placeholder="e.g. Architecture, Guides"
+                className="h-11"
+              />
+              <datalist id="note-category-suggestions">
+                {PROJECT_SECTIONS.map((section) => (
+                  <option key={section} value={section} />
+                ))}
+              </datalist>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="note-tags" className="text-xs font-medium text-muted-foreground">
+              Tags
+            </label>
+            <TagEditor id="note-tags" tags={values.tags} onChange={(tags) => set({ tags })} />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_7rem]">
+            <div className="space-y-1.5">
+              <label
+                htmlFor="note-source-url"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                Source URL (optional)
+              </label>
+              <Input
+                id="note-source-url"
+                type="url"
+                inputMode="url"
+                value={values.sourceUrl}
+                onChange={(e) => set({ sourceUrl: e.target.value })}
+                placeholder="https://…"
+                aria-invalid={Boolean(errors.sourceUrl)}
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="note-icon" className="text-xs font-medium text-muted-foreground">
+                Icon
+              </label>
+              <Input
+                id="note-icon"
                 value={values.icon}
                 onChange={(e) => set({ icon: e.target.value })}
                 placeholder="java"
-                title="Icon key (e.g. java, sql) — purely visual"
-                className="h-11 w-20 shrink-0 rounded-lg border border-border bg-background text-center text-base font-mono transition-colors focus:border-blue-500/50 focus:outline-none"
+                title="Icon key (e.g. java, sql), purely visual"
+                className="h-11 font-mono"
               />
-              <input
-                aria-label="Note title"
-                value={values.title}
-                onChange={(e) => {
-                  const title = e.target.value
-                  set({
-                    title,
-                    // While creating, the slug follows the title until the user edits it.
-                    ...(mode === "create" && !slugEdited
-                      ? { slug: title.trim() ? noteSlugFromTitle(title, fallbackSlug) : "" }
-                      : {}),
-                  })
-                }}
-                placeholder="Note title"
-                className="min-h-11 min-w-0 flex-1 bg-transparent text-xl font-semibold text-foreground placeholder:opacity-30 focus:outline-none sm:text-2xl"
-              />
-              <button
-                type="button"
-                onClick={() => set({ pinned: !values.pinned })}
-                aria-pressed={values.pinned}
-                aria-label={values.pinned ? "Unpin note" : "Pin note"}
-                // The editor's only pin control, matching the reader's star.
-                title={values.pinned ? "Pinned to the top of Notes" : "Pin to the top of Notes"}
-                className={cn(
-                  "flex size-11 shrink-0 items-center justify-center rounded-lg border transition-colors",
-                  values.pinned
-                    ? "border-primary/40 bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Star
-                  size={18}
-                  aria-hidden="true"
-                  className={values.pinned ? "fill-current" : ""}
-                />
-              </button>
             </div>
-            <input
-              aria-label="Note description"
-              value={values.description}
-              onChange={(e) => set({ description: e.target.value })}
-              placeholder="Short description..."
-              className="min-h-11 w-full bg-transparent text-base text-muted-foreground placeholder:opacity-30 focus:outline-none sm:text-sm"
-            />
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="font-mono opacity-60">/notes/</span>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="note-slug" className="text-xs font-medium text-muted-foreground">
+              URL{mode === "edit" ? " (fixed once the note exists)" : ""}
+            </label>
+            <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+              <span className="shrink-0 font-mono opacity-70">/notes/</span>
               <input
+                id="note-slug"
                 aria-label="Note URL slug"
                 value={values.slug}
                 onChange={(e) => {
@@ -371,117 +565,6 @@ export function NoteEditor({
               />
             </div>
           </div>
-
-          {/* Save is the screen's one primary action (theme primary, not a
-              one-off blue); Cancel stays quiet. */}
-          <div className="flex items-center gap-2 sm:self-start">
-            <Button type="button" variant="ghost" onClick={handleCancel}>
-              <X aria-hidden="true" />
-              Cancel
-            </Button>
-            <Button type="button" onClick={handleSave} disabled={isSaving}>
-              {isSaving ? (
-                <Loader2 className="animate-spin" aria-hidden="true" />
-              ) : (
-                <Save aria-hidden="true" />
-              )}
-              Save
-            </Button>
-          </div>
-        </div>
-
-        <div
-          className={cn(
-            "grid grid-cols-1 gap-3 border-t border-border/60 pt-4",
-            projectsUnavailable ? "sm:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-4",
-          )}
-        >
-          <div className="space-y-1.5">
-            <label htmlFor="note-type" className="text-xs font-medium text-muted-foreground">
-              Type
-            </label>
-            <Select
-              value={values.noteType}
-              onValueChange={(value) => set({ noteType: value as NoteType })}
-            >
-              <SelectTrigger id="note-type" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {NOTE_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {!projectsUnavailable && (
-            <div className="space-y-1.5">
-              <label htmlFor="note-project" className="text-xs font-medium text-muted-foreground">
-                Project
-              </label>
-              <Select
-                value={values.projectId || NO_PROJECT_VALUE}
-                onValueChange={(value) =>
-                  set({ projectId: value === NO_PROJECT_VALUE ? "" : value })
-                }
-              >
-                <SelectTrigger id="note-project" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NO_PROJECT_VALUE}>No project</SelectItem>
-                  {projectMissing && (
-                    <SelectItem value={values.projectId}>Current project</SelectItem>
-                  )}
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          <div className="space-y-1.5">
-            <label htmlFor="note-category" className="text-xs font-medium text-muted-foreground">
-              Category (project section)
-            </label>
-            <Input
-              id="note-category"
-              list="note-category-suggestions"
-              value={values.category}
-              onChange={(e) => set({ category: e.target.value })}
-              placeholder="e.g. Architecture, Guides, Reference"
-            />
-            <datalist id="note-category-suggestions">
-              {PROJECT_SECTIONS.map((section) => (
-                <option key={section} value={section} />
-              ))}
-            </datalist>
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="note-source-url" className="text-xs font-medium text-muted-foreground">
-              Source URL (optional)
-            </label>
-            <Input
-              id="note-source-url"
-              type="url"
-              inputMode="url"
-              value={values.sourceUrl}
-              onChange={(e) => set({ sourceUrl: e.target.value })}
-              placeholder="https://…"
-              aria-invalid={Boolean(errors.sourceUrl)}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1.5 border-t border-border/60 pt-4">
-          <label htmlFor="note-tags" className="text-xs font-medium text-muted-foreground">
-            Tags
-          </label>
-          <TagEditor id="note-tags" tags={values.tags} onChange={(tags) => set({ tags })} />
         </div>
       </div>
 
@@ -494,24 +577,25 @@ export function NoteEditor({
         </p>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Mode switch and the save actions stay in reach while scrolling a long note. */}
+      <div className="sticky top-[var(--shell-header-h,0px)] z-10 -mx-1 flex flex-wrap items-center justify-between gap-2 bg-background/95 px-1 py-2">
         <div
           role="group"
           aria-label="Editor mode"
-          className="flex items-center gap-1 rounded-lg border border-border bg-card p-1"
+          className="flex items-center gap-0.5 rounded-lg border border-border bg-card p-0.5"
         >
           <button
             type="button"
             onClick={() => setPreview(false)}
             aria-pressed={!preview}
             className={cn(
-              "min-h-11 flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+              "flex min-h-10 items-center gap-1.5 rounded-md px-2.5 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3 [@media(pointer:coarse)]:min-h-11",
               !preview
                 ? "bg-accent text-foreground"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <Pencil size={13} aria-hidden="true" />
+            <Pencil size={14} aria-hidden="true" className="hidden sm:block" />
             Write
           </button>
           <button
@@ -519,34 +603,46 @@ export function NoteEditor({
             onClick={() => setPreview(true)}
             aria-pressed={preview}
             className={cn(
-              "min-h-11 flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+              "flex min-h-10 items-center gap-1.5 rounded-md px-2.5 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3 [@media(pointer:coarse)]:min-h-11",
               preview ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <Eye size={13} aria-hidden="true" />
+            <Eye size={14} aria-hidden="true" className="hidden sm:block" />
             Preview
           </button>
         </div>
-        {/* One steady message while there are unsaved changes — not a
-            per-keystroke "saving…/saved" flicker that screen readers repeat. */}
-        <span aria-live="polite" className="text-xs text-muted-foreground">
-          {dirty && !pendingDraft
-            ? draftStorageFailed
-              ? "Unsaved changes can't be kept on this device. Save to keep them."
-              : "Unsaved changes are kept on this device"
-            : null}
-        </span>
+        {/* Save is the screen's one primary action; Cancel stays quiet. */}
+        <div className="flex items-center gap-1.5">
+          <Button type="button" variant="ghost" className="h-11 px-3" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            className="h-11 px-3 sm:px-4"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <Loader2 className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Save aria-hidden="true" className="hidden sm:block" />
+            )}
+            Save note
+          </Button>
+        </div>
       </div>
 
+      {preview && <CodeCopy />}
       {preview ? (
         <article
-          className="prose prose-zinc min-h-[50dvh] max-w-none break-words rounded-lg border border-border/60 bg-card/30 p-4 prose-sm [overflow-wrap:anywhere] dark:prose-invert sm:min-h-[500px] sm:p-6 prose-pre:max-w-full prose-pre:overflow-x-auto"
+          className="note-prose prose prose-zinc min-h-[50dvh] max-w-none break-words rounded-lg border border-border/60 bg-card/30 p-4 prose-sm [overflow-wrap:anywhere] dark:prose-invert sm:min-h-[500px] sm:p-6 prose-pre:max-w-full prose-code:before:content-none prose-code:after:content-none"
           dangerouslySetInnerHTML={{
             __html: renderMarkdown(values.content || "*Nothing to preview yet.*"),
           }}
         />
       ) : (
         <Textarea
+          aria-label="Note content (Markdown)"
           value={values.content}
           onChange={(e) => set({ content: e.target.value })}
           placeholder="Write your markdown here..."
@@ -554,6 +650,16 @@ export function NoteEditor({
           className="min-h-[50dvh] w-full resize-none rounded-lg border-border/60 bg-card/30 p-4 font-mono text-base leading-relaxed sm:min-h-[500px] sm:p-6 sm:text-sm"
         />
       )}
+
+      {/* One steady message while there are unsaved changes — not a
+          per-keystroke "saving…/saved" flicker that screen readers repeat. */}
+      <p aria-live="polite" className="min-h-4 text-xs text-muted-foreground">
+        {dirty && !pendingDraft
+          ? draftStorageFailed
+            ? "Unsaved changes can't be kept on this device. Save to keep them."
+            : "Unsaved changes are kept on this device"
+          : null}
+      </p>
 
       <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
         <AlertDialogContent>

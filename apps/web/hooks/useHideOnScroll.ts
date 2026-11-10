@@ -28,7 +28,7 @@ export function nextHiddenOnScroll(
 }
 
 /**
- * Hides a floating control (e.g. the mobile AI launcher) while the page is
+ * Hides a floating control (e.g. a page's floating action) while the page is
  * scrolled down, so it doesn't sit on top of the content being read, and
  * brings it back on the first scroll up. Returns `[hidden, reveal]`; call
  * `reveal` when the control gets keyboard focus so it's never focused while

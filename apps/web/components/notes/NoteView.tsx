@@ -3,12 +3,17 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import dynamic from "next/dynamic"
-import { ChevronLeft, ChevronDown, List, ArrowUp, Hash, ExternalLink, Clock } from "lucide-react"
-import { ReadingProgress } from "@/components/notes/ReadingProgress"
+import { ArrowUp, ChevronLeft, ExternalLink, List } from "lucide-react"
+
 import { CodeCopy } from "@/components/notes/CodeCopy"
-import { TechIcon } from "@/components/notes/TechIcon"
 import { NoteActions } from "@/components/notes/NoteActions"
-import { NOTE_TYPES, type Note } from "@/lib/notes"
+import { noteTypeLabel } from "@/components/notes/project-ui"
+import { ReadingProgress } from "@/components/notes/ReadingProgress"
+import { TechIcon } from "@/components/notes/TechIcon"
+import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { useNoteProjects } from "@/hooks/useNoteProjects"
+import { readingMinutes, type Note } from "@/lib/notes"
 
 const TableOfContents = dynamic(
   () => import("@/components/notes/TableOfContents").then((mod) => mod.TableOfContents),
@@ -24,6 +29,11 @@ function formatDate(iso?: string): string {
   })
 }
 
+/** renderMarkdown gives every h2/h3 an id; the contents list links to those. */
+function hasContents(html: string): boolean {
+  return /<h[23][^>]*\sid="/i.test(html)
+}
+
 interface NoteViewProps {
   slug: string
   note: Note
@@ -34,9 +44,12 @@ interface NoteViewProps {
 }
 
 export function NoteView({ slug, note, html, onEdit, onTogglePin, onDelete }: NoteViewProps) {
-  const [showMobileToc, setShowMobileToc] = useState(false)
+  const [contentsOpen, setContentsOpen] = useState(false)
   const [showFloatingNav, setShowFloatingNav] = useState(false)
   const [activeSectionLabel, setActiveSectionLabel] = useState("Contents")
+  const { projects } = useNoteProjects()
+  const project = note.projectId ? projects.find((p) => p.id === note.projectId) : undefined
+  const contents = hasContents(html)
 
   useEffect(() => {
     const onScroll = () => setShowFloatingNav(window.scrollY > 400)
@@ -63,36 +76,39 @@ export function NoteView({ slug, note, html, onEdit, onTogglePin, onDelete }: No
     return () => headingElements.forEach((el) => observer.unobserve(el))
   }, [html])
 
+  const meta = [
+    noteTypeLabel(note.noteType),
+    note.category ? `#${note.category}` : "",
+    note.updatedAt ? `Updated ${formatDate(note.updatedAt)}` : "",
+    `${readingMinutes(note.content)} min read`,
+  ].filter(Boolean)
+
   return (
     <>
       <ReadingProgress />
       <CodeCopy />
 
-      {/* Floating nav — appears after scrolling. Stacked above the shell's
-          floating AI Assistant button (right-4, size-14, just above the bottom
-          nav or the screen edge) instead of on top of it; --shell-bottom-nav-h
-          already includes the iPhone home-indicator inset. */}
+      {/* Floating nav — appears after scrolling, in the bottom-right corner
+          just above the bottom nav (or the home indicator when it's hidden). */}
       {showFloatingNav && (
-        <div className="fixed right-4 bottom-[calc(var(--shell-bottom-nav-h,0px)+5rem)] z-40 flex flex-col items-end gap-2.5">
+        <div className="fixed right-4 bottom-[calc(var(--shell-bottom-nav-h,0px)+max(0.75rem,calc(env(safe-area-inset-bottom)-var(--shell-bottom-nav-h,0px))))] z-40 flex flex-col items-end gap-2.5">
+          {contents && (
+            <button
+              type="button"
+              onClick={() => setContentsOpen(true)}
+              aria-label={`Contents: ${activeSectionLabel}`}
+              className="flex min-h-11 max-w-[16rem] items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground shadow-lg outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95 xl:hidden"
+            >
+              <List size={14} aria-hidden="true" className="shrink-0" />
+              <span className="truncate">{activeSectionLabel}</span>
+            </button>
+          )}
           <button
-            onClick={() => {
-              setShowMobileToc(true)
-              requestAnimationFrame(() => {
-                document
-                  .getElementById("note-toc-mobile")
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
-              })
-            }}
-            className="flex min-h-11 max-w-[16rem] items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground shadow-lg active:scale-95"
-          >
-            <List size={13} className="shrink-0" />
-            <span className="truncate">{activeSectionLabel}</span>
-          </button>
-          <button
+            type="button"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground shadow-lg active:scale-95"
+            className="flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground shadow-lg outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95"
           >
-            <ArrowUp size={13} />
+            <ArrowUp size={14} aria-hidden="true" />
             Top
           </button>
         </div>
@@ -101,93 +117,100 @@ export function NoteView({ slug, note, html, onEdit, onTogglePin, onDelete }: No
       <div className="mx-auto flex min-h-dvh max-w-[1440px] justify-center">
         {/* Main content column */}
         <div className="min-w-0 max-w-4xl flex-1">
-          {/* Top action bar */}
-          <div className="flex items-center justify-between gap-2 border-b border-border bg-background/95 py-3 md:sticky md:top-[var(--shell-header-h,0px)] md:z-20">
+          {/* Reader toolbar */}
+          {/* Phones and tablets: the mobile header already has Back, so the
+              toolbar is just the actions, right-aligned, and fits at 320px. */}
+          <div className="flex items-center justify-end gap-2 border-b border-border bg-background/95 py-1.5 md:sticky md:top-[var(--shell-header-h,0px)] md:z-20 lg:justify-between">
             <Link
-              href="/notes"
-              className="flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              href={project ? `/notes/projects/${project.id}` : "/notes"}
+              className="hidden min-h-11 min-w-0 items-center gap-1 rounded-md pr-2 text-sm font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring lg:flex"
             >
-              <ChevronLeft size={14} />
-              All notes
+              <ChevronLeft size={16} aria-hidden="true" className="shrink-0" />
+              <span className="truncate">{project ? project.name : "Notes"}</span>
             </Link>
-            <NoteActions
-              pinned={note.pinned}
-              onEdit={onEdit}
-              onTogglePin={onTogglePin}
-              onDelete={onDelete}
-              noteId={note.id}
-              noteSlug={note.slug}
-              noteTitle={note.title}
-            />
+            <div className="flex shrink-0 items-center gap-1">
+              {contents && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  aria-label="Contents"
+                  className="h-11 min-w-11 gap-1.5 px-3 text-muted-foreground hover:text-foreground xl:hidden"
+                  onClick={() => setContentsOpen(true)}
+                >
+                  <List aria-hidden="true" />
+                  <span aria-hidden="true" className="hidden sm:inline">
+                    Contents
+                  </span>
+                </Button>
+              )}
+              <NoteActions
+                pinned={note.pinned}
+                onEdit={onEdit}
+                onTogglePin={onTogglePin}
+                onDelete={onDelete}
+                noteId={note.id}
+                noteSlug={note.slug}
+                noteTitle={note.title}
+              />
+            </div>
           </div>
 
           {/* Page header */}
-          <div className="pb-6 pt-6 sm:pt-8">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-card">
-              <TechIcon name={note.icon} size={28} />
+          <div className="pt-4 pb-5 sm:pt-8 sm:pb-6">
+            <div className="mb-4 hidden size-11 items-center justify-center rounded-lg border border-border bg-card sm:flex">
+              <TechIcon name={note.icon} size={24} />
             </div>
 
-            <h2 className="mb-2 text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+            <h2 className="mb-2 text-2xl leading-tight font-semibold tracking-tight [overflow-wrap:anywhere] text-foreground sm:text-3xl">
               {note.title}
             </h2>
 
             {note.description && (
-              <p className="mb-4 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+              <p className="mb-3 max-w-2xl text-sm leading-6 [overflow-wrap:anywhere] text-muted-foreground sm:text-base">
                 {note.description}
               </p>
             )}
 
-            <div className="flex flex-wrap gap-x-5 gap-y-2 border-t border-border/60 pt-4 text-sm text-muted-foreground">
-              <div className="flex min-w-[120px] items-center gap-2">
-                <span className="w-16 shrink-0 text-xs font-medium text-muted-foreground">
-                  Type
-                </span>
-                <span className="font-medium capitalize text-foreground/80">
-                  {NOTE_TYPES.find((t) => t.value === note.noteType)?.label ?? note.noteType}
-                </span>
-              </div>
-              {note.category && (
-                <div className="flex min-w-[120px] items-center gap-2">
-                  <span className="w-16 shrink-0 text-xs font-medium text-muted-foreground">
-                    Category
-                  </span>
-                  <span className="flex items-center gap-1.5 font-medium text-foreground/80">
-                    <Hash size={12} className="text-muted-foreground" />
-                    {note.category}
-                  </span>
-                </div>
-              )}
-              <div className="flex min-w-[120px] items-center gap-2">
-                <span className="w-16 shrink-0 text-xs font-medium text-muted-foreground">
-                  Module
-                </span>
-                <span className="rounded border border-border bg-card px-2 py-0.5 font-mono text-xs font-medium text-foreground/80">
-                  {slug}
-                </span>
-              </div>
-              {(note.createdAt || note.updatedAt) && (
-                <div className="flex min-w-[160px] items-center gap-2">
-                  <Clock size={12} className="text-muted-foreground" />
-                  <span className="text-xs">
-                    Created {formatDate(note.createdAt)} · Updated {formatDate(note.updatedAt)}
-                  </span>
-                </div>
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+              <span
+                title={
+                  note.createdAt
+                    ? `Created ${formatDate(note.createdAt)} · Updated ${formatDate(note.updatedAt)}`
+                    : undefined
+                }
+              >
+                {meta.join(" · ")}
+              </span>
+              {project && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <Link
+                    href={`/notes/projects/${project.id}`}
+                    className="max-w-full truncate font-medium text-foreground/80 hover:underline"
+                  >
+                    {project.name}
+                  </Link>
+                </>
               )}
               {note.sourceUrl && (
-                <a
-                  href={note.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 font-medium text-primary hover:underline"
-                >
-                  <ExternalLink size={12} />
-                  Source
-                </a>
+                <>
+                  <span aria-hidden="true">·</span>
+                  <a
+                    href={note.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                  >
+                    Source
+                    <ExternalLink size={12} aria-hidden="true" />
+                    <span className="sr-only">(opens in a new tab)</span>
+                  </a>
+                </>
               )}
-            </div>
+            </p>
 
             {note.tags && note.tags.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-1.5">
+              <div className="mt-3 flex flex-wrap gap-1.5">
                 {note.tags.map((tag) => (
                   <span
                     key={tag}
@@ -200,53 +223,49 @@ export function NoteView({ slug, note, html, onEdit, onTogglePin, onDelete }: No
             )}
           </div>
 
-          {/* Mobile TOC */}
-          <div id="note-toc-mobile" className="mb-5 scroll-mt-16 xl:hidden">
-            <button
-              onClick={() => setShowMobileToc((v) => !v)}
-              className="flex min-h-11 w-full items-center justify-between rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/50"
-            >
-              <span className="flex items-center gap-2">
-                <List size={13} /> Table of Contents
-              </span>
-              <ChevronDown
-                size={13}
-                className={`transition-transform duration-200 ${showMobileToc ? "rotate-180" : ""}`}
-              />
-            </button>
-            {showMobileToc && (
-              <div className="mt-2 overflow-hidden rounded-xl border border-border bg-card">
-                <TableOfContents html={html} mobile />
-              </div>
-            )}
-          </div>
-
           {/* Article content */}
           <article
-            className="prose prose-base prose-zinc max-w-none break-words pb-12 [overflow-wrap:anywhere] dark:prose-invert prose-headings:font-semibold prose-headings:tracking-tight prose-a:text-primary prose-pre:max-w-full prose-pre:overflow-x-auto prose-code:rounded prose-code:bg-accent prose-code:px-1 prose-code:py-0.5 prose-code:font-mono prose-code:text-sm prose-code:before:content-none prose-code:after:content-none"
+            className="note-prose prose prose-base prose-zinc max-w-none break-words pb-12 [overflow-wrap:anywhere] dark:prose-invert prose-headings:scroll-mt-28 prose-headings:font-semibold prose-headings:tracking-tight prose-a:text-primary prose-pre:max-w-full prose-code:before:content-none prose-code:after:content-none"
             dangerouslySetInnerHTML={{ __html: html }}
           />
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-border pb-12 pt-6">
+          <div className="flex items-center justify-between gap-3 border-t border-border pt-4 pb-12">
             <Link
               href="/notes"
-              className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="flex min-h-11 shrink-0 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              <ChevronLeft size={15} />
-              Back to all notes
+              <ChevronLeft size={15} aria-hidden="true" />
+              All notes
             </Link>
-            <span className="font-mono text-xs text-muted-foreground">{slug}</span>
+            <span className="min-w-0 truncate font-mono text-xs text-muted-foreground">
+              /notes/{slug}
+            </span>
           </div>
         </div>
 
-        {/* Desktop right TOC panel */}
+        {/* Desktop right contents panel */}
         <div className="sticky top-[var(--shell-header-h,0px)] hidden h-[calc(100dvh-var(--shell-header-h,0px))] w-72 shrink-0 flex-col gap-5 overflow-y-auto border-l border-border/60 px-5 py-6 xl:flex">
           <div className="overflow-hidden rounded-xl border border-border/60 bg-card/40">
             <TableOfContents html={html} />
           </div>
         </div>
       </div>
+
+      {/* Phones and tablets: contents in a bottom sheet. */}
+      {contents && (
+        <Sheet open={contentsOpen} onOpenChange={setContentsOpen}>
+          <SheetContent
+            side="bottom"
+            className="max-h-[75dvh] gap-0 overflow-y-auto rounded-t-2xl pb-[env(safe-area-inset-bottom)] xl:hidden"
+          >
+            <SheetHeader className="pr-14">
+              <SheetTitle className="font-semibold">Contents</SheetTitle>
+            </SheetHeader>
+            <TableOfContents html={html} mobile onNavigate={() => setContentsOpen(false)} />
+          </SheetContent>
+        </Sheet>
+      )}
     </>
   )
 }

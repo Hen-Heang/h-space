@@ -1,8 +1,12 @@
 import { marked, Renderer, type Tokens } from "marked"
 
-// Client-side markdown → HTML for study notes. koriai is a client SPA, so the
-// original server-side shiki highlighter is dropped; code blocks are wrapped in
-// `.shiki-wrapper` so CodeCopy + globals.css can style them. Headings get stable
+import { codeLanguageLabel, highlightCode } from "@/lib/notes-highlight"
+
+// Client-side markdown → HTML for study notes. Code blocks are highlighted
+// with highlight.js (lib/notes-highlight.ts) and wrapped in `.shiki-wrapper`
+// (the class name is historical) with a `.code-header` that names the language
+// and holds CodeCopy's button; globals.css styles both. Tables get a
+// scrolling wrapper so they never widen a phone screen. Headings get stable
 // ids (h2/h3) so the TOC and reading-progress observers can anchor to them.
 //
 // Security: the output goes into `dangerouslySetInnerHTML` on the same origin
@@ -103,9 +107,24 @@ export function renderMarkdown(content: string): string {
   }
 
   renderer.code = ({ text, lang }: Tokens.Code) => {
-    const rawLang = (lang ?? "").toLowerCase().trim()
+    // Only the first word of the info string is the language ("ts title=x").
+    const rawLang = (lang ?? "").trim().split(/\s+/, 1)[0].toLowerCase()
     const langAttr = rawLang ? ` data-lang="${escapeHtml(rawLang)}"` : ""
-    return `<div class="shiki-wrapper"${langAttr}><pre><code>${escapeHtml(text)}</code></pre></div>`
+    const label = codeLanguageLabel(rawLang) || "Code"
+    const copyLabel = rawLang ? `Copy ${label} code` : "Copy code"
+    // highlightCode returns escaped text plus hljs <span class> wrappers only.
+    return (
+      `<div class="shiki-wrapper"${langAttr}>` +
+      `<div class="code-header"><span class="code-lang">${escapeHtml(label)}</span>` +
+      // Part of the HTML (not added after mount) so it survives React
+      // re-applying the article's innerHTML; CodeCopy handles its clicks.
+      `<button type="button" class="code-copy" aria-label="${escapeHtml(copyLabel)}">Copy</button></div>` +
+      `<pre><code class="hljs">${highlightCode(text, rawLang)}</code></pre></div>`
+    )
+  }
+
+  renderer.table = function (this: Renderer, token: Tokens.Table) {
+    return `<div class="table-scroll">${Renderer.prototype.table.call(this, token)}</div>`
   }
 
   renderer.heading = function (this: Renderer, { tokens, depth }: Tokens.Heading) {

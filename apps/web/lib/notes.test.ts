@@ -5,6 +5,7 @@ import {
   generatedNoteSlug,
   isNoteInputValid,
   noteSlugFromTitle,
+  readingMinutes,
   MAX_NOTE_CONTENT_LENGTH,
   MAX_NOTE_TITLE_LENGTH,
   sortNotesMeta,
@@ -154,5 +155,25 @@ describe("noteSlugFromTitle", () => {
   it("falls back for Korean and Khmer titles", () => {
     expect(noteSlugFromTitle("한국어 공부", "note-20261109-abcd")).toBe("note-20261109-abcd")
     expect(noteSlugFromTitle("ការសិក្សា", "note-20261109-abcd")).toBe("note-20261109-abcd")
+  })
+})
+
+describe("readingMinutes", () => {
+  it("is at least one minute", () => {
+    expect(readingMinutes("")).toBe(1)
+    expect(readingMinutes("# Title\n\nShort.")).toBe(1)
+  })
+
+  it("counts space-separated words at about 220 a minute", () => {
+    expect(readingMinutes(Array(660).fill("word").join(" "))).toBe(3)
+  })
+
+  it("counts Hangul by character, so Korean notes aren't undercounted", () => {
+    expect(readingMinutes("가".repeat(1000))).toBe(2)
+    expect(readingMinutes(`${"가".repeat(500)} ${Array(220).fill("word").join(" ")}`)).toBe(2)
+  })
+
+  it("ignores markdown punctuation", () => {
+    expect(readingMinutes("## ### > ** __ `` ~~ [](-) |".repeat(500))).toBe(1)
   })
 })

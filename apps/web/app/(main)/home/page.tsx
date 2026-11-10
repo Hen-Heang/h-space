@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowUpRight, BrainCircuit, Plus } from "lucide-react"
+import { ArrowUpRight, Plus } from "lucide-react"
 
 import { ActiveGoalsCard } from "@/components/home/ActiveGoalsCard"
 import { ContinueCard } from "@/components/home/ContinueCard"
@@ -15,7 +15,6 @@ import { PageSection } from "@/components/ui/page-section"
 import { useDailyMission } from "@/hooks/useDailyMission"
 import { useProfileImage } from "@/hooks/useProfileImage"
 import { useStreak } from "@/hooks/useStreak"
-import { askHengoItem } from "@/lib/navigation"
 import { openQuickCapture } from "@/lib/quick-capture-bus"
 
 function getGreeting() {
@@ -55,16 +54,12 @@ export default function HomePage() {
             {firstName ? `${getGreeting()}, ${firstName}` : getGreeting()}
           </h2>
         </div>
+        {/* Home's own actions. Ask Hengo lives in the top bar, not here; this
+            row is kept for creation shortcuts. */}
         <div className="flex flex-wrap gap-2">
           <Button type="button" onClick={openQuickCapture} className="gap-1.5">
             <Plus size={16} aria-hidden="true" />
             Quick capture
-          </Button>
-          <Button asChild variant="outline" className="gap-1.5">
-            <Link href={askHengoItem.href}>
-              <BrainCircuit size={16} aria-hidden="true" />
-              {askHengoItem.label}
-            </Link>
           </Button>
         </div>
       </header>

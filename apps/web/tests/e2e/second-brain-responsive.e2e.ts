@@ -50,8 +50,9 @@ test.describe("authenticated second-brain journey at 428 × 926", () => {
     await page.goto("/notes")
     await page.getByText(unique, { exact: true }).first().click()
     await page.getByRole("button", { name: "Edit" }).click()
-    await page.getByLabel("Note description").fill("Edited during the responsive audit")
-    await page.getByRole("button", { name: "Save" }).click()
+    await page.getByRole("button", { name: /Note details/ }).click()
+    await page.getByLabel("Short description").fill("Edited during the responsive audit")
+    await page.getByRole("button", { name: "Save note" }).click()
 
     const addReminder = page.getByRole("button", { name: "Add reminder" })
     await expectTouchTarget(addReminder)
@@ -71,7 +72,8 @@ test.describe("authenticated second-brain journey at 428 × 926", () => {
     await page.getByRole("button", { name: "Save entry" }).click()
 
     await page.goto("/ask-hengo")
-    await expect(page.getByRole("heading", { name: "Ask Hengo" })).toBeVisible()
+    // /ask-hengo opens the assistant's Search my workspace mode.
+    await expect(page.getByRole("heading", { name: "Search my workspace" })).toBeVisible()
     await expect(page.getByPlaceholder(/Ask about your notes/)).toBeVisible()
     await expectNoDocumentOverflow(page)
 

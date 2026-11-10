@@ -1,7 +1,14 @@
+import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
+import { Pin } from "lucide-react"
 
-import { projectStatusLabel, type ProjectStatus } from "@/lib/note-projects"
-import { NOTE_TYPES, type NoteType } from "@/lib/notes"
+import {
+  projectStatusLabel,
+  projectTypeLabel,
+  type Project,
+  type ProjectStatus,
+} from "@/lib/note-projects"
+import { NOTE_TYPES, type NoteMeta, type NoteType } from "@/lib/notes"
 import { cn } from "@/lib/utils"
 
 // Small presentational pieces shared by Notes Home and the Project Workspace.
@@ -36,13 +43,13 @@ export function ProjectStatusPill({
 }
 
 /** Monogram tile: the project's first letter. Decorative — the name is always next to it. */
-export function ProjectTile({ name, size = "md" }: { name: string; size?: "md" | "lg" }) {
+export function ProjectTile({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
   return (
     <span
       aria-hidden="true"
       className={cn(
         "flex shrink-0 items-center justify-center rounded-lg bg-primary/10 font-bold text-primary",
-        size === "lg" ? "size-12 text-xl" : "size-10 text-base",
+        size === "lg" ? "size-12 text-xl" : size === "sm" ? "size-9 text-sm" : "size-10 text-base",
       )}
     >
       {name.trim().charAt(0).toUpperCase() || "?"}
@@ -77,6 +84,127 @@ export function formatDay(value?: string | null): string {
   })
 }
 
+export function noteTypeLabel(noteType: NoteType): string {
+  return NOTE_TYPES.find((t) => t.value === noteType)?.label ?? "Note"
+}
+
+export function countText(count: number, one: string, many: string) {
+  return `${count} ${count === 1 ? one : many}`
+}
+
+/** Hover/focus treatment for a full-width row inside a divided list. */
+export const ROW_LINK =
+  "outline-none transition-colors hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+
+/** A divided list on a card surface; rows are its `<li>` children. */
+export function RowList({
+  children,
+  className,
+  label,
+}: {
+  children: React.ReactNode
+  className?: string
+  label?: string
+}) {
+  return (
+    <ul
+      aria-label={label}
+      className={cn(
+        "divide-y divide-border overflow-hidden rounded-xl border border-border bg-card",
+        className,
+      )}
+    >
+      {children}
+    </ul>
+  )
+}
+
+/**
+ * One note as a compact row: title (+ pin), an optional one-line excerpt, and
+ * one metadata line — type, project, updated, the first tags.
+ */
+export function NoteListRow({
+  note,
+  projectName,
+  showExcerpt = false,
+  showType = true,
+}: {
+  note: NoteMeta
+  projectName?: string
+  /** The description, when it helps tell results apart (search). */
+  showExcerpt?: boolean
+  showType?: boolean
+}) {
+  const updated = updatedLabel(note.updatedAt)
+  const meta = [
+    showType ? noteTypeLabel(note.noteType) : "",
+    projectName ?? "",
+    updated ? `Updated ${updated}` : "",
+    ...(note.tags ?? []).slice(0, 2).map((tag) => `#${tag}`),
+  ].filter(Boolean)
+  return (
+    <Link
+      href={`/notes/${note.slug}`}
+      className={cn("flex min-h-14 min-w-0 flex-col justify-center gap-0.5 px-4 py-2.5", ROW_LINK)}
+    >
+      <span className="flex min-w-0 items-center gap-1.5">
+        <span className="truncate text-[15px] font-semibold text-foreground">{note.title}</span>
+        {note.pinned && (
+          <Pin
+            size={13}
+            role="img"
+            aria-label="Pinned"
+            className="shrink-0 fill-current text-primary"
+          />
+        )}
+      </span>
+      {showExcerpt && note.description && (
+        <span className="truncate text-sm text-muted-foreground">{note.description}</span>
+      )}
+      <span className="truncate text-xs text-muted-foreground">{meta.join(" · ")}</span>
+    </Link>
+  )
+}
+
+/**
+ * A project as a compact row: name and status, then type, note count and
+ * updated — plus the description so same-name projects can be told apart.
+ */
+export function ProjectListRow({
+  project,
+  noteCount,
+  updatedAt,
+}: {
+  project: Project
+  noteCount: number
+  updatedAt?: string
+}) {
+  const updated = updatedLabel(updatedAt ?? project.updatedAt)
+  return (
+    <Link
+      href={`/notes/projects/${project.id}`}
+      className={cn("flex min-h-14 min-w-0 items-center gap-3 px-4 py-2.5", ROW_LINK)}
+    >
+      <ProjectTile name={project.name} size="sm" />
+      <span className="min-w-0 flex-1">
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-[15px] font-semibold text-foreground">{project.name}</span>
+          <ProjectStatusPill status={project.status} />
+        </span>
+        {project.description && (
+          <span className="block truncate text-sm text-muted-foreground">
+            {project.description}
+          </span>
+        )}
+        <span className="block truncate text-xs text-muted-foreground">
+          {projectTypeLabel(project.projectType)} · {countText(noteCount, "note", "notes")}
+          {updated && ` · Updated ${updated}`}
+        </span>
+      </span>
+    </Link>
+  )
+}
+
 /** Filter chip with aria-pressed, used for status and note-type filters. */
 export function FilterChip({
   pressed,
@@ -93,7 +221,7 @@ export function FilterChip({
       aria-pressed={pressed}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:text-sm",
         pressed
           ? "border-primary bg-primary/10 text-primary"
           : "border-border text-foreground hover:bg-accent",

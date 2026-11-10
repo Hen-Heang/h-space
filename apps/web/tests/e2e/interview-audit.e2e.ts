@@ -176,17 +176,6 @@ test("practice actions stay pinned within reach on a small phone", async ({ page
   const check = page.getByRole("button", { name: "Check my answer" })
   await expect(check).toBeInViewport()
   await page.screenshot({ path: "test-results/interview-practice-bar-375.png" })
-  // The bar leaves room for the floating AI Assistant button.
-  const assistant = page.getByRole("button", { name: "Open AI Assistant" })
-  if (await assistant.isVisible()) {
-    const a = (await assistant.boundingBox())!
-    for (const button of [check, page.getByRole("button", { name: "Just compare" })]) {
-      const b = (await button.boundingBox())!
-      const overlaps =
-        a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
-      expect(overlaps).toBe(false)
-    }
-  }
 })
 
 test("home is usable with the keyboard alone", async ({ page }) => {

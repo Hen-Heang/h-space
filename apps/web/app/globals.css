@@ -472,47 +472,263 @@ html[data-theme-transition]::view-transition-new(root) {
   }
 }
 
-/* ── Dev Notes: markdown code blocks ──
-   The study-notes reader renders markdown client-side without a syntax
-   highlighter, wrapping each fenced block in `.shiki-wrapper`. Give those a
-   consistent dark surface + a language badge from the `data-lang` attribute. */
+/* ── Notes: markdown code blocks ──
+   lib/notes-markdown.ts wraps each fenced block in `.shiki-wrapper` (the name
+   is historical) with a `.code-header` (language + CodeCopy's button) and
+   highlight.js token spans. The block is dark in both themes, so the token
+   colours below (GitHub Dark) are tuned for that one surface. */
 .prose .shiki-wrapper {
-  position: relative;
   margin: 1.5rem 0;
+  overflow: hidden;
+  border: 1px solid #30363d;
+  border-radius: 0.75rem;
+  background: #0d1117;
+}
+
+.prose .shiki-wrapper .code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0 0.25rem 0 1rem;
+  border-bottom: 1px solid #21262d;
+  background: #161b22;
+}
+
+.prose .shiki-wrapper .code-lang {
+  font-family: var(--font-mono-stack);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #8b949e;
+}
+
+.prose .shiki-wrapper .code-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  font-family: var(--font-sans-stack);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #c9d1d9;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.prose .shiki-wrapper .code-copy:hover {
+  background: #21262d;
+  color: #f0f6fc;
+}
+
+.prose .shiki-wrapper .code-copy:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+.prose .shiki-wrapper .code-copy[data-state="copied"] {
+  color: #3fb950;
+}
+
+@media (pointer: coarse) {
+  .prose .shiki-wrapper .code-copy {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
 }
 
 .prose .shiki-wrapper pre {
   margin: 0;
   overflow-x: auto;
-  border-radius: 0.75rem;
-  border: 1px solid var(--border);
-  background: #0d1117;
-  padding: 1.1rem 1.25rem;
+  overscroll-behavior-x: contain;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.875rem 1rem 1rem;
+  tab-size: 2;
 }
 
 .prose .shiki-wrapper pre code {
-  color: #e6edf3;
+  display: block;
+  min-width: max-content;
+  border: 0;
+  border-radius: 0;
   background: transparent;
-  font-size: 0.85rem;
-  line-height: 1.6;
   padding: 0;
-}
-
-.prose .shiki-wrapper[data-lang]::before {
-  content: attr(data-lang);
-  position: absolute;
-  top: 0.55rem;
-  left: 0.9rem;
   font-family: var(--font-mono-stack);
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #7d8590;
-  pointer-events: none;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: #e6edf3;
+  white-space: pre;
 }
 
-.prose .shiki-wrapper[data-lang] pre {
-  padding-top: 2rem;
+@media (min-width: 640px) {
+  .prose .shiki-wrapper pre {
+    padding: 1rem 1.25rem 1.125rem;
+  }
+  .prose .shiki-wrapper pre code {
+    font-size: 0.85rem;
+  }
+}
+
+.prose .shiki-wrapper .hljs-comment,
+.prose .shiki-wrapper .hljs-quote {
+  color: #8b949e;
+  font-style: italic;
+}
+.prose .shiki-wrapper .hljs-keyword,
+.prose .shiki-wrapper .hljs-selector-tag,
+.prose .shiki-wrapper .hljs-doctag,
+.prose .shiki-wrapper .hljs-template-tag,
+.prose .shiki-wrapper .hljs-template-variable,
+.prose .shiki-wrapper .hljs-type,
+.prose .shiki-wrapper .hljs-variable.language_,
+.prose .shiki-wrapper .hljs-meta .hljs-keyword {
+  color: #ff7b72;
+}
+.prose .shiki-wrapper .hljs-title,
+.prose .shiki-wrapper .hljs-title.class_,
+.prose .shiki-wrapper .hljs-title.function_ {
+  color: #d2a8ff;
+}
+.prose .shiki-wrapper .hljs-attr,
+.prose .shiki-wrapper .hljs-attribute,
+.prose .shiki-wrapper .hljs-literal,
+.prose .shiki-wrapper .hljs-meta,
+.prose .shiki-wrapper .hljs-number,
+.prose .shiki-wrapper .hljs-operator,
+.prose .shiki-wrapper .hljs-variable,
+.prose .shiki-wrapper .hljs-selector-attr,
+.prose .shiki-wrapper .hljs-selector-class,
+.prose .shiki-wrapper .hljs-selector-id {
+  color: #79c0ff;
+}
+.prose .shiki-wrapper .hljs-string,
+.prose .shiki-wrapper .hljs-regexp,
+.prose .shiki-wrapper .hljs-meta .hljs-string {
+  color: #a5d6ff;
+}
+.prose .shiki-wrapper .hljs-built_in,
+.prose .shiki-wrapper .hljs-symbol {
+  color: #ffa657;
+}
+.prose .shiki-wrapper .hljs-name,
+.prose .shiki-wrapper .hljs-tag,
+.prose .shiki-wrapper .hljs-selector-pseudo {
+  color: #7ee787;
+}
+.prose .shiki-wrapper .hljs-section {
+  color: #79c0ff;
+  font-weight: 700;
+}
+.prose .shiki-wrapper .hljs-bullet {
+  color: #f2cc60;
+}
+.prose .shiki-wrapper .hljs-emphasis {
+  font-style: italic;
+}
+.prose .shiki-wrapper .hljs-strong {
+  font-weight: 700;
+}
+.prose .shiki-wrapper .hljs-addition {
+  background: #033a16;
+  color: #aff5b4;
+}
+.prose .shiki-wrapper .hljs-deletion {
+  background: #67060c;
+  color: #ffdcd7;
+}
+
+/* ── Notes: reader typography (`.note-prose`, on top of Tailwind's prose) ── */
+.note-prose :where(h2) {
+  margin-top: 2.25em;
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid var(--border);
+}
+.note-prose :where(h3) {
+  margin-top: 1.75em;
+}
+.note-prose :where(a) {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.note-prose :where(li)::marker {
+  color: var(--muted-foreground);
+}
+.note-prose :where(:not(pre) > code) {
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: color-mix(in oklab, var(--muted) 70%, transparent);
+  padding: 0.1em 0.35em;
+  font-size: 0.875em;
+  font-weight: 500;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+.note-prose :where(blockquote) {
+  margin: 1.5rem 0;
+  border-left: 3px solid var(--primary);
+  border-radius: 0 0.5rem 0.5rem 0;
+  background: color-mix(in oklab, var(--primary) 6%, transparent);
+  padding: 0.75rem 1rem;
+  font-style: normal;
+  color: var(--foreground);
+}
+.note-prose :where(blockquote p) {
+  margin: 0.25em 0;
+}
+.note-prose :where(blockquote p)::before,
+.note-prose :where(blockquote p)::after {
+  content: none;
+}
+/* Tables scroll inside their own frame instead of widening a phone screen. */
+.note-prose .table-scroll {
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+.note-prose .table-scroll table {
+  margin: 0;
+  width: 100%;
+  font-size: 0.875rem;
+}
+.note-prose .table-scroll :where(th, td) {
+  min-width: 7rem;
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+}
+.note-prose .table-scroll :where(thead th) {
+  background: var(--muted);
+}
+.note-prose .table-scroll :where(tbody tr:last-child td) {
+  border-bottom: 0;
+}
+.note-prose :where(img) {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+.note-prose :where(hr) {
+  margin: 2.5rem 0;
+}
+/* GFM task lists: checkboxes instead of bullets. */
+.note-prose :where(ul:has(> li > input[type="checkbox"])) {
+  list-style: none;
+  padding-left: 0.25rem;
+}
+.note-prose :where(li > input[type="checkbox"]) {
+  margin: 0 0.5rem 0 0;
+  width: 1rem;
+  height: 1rem;
+  vertical-align: -0.15em;
+  accent-color: var(--primary);
 }
 
 @custom-variant data-open (&:where([data-state="open"], [data-open]:not([data-open="false"])));

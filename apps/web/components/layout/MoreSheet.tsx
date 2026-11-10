@@ -23,8 +23,8 @@ const chevron = <ChevronRight size={16} aria-hidden className="shrink-0 opacity-
 
 /**
  * The mobile bottom bar's "More" sheet. It leads with the destinations that
- * have no tab of their own — Notes, Growth, the AI Assistant, Settings
- * (`moreNavItems`) — then lists every shipped page grouped by workspace
+ * have no tab of their own (`moreNavItems`; the assistant isn't one — it's
+ * the "Ask Hengo" button in the header) — then lists every shipped page grouped by workspace
  * (`browseSections`), so on a phone every route keeps a tappable door even
  * when only its workspace page links to it on desktop.
  */

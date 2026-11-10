@@ -1,14 +1,11 @@
 "use client"
 
-import { Sparkles } from "lucide-react"
-
 import { QuickSwitcher } from "@/components/app/quick-switcher"
 import { NotificationBell } from "@/components/notifications/NotificationBell"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Button } from "@/components/ui/button"
-import { openHengoCoach } from "@/lib/hengo-coach-bus"
 import { type NavSearchParams } from "@/lib/navigation"
 
+import { AskHengoButton } from "./AskHengoButton"
 import { getHeaderTrail } from "./header-trail"
 import { BreadcrumbTrail } from "./PageHeader"
 
@@ -46,17 +43,7 @@ export function DesktopHeader({
 
       <div className="flex shrink-0 items-center gap-1.5">
         <QuickSwitcher />
-        <Button
-          id="hengo-coach-header-trigger"
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => openHengoCoach()}
-          className="h-9 gap-1.5 rounded-md px-3"
-        >
-          <Sparkles data-icon="inline-start" className="size-4 text-primary" aria-hidden="true" />
-          AI Assistant
-        </Button>
+        <AskHengoButton />
         <ThemeToggle className="size-9 rounded-md border-border bg-transparent shadow-none" />
         <NotificationBell className="size-9 rounded-md border-transparent bg-transparent shadow-none hover:bg-accent" />
       </div>

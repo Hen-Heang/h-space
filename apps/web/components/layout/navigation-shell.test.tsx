@@ -99,11 +99,11 @@ describe("MobileBottomNav", () => {
     render(<MobileBottomNav pathname={pathname} searchParams={searchParams} />)
   }
 
-  it("renders Home · Plan · Learn · Finance plus a More trigger", () => {
+  it("renders Home · Plan · Notes · Finance plus a More trigger", () => {
     setup("/home")
     const nav = screen.getByRole("navigation", { name: "Primary" })
     expect(within(nav).getAllByRole("listitem")).toHaveLength(5)
-    for (const label of ["Home", "Plan", "Learn", "Finance", "More"]) {
+    for (const label of ["Home", "Plan", "Notes", "Finance", "More"]) {
       expect(within(nav).getByText(label)).toBeTruthy()
     }
     expect(within(nav).getByRole("button", { name: "More" })).toBeTruthy()
@@ -112,7 +112,7 @@ describe("MobileBottomNav", () => {
   it("uses the workspace route mapping, in order", () => {
     setup("/home")
     const hrefs = screen.getAllByRole("link").map((el) => el.getAttribute("href"))
-    expect(hrefs).toEqual(["/home", "/goals", "/learn", "/finance"])
+    expect(hrefs).toEqual(["/home", "/goals", "/notes", "/finance"])
   })
 
   it("marks the current destination with aria-current", () => {
@@ -128,7 +128,8 @@ describe("MobileBottomNav", () => {
     for (const route of [
       "/apps",
       "/vault",
-      "/notes",
+      "/learn",
+      "/vocab",
       "/growth/recovery",
       "/progress",
       "/chat",
@@ -143,10 +144,16 @@ describe("MobileBottomNav", () => {
     }
   })
 
-  it("lights the Learn tab on every Learning route, not just /learn", () => {
-    for (const route of ["/learn", "/vocab", "/practice", "/korean-coach", "/history"]) {
+  it("lights the Notes tab on every Notes route, not just /notes", () => {
+    for (const route of [
+      "/notes",
+      "/notes/new",
+      "/notes/projects/abc-123",
+      "/ask-hengo/memories",
+      "/timeline",
+    ]) {
       setup(route)
-      expect(screen.getByRole("link", { name: "Learn" }).getAttribute("aria-current")).toBe("page")
+      expect(screen.getByRole("link", { name: "Notes" }).getAttribute("aria-current")).toBe("page")
       cleanup()
     }
   })
@@ -198,7 +205,7 @@ describe("MoreSheet", () => {
     expect(within(dialog).getByRole("button", { name: "Toggle theme" })).toBeTruthy()
   })
 
-  it("leads with Notes, Growth, AI Assistant and Settings", () => {
+  it("leads with Learning, Growth and Settings", () => {
     setup(true)
     const lead = screen.getByRole("navigation", { name: "More destinations" })
     expect(
@@ -208,9 +215,9 @@ describe("MoreSheet", () => {
     ).toEqual(moreNavItems.map((item) => item.href))
     expect(
       within(lead)
-        .getByRole("link", { name: /^Notes/ })
+        .getByRole("link", { name: /^Learning/ })
         .getAttribute("href"),
-    ).toBe("/notes")
+    ).toBe("/learn")
     expect(
       within(lead)
         .getByRole("link", { name: /^Settings/ })
@@ -227,7 +234,7 @@ describe("MoreSheet", () => {
     }
     for (const [label, href] of [
       ["Recovery", "/growth/recovery"],
-      ["Ask Hengo", "/chat?mode=memory"],
+      ["Search my workspace", "/chat?mode=memory"],
       ["Calendar", "/goals/calendar"],
       ["Exam Prep", "/interview"],
     ]) {
@@ -277,6 +284,16 @@ describe("MobileHeader", () => {
     expect(screen.queryByRole("link", { name: /profile/i })).toBeNull()
     // Content over chrome: the theme switch lives in the More sheet.
     expect(screen.queryByRole("button", { name: "Toggle theme" })).toBeNull()
+  })
+
+  it("shows a labelled Ask Hengo link to General chat on root and detail pages", () => {
+    for (const pathname of ["/home", "/goals/abc-123"]) {
+      render(<MobileHeader pathname={pathname} searchParams={undefined} onOpenSearch={vi.fn()} />)
+      const link = screen.getByRole("link", { name: "Ask Hengo" })
+      expect(link.textContent).toContain("Ask Hengo")
+      expect(link.getAttribute("href")).toBe("/chat")
+      cleanup()
+    }
   })
 
   it("gives Settings its own icon on the root-page bar", () => {
@@ -389,11 +406,6 @@ describe("DesktopSidebar", () => {
     for (const label of ["Overview", "Planner", "Notes"]) {
       expect(screen.getByRole("link", { name: label }).getAttribute("aria-current")).toBeNull()
     }
-    cleanup()
-    setup("/chat", false, "mode=analyze")
-    expect(screen.getByRole("link", { name: "AI Assistant" }).getAttribute("aria-current")).toBe(
-      "page",
-    )
   })
 
   it("lights Finance across its routes", () => {
@@ -448,6 +460,14 @@ describe("DesktopHeader", () => {
   it("leaves the Account menu to the sidebar so it isn't shown twice", () => {
     renderWithTooltips(<DesktopHeader pathname="/practice" searchParams={undefined} />)
     expect(screen.queryByRole("button", { name: "Account menu" })).toBeNull()
+  })
+
+  it("shows one labelled Ask Hengo link that opens General chat", () => {
+    renderWithTooltips(<DesktopHeader pathname="/finance" searchParams={undefined} />)
+    const links = screen.getAllByRole("link", { name: "Ask Hengo" })
+    expect(links).toHaveLength(1)
+    expect(links[0].getAttribute("href")).toBe("/chat")
+    expect(screen.queryByRole("button", { name: /AI Assistant/ })).toBeNull()
   })
 })
 
@@ -608,13 +628,14 @@ describe("QuickSwitcher", () => {
     expect(screen.getByRole("option", { name: /vocabulary/i })).toBeTruthy()
   })
 
-  it("finds Ask Hengo as a searchable page — the command-menu entry point for that action", async () => {
+  it("finds both Ask Hengo modes by searching 'ask hengo'", async () => {
     render(<QuickSwitcher />)
     fireEvent.click(screen.getByRole("button", { name: "Open quick navigation" }))
     await waitFor(() => expect(screen.getByRole("listbox")).toBeTruthy())
     const input = screen.getByRole("combobox")
     fireEvent.change(input, { target: { value: "ask hengo" } })
-    expect(screen.getByRole("option", { name: /ask hengo/i })).toBeTruthy()
+    expect(screen.getByRole("option", { name: /general chat/i })).toBeTruthy()
+    expect(screen.getByRole("option", { name: /search my workspace/i })).toBeTruthy()
   })
 
   it("still finds Hengo Coach and its mode variants by search, even though they're hidden from the sidebar", async () => {

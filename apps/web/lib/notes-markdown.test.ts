@@ -22,7 +22,7 @@ const DANGEROUS_TAGS = "script, iframe, object, embed, style, form, svg, math, b
 describe("renderMarkdown — untrusted content", () => {
   it.each([
     ["block html", '<img src="x" onerror="alert(1)">'],
-    ["inline html", 'Hello <img src=x onerror=alert(1)> world'],
+    ["inline html", "Hello <img src=x onerror=alert(1)> world"],
     ["script tag", "<script>alert(1)</script>"],
     ["svg", '<svg onload="alert(1)"><circle /></svg>'],
     ["iframe", '<iframe src="https://example.com"></iframe>'],
@@ -65,7 +65,9 @@ describe("renderMarkdown — untrusted content", () => {
 
   it("only allows http(s) and relative image sources", () => {
     expect(parse("![alt](javascript:alert(1))").querySelector("img")).toBeNull()
-    expect(parse("![alt](data:image/svg+xml,<svg onload=alert(1)>)").querySelector("img")).toBeNull()
+    expect(
+      parse("![alt](data:image/svg+xml,<svg onload=alert(1)>)").querySelector("img"),
+    ).toBeNull()
 
     const img = parse('![a "cat"](https://example.com/cat.png)').querySelector("img")
     expect(img?.getAttribute("src")).toBe("https://example.com/cat.png")
@@ -138,17 +140,96 @@ describe("renderMarkdown — normal notes", () => {
     const wrapper = parse("```ts\nconst a = 1\n```").querySelector(".shiki-wrapper")
     expect(wrapper?.getAttribute("data-lang")).toBe("ts")
   })
+
+  it("wraps tables so they scroll instead of widening the page", () => {
+    const root = parse("| a | b |\n| - | - |\n| 1 | 2 |")
+    expect(root.querySelector(".table-scroll > table td")?.textContent).toBe("1")
+  })
+})
+
+describe("renderMarkdown — code highlighting", () => {
+  it("colours known languages with hljs spans and keeps the exact code text", () => {
+    const code = 'public class A {\n  String s = "hi";\n}'
+    const root = parse("```java\n" + code + "\n```")
+    expect(root.querySelector("code")?.textContent).toBe(code)
+    expect(root.querySelector("code .hljs-keyword")?.textContent).toBe("public")
+    expect(root.querySelector("code .hljs-string")?.textContent).toBe('"hi"')
+  })
+
+  it("names the language in the block header", () => {
+    expect(parse("```ts\nlet a = 1\n```").querySelector(".code-lang")?.textContent).toBe(
+      "TypeScript",
+    )
+    expect(parse("```tsx\nconst a = <A />\n```").querySelector(".code-lang")?.textContent).toBe(
+      "TSX",
+    )
+    expect(parse("```\nplain\n```").querySelector(".code-lang")?.textContent).toBe("Code")
+    expect(
+      parse("```ts title=x.ts\nlet a\n```")
+        .querySelector(".shiki-wrapper")
+        ?.getAttribute("data-lang"),
+    ).toBe("ts")
+  })
+
+  it("puts a plain Copy button in every code block header", () => {
+    const root = parse("```sql\nselect 1\n```\n\n```\nplain\n```")
+    const buttons = Array.from(root.querySelectorAll(".code-header > button.code-copy"))
+    expect(buttons).toHaveLength(2)
+    expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual(["Copy SQL code", "Copy code"])
+    expect(buttons.every((b) => b.getAttribute("type") === "button")).toBe(true)
+    expect(handlerElements(root)).toEqual([])
+  })
+
+  it("leaves unknown or missing languages as plain text", () => {
+    for (const fence of ["```\n", "```cobol\n"]) {
+      const root = parse(fence + "SELECT 1\n```")
+      expect(root.querySelector("code span")).toBeNull()
+      expect(root.querySelector("code")?.textContent).toBe("SELECT 1")
+    }
+  })
+
+  it("adds nothing but class-only spans, and keeps html in code as text", () => {
+    const root = parse(
+      '```html\n<img src=x onerror="alert(1)"><script>alert(1)</script>\n```\n\n```ts\nconst x = "</code><script>alert(2)</script>"\n```',
+    )
+    expect(root.querySelector(DANGEROUS_TAGS)).toBeNull()
+    expect(root.querySelector("code img")).toBeNull()
+    expect(handlerElements(root)).toEqual([])
+    for (const span of Array.from(root.querySelectorAll("code span"))) {
+      expect(Array.from(span.attributes).map((a) => a.name)).toEqual(["class"])
+      expect(span.getAttribute("class")).toMatch(/^hljs-/)
+    }
+    expect(root.querySelectorAll("code")[1]?.textContent).toBe(
+      'const x = "</code><script>alert(2)</script>"',
+    )
+  })
 })
 
 describe("safeUrl", () => {
   it("accepts relative URLs and allowed schemes", () => {
-    for (const url of ["/notes", "setup", "#a", "?q=1", "https://a.b", "HTTP://a.b", "mailto:x@y.z"]) {
+    for (const url of [
+      "/notes",
+      "setup",
+      "#a",
+      "?q=1",
+      "https://a.b",
+      "HTTP://a.b",
+      "mailto:x@y.z",
+    ]) {
       expect(safeUrl(url)).toBe(url)
     }
   })
 
   it("rejects other schemes and empty input", () => {
-    for (const url of ["javascript:x", "\u0001javascript:x", "file:///etc", "data:x", "", "  ", null]) {
+    for (const url of [
+      "javascript:x",
+      "\u0001javascript:x",
+      "file:///etc",
+      "data:x",
+      "",
+      "  ",
+      null,
+    ]) {
       expect(safeUrl(url)).toBeNull()
     }
   })

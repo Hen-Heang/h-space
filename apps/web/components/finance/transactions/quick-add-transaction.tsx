@@ -23,13 +23,12 @@ import type { CreateTransactionInput } from "@/lib/validation/finance"
  *
  * Placement:
  * - Phones (AppShell's "mobile" mode, < 768px = Tailwind `md`): a round button
- *   stacked directly above H-Space's floating AI Assistant launcher
- *   (components/chat/FloatingAiCoach — right-4, size-14, ~0.75rem above the
- *   bottom nav). size-12 at right-5 shares its centre line; --shell-bottom-nav-h
- *   (set by AppShell, 0 when the nav is hidden) keeps the stack above the tab
- *   bar.
- * - Tablet and desktop have no floating AI launcher (it lives in the header),
- *   so the button drops to the corner and shows its label — the one obvious
+ *   in the bottom-right corner, 0.75rem above the bottom nav. The shell has no
+ *   floating AI launcher (Ask Hengo is in the top bar), so nothing is stacked
+ *   under it. --shell-bottom-nav-h (set by AppShell, 0 when the nav is hidden)
+ *   keeps it above the tab bar; the max() keeps it off the home indicator when
+ *   the nav is hidden.
+ * - Tablet and desktop: the corner, with its label — the one obvious
  *   "Add transaction" on every Finance page.
  * The finance layout adds bottom padding so the last row can scroll clear.
  */
@@ -54,7 +53,7 @@ export function QuickAddTransaction() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Add transaction"
-        className="fixed right-5 bottom-[calc(var(--shell-bottom-nav-h,0px)+5rem)] z-40 flex size-12 items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 outline-none transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none md:right-6 md:bottom-6 md:w-auto md:pr-5 md:pl-4"
+        className="fixed right-4 bottom-[calc(var(--shell-bottom-nav-h,0px)+max(0.75rem,calc(env(safe-area-inset-bottom)-var(--shell-bottom-nav-h,0px))))] z-40 flex size-12 items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 outline-none transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none md:right-6 md:bottom-6 md:w-auto md:pr-5 md:pl-4"
       >
         <Plus className="size-5.5" strokeWidth={2.4} aria-hidden />
         <span className="hidden text-sm font-semibold md:inline" aria-hidden>

@@ -1,19 +1,21 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { BookMarked, FolderPlus, Inbox, Pin, Search, X, NotebookPen, SearchX } from "lucide-react"
-import { toast } from "sonner"
+import { FolderPlus, Inbox, NotebookPen, Pin, SearchX } from "lucide-react"
 
 import {
+  countText,
   FilterChip,
-  NoteTypeChip,
-  ProjectStatusPill,
-  ProjectTile,
+  NoteListRow,
+  ProjectListRow,
+  ROW_LINK,
+  RowList,
   updatedLabel,
 } from "@/components/notes/project-ui"
+import { FilterGroup, SearchFilterBar } from "@/components/notes/SearchFilterBar"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import {
   Select,
   SelectContent,
@@ -22,170 +24,111 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Textarea } from "@/components/ui/textarea"
-import { getApiErrorMessage } from "@/lib/api"
-import { useInboxMutations } from "@/hooks/useInbox"
 import { useNoteSearch } from "@/hooks/useNotes"
 import {
   filterProjectsByStatus,
-  projectTypeLabel,
   PROJECT_STATUSES,
   selectRecentlyOpenedProjects,
   type Project,
   type ProjectStatus,
 } from "@/lib/note-projects"
 import {
-  buildCaptureInput,
   buildNoteSearchResults,
-  countNotesByType,
+  DEFAULT_NOTES_HOME_FILTERS,
+  describeActiveFilters,
+  filterHomeNotes,
   groupNotesIntoProjects,
   NO_PROJECT_ID,
-  projectIdOf,
-  selectPinnedNotes,
-  selectRecentNotes,
   type NoteProject,
+  type NotesHomeFilters,
 } from "@/lib/notes-home"
-import {
-  filterNotesMeta,
-  NOTE_TYPES,
-  sortNotesMeta,
-  type NoteMeta,
-  type NoteType,
-} from "@/lib/notes"
+import { NOTE_TYPES, sortNotesMeta, type NoteMeta, type NoteType } from "@/lib/notes"
 import { cn } from "@/lib/utils"
-import { EmptyState } from "@/components/ui/empty-state"
 
-const sectionTitle = "text-base font-semibold tracking-tight text-foreground"
-const panel = "rounded-xl border border-border bg-card"
-const rowLink =
-  "outline-none transition-colors hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+type View = "notes" | "projects"
 
-/** One note as a full-width row: title, preview, type, project, tags, updated. */
-function NoteRow({
-  note,
-  projectName,
-  compact = false,
-}: {
-  note: NoteMeta
-  projectName?: string
-  compact?: boolean
-}) {
-  const updated = updatedLabel(note.updatedAt)
+const sectionTitle =
+  "flex items-baseline gap-2 text-base font-semibold tracking-tight text-foreground"
+const countBadge = "text-sm font-normal text-muted-foreground tabular-nums"
+
+const TYPE_FILTERS: { value: NoteType | "all"; label: string }[] = [
+  { value: "all", label: "All types" },
+  ...NOTE_TYPES,
+]
+const STATUS_FILTERS: { value: ProjectStatus | "all"; label: string }[] = [
+  { value: "all", label: "All" },
+  ...PROJECT_STATUSES,
+]
+
+/** Notes / Projects switch — a two-option segmented control. */
+function ViewSwitch({ view, onChange }: { view: View; onChange: (view: View) => void }) {
+  const options: { value: View; label: string }[] = [
+    { value: "notes", label: "Notes" },
+    { value: "projects", label: "Projects" },
+  ]
   return (
-    <Link
-      href={`/notes/${note.slug}`}
-      className={cn("flex flex-col gap-1.5 px-4 py-3 text-foreground", rowLink)}
+    <div
+      role="group"
+      aria-label="Show"
+      // Phones: a full-width segmented control, like iOS's own.
+      className="flex min-w-0 flex-1 rounded-lg border border-border bg-muted/40 p-0.5 sm:inline-flex sm:flex-none"
     >
-      <span className="flex min-w-0 items-center gap-1.5">
-        <span className={cn("truncate font-semibold", compact ? "text-sm" : "text-base")}>
-          {note.title}
-        </span>
-        {note.pinned && (
-          <Pin size={13} className="shrink-0 text-primary" aria-label="Pinned" role="img" />
-        )}
-      </span>
-      {!compact && note.description && (
-        <span className="line-clamp-2 text-sm text-muted-foreground">{note.description}</span>
-      )}
-      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-        <NoteTypeChip noteType={note.noteType} />
-        {projectName && <span className="max-w-[16rem] truncate">{projectName}</span>}
-        {!compact && (note.tags ?? []).slice(0, 3).map((tag) => <span key={tag}>#{tag}</span>)}
-        {updated && <span>Updated {updated}</span>}
-      </span>
-    </Link>
+      {options.map((option) => {
+        const selected = view === option.value
+        return (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              "min-h-10 flex-1 rounded-md px-4 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-none [@media(pointer:coarse)]:min-h-11",
+              selected
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {option.label}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
-function NoteList({
-  notes,
-  projectNames,
-  compact,
-}: {
-  notes: NoteMeta[]
-  projectNames: Map<string, string>
-  compact?: boolean
-}) {
-  return (
-    <ul className={cn(panel, "divide-y divide-border overflow-hidden")}>
-      {notes.map((note) => (
-        <li key={note.slug}>
-          <NoteRow
-            note={note}
-            compact={compact}
-            projectName={note.projectId ? projectNames.get(note.projectId) : undefined}
-          />
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-function noteCountText(count: number) {
-  return `${count} ${count === 1 ? "note" : "notes"}`
-}
-
-/** A real project as a list row linking to its workspace. */
-function ProjectListRow({ group }: { group: NoteProject }) {
-  const project = group.project as Project
-  const updated = updatedLabel(group.updatedAt)
-  return (
-    <Link
-      href={`/notes/projects/${project.id}`}
-      className={cn("flex min-h-16 items-center gap-3 px-4 py-2.5", rowLink)}
-    >
-      <ProjectTile name={project.name} />
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-base font-semibold text-foreground">
-          {project.name}
-        </span>
-        <span className="block truncate text-sm text-muted-foreground">
-          {projectTypeLabel(project.projectType)} · {noteCountText(group.noteCount)}
-          {updated && ` · Updated ${updated}`}
-        </span>
-      </span>
-      <ProjectStatusPill status={project.status} />
-    </Link>
-  )
-}
-
-/** The "No project" bucket — filters the All notes list instead of opening a workspace. */
+/** The "No project" bucket — switches to the Notes list filtered to it. */
 function NoProjectRow({ group, onOpen }: { group: NoteProject; onOpen: () => void }) {
   const updated = updatedLabel(group.updatedAt)
   return (
     <button
       type="button"
       onClick={onOpen}
-      className={cn("flex min-h-16 w-full items-center gap-3 px-4 py-2.5 text-left", rowLink)}
+      className={cn("flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left", ROW_LINK)}
     >
       <span
         aria-hidden="true"
-        className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+        className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
       >
-        <Inbox size={18} />
+        <Inbox size={16} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-base font-semibold text-foreground">No project</span>
-        <span className="block text-sm text-muted-foreground">
-          {noteCountText(group.noteCount)}
+        <span className="block text-[15px] font-semibold text-foreground">No project</span>
+        <span className="block truncate text-xs text-muted-foreground">
+          {countText(group.noteCount, "note", "notes")}
           {updated && ` · Updated ${updated}`}
         </span>
       </span>
-      <span className="text-xs font-medium text-primary">Show notes</span>
+      <span className="shrink-0 text-xs font-medium text-primary">Show notes</span>
     </button>
   )
 }
 
-const STATUS_FILTERS: { value: ProjectStatus | "all"; label: string }[] = [
-  { value: "all", label: "All" },
-  ...PROJECT_STATUSES,
-]
-
 /**
- * Notes Home (/notes) — rebuilt from the "Notes · Home" design. Search with an
- * always-visible scope, Recently opened + All projects, the full note list,
- * and a side column with Quick Capture, pinned and recent notes, and
- * reference notes. Quick Capture writes to the Inbox.
+ * Notes Home (/notes). A Notes / Projects switch (Notes by default), one
+ * search field with a filter button, and the list directly underneath.
+ * Search covers note titles, descriptions and content (server full-text) plus
+ * project names, descriptions and tags; results are grouped as Notes and
+ * Projects. "New note" and "Save to inbox" live in the page header.
  */
 export function NotesHome({
   notes,
@@ -203,18 +146,10 @@ export function NotesHome({
   projectsError: string
   onNewProject: () => void
 }) {
-  const router = useRouter()
+  const [view, setView] = useState<View>("notes")
   const [query, setQuery] = useState("")
-  const [scope, setScope] = useState("all")
-  const [noteType, setNoteType] = useState<NoteType | "all">("all")
-  const [pinnedOnly, setPinnedOnly] = useState(false)
-  const [noProjectOnly, setNoProjectOnly] = useState(false)
-  const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all")
-  const [capture, setCapture] = useState("")
-  const [captureHint, setCaptureHint] = useState(false)
-  const allNotesRef = useRef<HTMLElement>(null)
+  const [filters, setFilters] = useState<NotesHomeFilters>(DEFAULT_NOTES_HOME_FILTERS)
 
-  const { capture: captureMutation } = useInboxMutations()
   const hasQuery = query.trim().length > 0
   const { results: searchMatches, searching, error: searchError } = useNoteSearch(query)
 
@@ -223,135 +158,217 @@ export function NotesHome({
   const projectNames = useMemo(() => new Map(projects.map((p) => [p.id, p.name])), [projects])
   const knownIds = useMemo(() => new Set(projects.map((p) => p.id)), [projects])
   const noProjectGroup = groupById.get(NO_PROJECT_ID)
-  const effectiveScope = groupById.has(scope) ? scope : "all"
+  // A scope whose project was deleted falls back to all notes.
+  const scope = groupById.has(filters.scope) ? filters.scope : "all"
+  const effective = { ...filters, scope }
+  const currentView: View = projectsUnavailable ? "notes" : view
+
+  const patch = (next: Partial<NotesHomeFilters>) => setFilters((prev) => ({ ...prev, ...next }))
+  const clearFilters = () => setFilters(DEFAULT_NOTES_HOME_FILTERS)
 
   const results = useMemo(
     () =>
       buildNoteSearchResults({
         query,
-        scope: effectiveScope,
+        scope,
         projects: groups,
         noteMatches: sortNotesMeta(searchMatches),
-        noteType,
+        noteType: filters.noteType,
+        pinnedOnly: filters.pinnedOnly,
+        projectStatus: filters.projectStatus,
       }),
-    [query, effectiveScope, groups, searchMatches, noteType],
+    [
+      query,
+      scope,
+      groups,
+      searchMatches,
+      filters.noteType,
+      filters.pinnedOnly,
+      filters.projectStatus,
+    ],
   )
 
-  const recentlyOpened = useMemo(() => selectRecentlyOpenedProjects(projects, 3), [projects])
-  const listedProjects = useMemo(
-    () => filterProjectsByStatus(projects, statusFilter),
-    [projects, statusFilter],
-  )
   const listedNotes = useMemo(
     () =>
       sortNotesMeta(
-        filterNotesMeta(notes, { noteType, pinnedOnly }).filter(
-          (n) => !noProjectOnly || projectIdOf(n, knownIds) === NO_PROJECT_ID,
+        filterHomeNotes(
+          notes,
+          { scope, noteType: filters.noteType, pinnedOnly: filters.pinnedOnly },
+          knownIds,
         ),
       ),
-    [notes, noteType, pinnedOnly, noProjectOnly, knownIds],
+    [notes, scope, filters.noteType, filters.pinnedOnly, knownIds],
   )
-  const pinned = useMemo(() => selectPinnedNotes(notes), [notes])
-  const recent = useMemo(() => selectRecentNotes(notes, 5), [notes])
-  const referenceCount = useMemo(() => countNotesByType(notes, "reference"), [notes])
-  const filtersActive = noteType !== "all" || pinnedOnly || noProjectOnly
+  const recentlyOpened = useMemo(() => selectRecentlyOpenedProjects(projects, 3), [projects])
+  const listedProjects = useMemo(
+    () => filterProjectsByStatus(projects, filters.projectStatus),
+    [projects, filters.projectStatus],
+  )
 
-  const showAllNotes = (opts: { type?: NoteType | "all"; noProject?: boolean } = {}) => {
-    setNoteType(opts.type ?? "all")
-    setPinnedOnly(false)
-    setNoProjectOnly(Boolean(opts.noProject))
-    allNotesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  // While searching, results include both kinds, so every filter applies.
+  const kinds = {
+    notes: hasQuery || currentView === "notes",
+    projects: !projectsUnavailable && (hasQuery || currentView === "projects"),
+  }
+  const activeFilters = describeActiveFilters(effective, groups, kinds)
+  const notesFiltered = scope !== "all" || filters.noteType !== "all" || filters.pinnedOnly
+
+  const showNoProjectNotes = () => {
+    setFilters({ ...DEFAULT_NOTES_HOME_FILTERS, scope: NO_PROJECT_ID })
+    setQuery("")
+    setView("notes")
   }
 
-  const saveCapture = async () => {
-    const input = buildCaptureInput(capture)
-    if (!input) {
-      setCaptureHint(true)
-      return
-    }
-    try {
-      await captureMutation.mutateAsync(input)
-      setCapture("")
-      setCaptureHint(false)
-      toast.success("Saved to Inbox. Organize it later.", {
-        action: { label: "Open Inbox", onClick: () => router.push("/inbox") },
-      })
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, "Couldn't save to Inbox. Your text is still here."))
-    }
-  }
+  const noteFilterControls = (
+    <>
+      {groups.length > 0 && (
+        <FilterGroup label="Project">
+          <Select value={scope} onValueChange={(value) => patch({ scope: value })}>
+            <SelectTrigger className="h-11! w-full" aria-label="Project">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All notes</SelectItem>
+              {groups.map((group) => (
+                <SelectItem key={group.id} value={group.id}>
+                  {group.isInbox ? "No project" : group.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FilterGroup>
+      )}
+      <FilterGroup label="Note type">
+        <div className="flex flex-wrap gap-1.5">
+          {TYPE_FILTERS.map((type) => (
+            <FilterChip
+              key={type.value}
+              pressed={filters.noteType === type.value}
+              onClick={() => patch({ noteType: type.value })}
+            >
+              {type.label}
+            </FilterChip>
+          ))}
+        </div>
+      </FilterGroup>
+      <FilterGroup label="Pinned">
+        <FilterChip
+          pressed={filters.pinnedOnly}
+          onClick={() => patch({ pinnedOnly: !filters.pinnedOnly })}
+        >
+          <Pin size={12} aria-hidden="true" />
+          Pinned only
+        </FilterChip>
+      </FilterGroup>
+    </>
+  )
+
+  const projectFilterControls = !projectsUnavailable && (
+    <FilterGroup label="Project status">
+      <div className="flex flex-wrap gap-1.5">
+        {STATUS_FILTERS.map((status) => (
+          <FilterChip
+            key={status.value}
+            pressed={filters.projectStatus === status.value}
+            onClick={() => patch({ projectStatus: status.value })}
+          >
+            {status.label}
+          </FilterChip>
+        ))}
+      </div>
+    </FilterGroup>
+  )
+
+  const filterControls = hasQuery ? (
+    currentView === "projects" ? (
+      <>
+        {projectFilterControls}
+        {noteFilterControls}
+      </>
+    ) : (
+      <>
+        {noteFilterControls}
+        {projectFilterControls}
+      </>
+    )
+  ) : currentView === "projects" ? (
+    projectFilterControls
+  ) : (
+    noteFilterControls
+  )
+
+  const noteHitsBlock = results.noteHits.length > 0 && (
+    <section aria-labelledby="notes-hits" className="space-y-2">
+      <h2 id="notes-hits" className={sectionTitle}>
+        Notes <span className={countBadge}>{results.noteHits.length}</span>
+      </h2>
+      <RowList>
+        {results.noteHits.map((note) => (
+          <li key={note.slug}>
+            <NoteListRow
+              note={note}
+              showExcerpt
+              projectName={note.projectId ? projectNames.get(note.projectId) : undefined}
+            />
+          </li>
+        ))}
+      </RowList>
+    </section>
+  )
+
+  const projectHitsBlock = results.projectHits.length > 0 && (
+    <section aria-labelledby="projects-hits" className="space-y-2">
+      <h2 id="projects-hits" className={sectionTitle}>
+        Projects <span className={countBadge}>{results.projectHits.length}</span>
+      </h2>
+      <RowList>
+        {results.projectHits.map((group) => (
+          <li key={group.id}>
+            <ProjectListRow
+              project={group.project as Project}
+              noteCount={group.noteCount}
+              updatedAt={group.updatedAt}
+            />
+          </li>
+        ))}
+      </RowList>
+    </section>
+  )
 
   return (
-    <div className="space-y-6">
-      {/* Search with an explicit scope */}
-      <div className="space-y-2">
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <div className="relative min-w-0 flex-1">
-            <Search
-              size={18}
-              aria-hidden="true"
-              className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
-              type="search"
-              aria-label="Search notes and projects"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              // Short enough to fit a 320px phone; the helper text below the
-              // filters says what else is searched.
-              placeholder="Search notes and projects"
-              className="h-12 w-full rounded-xl border border-border bg-card pr-12 pl-11 text-base text-foreground outline-none placeholder:text-muted-foreground/80 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 sm:text-sm [&::-webkit-search-cancel-button]:hidden"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                aria-label="Clear search"
-                className="absolute top-1/2 right-1 flex size-10 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <X size={16} aria-hidden="true" />
-              </button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Select value={effectiveScope} onValueChange={setScope}>
-              <SelectTrigger
-                className="h-12! min-w-0 flex-1 rounded-xl sm:w-56 sm:flex-none"
-                aria-label="Search scope"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Searching: All notes</SelectItem>
-                {groups.map((group) => (
-                  <SelectItem key={group.id} value={group.id}>
-                    In: {group.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={noteType} onValueChange={(v) => setNoteType(v as NoteType | "all")}>
-              <SelectTrigger className="h-12! w-36 rounded-xl" aria-label="Filter by note type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
-                {NOTE_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+    <div className="space-y-4">
+      {!projectsUnavailable && (
+        <div className="flex items-center justify-between gap-2">
+          <ViewSwitch view={currentView} onChange={setView} />
+          {currentView === "projects" && (
+            // Icon-only on phones so the switch keeps its width at 320px.
+            <Button
+              variant="outline"
+              aria-label="New project"
+              className="size-11 shrink-0 gap-1.5 px-0 sm:w-auto sm:px-4"
+              onClick={onNewProject}
+            >
+              <FolderPlus size={16} aria-hidden="true" />
+              <span className="hidden sm:inline">New project</span>
+            </Button>
+          )}
         </div>
-        <p className="text-xs text-muted-foreground">
-          Searches project names and tags, plus note titles, descriptions and content.
-        </p>
-      </div>
+      )}
+
+      <SearchFilterBar
+        query={query}
+        onQueryChange={setQuery}
+        searchLabel="Search notes and projects"
+        placeholder={currentView === "projects" ? "Search projects and notes" : "Search notes"}
+        activeFilters={activeFilters}
+        onClearFilters={clearFilters}
+        filterDescription="Searches note titles, descriptions and content, plus project names and tags."
+      >
+        {filterControls}
+      </SearchFilterBar>
 
       {hasQuery ? (
-        <section aria-label="Search results" className="space-y-4">
+        <div aria-label="Search results" role="region" className="space-y-5">
           <p role="status" className="text-sm text-muted-foreground">
             {searching ? "Searching…" : results.summary}
           </p>
@@ -361,323 +378,197 @@ export function NotesHome({
             </p>
           )}
           {!searching && !searchError && results.total === 0 && (
-            <div className="flex flex-col items-center gap-2.5 rounded-xl border border-dashed border-border px-6 py-12 text-center">
-              <h2 className="text-base font-semibold text-foreground">Nothing found</h2>
-              <p className="max-w-sm text-sm text-muted-foreground">
-                {effectiveScope === "all" && noteType === "all"
-                  ? "Try different words."
-                  : "Try different words, or search all notes instead of one project or type."}
-              </p>
-              {effectiveScope === "all" && noteType === "all" ? (
-                <Button variant="outline" className="h-11" onClick={() => setQuery("")}>
-                  Clear search
-                </Button>
-              ) : (
-                <Button
-                  className="h-11"
-                  onClick={() => {
-                    setScope("all")
-                    setNoteType("all")
-                  }}
-                >
-                  Search all notes
-                </Button>
-              )}
-            </div>
+            <EmptyState
+              surface
+              icon={SearchX}
+              title="Nothing found"
+              description={
+                activeFilters.length > 0
+                  ? "Try different words, or clear the filters."
+                  : "Try different words."
+              }
+              action={
+                <div className="flex flex-wrap justify-center gap-2">
+                  {activeFilters.length > 0 && (
+                    <Button className="h-11" onClick={clearFilters}>
+                      Clear filters
+                    </Button>
+                  )}
+                  <Button variant="outline" className="h-11" onClick={() => setQuery("")}>
+                    Clear search
+                  </Button>
+                </div>
+              }
+            />
           )}
-          {results.projectHits.length > 0 && (
-            <div className="space-y-2">
-              <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Projects
-              </h2>
-              <div className={cn(panel, "divide-y divide-border overflow-hidden")}>
-                {results.projectHits.map((group) => (
-                  <ProjectListRow key={group.id} group={group} />
-                ))}
-              </div>
-            </div>
+          {currentView === "projects" ? (
+            <>
+              {projectHitsBlock}
+              {noteHitsBlock}
+            </>
+          ) : (
+            <>
+              {noteHitsBlock}
+              {projectHitsBlock}
+            </>
           )}
-          {results.noteHits.length > 0 && (
-            <div className="space-y-2">
-              <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Notes
-              </h2>
-              <NoteList notes={results.noteHits} projectNames={projectNames} />
-            </div>
+        </div>
+      ) : currentView === "notes" ? (
+        <section aria-labelledby="notes-all" className="space-y-2">
+          <h2 id="notes-all" className={sectionTitle}>
+            Notes
+            <span className={countBadge}>
+              {notesFiltered ? `${listedNotes.length} of ${notes.length}` : notes.length}
+            </span>
+          </h2>
+          {projectsUnavailable && (
+            <p className="text-xs text-muted-foreground">
+              Projects aren&apos;t set up yet: the database update for them hasn&apos;t been
+              applied. Your notes work as usual.
+            </p>
+          )}
+          {listedNotes.length > 0 ? (
+            <RowList>
+              {listedNotes.map((note) => (
+                <li key={note.slug}>
+                  <NoteListRow
+                    note={note}
+                    projectName={note.projectId ? projectNames.get(note.projectId) : undefined}
+                  />
+                </li>
+              ))}
+            </RowList>
+          ) : notes.length === 0 ? (
+            <EmptyState
+              surface
+              icon={NotebookPen}
+              title="No notes yet"
+              description="Write your first note, or save a quick thought to your inbox and organize it later."
+              action={
+                <Button asChild className="h-11">
+                  <Link href="/notes/new">New note</Link>
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState
+              surface
+              icon={SearchX}
+              title="No matches"
+              description="No notes match these filters."
+              action={
+                <Button variant="outline" className="h-11" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              }
+            />
           )}
         </section>
       ) : (
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start">
-          <div className="min-w-0 space-y-8">
-            {projectsUnavailable ? (
-              <section aria-labelledby="notes-projects" className="space-y-3">
-                <h2 id="notes-projects" className={sectionTitle}>
-                  Projects
-                </h2>
-                <div className={cn(panel, "overflow-hidden")}>
-                  <p className="border-b border-border px-4 py-3 text-sm text-muted-foreground">
-                    Projects aren&apos;t set up yet: the database update for them hasn&apos;t been
-                    applied. Your notes work as usual.
-                  </p>
-                  {noProjectGroup && (
-                    <NoProjectRow
-                      group={noProjectGroup}
-                      onOpen={() => showAllNotes({ noProject: true })}
-                    />
-                  )}
-                </div>
-              </section>
-            ) : (
-              <>
-                {recentlyOpened.length > 0 && (
-                  <section aria-labelledby="notes-recent-projects" className="space-y-3">
-                    <h2 id="notes-recent-projects" className={sectionTitle}>
-                      Recently opened
-                    </h2>
-                    <div className="grid gap-3 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
-                      {recentlyOpened.map((project) => {
-                        const group = groupById.get(project.id)
-                        const updated = updatedLabel(group?.updatedAt)
-                        return (
-                          <Link
-                            key={project.id}
-                            href={`/notes/projects/${project.id}`}
-                            className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 text-foreground outline-none transition-colors hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring"
-                          >
-                            <span className="flex items-center justify-between gap-2">
-                              <ProjectTile name={project.name} />
-                              <ProjectStatusPill status={project.status} />
-                            </span>
-                            <span>
-                              <span className="block truncate text-base font-semibold">
-                                {project.name}
-                              </span>
-                              {project.description && (
-                                <span className="mt-1 line-clamp-2 block text-sm text-muted-foreground">
-                                  {project.description}
-                                </span>
-                              )}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {noteCountText(group?.noteCount ?? 0)}
-                              {updated && ` · Updated ${updated}`}
-                            </span>
-                          </Link>
-                        )
-                      })}
-                    </div>
-                  </section>
-                )}
+        <div className="space-y-6">
+          {projectsLoading ? (
+            <div className="space-y-2" aria-busy="true" aria-label="Loading projects">
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-xl" />
+            </div>
+          ) : projectsError ? (
+            <p
+              role="alert"
+              className="rounded-xl border border-border bg-card px-4 py-3 text-sm text-destructive"
+            >
+              {projectsError} Your notes are still under Notes.
+            </p>
+          ) : (
+            <>
+              {recentlyOpened.length > 0 && filters.projectStatus === "all" && (
+                <section aria-labelledby="notes-recent-projects" className="space-y-2">
+                  <h2 id="notes-recent-projects" className={sectionTitle}>
+                    Recently opened
+                  </h2>
+                  <RowList>
+                    {recentlyOpened.map((project) => {
+                      const group = groupById.get(project.id)
+                      return (
+                        <li key={project.id}>
+                          <ProjectListRow
+                            project={project}
+                            noteCount={group?.noteCount ?? 0}
+                            updatedAt={group?.updatedAt}
+                          />
+                        </li>
+                      )
+                    })}
+                  </RowList>
+                </section>
+              )}
 
-                <section aria-labelledby="notes-projects" className="space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h2 id="notes-projects" className={sectionTitle}>
-                      All projects · <span className="tabular-nums">{projects.length}</span>
-                    </h2>
-                    {projects.length > 0 && (
-                      <div
-                        role="group"
-                        aria-label="Project status"
-                        className="flex flex-wrap gap-1.5"
-                      >
-                        {STATUS_FILTERS.map((s) => (
-                          <FilterChip
-                            key={s.value}
-                            pressed={statusFilter === s.value}
-                            onClick={() => setStatusFilter(s.value)}
-                          >
-                            {s.label}
-                          </FilterChip>
-                        ))}
-                      </div>
+              <section aria-labelledby="notes-projects" className="space-y-2">
+                <h2 id="notes-projects" className={sectionTitle}>
+                  All projects
+                  <span className={countBadge}>
+                    {filters.projectStatus === "all"
+                      ? projects.length
+                      : `${listedProjects.length} of ${projects.length}`}
+                  </span>
+                </h2>
+                {projects.length === 0 ? (
+                  <div className="space-y-2">
+                    <EmptyState
+                      surface
+                      icon={FolderPlus}
+                      title="No projects yet"
+                      description="Group related notes, decisions and references in one place."
+                      action={
+                        <Button className="h-11 gap-1.5" onClick={onNewProject}>
+                          <FolderPlus size={16} aria-hidden="true" />
+                          New project
+                        </Button>
+                      }
+                    />
+                    {noProjectGroup && (
+                      <RowList>
+                        <li>
+                          <NoProjectRow group={noProjectGroup} onOpen={showNoProjectNotes} />
+                        </li>
+                      </RowList>
                     )}
                   </div>
-                  {projectsLoading ? (
-                    <Skeleton className="h-16 w-full rounded-xl" />
-                  ) : projectsError ? (
-                    <p role="alert" className={cn(panel, "px-4 py-3 text-sm text-destructive")}>
-                      {projectsError} Your notes are still listed below.
-                    </p>
-                  ) : (
-                    <div className={cn(panel, "divide-y divide-border overflow-hidden")}>
-                      {projects.length === 0 && (
-                        <div className="flex flex-col items-start gap-2 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-                          <p className="text-sm text-muted-foreground">
-                            No projects yet. Group related notes, decisions and references in one
-                            place.
-                          </p>
-                          <Button variant="outline" className="h-11 gap-1.5" onClick={onNewProject}>
-                            <FolderPlus size={16} aria-hidden="true" />
-                            New project
-                          </Button>
-                        </div>
-                      )}
-                      {projects.length > 0 && listedProjects.length === 0 && (
-                        <p className="px-4 py-4 text-sm text-muted-foreground">
-                          No projects with this status.
-                        </p>
-                      )}
-                      {listedProjects.map((project) => {
-                        const group = groupById.get(project.id)
-                        return group ? <ProjectListRow key={project.id} group={group} /> : null
-                      })}
-                      {noProjectGroup && statusFilter === "all" && (
-                        <NoProjectRow
-                          group={noProjectGroup}
-                          onOpen={() => showAllNotes({ noProject: true })}
-                        />
-                      )}
-                    </div>
-                  )}
-                </section>
-              </>
-            )}
-
-            {/* All notes */}
-            <section
-              ref={allNotesRef}
-              aria-labelledby="notes-all"
-              className="scroll-mt-24 space-y-3"
-            >
-              <h2 id="notes-all" className={sectionTitle}>
-                All notes · <span className="tabular-nums">{listedNotes.length}</span>
-              </h2>
-              <div role="group" aria-label="Filter notes" className="flex flex-wrap gap-1.5">
-                <FilterChip pressed={noteType === "all"} onClick={() => setNoteType("all")}>
-                  All
-                </FilterChip>
-                {NOTE_TYPES.map((type) => (
-                  <FilterChip
-                    key={type.value}
-                    pressed={noteType === type.value}
-                    onClick={() => setNoteType(type.value)}
-                  >
-                    {type.label}
-                  </FilterChip>
-                ))}
-                <FilterChip pressed={pinnedOnly} onClick={() => setPinnedOnly((v) => !v)}>
-                  <Pin size={12} aria-hidden="true" />
-                  Pinned
-                </FilterChip>
-                {noProjectOnly && (
-                  <FilterChip pressed onClick={() => setNoProjectOnly(false)}>
-                    No project
-                    <X size={12} aria-hidden="true" />
-                    <span className="sr-only">(remove filter)</span>
-                  </FilterChip>
-                )}
-              </div>
-              {listedNotes.length > 0 ? (
-                <NoteList notes={listedNotes} projectNames={projectNames} />
-              ) : notes.length === 0 ? (
-                <EmptyState
-                  surface
-                  icon={NotebookPen}
-                  title="No notes yet"
-                  description="Write your first note, or capture a quick thought and organize it later."
-                  action={
-                    <Button asChild className="h-11">
-                      <Link href="/notes/new">New note</Link>
-                    </Button>
-                  }
-                />
-              ) : (
-                <EmptyState
-                  surface
-                  icon={SearchX}
-                  title="No matches"
-                  description="No notes match these filters."
-                  action={
-                    filtersActive && (
-                      <Button variant="outline" className="h-11" onClick={() => showAllNotes()}>
-                        Show all notes
+                ) : listedProjects.length === 0 ? (
+                  <EmptyState
+                    surface
+                    icon={SearchX}
+                    title="No matches"
+                    description="No projects with this status."
+                    action={
+                      <Button variant="outline" className="h-11" onClick={clearFilters}>
+                        Clear filters
                       </Button>
-                    )
-                  }
-                />
-              )}
-            </section>
-          </div>
-
-          <aside aria-label="Notes shortcuts" className="min-w-0 space-y-6">
-            <section aria-labelledby="notes-capture" className={cn(panel, "space-y-2.5 p-4")}>
-              <h2 id="notes-capture" className="text-base font-semibold text-foreground">
-                Quick Capture
-              </h2>
-              <label htmlFor="notes-capture-text" className="sr-only">
-                Quick capture text
-              </label>
-              <Textarea
-                id="notes-capture-text"
-                rows={3}
-                value={capture}
-                onChange={(e) => {
-                  setCapture(e.target.value)
-                  if (captureHint) setCaptureHint(false)
-                }}
-                placeholder="Jot down advice, an idea or a question. Organize it later."
-                aria-invalid={captureHint || undefined}
-                aria-describedby={captureHint ? "notes-capture-hint" : undefined}
-                className="min-h-20 text-base"
-              />
-              {captureHint && (
-                <p id="notes-capture-hint" role="alert" className="text-xs text-destructive">
-                  Type something to capture first.
-                </p>
-              )}
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-muted-foreground">Saved to Inbox</span>
-                <Button className="h-11" onClick={saveCapture} disabled={captureMutation.isPending}>
-                  {captureMutation.isPending ? "Saving…" : "Capture"}
-                </Button>
-              </div>
-            </section>
-
-            <section aria-labelledby="notes-pinned" className="space-y-2">
-              <h2 id="notes-pinned" className="text-base font-semibold text-foreground">
-                Pinned notes
-              </h2>
-              {pinned.length > 0 ? (
-                <NoteList notes={pinned} projectNames={projectNames} compact />
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Pin a note from its page to keep it here.
-                </p>
-              )}
-            </section>
-
-            <section aria-labelledby="notes-recent" className="space-y-2">
-              <h2 id="notes-recent" className="text-base font-semibold text-foreground">
-                Recent notes
-              </h2>
-              {recent.length > 0 ? (
-                <NoteList notes={recent} projectNames={projectNames} compact />
-              ) : (
-                <p className="text-sm text-muted-foreground">Nothing yet.</p>
-              )}
-            </section>
-
-            <section aria-labelledby="notes-resources" className={cn(panel, "space-y-1.5 p-4")}>
-              <h2
-                id="notes-resources"
-                className="flex items-center gap-2 text-base font-semibold text-foreground"
-              >
-                <BookMarked size={16} aria-hidden="true" className="text-muted-foreground" />
-                Knowledge resources
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Docs links, repos, commands and prompts. These are regular notes with the Reference
-                type.
-              </p>
-              <button
-                type="button"
-                onClick={() => showAllNotes({ type: "reference" })}
-                className="inline-flex min-h-11 items-center rounded-md text-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                Browse reference notes ({referenceCount})
-              </button>
-            </section>
-          </aside>
+                    }
+                  />
+                ) : (
+                  <RowList>
+                    {listedProjects.map((project) => {
+                      const group = groupById.get(project.id)
+                      return (
+                        <li key={project.id}>
+                          <ProjectListRow
+                            project={project}
+                            noteCount={group?.noteCount ?? 0}
+                            updatedAt={group?.updatedAt}
+                          />
+                        </li>
+                      )
+                    })}
+                    {noProjectGroup && filters.projectStatus === "all" && (
+                      <li>
+                        <NoProjectRow group={noProjectGroup} onOpen={showNoProjectNotes} />
+                      </li>
+                    )}
+                  </RowList>
+                )}
+              </section>
+            </>
+          )}
         </div>
       )}
     </div>
