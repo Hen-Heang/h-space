@@ -5,19 +5,23 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/finance/base/dropdown-menu"
-import { CategoryIcon } from "@/components/finance/ui/finance-primitives"
-import { krw, usd } from "@/lib/finance-format"
+import { AmountText, CategoryIcon } from "@/components/finance/ui/finance-primitives"
+import { shortTransactionDate, transactionAmountLabel } from "@/lib/finance/overview-display"
+import { transactionCategoryLabel, transactionDetails } from "@/lib/finance/transactions-display"
 import { cn } from "@/lib/utils"
 import type { Transaction } from "@/types/finance"
 
-function formatTime(createdAt: string): string | null {
-  const date = new Date(createdAt)
-  if (Number.isNaN(date.getTime())) return null
-  return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
-}
-
+/**
+ * One transaction as a plain row inside a day group's list: title and amount
+ * on the first line, category · date on the second. The row opens the editor
+ * (or toggles it in selection mode). Payment method, USD original and rate,
+ * note and the time it was added sit in the row's "⋯" menu above Edit and
+ * Delete, and all of them are in the editor.
+ */
 export function TransactionRow({
   transaction,
   onEdit,
@@ -31,104 +35,100 @@ export function TransactionRow({
   selection?: { selected: boolean; onToggle: (transaction: Transaction) => void }
 }) {
   const isIncome = transaction.type === "income"
-  const time = formatTime(transaction.createdAt)
-  const metaParts = [
-    transaction.categoryName ?? (isIncome ? "Income" : "Uncategorized"),
-    transaction.paymentMethodName,
-    transaction.note,
-  ].filter(Boolean)
-  const meta = metaParts.join(" · ")
-  const activate = () => (selection ? selection.onToggle(transaction) : onEdit(transaction))
+  const title = transaction.description || "Untitled transaction"
+  const details = transactionDetails(transaction)
 
   return (
-    <div
-      role={selection ? "checkbox" : "button"}
-      aria-checked={selection ? selection.selected : undefined}
-      aria-label={selection ? `Select ${transaction.description}` : undefined}
-      tabIndex={0}
-      onClick={activate}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault()
-          activate()
-        }
-      }}
+    <li
       className={cn(
-        "flex min-h-16 cursor-pointer items-start gap-2 px-3 py-3 transition-colors hover:bg-secondary/50 active:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:items-center sm:gap-3 sm:px-4",
-        selection?.selected && "bg-primary/5 hover:bg-primary/10",
+        "flex min-w-0 items-stretch transition-colors",
+        selection?.selected && "bg-primary/5",
       )}
     >
-      <CategoryIcon icon={transaction.categoryIcon} color={transaction.categoryColor} />
-
-      <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 items-start gap-2">
-          <p
-            className="min-w-0 flex-1 truncate text-sm font-semibold"
-            title={transaction.description}
-          >
-            {transaction.description}
-          </p>
-          <p
-            className={cn(
-              "max-w-[58%] shrink-0 whitespace-nowrap text-right font-mono text-sm font-semibold tabular-nums",
-              isIncome ? "text-success" : "text-foreground",
-            )}
-          >
-            {isIncome ? "+" : "−"}
-            {krw.format(transaction.amountKrw)}
-          </p>
-        </div>
-
-        <div className="mt-1 flex min-w-0 flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-          <p className="min-w-0 flex-1 truncate" title={meta}>
-            {meta}
-          </p>
-          <div className="ml-auto flex max-w-full flex-wrap justify-end gap-x-2 text-right text-xs tabular-nums sm:text-xs">
-            {transaction.currency === "USD" && transaction.originalAmount !== null && (
-              <span className="break-words">
-                {usd.format(transaction.originalAmount)}
-                {transaction.exchangeRate !== null
-                  ? ` @ ${krw.format(transaction.exchangeRate)}`
-                  : ""}
-              </span>
-            )}
-            {time && <span>{time}</span>}
-          </div>
-        </div>
-      </div>
-
-      {selection ? (
-        <span
-          aria-hidden="true"
-          className={cn(
-            "flex size-11 shrink-0 items-center justify-center",
-            selection.selected ? "text-primary" : "text-muted-foreground",
-          )}
-        >
-          <span
-            className={cn(
-              "flex size-5 items-center justify-center rounded border-2",
-              selection.selected
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-input",
-            )}
-          >
-            {selection.selected && <Check className="size-3.5" strokeWidth={3} />}
+      <button
+        type="button"
+        role={selection ? "checkbox" : undefined}
+        aria-checked={selection ? selection.selected : undefined}
+        aria-label={selection ? `Select ${transaction.description}` : undefined}
+        onClick={() => (selection ? selection.onToggle(transaction) : onEdit(transaction))}
+        className={cn(
+          "flex min-h-14 min-w-0 flex-1 cursor-pointer items-start gap-3 py-3 pl-3 text-left outline-none transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:pl-4",
+          selection ? "pr-3 sm:pr-4" : "pr-1",
+        )}
+      >
+        <CategoryIcon
+          icon={transaction.categoryIcon}
+          color={transaction.categoryColor}
+          className="mt-0.5 size-9 rounded-lg border-0 text-base"
+        />
+        <span className="min-w-0 flex-1">
+          {/* Title and amount share the first line; the metadata gets the full
+              width below, so it stays one line on a phone. */}
+          <span className="flex min-w-0 items-start justify-between gap-3">
+            <span className="line-clamp-2 min-w-0 flex-1 break-words text-base font-medium leading-snug">
+              {title}
+            </span>
+            <span
+              className={cn(
+                // Capped so a huge amount wraps between digit groups instead of
+                // squeezing the title to nothing.
+                "max-w-[55%] shrink-0 text-right text-base font-semibold leading-snug tracking-tight [overflow-wrap:anywhere] tabular-nums",
+                isIncome ? "text-success" : "text-foreground",
+              )}
+            >
+              <AmountText value={transactionAmountLabel(transaction)} />
+            </span>
+          </span>
+          <span className="mt-0.5 block truncate text-sm text-muted-foreground">
+            {transactionCategoryLabel(transaction)} · {shortTransactionDate(transaction.date)}
           </span>
         </span>
-      ) : (
+        {selection && (
+          <span
+            aria-hidden="true"
+            className="flex size-6 shrink-0 items-center justify-center self-center"
+          >
+            <span
+              className={cn(
+                "flex size-5 items-center justify-center rounded border-2",
+                selection.selected
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-input",
+              )}
+            >
+              {selection.selected && <Check className="size-3.5" strokeWidth={3} />}
+            </span>
+          </span>
+        )}
+      </button>
+
+      {!selection && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              onClick={(event) => event.stopPropagation()}
-              className="flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary active:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex w-11 shrink-0 items-center justify-center text-muted-foreground outline-none transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:w-12"
               aria-label={`Actions for ${transaction.description}`}
             >
               <MoreHorizontal className="size-4" aria-hidden="true" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
+          <DropdownMenuContent align="end" className="w-64">
+            {details.length > 0 && (
+              <>
+                <DropdownMenuLabel className="space-y-1.5 px-2.5 py-2 sm:px-1.5">
+                  {details.map((detail) => (
+                    <span key={detail.label} className="block">
+                      <span className="block text-sm text-muted-foreground">{detail.label}</span>
+                      <span className="block break-words text-sm font-normal text-foreground">
+                        {detail.value}
+                      </span>
+                    </span>
+                  ))}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem onSelect={() => onEdit(transaction)}>
               <Pencil className="size-4" aria-hidden="true" />
               Edit
@@ -140,6 +140,6 @@ export function TransactionRow({
           </DropdownMenuContent>
         </DropdownMenu>
       )}
-    </div>
+    </li>
   )
 }

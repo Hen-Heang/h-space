@@ -25,7 +25,7 @@ function ReportsLoading() {
   return (
     <div className="space-y-3" aria-busy="true" aria-label="Loading report">
       {[0, 1, 2].map((row) => (
-        <div key={row} className="h-24 rounded-2xl bg-secondary motion-safe:animate-pulse" />
+        <div key={row} className="h-24 rounded-lg bg-secondary motion-safe:animate-pulse" />
       ))}
     </div>
   )
@@ -161,9 +161,13 @@ export function FinanceReportsSection() {
   const reportReady = tab === "weekly" ? Boolean(weekly.data) : Boolean(monthly.data)
 
   return (
-    <div className="space-y-4 rounded-2xl border bg-card p-4">
+    <div className="space-y-5">
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="grid w-full grid-cols-2 gap-1 rounded-xl border bg-secondary p-1 sm:flex sm:w-auto">
+        <div
+          role="group"
+          aria-label="Report type"
+          className="grid w-full grid-cols-2 gap-1 rounded-xl border bg-secondary p-1 sm:flex sm:w-auto"
+        >
           {(
             [
               { value: "weekly", label: "Weekly summary" },
@@ -174,8 +178,9 @@ export function FinanceReportsSection() {
               key={option.value}
               type="button"
               onClick={() => setTab(option.value)}
+              aria-pressed={tab === option.value}
               className={cn(
-                "min-h-11 min-w-0 rounded-lg px-2 text-xs font-medium transition-colors sm:min-h-9 sm:px-3 sm:text-sm",
+                "min-h-10 min-w-0 rounded-lg px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:min-h-11",
                 tab === option.value
                   ? "bg-card font-semibold text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
@@ -201,10 +206,11 @@ export function FinanceReportsSection() {
               href={printHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border bg-card px-3 text-sm font-medium hover:bg-secondary sm:min-h-9"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border bg-card px-3 text-sm font-medium outline-none hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:fine)]:min-h-10"
             >
               <Printer className="size-4" aria-hidden="true" />
               Print
+              <span className="sr-only"> (opens in a new tab)</span>
             </a>
           )}
           {reportReady && telegramLinked && (
@@ -212,7 +218,7 @@ export function FinanceReportsSection() {
               type="button"
               onClick={handleSendToTelegram}
               disabled={sendingToTelegram}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border bg-card px-3 text-sm font-medium hover:bg-secondary disabled:opacity-50 sm:min-h-9"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border bg-card px-3 text-sm font-medium outline-none hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 [@media(pointer:fine)]:min-h-10"
             >
               <Send className="size-4" aria-hidden="true" />
               {sendingToTelegram ? "Sending…" : "Send to Telegram"}
@@ -223,7 +229,7 @@ export function FinanceReportsSection() {
               type="button"
               onClick={handleSendEmail}
               disabled={sendingEmail}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border bg-card px-3 text-sm font-medium hover:bg-secondary disabled:opacity-50 sm:min-h-9"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border bg-card px-3 text-sm font-medium outline-none hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 [@media(pointer:fine)]:min-h-10"
             >
               <Mail className="size-4" aria-hidden="true" />
               {sendingEmail ? "Sending…" : "Send email"}
@@ -232,8 +238,16 @@ export function FinanceReportsSection() {
         </div>
       </div>
 
-      {telegramMessage && <p className="text-xs text-muted-foreground">{telegramMessage}</p>}
-      {emailMessage && <p className="text-xs text-muted-foreground">{emailMessage}</p>}
+      {telegramMessage && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {telegramMessage}
+        </p>
+      )}
+      {emailMessage && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {emailMessage}
+        </p>
+      )}
 
       {tab === "weekly" ? (
         weekly.error ? (

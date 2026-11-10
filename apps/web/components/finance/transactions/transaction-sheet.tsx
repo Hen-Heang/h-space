@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { Check, ChevronDown, Loader2, Plus, RefreshCw, Save, WalletCards } from "lucide-react"
+import { Check, ChevronDown, Loader2, RefreshCw, Save, WalletCards } from "lucide-react"
 import { Button } from "@/components/finance/base/button"
 import { Input } from "@/components/finance/base/input"
 import { Label } from "@/components/finance/base/label"
@@ -22,6 +22,7 @@ import { DescriptionSuggestions } from "@/components/finance/transactions/descri
 import type { DescriptionSuggestion } from "@/lib/api/finance"
 import { QUICK_AMOUNTS, groupAmount, sanitizeAmount } from "@/lib/finance/amount-entry"
 import { krw, usd } from "@/lib/finance-format"
+import { dayHeading } from "@/lib/finance/transactions-display"
 import { exchangeRateQuery } from "@/lib/query/finance-queries"
 import { cn } from "@/lib/utils"
 import type {
@@ -164,8 +165,12 @@ function TransactionSheetFields({
       : (paymentMethods.find((method) => method.name.trim().toLowerCase() === "bank")?.id ?? ""),
   )
   const [note, setNote] = useState(transaction?.note ?? "")
-  // The note field stays tucked behind a link until it's wanted.
-  const [noteOpen, setNoteOpen] = useState(note !== "")
+  // Date, note and "Save as template" sit behind "More details". It opens
+  // by itself when an entry already has a note or a date other than today,
+  // and its summary line always shows the date, so nothing is hidden silently.
+  const [detailsOpen, setDetailsOpen] = useState(
+    note !== "" || (transaction !== undefined && transaction.date !== localToday()),
+  )
   // The rate editor is folded into a one-line summary; USD entries open with
   // it shown since the rate decides the stored KRW amount.
   const [rateOpen, setRateOpen] = useState(currency === "USD")
@@ -352,6 +357,13 @@ function TransactionSheetFields({
       setError("Description is required.")
       return
     }
+    // The date input lives in "More details"; if it was cleared and then
+    // folded away, the browser can't point at it, so say so here instead.
+    if (date.trim() === "") {
+      setDetailsOpen(true)
+      setError("Choose a date.")
+      return
+    }
 
     setPending(true)
     setError(null)
@@ -376,6 +388,14 @@ function TransactionSheetFields({
     }
   }
 
+  const detailsSummary = [date ? dayHeading(date) : "No date", note.trim() ? "Note" : null]
+    .filter(Boolean)
+    .join(" · ")
+
+  // Order: type → amount → currency → description → category → payment
+  // method, then "More details" (date, note, save as template). Description
+  // follows the amount because Enter on the amount jumps to it and a picked
+  // suggestion fills the category and payment method below it.
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-4">
@@ -387,18 +407,21 @@ function TransactionSheetFields({
           />
         )}
 
-        <div className="grid grid-cols-2 gap-1 rounded-xl border bg-secondary p-1">
+        <div
+          className="grid grid-cols-2 gap-1 rounded-xl bg-secondary p-1"
+          role="group"
+          aria-label="Transaction type"
+        >
           {(["expense", "income"] as const).map((option) => (
             <button
               key={option}
               type="button"
               onClick={() => handleTypeChange(option)}
+              aria-pressed={type === option}
               className={cn(
-                "min-h-11 rounded-lg text-sm font-semibold capitalize transition-colors active:scale-[0.98]",
+                "min-h-11 rounded-lg text-sm font-semibold capitalize outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                 type === option
-                  ? option === "expense"
-                    ? "bg-destructive text-destructive-foreground shadow-sm"
-                    : "bg-success text-white shadow-sm"
+                  ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -407,19 +430,44 @@ function TransactionSheetFields({
           ))}
         </div>
 
-        <div
-          className={cn(
-            "rounded-2xl border p-3 transition-colors sm:p-4",
-            type === "expense"
-              ? "border-destructive/20 bg-destructive/[0.03]"
-              : "border-success/25 bg-success/[0.04]",
-          )}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <Label htmlFor="transaction-amount" className="text-muted-foreground">
-              {type === "expense" ? "Amount spent" : "Amount received"}
-            </Label>
-            <div className="flex gap-1 rounded-lg border bg-card p-0.5">
+        <div className="space-y-2">
+          <Label htmlFor="transaction-amount">
+            {type === "expense" ? "Amount spent" : "Amount received"}
+          </Label>
+          <AmountInput
+            ref={amountInputRef}
+            id="transaction-amount"
+            value={amount}
+            currency={currency}
+            tone={type}
+            onValueChange={setAmount}
+            onEnter={handleAmountEnter}
+          />
+          <div className="grid grid-cols-4 gap-1.5" role="group" aria-label="Add to amount">
+            {QUICK_AMOUNTS[currency].map((step) => (
+              <button
+                key={step}
+                type="button"
+                onClick={() => addQuickAmount(step)}
+                className="min-h-11 rounded-lg border bg-card px-1 text-sm font-medium tabular-nums text-foreground outline-none transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring sm:min-h-9 [@media(pointer:coarse)]:min-h-11"
+              >
+                +{currency === "USD" ? "$" : ""}
+                {groupAmount(String(step))}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <p id="transaction-currency-label" className="text-sm font-medium">
+              Currency
+            </p>
+            <div
+              className="flex gap-1 rounded-lg bg-secondary p-0.5"
+              role="group"
+              aria-labelledby="transaction-currency-label"
+            >
               {(["KRW", "USD"] as const).map((option) => (
                 <button
                   key={option}
@@ -427,9 +475,9 @@ function TransactionSheetFields({
                   onClick={() => handleCurrencyChange(option)}
                   aria-pressed={currency === option}
                   className={cn(
-                    "min-h-11 rounded-md px-2.5 text-xs font-semibold transition-colors sm:min-h-7",
+                    "min-h-11 min-w-14 rounded-md px-3 text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring sm:min-h-8 [@media(pointer:coarse)]:min-h-11",
                     currency === option
-                      ? "bg-secondary text-foreground shadow-sm"
+                      ? "bg-card text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -437,31 +485,23 @@ function TransactionSheetFields({
                 </button>
               ))}
             </div>
-          </div>
-          <div className="mt-1">
-            <AmountInput
-              ref={amountInputRef}
-              id="transaction-amount"
-              value={amount}
-              currency={currency}
-              tone={type}
-              onValueChange={setAmount}
-              onEnter={handleAmountEnter}
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
             {(previewUsd !== null || previewKrw !== null) && (
-              <span className="font-semibold text-foreground tabular-nums" aria-live="polite">
+              <span
+                className="ml-auto text-sm font-semibold text-foreground tabular-nums"
+                aria-live="polite"
+              >
                 ≈ {previewUsd !== null ? usd.format(previewUsd) : krw.format(previewKrw ?? 0)}
               </span>
             )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
             <button
               type="button"
               onClick={() => setRateOpen((current) => !current)}
               aria-expanded={rateOpen}
               aria-controls="transaction-rate-editor"
-              className="flex min-h-11 items-center gap-1 rounded-md tabular-nums hover:text-foreground sm:min-h-7"
+              className="flex min-h-11 items-center gap-1 rounded-md tabular-nums outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring sm:min-h-8 [@media(pointer:coarse)]:min-h-11"
             >
               {rateFetch.state === "loading" && !hasValidRate
                 ? "Fetching rate…"
@@ -469,7 +509,10 @@ function TransactionSheetFields({
                   ? `1 USD = ₩${groupAmount(exchangeRate)}`
                   : "Set exchange rate"}
               <ChevronDown
-                className={cn("size-3.5 transition-transform", rateOpen && "rotate-180")}
+                className={cn(
+                  "size-4 transition-transform motion-reduce:transition-none",
+                  rateOpen && "rotate-180",
+                )}
                 aria-hidden="true"
               />
             </button>
@@ -479,23 +522,27 @@ function TransactionSheetFields({
               href="https://www.exchangerate-api.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-auto text-xs underline-offset-2 hover:underline"
+              className="ml-auto inline-flex min-h-11 items-center text-xs underline-offset-2 hover:underline sm:min-h-0 [@media(pointer:coarse)]:min-h-11"
             >
               Rates by Exchange Rate API
             </a>
           </div>
 
           {(rateOpen || rateFetch.state === "error") && (
-            <div id="transaction-rate-editor" className="mt-1 rounded-xl border bg-card/60 p-2.5">
+            <div id="transaction-rate-editor" className="rounded-xl border p-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 <Label
                   htmlFor="transaction-exchange-rate"
-                  className="text-xs text-muted-foreground"
+                  className="text-sm text-muted-foreground"
                 >
                   1 USD =
                 </Label>
-                <div className="flex h-11 min-w-0 flex-1 items-center rounded-xl border border-input bg-background px-2 focus-within:ring-2 focus-within:ring-ring sm:h-9 sm:flex-none">
-                  <span className="text-xs text-muted-foreground">₩</span>
+                {/* A <label> so a tap anywhere in the 44px box, ₩ included,
+                    focuses the input. */}
+                <label className="flex h-11 min-w-0 flex-1 cursor-text items-center rounded-xl border border-input bg-background px-2 focus-within:ring-2 focus-within:ring-ring sm:h-9 sm:flex-none [@media(pointer:coarse)]:h-11">
+                  <span className="text-sm text-muted-foreground" aria-hidden="true">
+                    ₩
+                  </span>
                   <input
                     id="transaction-exchange-rate"
                     type="number"
@@ -506,104 +553,28 @@ function TransactionSheetFields({
                     onChange={(event) => setExchangeRate(event.target.value)}
                     required={currency === "USD"}
                     aria-label="KRW value of one US dollar"
-                    className="min-w-0 w-full bg-transparent px-1.5 text-base font-medium tabular-nums outline-none sm:w-24 sm:text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    className="h-full min-w-0 w-full bg-transparent px-1.5 text-base font-medium tabular-nums outline-none sm:w-24 sm:text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
-                </div>
+                </label>
                 <button
                   type="button"
                   onClick={() => void fetchLiveRate()}
                   disabled={rateFetch.state === "loading"}
                   aria-label="Refresh USD to KRW exchange rate"
-                  className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-foreground hover:bg-background disabled:opacity-50 sm:min-h-9"
+                  className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-foreground outline-none hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 sm:min-h-9 [@media(pointer:coarse)]:min-h-11"
                 >
                   <RefreshCw
-                    className={cn("size-3.5", rateFetch.state === "loading" && "animate-spin")}
+                    className={cn("size-4", rateFetch.state === "loading" && "animate-spin")}
                     aria-hidden="true"
                   />
                   {rateFetch.state === "loading" ? "Updating" : "Refresh"}
                 </button>
               </div>
               {rateFetch.state === "error" && (
-                <p className="mt-2 text-xs text-destructive">
+                <p className="mt-2 text-sm text-destructive">
                   Couldn&apos;t fetch a live rate. You can enter the rate manually.
                 </p>
               )}
-            </div>
-          )}
-
-          <div className="mt-3 grid grid-cols-4 gap-1.5" role="group" aria-label="Add to amount">
-            {QUICK_AMOUNTS[currency].map((step) => (
-              <button
-                key={step}
-                type="button"
-                onClick={() => addQuickAmount(step)}
-                className="min-h-11 rounded-lg border bg-card px-1 text-xs font-semibold tabular-nums text-foreground transition-colors hover:bg-secondary active:scale-[0.97] sm:min-h-9"
-              >
-                +{currency === "USD" ? "$" : ""}
-                {groupAmount(String(step))}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between gap-3">
-            <Label>Category</Label>
-            <span className="text-xs text-muted-foreground">Scroll to see all</span>
-          </div>
-          {availableCategories.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No {type} categories yet.</p>
-          ) : (
-            <div
-              className="max-h-44 overflow-y-auto overscroll-contain rounded-xl border bg-secondary/20 p-2"
-              role="group"
-              aria-label={`${type} categories`}
-            >
-              <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setCategoryId("")}
-                  aria-pressed={categoryId === ""}
-                  className={cn(
-                    "flex min-h-12 min-w-0 items-center gap-2 rounded-lg border px-2.5 text-left text-sm font-medium transition-colors active:scale-[0.98]",
-                    categoryId === ""
-                      ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/20"
-                      : "border-border bg-background text-muted-foreground hover:bg-secondary hover:text-foreground",
-                  )}
-                >
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                    <WalletCards className="size-3.5" aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">No category</span>
-                  {categoryId === "" && (
-                    <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                  )}
-                </button>
-                {availableCategories.map((category) => (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => setCategoryId(category.id)}
-                    aria-pressed={categoryId === category.id}
-                    className={cn(
-                      "flex min-h-12 min-w-0 items-center gap-2 rounded-lg border px-2.5 text-left text-sm font-medium transition-colors active:scale-[0.98]",
-                      categoryId === category.id
-                        ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/20"
-                        : "border-border bg-background text-muted-foreground hover:bg-secondary hover:text-foreground",
-                    )}
-                  >
-                    <CategoryIcon
-                      icon={category.icon}
-                      color={category.color}
-                      className="size-7 text-sm"
-                    />
-                    <span className="min-w-0 flex-1 truncate">{category.name}</span>
-                    {categoryId === category.id && (
-                      <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                    )}
-                  </button>
-                ))}
-              </div>
             </div>
           )}
         </div>
@@ -637,96 +608,168 @@ function TransactionSheetFields({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="transaction-date">Date</Label>
-              <div className="flex gap-1">
-                {[
-                  { label: "Today", value: localToday() },
-                  { label: "Yesterday", value: localToday(1) },
-                ].map((option) => (
+        <div className="space-y-1.5">
+          <Label>Category</Label>
+          {availableCategories.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No {type} categories yet.</p>
+          ) : (
+            <div
+              className="max-h-44 overflow-y-auto overscroll-contain rounded-xl border p-2"
+              role="group"
+              aria-label={`${type} categories`}
+            >
+              <div className="grid grid-cols-1 gap-1.5 min-[360px]:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setCategoryId("")}
+                  aria-pressed={categoryId === ""}
+                  className={cn(
+                    "flex min-h-12 min-w-0 items-center gap-2 rounded-lg border px-2.5 text-left text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                    categoryId === ""
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground",
+                  )}
+                >
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-secondary">
+                    <WalletCards className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">No category</span>
+                  {categoryId === "" && (
+                    <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                  )}
+                </button>
+                {availableCategories.map((category) => (
                   <button
-                    key={option.label}
+                    key={category.id}
                     type="button"
-                    onClick={() => setDate(option.value)}
-                    aria-pressed={date === option.value}
+                    onClick={() => setCategoryId(category.id)}
+                    aria-pressed={categoryId === category.id}
                     className={cn(
-                      "min-h-9 rounded-full px-2.5 text-xs font-semibold transition-colors sm:min-h-6",
-                      date === option.value
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                      "flex min-h-12 min-w-0 items-center gap-2 rounded-lg border px-2.5 text-left text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                      categoryId === category.id
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground",
                     )}
                   >
-                    {option.label}
+                    <CategoryIcon
+                      icon={category.icon}
+                      color={category.color}
+                      className="size-7 rounded-lg border-0 text-sm"
+                    />
+                    <span className="min-w-0 flex-1 truncate">{category.name}</span>
+                    {categoryId === category.id && (
+                      <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                    )}
                   </button>
                 ))}
               </div>
             </div>
-            <Input
-              id="transaction-date"
-              type="date"
-              value={date}
-              onChange={(event) => setDate(event.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="transaction-payment-method">Payment method</Label>
-            <select
-              id="transaction-payment-method"
-              value={paymentMethodId}
-              onChange={(event) => setPaymentMethodId(event.target.value)}
-              className="flex h-11 min-h-11 w-full min-w-0 rounded-xl border border-input bg-transparent px-3 text-base shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
-            >
-              <option value="">None</option>
-              {paymentMethods.map((method) => (
-                <option key={method.id} value={method.id}>
-                  {method.icon ? `${method.icon} ` : ""}
-                  {method.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          )}
         </div>
 
-        {noteOpen ? (
-          <div className="space-y-1.5">
-            <Label htmlFor="transaction-note">Note (optional)</Label>
-            <Textarea
-              id="transaction-note"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              rows={2}
-              autoFocus={note === ""}
-            />
-          </div>
-        ) : (
+        <div className="space-y-1.5">
+          <Label htmlFor="transaction-payment-method">Payment method</Label>
+          <select
+            id="transaction-payment-method"
+            value={paymentMethodId}
+            onChange={(event) => setPaymentMethodId(event.target.value)}
+            className="flex h-11 min-h-11 w-full min-w-0 rounded-xl border border-input bg-transparent px-3 text-base shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
+          >
+            <option value="">None</option>
+            {paymentMethods.map((method) => (
+              <option key={method.id} value={method.id}>
+                {method.icon ? `${method.icon} ` : ""}
+                {method.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="border-t border-border pt-1">
           <button
             type="button"
-            onClick={() => setNoteOpen(true)}
-            className="flex min-h-11 items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground sm:min-h-8"
+            onClick={() => setDetailsOpen((current) => !current)}
+            aria-expanded={detailsOpen}
+            aria-controls="transaction-more-details"
+            className="flex min-h-11 w-full items-center justify-between gap-3 rounded-md py-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Plus className="size-3.5" aria-hidden="true" />
-            Add a note
+            <span className="min-w-0">
+              <span className="block text-sm font-medium">More details</span>
+              <span className="block truncate text-sm text-muted-foreground">{detailsSummary}</span>
+            </span>
+            <ChevronDown
+              className={cn(
+                "size-4 shrink-0 text-muted-foreground transition-transform motion-reduce:transition-none",
+                detailsOpen && "rotate-180",
+              )}
+              aria-hidden="true"
+            />
           </button>
-        )}
 
-        {mode === "create" && (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={handleSaveAsTemplate}
-              disabled={savingTemplate}
-              className="min-h-11 text-xs font-semibold text-foreground underline-offset-4 hover:underline disabled:opacity-50 sm:min-h-9"
-            >
-              {savingTemplate ? "Saving…" : "Save as template"}
-            </button>
-            {templateMessage && (
-              <span className="text-xs text-muted-foreground">{templateMessage}</span>
-            )}
-          </div>
-        )}
+          {detailsOpen && (
+            <div id="transaction-more-details" className="mt-3 space-y-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="transaction-date">Date</Label>
+                  <div className="flex gap-1">
+                    {[
+                      { label: "Today", value: localToday() },
+                      { label: "Yesterday", value: localToday(1) },
+                    ].map((option) => (
+                      <button
+                        key={option.label}
+                        type="button"
+                        onClick={() => setDate(option.value)}
+                        aria-pressed={date === option.value}
+                        className={cn(
+                          "min-h-9 rounded-full px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:min-h-11",
+                          date === option.value
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <Input
+                  id="transaction-date"
+                  type="date"
+                  value={date}
+                  onChange={(event) => setDate(event.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="transaction-note">Note (optional)</Label>
+                <Textarea
+                  id="transaction-note"
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  rows={2}
+                />
+              </div>
+
+              {mode === "create" && (
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSaveAsTemplate}
+                    disabled={savingTemplate}
+                    className="min-h-11 rounded-md text-sm font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                  >
+                    {savingTemplate ? "Saving…" : "Save as template"}
+                  </button>
+                  {templateMessage && (
+                    <span className="text-sm text-muted-foreground">{templateMessage}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {error && (
           <p

@@ -1,47 +1,41 @@
 "use client"
 
-import { CheckCircle2, PiggyBank, Target, TrendingUp } from "lucide-react"
-import { FinanceMetricCard, FinanceMetricGrid } from "@/components/finance/ui/finance-primitives"
+import { AmountText, FinanceProgress } from "@/components/finance/ui/finance-primitives"
 import { usd } from "@/lib/finance-format"
+import { goalsReachedLabel, savingsTotals } from "@/lib/finance/savings-display"
 import type { SavingsGoal } from "@/types/finance"
 
+/**
+ * Combined progress as one line — saved of target, the overall percent and
+ * how many goals are reached. Replaces the four summary tiles and keeps
+ * their four figures.
+ */
 export function SavingsSummary({ goals }: { goals: SavingsGoal[] }) {
-  const totalSavedUsd = goals.reduce((sum, goal) => sum + goal.currentUsd, 0)
-  const totalTargetUsd = goals.reduce((sum, goal) => sum + goal.targetUsd, 0)
-  const overallPct = totalTargetUsd > 0 ? Math.round((totalSavedUsd / totalTargetUsd) * 100) : 0
-  const reachedCount = goals.filter(
-    (goal) => goal.targetUsd > 0 && goal.currentUsd >= goal.targetUsd,
-  ).length
+  const totals = savingsTotals(goals)
 
   return (
-    <FinanceMetricGrid>
-      <FinanceMetricCard
-        label="Total saved"
-        value={usd.format(totalSavedUsd)}
-        detail="Across all goals"
-        icon={PiggyBank}
-        tone="positive"
-      />
-      <FinanceMetricCard
-        label="Total target"
-        value={usd.format(totalTargetUsd)}
-        detail={`${goals.length} goal${goals.length === 1 ? "" : "s"}`}
-        icon={Target}
-      />
-      <FinanceMetricCard
-        label="Overall progress"
-        value={`${overallPct}%`}
-        detail="Saved of combined targets"
-        icon={TrendingUp}
-        tone={overallPct >= 100 ? "positive" : "neutral"}
-      />
-      <FinanceMetricCard
-        label="Goals reached"
-        value={String(reachedCount)}
-        detail={reachedCount > 0 ? "At or above target" : "Keep contributing"}
-        icon={CheckCircle2}
-        tone={reachedCount > 0 ? "positive" : "neutral"}
-      />
-    </FinanceMetricGrid>
+    <section aria-labelledby="savings-summary" className="min-w-0">
+      {/* Kept as the section's anchor; the figures below say what it is. */}
+      <h2 id="savings-summary" className="sr-only">
+        Summary
+      </h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <p className="[overflow-wrap:anywhere] text-2xl font-semibold tracking-tight tabular-nums">
+          <AmountText value={usd.format(totals.totalSavedUsd)} />{" "}
+          <span className="text-base font-medium text-muted-foreground">saved</span>
+        </p>
+        <p className="text-sm font-medium tabular-nums">{totals.overallPct}% of combined targets</p>
+      </div>
+      <div className="mt-2">
+        <FinanceProgress
+          value={totals.overallPct}
+          label={`${totals.overallPct}% saved of combined targets`}
+        />
+      </div>
+      <p className="mt-2 [overflow-wrap:anywhere] text-sm text-muted-foreground tabular-nums">
+        Target {usd.format(totals.totalTargetUsd)} ·{" "}
+        {goalsReachedLabel(totals.reachedCount, totals.count)}
+      </p>
+    </section>
   )
 }

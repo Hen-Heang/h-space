@@ -1,65 +1,42 @@
 "use client"
 
-import { WalletCards } from "lucide-react"
-import { CategoryDonut } from "@/components/finance/analytics/category-donut"
-import {
-  CategoryIcon,
-  FinanceEmptyState,
-  FinanceProgress,
-} from "@/components/finance/ui/finance-primitives"
-import { krw } from "@/lib/finance-format"
+import { RankedRow } from "@/components/finance/analytics/ranked-rows"
+import { CategoryIcon } from "@/components/finance/ui/finance-primitives"
+import { RowList } from "@/components/ui/row-list"
+import { rankedShares } from "@/lib/finance/analytics-display"
 import type { CategoryAmount } from "@/types/finance"
 
+/** Every expense category, largest first, with its share of the month's expenses. */
 export function CategoryDistribution({ categories }: { categories: CategoryAmount[] }) {
   if (categories.length === 0) {
     return (
-      <FinanceEmptyState
-        icon={WalletCards}
-        title="No expenses recorded"
-        description="Category distribution appears once you log expenses this month."
-      />
+      <p className="text-sm text-muted-foreground">
+        No expenses recorded. Category distribution appears once you log expenses this month.
+      </p>
     )
   }
 
-  const total = categories.reduce((sum, category) => sum + category.amountKrw, 0)
+  const { rows } = rankedShares(categories, (category) => category.amountKrw)
 
   return (
-    <div className="overflow-hidden rounded-2xl border bg-card">
-      <div className="border-b border-border p-4">
-        <CategoryDonut categories={categories} />
-      </div>
-      <div className="divide-y divide-border">
-        {categories.map((category) => {
-          const share = total > 0 ? (category.amountKrw / total) * 100 : 0
-          return (
-            <div key={category.categoryId ?? category.categoryName} className="p-4">
-              <div className="flex items-center gap-3">
-                <CategoryIcon icon={category.categoryIcon} color={category.categoryColor} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 items-baseline justify-between gap-2">
-                    <p className="min-w-0 flex-1 truncate text-sm font-semibold">
-                      {category.categoryName}
-                    </p>
-                    <p className="shrink-0 whitespace-nowrap font-mono text-sm font-semibold tabular-nums">
-                      {krw.format(category.amountKrw)}
-                    </p>
-                  </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {share.toFixed(0)}% of expenses
-                  </p>
-                  <div className="mt-2">
-                    <FinanceProgress
-                      value={share}
-                      label={`${category.categoryName} is ${share.toFixed(0)}% of expenses`}
-                      color={category.categoryColor}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </div>
+    <RowList surface>
+      {rows.map(({ item: category, amountKrw, sharePct }, index) => (
+        <RankedRow
+          key={category.categoryId ?? category.categoryName}
+          rank={index + 1}
+          leading={
+            <CategoryIcon
+              icon={category.categoryIcon}
+              color={category.categoryColor}
+              className="size-9 rounded-lg border-0 text-base"
+            />
+          }
+          name={category.categoryName}
+          amountKrw={amountKrw}
+          sharePct={sharePct}
+          barColor={category.categoryColor}
+        />
+      ))}
+    </RowList>
   )
 }

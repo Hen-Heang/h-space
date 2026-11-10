@@ -7,11 +7,12 @@ import { Button } from "@/components/finance/base/button"
 import {
   FinanceEmptyState,
   FinanceErrorState,
-  FinanceMetricGrid,
   FinanceSection,
 } from "@/components/finance/ui/finance-primitives"
+import { RowList } from "@/components/ui/row-list"
 import { SavingsSummary } from "@/components/finance/savings/savings-summary"
-import { SavingsGoalCard } from "@/components/finance/savings/savings-goal-card"
+import { SavingsGoalRow } from "@/components/finance/savings/savings-goal-row"
+import { SavingsGoalDetailSheet } from "@/components/finance/savings/savings-goal-detail-sheet"
 import { SavingsGoalSheet } from "@/components/finance/savings/savings-goal-sheet"
 import { ContributionSheet } from "@/components/finance/savings/contribution-sheet"
 import { DeleteSavingsGoalDialog } from "@/components/finance/savings/delete-savings-goal-dialog"
@@ -28,14 +29,19 @@ import type { SavingsGoal } from "@/types/finance"
 function SavingsListSkeleton() {
   return (
     <div className="space-y-6" aria-busy="true" aria-label="Loading savings goals">
-      <FinanceMetricGrid>
-        {[0, 1, 2, 3].map((card) => (
-          <div key={card} className="h-28 rounded-2xl bg-secondary motion-safe:animate-pulse" />
-        ))}
-      </FinanceMetricGrid>
-      <div className="space-y-3">
-        {[0, 1].map((card) => (
-          <div key={card} className="h-48 rounded-2xl bg-secondary motion-safe:animate-pulse" />
+      <div className="space-y-2">
+        <div className="h-8 w-48 rounded-lg bg-secondary motion-safe:animate-pulse" />
+        <div className="h-2 rounded-full bg-secondary motion-safe:animate-pulse" />
+      </div>
+      <div className="app-surface divide-y divide-border overflow-hidden">
+        {[0, 1].map((row) => (
+          <div key={row} className="flex gap-3 px-3 py-3 sm:px-4">
+            <div className="size-9 shrink-0 rounded-lg bg-secondary motion-safe:animate-pulse" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-2/3 rounded bg-secondary motion-safe:animate-pulse" />
+              <div className="h-2 rounded-full bg-secondary motion-safe:animate-pulse" />
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -50,6 +56,9 @@ export function SavingsList() {
   // A failed background refresh keeps the goals already on screen.
   const loadError = savings.isError && !savings.data
 
+  // The goal sheet tracks an id so it always shows the latest cached goal.
+  const [detailGoalId, setDetailGoalId] = useState<string | null>(null)
+  const detailGoal = goals.find((goal) => goal.id === detailGoalId) ?? null
   const [goalSheet, setGoalSheet] = useState<{
     mode: "create" | "edit"
     goal?: SavingsGoal
@@ -94,6 +103,12 @@ export function SavingsList() {
     }
   }
 
+  // Each action in the goal sheet closes it and opens its own form or dialog.
+  function fromGoalSheet(open: () => void) {
+    setDetailGoalId(null)
+    open()
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -128,33 +143,34 @@ export function SavingsList() {
         />
       ) : (
         <>
-          <FinanceSection
-            id="savings-summary"
-            title="Summary"
-            description="Combined progress across every goal."
-          >
-            <SavingsSummary goals={goals} />
-          </FinanceSection>
+          <SavingsSummary goals={goals} />
 
           <FinanceSection
             id="savings-goals"
             title="Goals"
-            description="Progress, remaining balance, and target date for each goal."
+            description="Select a goal to add a contribution, edit or delete it."
           >
-            <div className="space-y-3">
+            <RowList surface>
               {goals.map((goal) => (
-                <SavingsGoalCard
+                <SavingsGoalRow
                   key={goal.id}
                   goal={goal}
-                  onContribute={setContributionTarget}
-                  onEdit={(target) => setGoalSheet({ mode: "edit", goal: target })}
-                  onDeleteRequest={setDeleteTarget}
+                  onOpen={(target) => setDetailGoalId(target.id)}
                 />
               ))}
-            </div>
+            </RowList>
           </FinanceSection>
         </>
       )}
+
+      <SavingsGoalDetailSheet
+        goal={detailGoal}
+        open={detailGoal !== null}
+        onOpenChange={(open) => !open && setDetailGoalId(null)}
+        onContribute={(goal) => fromGoalSheet(() => setContributionTarget(goal))}
+        onEdit={(goal) => fromGoalSheet(() => setGoalSheet({ mode: "edit", goal }))}
+        onDeleteRequest={(goal) => fromGoalSheet(() => setDeleteTarget(goal))}
+      />
 
       <SavingsGoalSheet
         mode={goalSheet?.mode ?? "create"}

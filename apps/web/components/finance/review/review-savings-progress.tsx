@@ -1,64 +1,84 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, PiggyBank } from "lucide-react"
-import { FinanceEmptyState, FinanceProgress } from "@/components/finance/ui/finance-primitives"
-import { buttonVariants } from "@/components/finance/base/button"
-import { usd } from "@/lib/finance-format"
+import { ChevronRight } from "lucide-react"
+import { AmountText, FinanceProgress } from "@/components/finance/ui/finance-primitives"
+import { RowList } from "@/components/ui/row-list"
+import { krw, usd } from "@/lib/finance-format"
+import { savingsGoalsLabel } from "@/lib/finance/review-display"
 import type { SavingsProgress } from "@/types/finance"
 
-export function ReviewSavingsProgressCard({ progress }: { progress: SavingsProgress }) {
-  if (progress.goalsCount === 0) {
-    return (
-      <FinanceEmptyState
-        icon={PiggyBank}
-        title="No savings goals yet"
-        description="Create a goal to track progress here month over month."
-        action={
-          <Link
-            href="/finance/savings"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Open Savings
-          </Link>
-        }
-      />
-    )
-  }
+const ROW =
+  "-mx-2 flex min-h-14 min-w-0 items-start gap-3 rounded-md px-2 py-3 outline-none transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
 
+/**
+ * Savings goals and subscriptions as two flat rows, each opening its page.
+ * Replaces a whole section for the single subscriptions tile and a separate
+ * savings card. Shared with the weekly and monthly reports.
+ */
+export function ReviewSavingsAndSubscriptions({
+  progress,
+  subscriptionsMonthlyKrw,
+  subscriptionsId,
+}: {
+  progress: SavingsProgress
+  subscriptionsMonthlyKrw: number
+  /** Anchor id for the subscriptions row (the Review keeps `#review-subscriptions`). */
+  subscriptionsId?: string
+}) {
   return (
-    <div className="rounded-2xl border bg-card p-4 sm:p-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs text-muted-foreground">Saved of combined targets</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums">
-            {usd.format(progress.totalSavedUsd)}
-            <span className="ml-1 text-sm font-medium text-muted-foreground">
-              / {usd.format(progress.totalTargetUsd)}
+    <RowList className="border-y border-border">
+      <li>
+        <Link href="/finance/savings" className={ROW}>
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-baseline justify-between gap-x-3">
+              <span className="text-base font-medium leading-snug">Savings goals</span>
+              {progress.goalsCount > 0 && (
+                <span className="ml-auto text-base font-semibold tabular-nums">
+                  {progress.overallPct}%
+                </span>
+              )}
             </span>
-          </p>
-        </div>
-        <p className="text-sm font-semibold text-foreground">{progress.overallPct}%</p>
-      </div>
-      <div className="mt-3">
-        <FinanceProgress
-          value={progress.overallPct}
-          label={`${progress.overallPct}% of combined savings targets reached`}
-          tone="positive"
-        />
-      </div>
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-        <span>
-          {progress.goalsCount} goal{progress.goalsCount === 1 ? "" : "s"}
-          {progress.goalsReachedCount > 0 ? ` · ${progress.goalsReachedCount} reached` : ""}
-        </span>
-        <Link
-          href="/finance/savings"
-          className="inline-flex items-center gap-1 font-semibold text-foreground underline-offset-4 hover:underline"
-        >
-          View goals <ArrowRight className="size-3.5" aria-hidden="true" />
+            {progress.goalsCount === 0 ? (
+              <span className="mt-0.5 block text-sm text-muted-foreground">
+                No savings goals yet. Create one in Savings to track progress here month over month.
+              </span>
+            ) : (
+              <>
+                <span className="mt-0.5 block [overflow-wrap:anywhere] text-sm text-muted-foreground tabular-nums">
+                  {usd.format(progress.totalSavedUsd)} of {usd.format(progress.totalTargetUsd)} ·{" "}
+                  {savingsGoalsLabel(progress)}
+                </span>
+                <span className="mt-2 block">
+                  <FinanceProgress
+                    value={progress.overallPct}
+                    label={`${progress.overallPct}% of combined savings targets reached`}
+                    tone="positive"
+                  />
+                </span>
+              </>
+            )}
+          </span>
+          <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         </Link>
-      </div>
-    </div>
+      </li>
+      <li id={subscriptionsId}>
+        <Link href="/finance/subscriptions" className={ROW}>
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-baseline justify-between gap-x-3">
+              <span className="text-base font-medium leading-snug">Subscriptions</span>
+              <span className="ml-auto [overflow-wrap:anywhere] text-base font-semibold tabular-nums">
+                <AmountText value={krw.format(subscriptionsMonthlyKrw)} />
+                <span className="font-normal text-muted-foreground">/mo</span>
+              </span>
+            </span>
+            <span className="mt-0.5 block text-sm text-muted-foreground">
+              Estimated recurring cost, excluding cancelled
+            </span>
+          </span>
+          <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        </Link>
+      </li>
+    </RowList>
   )
 }

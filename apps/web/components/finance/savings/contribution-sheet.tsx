@@ -117,7 +117,7 @@ function ContributionSheetFields({
           <CategoryIcon icon={goal.icon} color={goal.color} />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">{goal.name}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {usd.format(goal.currentUsd)} of {usd.format(goal.targetUsd)}
             </p>
           </div>
@@ -151,13 +151,13 @@ function ContributionSheetFields({
         <div className="space-y-1.5">
           <Label>Recent contributions</Label>
           {history.state === "loading" ? (
-            <p className="text-xs text-muted-foreground">Loading history…</p>
+            <p className="text-sm text-muted-foreground">Loading history…</p>
           ) : history.state === "error" ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Couldn&apos;t load contribution history.
             </p>
           ) : history.contributions.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No contributions recorded yet.</p>
+            <p className="text-sm text-muted-foreground">No contributions recorded yet.</p>
           ) : (
             <div className="overflow-hidden rounded-xl border">
               <div className="max-h-40 divide-y divide-border overflow-y-auto">
@@ -169,7 +169,7 @@ function ContributionSheetFields({
                     <span className="text-muted-foreground">
                       {formatContributionDate(contribution.createdAt)}
                     </span>
-                    <span className="font-mono font-medium tabular-nums">
+                    <span className="font-medium tabular-nums">
                       +{usd.format(contribution.amountUsd)}
                     </span>
                   </div>

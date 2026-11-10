@@ -17,6 +17,7 @@ import { applyBudgetPlan } from "@/lib/api/finance"
 import { monthKeyLabel } from "@/lib/finance-cron-time"
 import { krw } from "@/lib/finance-format"
 import { useInvalidateAfter } from "@/lib/query/finance-queries"
+import { cn } from "@/lib/utils"
 import type { BudgetRecommendation, NextMonthBudgetPlan } from "@/types/finance"
 
 function isChange(recommendation: BudgetRecommendation): boolean {
@@ -111,32 +112,34 @@ export function ReviewNextMonthPlan({
 
   return (
     <div className="space-y-4">
-      <p className="text-xs leading-5 text-muted-foreground">
-        Based on {plan.monthsAnalyzed.map(monthKeyLabel).join(", ")}. Only categories you marked
-        Flexible or Avoidable are trimmed, and only by a small step.
-      </p>
-
-      {plan.projectedSavingsRatePct !== null && (
-        <div className="rounded-xl border bg-secondary/40 p-3 text-sm">
-          <p>
-            Following every suggestion leaves a projected savings rate of{" "}
-            <span className="font-semibold tabular-nums">{plan.projectedSavingsRatePct}%</span>{" "}
-            against your <span className="tabular-nums">{plan.targetSavingsRatePct}%</span> target.
-          </p>
-          {plan.otherSpendingKrw > 0 && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Includes about {krw.format(plan.otherSpendingKrw)} a month of uncategorized or
-              occasional spending that no budget covers.
+      <div className="max-w-2xl space-y-1.5 text-sm leading-relaxed text-muted-foreground">
+        <p>
+          Based on {plan.monthsAnalyzed.map(monthKeyLabel).join(", ")}. Only categories you marked
+          Flexible or Avoidable are trimmed, and only by a small step.
+        </p>
+        {plan.projectedSavingsRatePct !== null && (
+          <>
+            <p className="text-base text-foreground">
+              Following every suggestion leaves a projected savings rate of{" "}
+              <span className="font-semibold tabular-nums">{plan.projectedSavingsRatePct}%</span>{" "}
+              against your <span className="tabular-nums">{plan.targetSavingsRatePct}%</span>{" "}
+              target.
             </p>
-          )}
-          {plan.additionalTrimNeededKrw > 0 && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Reaching the target would take about {krw.format(plan.additionalTrimNeededKrw)} more
-              in cuts — that&apos;s information only; nothing is trimmed for you.
-            </p>
-          )}
-        </div>
-      )}
+            {plan.otherSpendingKrw > 0 && (
+              <p>
+                Includes about {krw.format(plan.otherSpendingKrw)} a month of uncategorized or
+                occasional spending that no budget covers.
+              </p>
+            )}
+            {plan.additionalTrimNeededKrw > 0 && (
+              <p>
+                Reaching the target would take about {krw.format(plan.additionalTrimNeededKrw)} more
+                in cuts — that&apos;s information only; nothing is trimmed for you.
+              </p>
+            )}
+          </>
+        )}
+      </div>
 
       {appliedCount !== null && (
         <p className="flex items-center gap-1.5 text-sm font-medium text-success" role="status">
@@ -155,62 +158,69 @@ export function ReviewNextMonthPlan({
         </p>
       )}
 
-      <div className="overflow-hidden rounded-2xl border bg-card">
-        <ul className="divide-y divide-border">
-          {plan.recommendations.map((rec) => {
-            const changed = isChange(rec)
-            const delta = rec.recommendedBudgetKrw - rec.currentBudgetKrw
-            const inputId = `plan-${rec.categoryId}`
-            return (
-              <li key={rec.categoryId}>
-                <label
-                  htmlFor={inputId}
-                  className={`flex gap-3 p-4 ${changed ? "cursor-pointer" : ""}`}
-                >
-                  <input
-                    id={inputId}
-                    type="checkbox"
-                    checked={selected.has(rec.categoryId)}
-                    disabled={!changed || applying}
-                    onChange={() => toggle(rec.categoryId)}
-                    className="mt-1 size-5 shrink-0 rounded border-input disabled:opacity-40"
-                    aria-label={`Apply new budget for ${rec.categoryName}`}
-                  />
-                  <CategoryIcon icon={rec.categoryIcon} color={rec.categoryColor} />
-                  <span className="min-w-0 flex-1">
-                    <span className="flex flex-col items-start gap-1 xs:flex-row xs:items-baseline xs:justify-between xs:gap-3">
-                      <span className="truncate text-sm font-semibold">{rec.categoryName}</span>
-                      <span className="font-mono text-sm tabular-nums">
-                        {rec.currentBudgetKrw > 0 && changed && (
-                          <span className="mr-2 text-muted-foreground line-through">
-                            {krw.format(rec.currentBudgetKrw)}
-                          </span>
-                        )}
-                        <span className="font-semibold">
-                          {krw.format(rec.recommendedBudgetKrw)}
-                        </span>
-                        {changed && (
-                          <span
-                            className={`ml-1.5 text-xs ${delta < 0 ? "text-success" : "text-warning"}`}
-                          >
-                            {signedKrw(delta)}
-                          </span>
-                        )}
-                      </span>
+      <ul className="divide-y divide-border border-y border-border">
+        {plan.recommendations.map((rec) => {
+          const changed = isChange(rec)
+          const delta = rec.recommendedBudgetKrw - rec.currentBudgetKrw
+          const inputId = `plan-${rec.categoryId}`
+          return (
+            <li key={rec.categoryId}>
+              <label
+                htmlFor={inputId}
+                className={cn("flex min-h-14 gap-3 py-3", changed && "cursor-pointer")}
+              >
+                <input
+                  id={inputId}
+                  type="checkbox"
+                  checked={selected.has(rec.categoryId)}
+                  disabled={!changed || applying}
+                  onChange={() => toggle(rec.categoryId)}
+                  className="mt-2 size-5 shrink-0 rounded border-input accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
+                  aria-label={`Apply new budget for ${rec.categoryName}`}
+                />
+                <CategoryIcon
+                  icon={rec.categoryIcon}
+                  color={rec.categoryColor}
+                  className="size-9 rounded-lg border-0 text-base"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                    <span className="min-w-0 flex-1 basis-32 break-words text-base font-medium leading-snug">
+                      {rec.categoryName}
                     </span>
-                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                      {changed ? rec.rationale : "Already matches your budget — nothing to change."}
+                    <span className="ml-auto [overflow-wrap:anywhere] text-right text-base tabular-nums">
+                      {rec.currentBudgetKrw > 0 && changed && (
+                        <span className="mr-2 text-sm text-muted-foreground line-through">
+                          <span className="sr-only">was </span>
+                          {krw.format(rec.currentBudgetKrw)}
+                        </span>
+                      )}
+                      <span className="font-semibold">{krw.format(rec.recommendedBudgetKrw)}</span>
+                      {changed && (
+                        <span
+                          className={cn(
+                            "ml-1.5 text-sm",
+                            delta < 0 ? "text-success" : "text-warning",
+                          )}
+                        >
+                          {signedKrw(delta)}
+                        </span>
+                      )}
                     </span>
                   </span>
-                </label>
-              </li>
-            )
-          })}
-        </ul>
-      </div>
+                  <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+                    {changed ? rec.rationale : "Already matches your budget — nothing to change."}
+                  </span>
+                </span>
+              </label>
+            </li>
+          )
+        })}
+      </ul>
 
+      {/* The Review's one primary action. */}
       <Button
-        className="min-h-11 w-full"
+        className="min-h-11 w-full sm:w-auto"
         onClick={() => setConfirmOpen(true)}
         disabled={selectedRecommendations.length === 0 || applying || changeCount === 0}
       >

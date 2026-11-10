@@ -201,7 +201,7 @@ function SavingsGoalSheetFields({
                 onClick={() => setPurpose(purpose === option ? null : option)}
                 aria-pressed={purpose === option}
                 className={cn(
-                  "min-h-11 rounded-full border px-4 py-2 text-xs font-bold transition-all active:scale-95",
+                  "min-h-11 rounded-full border px-4 py-2 text-sm font-medium transition-all active:scale-95",
                   purpose === option
                     ? "border-primary/40 bg-primary text-primary-foreground shadow-md"
                     : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",

@@ -80,7 +80,7 @@ export function CategoriesSection() {
   if (loading) {
     return (
       <div
-        className="h-32 rounded-2xl bg-secondary motion-safe:animate-pulse"
+        className="h-32 rounded-lg bg-secondary motion-safe:animate-pulse"
         aria-busy="true"
         aria-label="Loading categories"
       />
@@ -111,13 +111,20 @@ export function CategoriesSection() {
         />
       ) : (
         <>
-          <ul className="divide-y divide-border overflow-hidden rounded-2xl border bg-card">
+          <ul className="app-surface divide-y divide-border overflow-hidden">
             {categories.map((category) => (
-              <li key={category.id} className="flex items-center gap-3 px-3 py-2">
-                <CategoryIcon icon={category.icon} color={category.color} />
+              <li
+                key={category.id}
+                className="flex min-h-14 items-center gap-3 py-1.5 pr-1.5 pl-3 sm:pl-4"
+              >
+                <CategoryIcon
+                  icon={category.icon}
+                  color={category.color}
+                  className="size-9 rounded-lg border-0 text-base"
+                />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{category.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="truncate text-base font-medium">{category.name}</p>
+                  <p className="text-sm text-muted-foreground">
                     {CATEGORY_TYPE_LABELS[category.type]}
                     {category.spendingClass
                       ? ` · ${SPENDING_CLASS_META[category.spendingClass].label}`

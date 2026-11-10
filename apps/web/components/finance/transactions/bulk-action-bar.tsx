@@ -66,7 +66,7 @@ export function BulkActionBar({
   return (
     <>
       <div
-        className="sticky top-2 z-30 flex flex-wrap items-center gap-2 rounded-2xl border bg-card/95 p-2 shadow-lg shadow-black/5 backdrop-blur"
+        className="sticky top-[calc(var(--shell-header-h,0px)+0.5rem)] z-30flex flex-wrap items-center gap-2 rounded-2xl border bg-card/95 p-2 shadow-lg shadow-black/5 backdrop-blur"
         role="toolbar"
         aria-label="Bulk actions"
       >
