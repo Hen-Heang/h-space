@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useId, useState, type ReactNode } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Combine, Loader2, Undo2 } from "lucide-react"
+import { ChevronDown, Combine, Loader2, Undo2 } from "lucide-react"
 import { Button } from "@/components/finance/base/button"
 import { Input } from "@/components/finance/base/input"
 import { FinanceErrorState } from "@/components/finance/ui/finance-primitives"
@@ -14,7 +14,9 @@ import {
   type MerchantMergeSuggestion,
 } from "@/lib/api/finance"
 import { krw } from "@/lib/finance-format"
+import { mergedNamesLabel, similarNamesLabel } from "@/lib/finance/subscriptions-display"
 import { financeKeys } from "@/lib/query/finance-queries"
+import { cn } from "@/lib/utils"
 
 const VISIBLE_SUGGESTIONS = 3
 const DISMISSED_KEY = "luyra:dismissed-merchant-merges"
@@ -46,6 +48,9 @@ const merchantNamesKey = () => [...financeKeys.user(), "merchant-names"] as cons
  * so subscriptions count them together. Only suggestions — nothing merges
  * until confirmed — and every merge can be undone. Transactions keep their
  * original descriptions either way.
+ *
+ * Suggestions and existing merges each sit behind a disclosure row ("Review
+ * 5 similar names", "2 merged names") so they don't crowd the page.
  */
 export function MerchantNamesSection({ onChanged }: { onChanged: () => void }) {
   const queryClient = useQueryClient()
@@ -110,7 +115,7 @@ export function MerchantNamesSection({ onChanged }: { onChanged: () => void }) {
   if (names.isPending) {
     return (
       <div
-        className="h-24 rounded-2xl bg-secondary motion-safe:animate-pulse"
+        className="h-14 rounded-2xl bg-secondary motion-safe:animate-pulse"
         aria-busy="true"
         aria-label="Loading merchant names"
       />
@@ -131,7 +136,7 @@ export function MerchantNamesSection({ onChanged }: { onChanged: () => void }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {error && (
         <p
           className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
@@ -141,70 +146,120 @@ export function MerchantNamesSection({ onChanged }: { onChanged: () => void }) {
         </p>
       )}
 
-      {visible.length > 0 && (
-        <ul className="space-y-3">
-          {visible.map((suggestion) => (
-            <SuggestionCard
-              key={suggestion.id}
-              suggestion={suggestion}
-              busy={busy === suggestion.id}
-              disabled={busy !== null}
-              onMerge={(name) => void handleMerge(suggestion, name)}
-              onDismiss={() => dismiss(suggestion.id)}
-            />
-          ))}
-        </ul>
-      )}
-      {suggestions.length > VISIBLE_SUGGESTIONS && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="min-h-11"
-          onClick={() => setShowAll((value) => !value)}
-        >
-          {showAll ? "Show fewer" : `Show ${suggestions.length - VISIBLE_SUGGESTIONS} more`}
-        </Button>
-      )}
-
-      {merges.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Merged
-          </p>
-          <ul className="divide-y divide-border overflow-hidden rounded-2xl border bg-card">
-            {merges.map((merge) => (
-              <li key={merge.name} className="flex items-center gap-3 px-3 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{merge.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {merge.variants.map((variant) => variant.sample).join(" · ")}
-                  </p>
-                </div>
+      <div className="app-surface divide-y divide-border overflow-hidden">
+        {suggestions.length > 0 && (
+          <Disclosure
+            label={similarNamesLabel(suggestions)}
+            description="Possible spellings of the same merchant. Nothing merges until you confirm."
+          >
+            <ul className="divide-y divide-border">
+              {visible.map((suggestion) => (
+                <SuggestionRow
+                  key={suggestion.id}
+                  suggestion={suggestion}
+                  busy={busy === suggestion.id}
+                  disabled={busy !== null}
+                  onMerge={(name) => void handleMerge(suggestion, name)}
+                  onDismiss={() => dismiss(suggestion.id)}
+                />
+              ))}
+            </ul>
+            {suggestions.length > VISIBLE_SUGGESTIONS && (
+              <div className="border-t border-border px-3 py-1 sm:px-4">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="min-h-11 shrink-0"
-                  onClick={() => void handleUnmerge(merge.name)}
-                  disabled={busy !== null}
-                  aria-label={`Undo merge for ${merge.name}`}
+                  className="-ml-2 min-h-11"
+                  onClick={() => setShowAll((value) => !value)}
                 >
-                  {busy === `merge:${merge.name}` ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Undo2 className="size-4" />
-                  )}
-                  Undo
+                  {showAll ? "Show fewer" : `Show ${suggestions.length - VISIBLE_SUGGESTIONS} more`}
                 </Button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+              </div>
+            )}
+          </Disclosure>
+        )}
+
+        {merges.length > 0 && (
+          <Disclosure
+            label={mergedNamesLabel(merges.length)}
+            description="Undo a merge to count those names separately again."
+          >
+            <ul className="divide-y divide-border">
+              {merges.map((merge) => (
+                <li key={merge.name} className="flex items-center gap-3 px-3 py-2 sm:px-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words text-base font-medium">{merge.name}</p>
+                    <p className="break-words text-sm text-muted-foreground">
+                      {merge.variants.map((variant) => variant.sample).join(" · ")}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="min-h-11 shrink-0"
+                    onClick={() => void handleUnmerge(merge.name)}
+                    disabled={busy !== null}
+                    aria-label={`Undo merge for ${merge.name}`}
+                  >
+                    {busy === `merge:${merge.name}` ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Undo2 className="size-4" />
+                    )}
+                    Undo
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </Disclosure>
+        )}
+      </div>
     </div>
   )
 }
 
-function SuggestionCard({
+/** A full-width row that shows or hides the content under it. */
+function Disclosure({
+  label,
+  description,
+  children,
+}: {
+  label: string
+  description: string
+  children: ReactNode
+}) {
+  const [open, setOpen] = useState(false)
+  const panelId = useId()
+
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((value) => !value)}
+        className="flex min-h-14 w-full min-w-0 items-center gap-3 px-3 py-3 text-left outline-none transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-4"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block text-base font-medium leading-snug">{label}</span>
+          <span className="mt-0.5 block text-sm text-muted-foreground">{description}</span>
+        </span>
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground motion-safe:transition-transform",
+            open && "rotate-180",
+          )}
+          aria-hidden="true"
+        />
+      </button>
+      <div id={panelId} hidden={!open} className="border-t border-border">
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function SuggestionRow({
   suggestion,
   busy,
   disabled,
@@ -221,24 +276,29 @@ function SuggestionCard({
   const inputId = `merge-name-${suggestion.id}`
 
   return (
-    <li className="space-y-3 rounded-2xl border bg-card p-4">
+    <li className="space-y-3 px-3 py-3 sm:px-4">
       <div>
-        <p className="text-sm font-semibold">Same merchant?</p>
-        <ul className="mt-1.5 flex flex-wrap gap-1.5">
-          {suggestion.members.map((member) => (
-            <li key={member.key} className="rounded-full bg-secondary px-2.5 py-1 text-xs">
+        <p className="text-base font-medium">Same merchant?</p>
+        <ul className="mt-0.5 break-words text-sm">
+          {suggestion.members.map((member, index) => (
+            <li key={member.key} className="inline">
+              {index > 0 && (
+                <span className="text-muted-foreground" aria-hidden="true">
+                  {" · "}
+                </span>
+              )}
               {member.sample} <span className="text-muted-foreground">×{member.count}</span>
             </li>
           ))}
         </ul>
-        <p className="mt-1.5 text-xs text-muted-foreground">
+        <p className="mt-0.5 text-sm text-muted-foreground tabular-nums">
           {suggestion.occurrenceCount} payments, {krw.format(suggestion.totalKrw)} in the last 6
           months.
         </p>
       </div>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="min-w-0 flex-1 space-y-1">
-          <label htmlFor={inputId} className="text-xs font-medium text-muted-foreground">
+          <label htmlFor={inputId} className="text-sm font-medium text-muted-foreground">
             Show as
           </label>
           <Input
@@ -250,7 +310,7 @@ function SuggestionCard({
         </div>
         <div className="flex gap-2">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             className="min-h-11 flex-1 sm:flex-none"
             onClick={onDismiss}
@@ -259,6 +319,7 @@ function SuggestionCard({
             Not the same
           </Button>
           <Button
+            variant="outline"
             size="sm"
             className="min-h-11 flex-1 sm:flex-none"
             onClick={() => onMerge(name.trim())}

@@ -7,11 +7,11 @@ import { Button } from "@/components/finance/base/button"
 import {
   FinanceEmptyState,
   FinanceErrorState,
-  FinanceMetricGrid,
   FinanceSection,
   MonthSelector,
 } from "@/components/finance/ui/finance-primitives"
-import { BudgetCard } from "@/components/finance/budgets/budget-card"
+import { RowList } from "@/components/ui/row-list"
+import { BudgetRow } from "@/components/finance/budgets/budget-row"
 import { BudgetSummary } from "@/components/finance/budgets/budget-summary"
 import { BudgetSheet } from "@/components/finance/budgets/budget-sheet"
 import { DeleteBudgetDialog } from "@/components/finance/budgets/delete-budget-dialog"
@@ -23,14 +23,19 @@ import type { BudgetPerformance, Category } from "@/types/finance"
 function BudgetListSkeleton() {
   return (
     <div className="space-y-6" aria-busy="true" aria-label="Loading budgets">
-      <FinanceMetricGrid>
-        {[0, 1, 2, 3].map((card) => (
-          <div key={card} className="h-28 rounded-2xl bg-secondary motion-safe:animate-pulse" />
-        ))}
-      </FinanceMetricGrid>
-      <div className="space-y-3">
-        {[0, 1, 2].map((card) => (
-          <div key={card} className="h-28 rounded-2xl bg-secondary motion-safe:animate-pulse" />
+      <div className="space-y-2">
+        <div className="h-8 w-48 rounded-lg bg-secondary motion-safe:animate-pulse" />
+        <div className="h-4 w-72 max-w-full rounded bg-secondary motion-safe:animate-pulse" />
+      </div>
+      <div className="app-surface divide-y divide-border overflow-hidden">
+        {[0, 1, 2].map((row) => (
+          <div key={row} className="flex gap-3 px-3 py-3 sm:px-4">
+            <div className="size-9 shrink-0 rounded-lg bg-secondary motion-safe:animate-pulse" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-2/3 rounded bg-secondary motion-safe:animate-pulse" />
+              <div className="h-2 rounded-full bg-secondary motion-safe:animate-pulse" />
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -83,11 +88,19 @@ export function BudgetList() {
     }
   }
 
+  // Remove is reached from inside the editor: close it, then confirm.
+  function requestRemove(budget: BudgetPerformance) {
+    setSheetTarget(null)
+    setRemoveTarget(budget)
+  }
+
+  const month = monthLabel(monthOffset)
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <MonthSelector
-          label={monthLabel(monthOffset)}
+          label={month}
           onPrevious={() => setMonthOffset((offset) => offset - 1)}
           onNext={() => setMonthOffset((offset) => offset + 1)}
           nextDisabled={monthOffset >= 0}
@@ -121,18 +134,14 @@ export function BudgetList() {
         />
       ) : (
         <>
-          <FinanceSection
-            id="budgets-summary"
-            title="Summary"
-            description={`Standing category limits measured against ${monthLabel(monthOffset)} spending.`}
-          >
-            <BudgetSummary performance={performance} />
-          </FinanceSection>
+          {performance.length > 0 && <BudgetSummary performance={performance} monthLabel={month} />}
 
           <FinanceSection
             id="budgets-categories"
             title="Categories"
-            description="Progress, remaining balance, and status for each budgeted category."
+            description={
+              performance.length > 0 ? "Select a budget to change or remove it." : undefined
+            }
           >
             {performance.length === 0 ? (
               <FinanceEmptyState
@@ -151,16 +160,15 @@ export function BudgetList() {
                 }
               />
             ) : (
-              <div className="space-y-3">
+              <RowList surface>
                 {performance.map((budget) => (
-                  <BudgetCard
+                  <BudgetRow
                     key={budget.categoryId}
                     budget={budget}
-                    onEdit={(target) => setSheetTarget({ mode: "edit", budget: target })}
-                    onRemoveRequest={setRemoveTarget}
+                    onOpen={(target) => setSheetTarget({ mode: "edit", budget: target })}
                   />
                 ))}
-              </div>
+              </RowList>
             )}
           </FinanceSection>
         </>
@@ -171,6 +179,7 @@ export function BudgetList() {
         open={sheetTarget !== null}
         onOpenChange={(open) => !open && setSheetTarget(null)}
         onSave={handleSave}
+        onRemoveRequest={requestRemove}
       />
 
       <DeleteBudgetDialog

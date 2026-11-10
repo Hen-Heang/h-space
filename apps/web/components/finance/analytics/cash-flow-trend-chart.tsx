@@ -1,81 +1,164 @@
 "use client"
 
-import { useRef, useState, type PointerEvent } from "react"
+import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
+import { AmountText } from "@/components/finance/ui/finance-primitives"
 import { krw } from "@/lib/finance-format"
+import {
+  defaultTrendIndex,
+  trendDayLabel,
+  trendDayValueText,
+  trendIndexForKey,
+} from "@/lib/finance/analytics-display"
 import type { DailyFlowPoint } from "@/types/finance"
 
 const WIDTH = 640
 const HEIGHT = 200
 const PLOT_HEIGHT = HEIGHT - 20
 
-function point(index: number, amountKrw: number, max: number, stepX: number) {
-  return { x: index * stepX, y: PLOT_HEIGHT - (amountKrw / max) * (PLOT_HEIGHT - 8) }
+function yFor(amountKrw: number, max: number): number {
+  return PLOT_HEIGHT - (Math.max(amountKrw, 0) / max) * (PLOT_HEIGHT - 8)
 }
 
-function pathFor(points: { x: number; y: number }[]): string {
-  return points
-    .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+function pathFor(values: number[], max: number, stepX: number): string {
+  return values
+    .map(
+      (value, i) =>
+        `${i === 0 ? "M" : "L"} ${(i * stepX).toFixed(2)} ${yFor(value, max).toFixed(2)}`,
+    )
     .join(" ")
 }
 
+/**
+ * Daily income and expenses for the month. One day is always selected and
+ * its values are shown in plain text above the plot — not in a hover-only
+ * tooltip. The plot is a slider: Tab to it, then arrow keys (Page Up/Down
+ * for a week, Home/End) move between days; tapping or dragging picks a day;
+ * a mouse picks the day under it. Expenses are dashed so the two lines differ
+ * by more than colour.
+ */
 export function CashFlowTrendChart({ data }: { data: DailyFlowPoint[] }) {
-  const svgRef = useRef<SVGSVGElement>(null)
-  const [hoverIndex, setHoverIndex] = useState<number | null>(null)
+  const plotRef = useRef<HTMLDivElement>(null)
+  const [selected, setSelected] = useState<number | null>(null)
 
+  if (data.length === 0) {
+    return <p className="text-sm text-muted-foreground">No daily figures for this month yet.</p>
+  }
+
+  const index = Math.min(selected ?? defaultTrendIndex(data), data.length - 1)
+  const point = data[index]!
   const max = Math.max(1, ...data.map((d) => Math.max(d.incomeKrw, d.expenseKrw)))
   const stepX = data.length > 1 ? WIDTH / (data.length - 1) : 0
-  const incomePoints = data.map((d, i) => point(i, d.incomeKrw, max, stepX))
-  const expensePoints = data.map((d, i) => point(i, d.expenseKrw, max, stepX))
+  const xPct = data.length > 1 ? (index / (data.length - 1)) * 100 : 50
+  const lineX = data.length > 1 ? index * stepX : WIDTH / 2
 
-  const totalIncome = data.reduce((sum, d) => sum + d.incomeKrw, 0)
-  const totalExpense = data.reduce((sum, d) => sum + d.expenseKrw, 0)
-  const hovered = hoverIndex !== null ? data[hoverIndex] : null
-  const hoveredLabel = hovered
-    ? new Date(`${hovered.date}T00:00:00`).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })
-    : null
+  function indexAt(clientX: number): number | null {
+    const plot = plotRef.current
+    if (!plot) return null
+    const rect = plot.getBoundingClientRect()
+    if (rect.width <= 0) return null
+    const ratio = (clientX - rect.left) / rect.width
+    const next = Math.round(ratio * (data.length - 1))
+    return Math.min(Math.max(next, 0), data.length - 1)
+  }
 
-  function handleMove(event: PointerEvent<SVGSVGElement>) {
-    const svg = svgRef.current
-    if (!svg || data.length === 0) return
-    const rect = svg.getBoundingClientRect()
-    const relativeX = ((event.clientX - rect.left) / rect.width) * WIDTH
-    const index = data.length > 1 ? Math.round(relativeX / stepX) : 0
-    setHoverIndex(Math.min(Math.max(index, 0), data.length - 1))
+  function handlePointer(event: PointerEvent<HTMLDivElement>) {
+    // Mouse: follow the pointer. Touch/pen: only while pressed, so a
+    // vertical page scroll that starts on the chart doesn't move the day.
+    if (event.pointerType !== "mouse" && event.buttons === 0 && event.type === "pointermove") return
+    const next = indexAt(event.clientX)
+    if (next !== null) setSelected(next)
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const next = trendIndexForKey(event.key, index, data.length)
+    if (next === null) return
+    event.preventDefault()
+    setSelected(next)
   }
 
   return (
-    <div className="rounded-2xl border bg-card p-4 sm:p-5">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
+    <div className="app-surface min-w-0 p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-success" aria-hidden="true" />
+            <svg width="18" height="4" aria-hidden="true" className="shrink-0">
+              <line
+                x1="1"
+                x2="17"
+                y1="2"
+                y2="2"
+                stroke="var(--success)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+            </svg>
             Income
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-destructive" aria-hidden="true" />
-            Expense
+            <svg width="18" height="4" aria-hidden="true" className="shrink-0">
+              <line
+                x1="1"
+                x2="17"
+                y1="2"
+                y2="2"
+                stroke="var(--destructive)"
+                strokeWidth="2.5"
+                strokeDasharray="4 3"
+              />
+            </svg>
+            Expenses
           </span>
         </div>
-        <p id="cash-flow-trend-summary" className="text-xs text-muted-foreground">
-          {krw.format(totalIncome)} in · {krw.format(totalExpense)} out this month
+        <p className="text-sm text-muted-foreground">
+          Highest day <span className="tabular-nums">{krw.format(max)}</span>
         </p>
       </div>
 
-      <div className="relative">
+      {/* The selected day, always visible: works for touch, keyboard and print alike. */}
+      <dl
+        className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm"
+        aria-hidden="true"
+        data-testid="trend-readout"
+      >
+        <div>
+          <dt className="sr-only">Day</dt>
+          <dd className="font-semibold text-foreground">{trendDayLabel(point.date)}</dd>
+        </div>
+        <div className="flex gap-1.5">
+          <dt className="text-muted-foreground">Income</dt>
+          <dd className="font-semibold tabular-nums text-success">
+            <AmountText value={krw.format(point.incomeKrw)} />
+          </dd>
+        </div>
+        <div className="flex gap-1.5">
+          <dt className="text-muted-foreground">Expenses</dt>
+          <dd className="font-semibold tabular-nums text-destructive">
+            <AmountText value={krw.format(point.expenseKrw)} />
+          </dd>
+        </div>
+      </dl>
+
+      <div
+        ref={plotRef}
+        role="slider"
+        tabIndex={0}
+        aria-label="Daily income and expenses. Use the arrow keys to move between days."
+        aria-valuemin={1}
+        aria-valuemax={data.length}
+        aria-valuenow={index + 1}
+        aria-valuetext={trendDayValueText(point)}
+        onKeyDown={handleKeyDown}
+        onPointerDown={handlePointer}
+        onPointerMove={handlePointer}
+        className="relative mt-3 cursor-crosshair touch-pan-y select-none rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+      >
         <svg
-          ref={svgRef}
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-          className="h-44 w-full overflow-visible sm:h-52"
-          role="img"
-          aria-labelledby="cash-flow-trend-title cash-flow-trend-summary"
+          className="block h-44 w-full overflow-visible sm:h-52"
           preserveAspectRatio="none"
-          onPointerMove={handleMove}
-          onPointerLeave={() => setHoverIndex(null)}
+          aria-hidden="true"
+          focusable="false"
         >
-          <title id="cash-flow-trend-title">Daily income and expense trend</title>
           {[0, 0.5, 1].map((position) => (
             <line
               key={position}
@@ -88,17 +171,35 @@ export function CashFlowTrendChart({ data }: { data: DailyFlowPoint[] }) {
               vectorEffect="non-scaling-stroke"
             />
           ))}
+          <line
+            x1={lineX}
+            x2={lineX}
+            y1={0}
+            y2={PLOT_HEIGHT}
+            stroke="var(--muted-foreground)"
+            strokeWidth="1"
+            vectorEffect="non-scaling-stroke"
+          />
           <path
-            d={pathFor(expensePoints)}
+            d={pathFor(
+              data.map((d) => d.expenseKrw),
+              max,
+              stepX,
+            )}
             fill="none"
             stroke="var(--destructive)"
             strokeWidth="2"
+            strokeDasharray="6 4"
             strokeLinecap="round"
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"
           />
           <path
-            d={pathFor(incomePoints)}
+            d={pathFor(
+              data.map((d) => d.incomeKrw),
+              max,
+              stepX,
+            )}
             fill="none"
             stroke="var(--success)"
             strokeWidth="2"
@@ -106,56 +207,22 @@ export function CashFlowTrendChart({ data }: { data: DailyFlowPoint[] }) {
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"
           />
-          {hoverIndex !== null && (
-            <>
-              <line
-                x1={incomePoints[hoverIndex].x}
-                x2={incomePoints[hoverIndex].x}
-                y1={0}
-                y2={PLOT_HEIGHT}
-                stroke="var(--muted-foreground)"
-                strokeWidth="1"
-                vectorEffect="non-scaling-stroke"
-              />
-              <circle
-                cx={incomePoints[hoverIndex].x}
-                cy={incomePoints[hoverIndex].y}
-                r="4"
-                fill="var(--success)"
-              />
-              <circle
-                cx={expensePoints[hoverIndex].x}
-                cy={expensePoints[hoverIndex].y}
-                r="4"
-                fill="var(--destructive)"
-              />
-            </>
-          )}
         </svg>
-
-        {hovered && hoveredLabel && hoverIndex !== null && (
-          <div
-            className="pointer-events-none absolute top-2 z-10 max-w-[calc(100%-0.5rem)] rounded-lg border bg-popover px-3 py-2 text-xs shadow-md"
-            style={{
-              ...(hoverIndex <= Math.max(data.length - 1, 1) * 0.2
-                ? { left: 0 }
-                : hoverIndex >= Math.max(data.length - 1, 1) * 0.8
-                  ? { right: 0 }
-                  : {
-                      left: `${(hoverIndex / Math.max(data.length - 1, 1)) * 100}%`,
-                      transform: "translateX(-50%)",
-                    }),
-            }}
-          >
-            <p className="font-semibold text-popover-foreground">{hoveredLabel}</p>
-            <p className="text-success">Income {krw.format(hovered.incomeKrw)}</p>
-            <p className="text-destructive">Expense {krw.format(hovered.expenseKrw)}</p>
-          </div>
-        )}
+        {/* Markers are HTML so they stay round while the SVG stretches. */}
+        <span
+          className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-card bg-success"
+          style={{ left: `${xPct}%`, top: `${(yFor(point.incomeKrw, max) / HEIGHT) * 100}%` }}
+          aria-hidden="true"
+        />
+        <span
+          className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-card bg-destructive"
+          style={{ left: `${xPct}%`, top: `${(yFor(point.expenseKrw, max) / HEIGHT) * 100}%` }}
+          aria-hidden="true"
+        />
       </div>
-      <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-        <span>Day 1</span>
-        <span>Day {data.length}</span>
+      <div className="mt-2 flex justify-between text-sm text-muted-foreground" aria-hidden="true">
+        <span>{trendDayLabel(data[0]!.date)}</span>
+        <span>{trendDayLabel(data[data.length - 1]!.date)}</span>
       </div>
     </div>
   )

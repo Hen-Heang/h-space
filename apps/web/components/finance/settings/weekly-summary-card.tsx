@@ -1,10 +1,10 @@
 "use client"
 
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react"
-import { FinanceMetricCard, FinanceMetricGrid } from "@/components/finance/ui/finance-primitives"
 import { ReviewBudgetPerformance } from "@/components/finance/review/review-budget-performance"
-import { ReviewSavingsProgressCard } from "@/components/finance/review/review-savings-progress"
+import { ReviewSavingsAndSubscriptions } from "@/components/finance/review/review-savings-progress"
 import { ReportTopCategories } from "@/components/finance/settings/report-top-categories"
+import { ReportFigures, ReportPart, toneOf } from "@/components/finance/settings/report-figures"
 import { krw } from "@/lib/finance-format"
 import type { WeeklySummary } from "@/types/finance"
 
@@ -14,6 +14,8 @@ function formatRange(weekStart: string, weekEnd: string): string {
   return `${format(weekStart)} – ${format(weekEnd)}`
 }
 
+// Flat parts under plain headings — no tiles or cards inside the Reports
+// area. Also rendered by the printable page (app/reports-print).
 export function WeeklySummaryCard({ summary }: { summary: WeeklySummary }) {
   const ChangeIcon =
     summary.expenseChangePct === null || summary.expenseChangePct === 0
@@ -29,82 +31,55 @@ export function WeeklySummaryCard({ summary }: { summary: WeeklySummary }) {
         : "text-success"
 
   return (
-    <div className="space-y-4">
-      <p className="text-xs text-muted-foreground">
-        {formatRange(summary.weekStart, summary.weekEnd)}
-      </p>
-
-      {/* H-Space: these cards sit inside the Reports box, so two columns only
-          fit once there is room for a full ₩ amount (Luyra switched at 390px). */}
-      <FinanceMetricGrid columns={3} className="xs:grid-cols-1 min-[480px]:grid-cols-2">
-        <FinanceMetricCard
-          label="Income"
-          value={krw.format(summary.incomeKrw)}
-          detail="This week"
-          icon={ArrowUpRight}
-          tone="positive"
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">
+          {formatRange(summary.weekStart, summary.weekEnd)}
+        </p>
+        <ReportFigures
+          figures={[
+            { label: "Income", value: krw.format(summary.incomeKrw) },
+            { label: "Expenses", value: krw.format(summary.expenseKrw) },
+            {
+              label: "Net",
+              value: krw.format(summary.netCashFlowKrw),
+              tone: toneOf(summary.netCashFlowKrw),
+            },
+          ]}
         />
-        <FinanceMetricCard
-          label="Expenses"
-          value={krw.format(summary.expenseKrw)}
-          detail="This week"
-          icon={ArrowDownRight}
-          tone="expense"
-        />
-        <FinanceMetricCard
-          label="Net"
-          value={krw.format(summary.netCashFlowKrw)}
-          detail="Income minus expenses"
-          icon={Minus}
-          tone={
-            summary.netCashFlowKrw > 0
-              ? "positive"
-              : summary.netCashFlowKrw < 0
-                ? "expense"
-                : "neutral"
-          }
-        />
-      </FinanceMetricGrid>
-
-      <div className="flex items-center gap-1.5 text-xs">
-        <ChangeIcon className={`size-3.5 ${changeToneClass}`} aria-hidden="true" />
-        <span className={changeToneClass}>
-          {summary.expenseChangePct === null
-            ? "No spending last week to compare."
-            : summary.expenseChangePct === 0
-              ? "Same spending as last week."
-              : `${Math.abs(summary.expenseChangePct)}% ${summary.expenseChangePct > 0 ? "more" : "less"} than last week`}
-        </span>
-        {summary.expenseChangePct !== null && (
-          <span className="text-muted-foreground">
-            ({krw.format(summary.previousWeekExpenseKrw)} last week)
+        <p className="flex flex-wrap items-center gap-x-1.5 text-sm">
+          <ChangeIcon className={`size-4 shrink-0 ${changeToneClass}`} aria-hidden="true" />
+          <span className={changeToneClass}>
+            {summary.expenseChangePct === null
+              ? "No spending last week to compare."
+              : summary.expenseChangePct === 0
+                ? "Same spending as last week."
+                : `${Math.abs(summary.expenseChangePct)}% ${summary.expenseChangePct > 0 ? "more" : "less"} than last week`}
           </span>
-        )}
+          {summary.expenseChangePct !== null && (
+            <span className="text-muted-foreground">
+              ({krw.format(summary.previousWeekExpenseKrw)} last week)
+            </span>
+          )}
+        </p>
       </div>
 
-      <div>
-        <p className="mb-1.5 text-xs font-medium text-muted-foreground">Top categories</p>
+      <ReportPart title="Top categories">
         <ReportTopCategories categories={summary.topCategories} />
-      </div>
+      </ReportPart>
 
       {summary.budgetWarnings.length > 0 && (
-        <div>
-          <p className="mb-1.5 text-xs font-medium text-muted-foreground">Budget warnings</p>
+        <ReportPart title="Budget warnings">
           <ReviewBudgetPerformance budgets={summary.budgetWarnings} />
-        </div>
+        </ReportPart>
       )}
 
-      <div>
-        <p className="mb-1.5 text-xs font-medium text-muted-foreground">Savings progress</p>
-        <ReviewSavingsProgressCard progress={summary.savingsProgress} />
-      </div>
-
-      <FinanceMetricCard
-        label="Subscriptions"
-        value={`${krw.format(summary.subscriptionsMonthlyKrw)}/mo`}
-        detail="Estimated recurring cost"
-        icon={ArrowDownRight}
-      />
+      <ReportPart title="Savings and subscriptions">
+        <ReviewSavingsAndSubscriptions
+          progress={summary.savingsProgress}
+          subscriptionsMonthlyKrw={summary.subscriptionsMonthlyKrw}
+        />
+      </ReportPart>
     </div>
   )
 }

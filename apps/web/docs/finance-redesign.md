@@ -1,7 +1,8 @@
 # Finance redesign
 
-Status: **Phase A (audit), Phase B (foundation) and Phase C (Overview) done** on
-branch `feat/finance-redesign` (2026-11-05). Phases D–F are planned below.
+Status: **Phases A–C done** on `feat/finance-redesign` (2026-11-05); **Phases
+D and E built** on `feat/finance-redesign-de` (2026-11-10). Phase F (visual and
+e2e validation) is still open.
 
 Goal: make `/finance` feel like an effortless daily money tracker inside
 H-Space rather than a separate, dense dashboard. UI only: no change to the
@@ -159,14 +160,14 @@ At 375px the page went from 4,871px to about 3,450px tall; light and dark.
 - [x] **C — Overview**: `components/finance/overview/*` (cash flow, budget and
       spending, recent activity, needs attention, insights) + display helpers
       in `lib/finance/overview-display.ts`.
-- [ ] **D — Transactions**: one Add (drop the toolbar duplicate on phones or
+- [x] **D — Transactions** (2026-11-10; see section 7): one Add (drop the toolbar duplicate on phones or
       the FAB on that page), flat day groups with sticky day headers, rows
       with title/amount on line one and category · date on line two (payment
       method, note, USD rate in the editor or an expanded row), a single
       search + "Filters" control, transaction sheet with type → amount →
       currency → category → payment method and "More details" for the rest.
       Keep bulk selection, recurring, templates, filters and search.
-- [ ] **E — Remaining screens**: Budgets, Savings, Subscriptions as rows;
+- [x] **E — Remaining screens** (2026-11-10; see section 7): Budgets, Savings, Subscriptions as rows;
       Review as a narrative; Analytics de-duplicated; Settings grouped.
 - [ ] **F — Validation** for D/E, as below.
 
@@ -191,3 +192,65 @@ messages and retry, same routes and deep links (`#finance-health`,
 `#settings-categories`, …), same quick-add sheet and mutation path, same
 budget status vocabulary (`budget-status.tsx`). No API, type, schema,
 validation, currency, exchange-rate, budget, savings or auth change.
+
+## 7. Phases D and E, as built (2026-11-10)
+
+UI only, as before: no API, type, query key, schema, validation, currency or
+calculation change. New pure display helpers live in
+`lib/finance/{transactions,budgets,savings,subscriptions,analytics,review}-display.ts`
+and `lib/finance/settings-form.ts`, each with tests.
+
+- **Transactions:** the floating Add is the only add (toolbar Add removed at
+  every width; the empty state keeps its button). One search plus a "Filters"
+  button with a count; type, category, payment method, amount range and sort
+  live in the panel, with a one-line summary and "Clear filters" when it's
+  closed. Flat day groups with sticky headings and day totals. Rows match
+  Recent activity; payment method, USD amount/rate, note and time moved into
+  the row's menu. The sheet runs templates → type → amount → currency/rate →
+  description → category → payment method → "More details" (date, note,
+  save as template). Description sits before category because picking a
+  suggestion fills category and payment method.
+- **Budgets:** one summary line; rows with spent of limit, % and status, left
+  or over trailing, thin bar in the status colour. The row opens the editor;
+  Remove moved into it.
+- **Savings:** one summary line with a neutral bar; goal rows (no per-goal bar
+  colour). A row opens a goal sheet with Add contribution (primary), Edit and
+  Delete.
+- **Subscriptions:** one summary line; rows with the amount at body size; Keep
+  is no longer coloured. Merchant-name suggestions and existing merges sit
+  behind "Review N similar names" / "N merged names" disclosures.
+- **Review:** a narrative lede replaces the KPI tiles; flat lists; savings and
+  subscriptions share one section; "Apply plan" is the only filled button.
+- **Analytics:** income, expenses, net and savings rate once, with "vs last
+  month" deltas (Month comparison removed). The trend chart always has a
+  selected day, reachable by keyboard, tap and pointer; expenses are dashed.
+  Categories and payment methods are ranked rows; the donuts are gone.
+- **Settings:** three groups with their own Save (Goals and money rule,
+  Budget controls, Reviews and email reports), using the existing
+  partial-update preferences endpoint. Reports are flat figures and lists.
+- **Ids moved, not removed:** `#analytics-comparison` (summary block),
+  `#review-subscriptions` (subscriptions row), `#settings-money-rule` and
+  `#settings-email-reports` (subheadings in their groups). `#budgets-summary`
+  only renders when budgets exist.
+- **Known follow-ups:** `FinanceProgress` renders a `div` inside row buttons
+  (needs a `span` option in `ui/`); `hashSeriesColor` in
+  `lib/finance-chart-colors.ts` is now unused; a failed budget removal still
+  shows no error (unchanged behaviour).
+- **Phase F, done (2026-11-10):** `tests/e2e/finance-screens.e2e.ts`
+  (synthetic data) checks the seven redesigned routes for horizontal
+  overflow at 320/375/768/1024/1440 in light and at 375/1440 in dark, that
+  Transactions has a single Add, that Filters opens and closes by keyboard,
+  and that the trend chart moves between days with arrow keys and Home. It
+  also walks the add-transaction sheet at iPhone 15 Pro Max size (430×932
+  @3x, light and dark): the sheet fits, the submit stays in view, targets
+  are ≥44px, inputs are ≥16px (no iOS focus zoom) and the button label is
+  ≥4.5:1. With `finance-overview.e2e.ts`: 27/27 passed. A screenshot review
+  caught Analytics' ranked rows dropping the amount to its own line on
+  phones, a 24px-tall USD rate input and a 19px attribution link; all fixed. Run it against a dev server you start yourself
+  (`pnpm exec next dev --port 3100`), since the config's `pnpm dev -- --port`
+  passes a stray `--` to Next; with no Playwright browser installed, set
+  `PLAYWRIGHT_EXECUTABLE_PATH` to a local Chrome.
+- **Phase F, still owed:** `UI_SWEEP=1 ui-route-sweep`, a hand check of
+  sheet-to-sheet focus return (Savings goal sheet → contribution/edit/delete,
+  budget editor → remove dialog), and at 320px a single long word in a
+  ranked or activity row can break mid-word.

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
-import { Loader2, Save } from "lucide-react"
+import { Loader2, Save, Trash2 } from "lucide-react"
 import { Button } from "@/components/finance/base/button"
 import { Label } from "@/components/finance/base/label"
 import {
@@ -24,11 +24,14 @@ export function BudgetSheet({
   open,
   onOpenChange,
   onSave,
+  onRemoveRequest,
 }: {
   target: BudgetSheetTarget | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onSave: (categoryId: string, amountKrw: number) => Promise<void>
+  /** Edit mode only: asks the page to confirm removing this budget. */
+  onRemoveRequest: (budget: BudgetPerformance) => void
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -46,6 +49,7 @@ export function BudgetSheet({
             key={target.mode === "edit" ? target.budget.categoryId : "create"}
             target={target}
             onSave={onSave}
+            onRemoveRequest={onRemoveRequest}
             onOpenChange={onOpenChange}
           />
         )}
@@ -57,10 +61,12 @@ export function BudgetSheet({
 function BudgetSheetFields({
   target,
   onSave,
+  onRemoveRequest,
   onOpenChange,
 }: {
   target: BudgetSheetTarget
   onSave: (categoryId: string, amountKrw: number) => Promise<void>
+  onRemoveRequest: (budget: BudgetPerformance) => void
   onOpenChange: (open: boolean) => void
 }) {
   const [categoryId, setCategoryId] = useState(
@@ -108,7 +114,7 @@ function BudgetSheetFields({
           <div className="space-y-1.5">
             <Label>Category</Label>
             {target.unbudgetedCategories.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Every expense category already has a budget.
               </p>
             ) : (
@@ -161,6 +167,26 @@ function BudgetSheetFields({
           >
             {error}
           </p>
+        )}
+
+        {target.mode === "edit" && (
+          // The rare, destructive action lives in the editor rather than on
+          // the row; it still asks for confirmation before removing anything.
+          <div className="border-t border-border pt-4">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onRemoveRequest(target.budget)}
+              disabled={pending}
+              className="min-h-11 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 aria-hidden="true" />
+              Remove budget
+            </Button>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Past spending stays recorded — only the limit is removed.
+            </p>
+          </div>
         )}
       </div>
 

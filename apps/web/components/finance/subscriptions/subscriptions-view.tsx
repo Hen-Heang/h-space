@@ -5,26 +5,32 @@ import { Repeat } from "lucide-react"
 import {
   FinanceEmptyState,
   FinanceErrorState,
-  FinanceMetricGrid,
   FinanceSection,
 } from "@/components/finance/ui/finance-primitives"
+import { RowList } from "@/components/ui/row-list"
 import { SubscriptionsSummary } from "@/components/finance/subscriptions/subscriptions-summary"
-import { SubscriptionCard } from "@/components/finance/subscriptions/subscription-card"
+import { SubscriptionRow } from "@/components/finance/subscriptions/subscription-row"
 import { MerchantNamesSection } from "@/components/finance/subscriptions/merchant-names-section"
 import { listDetectedSubscriptions, setSubscriptionStatus } from "@/lib/api/finance"
+import { sortSubscriptions } from "@/lib/finance/subscriptions-display"
 import type { DetectedSubscription, SubscriptionStatus } from "@/types/finance"
 
 function SubscriptionsLoading() {
   return (
     <div className="space-y-6" aria-busy="true" aria-label="Loading subscriptions">
-      <FinanceMetricGrid>
-        {[0, 1, 2, 3].map((card) => (
-          <div key={card} className="h-24 rounded-2xl bg-secondary motion-safe:animate-pulse" />
-        ))}
-      </FinanceMetricGrid>
-      <div className="space-y-3">
-        {[0, 1, 2].map((card) => (
-          <div key={card} className="h-28 rounded-2xl bg-secondary motion-safe:animate-pulse" />
+      <div className="space-y-2">
+        <div className="h-8 w-40 rounded-lg bg-secondary motion-safe:animate-pulse" />
+        <div className="h-4 w-72 max-w-full rounded bg-secondary motion-safe:animate-pulse" />
+      </div>
+      <div className="app-surface divide-y divide-border overflow-hidden">
+        {[0, 1, 2].map((row) => (
+          <div key={row} className="flex gap-3 px-3 py-3 sm:px-4">
+            <div className="size-9 shrink-0 rounded-lg bg-secondary motion-safe:animate-pulse" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-2/3 rounded bg-secondary motion-safe:animate-pulse" />
+              <div className="h-4 w-1/2 rounded bg-secondary motion-safe:animate-pulse" />
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -84,11 +90,7 @@ export function SubscriptionsView() {
     }
   }
 
-  const sorted = [...subscriptions].sort((a, b) => {
-    const aCancelled = a.status === "cancelled" ? 1 : 0
-    const bCancelled = b.status === "cancelled" ? 1 : 0
-    return aCancelled - bCancelled
-  })
+  const sorted = sortSubscriptions(subscriptions)
 
   return (
     <div className="space-y-6">
@@ -113,13 +115,7 @@ export function SubscriptionsView() {
         />
       ) : (
         <>
-          <FinanceSection
-            id="subscriptions-summary"
-            title="Summary"
-            description="Estimated recurring cost across detected subscriptions."
-          >
-            <SubscriptionsSummary subscriptions={subscriptions} />
-          </FinanceSection>
+          <SubscriptionsSummary subscriptions={subscriptions} />
 
           {actionError && (
             <p
@@ -135,16 +131,16 @@ export function SubscriptionsView() {
             title="Detected subscriptions"
             description="Decide what to keep, review, or cancel."
           >
-            <div className="space-y-3">
+            <RowList surface>
               {sorted.map((subscription) => (
-                <SubscriptionCard
+                <SubscriptionRow
                   key={subscription.key}
                   subscription={subscription}
                   saving={savingKey === subscription.key}
                   onStatusChange={(status) => updateStatus(subscription, status)}
                 />
               ))}
-            </div>
+            </RowList>
           </FinanceSection>
         </>
       )}

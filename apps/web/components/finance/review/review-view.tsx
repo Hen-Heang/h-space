@@ -2,45 +2,46 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowRight, CalendarClock, Settings2 } from "lucide-react"
+import { CalendarClock, Settings2 } from "lucide-react"
 import { buttonVariants } from "@/components/finance/base/button"
 import {
   FinanceEmptyState,
   FinanceErrorState,
-  FinanceMetricCard,
-  FinanceMetricGrid,
   FinanceSection,
   MonthSelector,
 } from "@/components/finance/ui/finance-primitives"
-import { ReviewSummaryCards } from "@/components/finance/review/review-summary"
+import { ReviewLede } from "@/components/finance/review/review-summary"
 import { ReviewBudgetPerformance } from "@/components/finance/review/review-budget-performance"
 import { ReviewCategoryChanges } from "@/components/finance/review/review-category-changes"
-import { ReviewSavingsProgressCard } from "@/components/finance/review/review-savings-progress"
+import { ReviewSavingsAndSubscriptions } from "@/components/finance/review/review-savings-progress"
 import { ReviewObservations } from "@/components/finance/review/review-observations"
 import { ReviewNextMonthPlan } from "@/components/finance/review/review-next-month-plan"
 import { getReviewSummary } from "@/lib/api/finance"
 import { monthKeyLabel } from "@/lib/finance-cron-time"
 import { usePreferences } from "@/lib/query/finance-queries"
-import { krw } from "@/lib/finance-format"
 import { monthKey, monthLabel } from "@/lib/finance-month"
 import type { ReviewSummary } from "@/types/finance"
 
 function ReviewLoading() {
   return (
     <div className="space-y-6" aria-busy="true" aria-label="Loading monthly review">
-      <FinanceMetricGrid>
-        {[0, 1, 2, 3].map((card) => (
-          <div key={card} className="h-28 rounded-2xl bg-secondary motion-safe:animate-pulse" />
-        ))}
-      </FinanceMetricGrid>
-      <div className="h-56 rounded-2xl bg-secondary motion-safe:animate-pulse" />
-      <div className="h-56 rounded-2xl bg-secondary motion-safe:animate-pulse" />
+      <div className="max-w-2xl space-y-2">
+        <div className="h-6 rounded-md bg-secondary motion-safe:animate-pulse" />
+        <div className="h-6 w-4/5 rounded-md bg-secondary motion-safe:animate-pulse" />
+        <div className="h-5 w-3/5 rounded-md bg-secondary motion-safe:animate-pulse" />
+      </div>
+      <div className="h-48 rounded-lg bg-secondary motion-safe:animate-pulse" />
+      <div className="h-48 rounded-lg bg-secondary motion-safe:animate-pulse" />
     </div>
   )
 }
 
 // Defaults to last month — a review of the month still in progress isn't
 // meaningful yet, same reasoning Money Flow's review page uses.
+//
+// Reads top to bottom as a short story: what happened (lede), what stood out,
+// how budgets held, where spending moved, savings and subscriptions, then the
+// one thing to do about it — next month's plan.
 export function ReviewView() {
   const [monthOffset, setMonthOffset] = useState(-1)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -98,7 +99,7 @@ export function ReviewView() {
         description="Turn it back on in Finance Settings to see this month's review."
         action={
           <Link
-            href="/finance/settings"
+            href="/finance/settings#settings-reviews"
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
             Open Finance Settings
@@ -108,10 +109,12 @@ export function ReviewView() {
     )
   }
 
+  const planLabel = summary?.nextMonthPlan ? monthKeyLabel(summary.nextMonthPlan.planMonth) : null
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="max-w-xl text-sm leading-5 text-muted-foreground">
+        <p className="max-w-xl text-sm text-muted-foreground">
           How income, spending, budgets, and savings changed.
         </p>
         <MonthSelector
@@ -147,7 +150,20 @@ export function ReviewView() {
         />
       ) : (
         <>
-          <ReviewSummaryCards totals={summary.totals} />
+          <ReviewLede
+            summary={summary}
+            monthLabel={monthLabel(monthOffset)}
+            previousMonthLabel={monthLabel(monthOffset - 1)}
+            planLabel={planLabel}
+          />
+
+          <FinanceSection
+            id="review-observations"
+            title="Key observations"
+            description="Changes worth knowing about, worked out from your numbers — no AI involved."
+          >
+            <ReviewObservations observations={summary.observations} />
+          </FinanceSection>
 
           <FinanceSection
             id="review-budgets"
@@ -166,46 +182,21 @@ export function ReviewView() {
           </FinanceSection>
 
           <FinanceSection
-            id="review-subscriptions"
-            title="Subscriptions"
-            description="Estimated recurring cost this month."
-            action={
-              <Link
-                href="/finance/subscriptions"
-                className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-foreground underline-offset-4 hover:underline"
-              >
-                View all <ArrowRight className="size-3.5" aria-hidden="true" />
-              </Link>
-            }
+            id="review-savings"
+            title="Savings and subscriptions"
+            description="Combined progress across every savings goal, and what subscriptions cost."
           >
-            <FinanceMetricCard
-              label="Active subscriptions"
-              value={`${krw.format(summary.subscriptionsMonthlyKrw)}/mo`}
-              detail="Estimated recurring cost, excluding cancelled"
-              icon={CalendarClock}
+            <ReviewSavingsAndSubscriptions
+              progress={summary.savingsProgress}
+              subscriptionsMonthlyKrw={summary.subscriptionsMonthlyKrw}
+              subscriptionsId="review-subscriptions"
             />
           </FinanceSection>
 
-          <FinanceSection
-            id="review-savings"
-            title="Savings progress"
-            description="Combined progress across every savings goal."
-          >
-            <ReviewSavingsProgressCard progress={summary.savingsProgress} />
-          </FinanceSection>
-
-          <FinanceSection
-            id="review-observations"
-            title="Key observations"
-            description="Deterministic changes worth knowing about — no AI involved."
-          >
-            <ReviewObservations observations={summary.observations} />
-          </FinanceSection>
-
-          {summary.nextMonthPlan && (
+          {summary.nextMonthPlan && planLabel && (
             <FinanceSection
               id="review-next-month-plan"
-              title={`Plan for ${monthKeyLabel(summary.nextMonthPlan.planMonth)}`}
+              title={`Plan for ${planLabel}`}
               description="Suggested budgets from your recent spending. Nothing changes until you confirm."
             >
               <ReviewNextMonthPlan

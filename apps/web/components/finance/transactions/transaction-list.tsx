@@ -14,10 +14,12 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/finance/base/button"
 import {
+  AmountText,
   FinanceEmptyState,
   FinanceErrorState,
   MonthSelector,
 } from "@/components/finance/ui/finance-primitives"
+import { RowList } from "@/components/ui/row-list"
 import { TransactionRow } from "@/components/finance/transactions/transaction-row"
 import { TransactionSheet } from "@/components/finance/transactions/transaction-sheet"
 import { DeleteTransactionDialog } from "@/components/finance/transactions/delete-transaction-dialog"
@@ -28,6 +30,12 @@ import { emitTransactionChanged } from "@/lib/finance-events"
 import { cn } from "@/lib/utils"
 import { monthBounds, monthLabel } from "@/lib/finance-month"
 import { krw } from "@/lib/finance-format"
+import {
+  activeFilterCount as countActiveFilters,
+  activeFilterSummary,
+  dayHeading,
+  groupTransactionsByDate,
+} from "@/lib/finance/transactions-display"
 import { ApiError } from "@/lib/api/finance-client"
 import { getUserId } from "@/lib/auth-store"
 import {
@@ -51,12 +59,6 @@ import type {
 } from "@/lib/validation/finance"
 import type { Transaction, TransactionType } from "@/types/finance"
 
-const TYPE_TABS: { label: string; value: TransactionType | undefined }[] = [
-  { label: "All", value: undefined },
-  { label: "Income", value: "income" },
-  { label: "Expense", value: "expense" },
-]
-
 function parseAmount(value: string): number | undefined {
   const trimmed = value.trim()
   if (!trimmed) return undefined
@@ -64,54 +66,28 @@ function parseAmount(value: string): number | undefined {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined
 }
 
-function groupByDate(
-  transactions: Transaction[],
-): { date: string; items: Transaction[]; incomeKrw: number; expenseKrw: number }[] {
-  const order: string[] = []
-  const groups = new Map<string, { items: Transaction[]; incomeKrw: number; expenseKrw: number }>()
-  for (const transaction of transactions) {
-    if (!groups.has(transaction.date)) {
-      order.push(transaction.date)
-      groups.set(transaction.date, { items: [], incomeKrw: 0, expenseKrw: 0 })
-    }
-    const group = groups.get(transaction.date)!
-    group.items.push(transaction)
-    if (transaction.type === "income") group.incomeKrw += transaction.amountKrw
-    else group.expenseKrw += transaction.amountKrw
-  }
-  return order.map((date) => ({ date, ...groups.get(date)! }))
-}
-
-function dateHeading(date: string): string {
-  const today = new Date().toLocaleDateString("en-CA")
-  const yesterday = new Date(Date.now() - 86_400_000).toLocaleDateString("en-CA")
-  if (date === today) return "Today"
-  if (date === yesterday) return "Yesterday"
-  return new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  })
-}
+// Day headers stick just below the shell's own sticky header while their
+// group scrolls under them (AppShell sets --shell-header-h).
+const DAY_HEADER_CLASS =
+  "sticky top-[var(--shell-header-h,0px)] z-10 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 border-b border-border bg-background px-3 py-2 sm:px-4"
 
 function ListSkeleton() {
   return (
-    <div className="space-y-4" aria-busy="true" aria-label="Loading transactions">
+    <div className="space-y-6" aria-busy="true" aria-label="Loading transactions">
       {[0, 1].map((group) => (
-        <div key={group} className="space-y-2">
-          <div className="h-4 w-32 rounded bg-secondary motion-safe:animate-pulse" />
-          <div className="overflow-hidden rounded-2xl border bg-card">
+        <div key={group}>
+          <div className="border-b border-border px-3 py-2.5 sm:px-4">
+            <div className="h-4 w-32 rounded bg-secondary motion-safe:animate-pulse" />
+          </div>
+          <div className="divide-y divide-border">
             {[0, 1, 2].map((row) => (
-              <div
-                key={row}
-                className="flex items-center gap-3 border-b border-border p-4 last:border-b-0"
-              >
-                <div className="size-10 shrink-0 rounded-xl bg-secondary motion-safe:animate-pulse" />
-                <div className="min-w-0 flex-1 space-y-2">
-                  <div className="h-3.5 w-1/3 rounded bg-secondary motion-safe:animate-pulse" />
-                  <div className="h-3 w-1/4 rounded bg-secondary motion-safe:animate-pulse" />
+              <div key={row} className="flex items-start gap-3 px-3 py-3 sm:px-4">
+                <div className="size-9 shrink-0 rounded-lg bg-secondary motion-safe:animate-pulse" />
+                <div className="min-w-0 flex-1 space-y-2 pt-0.5">
+                  <div className="h-4 w-1/3 rounded bg-secondary motion-safe:animate-pulse" />
+                  <div className="h-3.5 w-1/4 rounded bg-secondary motion-safe:animate-pulse" />
                 </div>
-                <div className="h-3.5 w-16 shrink-0 rounded bg-secondary motion-safe:animate-pulse" />
+                <div className="h-4 w-16 shrink-0 rounded bg-secondary motion-safe:animate-pulse" />
               </div>
             ))}
           </div>
@@ -121,6 +97,12 @@ function ListSkeleton() {
   )
 }
 
+/**
+ * The Transactions page. One add path: the Finance layout's floating
+ * "Add transaction" (a + on phones, a labelled pill from tablet width), so the
+ * toolbar here only holds the month, selection and recurring. Search is
+ * always visible; every other narrowing control is behind "Filters".
+ */
 export function TransactionList() {
   const [monthOffset, setMonthOffset] = useState(0)
   const [typeFilter, setTypeFilter] = useState<TransactionType | undefined>(undefined)
@@ -193,13 +175,17 @@ export function TransactionList() {
     return () => clearTimeout(timeout)
   }, [amountMaxInput])
 
-  const grouped = useMemo(() => groupByDate(transactions), [transactions])
-  const advancedFilterCount = [
-    paymentMethodFilter,
-    amountMin !== undefined,
-    amountMax !== undefined,
-  ].filter(Boolean).length
-  const isFiltered = Boolean(search || typeFilter || categoryFilter || advancedFilterCount > 0)
+  const grouped = useMemo(() => groupTransactionsByDate(transactions), [transactions])
+  const filterState = {
+    type: typeFilter,
+    categoryId: categoryFilter,
+    paymentMethodId: paymentMethodFilter,
+    amountMin,
+    amountMax,
+  }
+  const filterCount = countActiveFilters(filterState)
+  const filterSummary = activeFilterSummary(filterState, categories, paymentMethods)
+  const isFiltered = Boolean(search || filterCount > 0)
 
   // Only rows still on screen count as selected, so changing a filter or
   // month can never act on transactions the user can no longer see.
@@ -244,7 +230,10 @@ export function TransactionList() {
 
   const countLabel = (count: number) => `${count} ${count === 1 ? "transaction" : "transactions"}`
 
-  function clearAdvancedFilters() {
+  // Clears every filter in the panel; search and sort are left as they are.
+  function clearFilters() {
+    setTypeFilter(undefined)
+    setCategoryFilter("")
     setPaymentMethodFilter("")
     setAmountMinInput("")
     setAmountMaxInput("")
@@ -277,7 +266,7 @@ export function TransactionList() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <MonthSelector
           label={monthLabel(monthOffset)}
@@ -289,7 +278,7 @@ export function TransactionList() {
         />
         <div className="ml-auto flex shrink-0 gap-2">
           <Button
-            variant={selection ? "secondary" : "outline"}
+            variant={selection ? "secondary" : "ghost"}
             size="sm"
             className="min-h-11 px-3"
             onClick={() => {
@@ -304,7 +293,7 @@ export function TransactionList() {
             <span className="hidden sm:inline">{selection ? "Done" : "Select"}</span>
           </Button>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             className="min-h-11 px-3"
             onClick={() => setRecurringOpen(true)}
@@ -313,83 +302,82 @@ export function TransactionList() {
             <Repeat />
             <span className="hidden sm:inline">Recurring</span>
           </Button>
-          <Button
-            size="sm"
-            className="min-h-11 px-3"
-            onClick={() => setSheet({ mode: "create" })}
-            aria-label="Add transaction"
-          >
-            <Plus />
-            <span className="hidden min-[400px]:inline">Add transaction</span>
-          </Button>
         </div>
       </div>
 
-      <div className="grid gap-2 sm:flex sm:flex-wrap">
-        <div className="relative w-full min-w-0 flex-1 sm:min-w-48">
-          <Search
-            className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <input
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Search description…"
-            aria-label="Search transactions"
-            className="h-11 w-full rounded-xl border bg-card pl-9 pr-11 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
-          />
-          {searchInput && (
-            <button
-              type="button"
-              onClick={() => setSearchInput("")}
-              className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary active:bg-secondary"
-              aria-label="Clear search"
-            >
-              <X className="size-3.5" />
-            </button>
-          )}
-        </div>
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex">
-          <select
-            value={categoryFilter}
-            onChange={(event) => setCategoryFilter(event.target.value)}
-            aria-label="Filter by category"
-            className="h-11 min-w-0 w-full max-w-full rounded-xl border bg-card px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto sm:max-w-56 sm:text-sm"
-          >
-            <option value="">All categories</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.icon ? `${category.icon} ` : ""}
-                {category.name}
-              </option>
-            ))}
-          </select>
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <div className="relative min-w-0 flex-1">
+            <Search
+              className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <input
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder="Search description…"
+              aria-label="Search transactions"
+              className="h-11 w-full rounded-xl border bg-card pl-9 pr-11 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => setSearchInput("")}
+                className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary active:bg-secondary [@media(pointer:coarse)]:size-11 [@media(pointer:coarse)]:right-0"
+                aria-label="Clear search"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setFiltersOpen((open) => !open)}
             aria-expanded={filtersOpen}
             aria-controls="transaction-advanced-filters"
             className={cn(
-              "relative flex h-11 min-h-11 items-center gap-1.5 rounded-xl border px-3 text-sm font-medium transition-colors",
-              filtersOpen || advancedFilterCount > 0
-                ? "border-primary/40 bg-primary/10 text-primary"
-                : "bg-card text-muted-foreground hover:text-foreground",
+              "flex h-11 min-h-11 shrink-0 items-center gap-1.5 rounded-xl border bg-card px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+              filtersOpen || filterCount > 0
+                ? "border-primary/40 text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             <SlidersHorizontal className="size-4" aria-hidden="true" />
             Filters
-            {advancedFilterCount > 0 && (
+            {filterCount > 0 && (
               <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-                {advancedFilterCount}
+                {filterCount}
+                <span className="sr-only"> active</span>
               </span>
             )}
           </button>
         </div>
+
+        {!filtersOpen && filterSummary.length > 0 && (
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
+            <p className="min-w-0 break-words">
+              <span className="sr-only">Filtered by </span>
+              {filterSummary.join(" · ")}
+            </p>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex min-h-11 items-center rounded-md px-1 font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Clear filters
+            </button>
+          </div>
+        )}
       </div>
 
       <div id="transaction-advanced-filters">
         <TransactionFilterPanel
           open={filtersOpen}
+          typeFilter={typeFilter}
+          onTypeChange={setTypeFilter}
+          categories={categories}
+          categoryFilter={categoryFilter}
+          onCategoryChange={setCategoryFilter}
           paymentMethods={paymentMethods}
           paymentMethodFilter={paymentMethodFilter}
           onPaymentMethodChange={setPaymentMethodFilter}
@@ -399,27 +387,9 @@ export function TransactionList() {
           onAmountMaxChange={setAmountMaxInput}
           sort={sort}
           onSortChange={setSort}
-          activeFilterCount={advancedFilterCount}
-          onClear={clearAdvancedFilters}
+          activeFilterCount={filterCount}
+          onClear={clearFilters}
         />
-      </div>
-
-      <div className="flex gap-1 rounded-xl border bg-card p-1">
-        {TYPE_TABS.map((tab) => (
-          <button
-            key={tab.label}
-            type="button"
-            onClick={() => setTypeFilter(tab.value)}
-            className={cn(
-              "min-h-11 flex-1 rounded-lg text-sm font-medium transition-colors sm:min-h-9",
-              typeFilter === tab.value
-                ? "bg-secondary font-semibold text-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
       </div>
 
       {selection && (
@@ -484,7 +454,14 @@ export function TransactionList() {
               : "Add your first income or expense to start tracking this month."
           }
           action={
-            isFiltered ? undefined : (
+            isFiltered ? (
+              filterCount > 0 ? (
+                <Button variant="outline" size="sm" className="min-h-11" onClick={clearFilters}>
+                  <X />
+                  Clear filters
+                </Button>
+              ) : undefined
+            ) : (
               <Button variant="outline" size="sm" onClick={() => setSheet({ mode: "create" })}>
                 <Plus />
                 Add transaction
@@ -493,22 +470,31 @@ export function TransactionList() {
           }
         />
       ) : (
-        <div className="space-y-4">
-          {grouped.map(({ date, items, incomeKrw, expenseKrw }) => (
-            <div key={date}>
-              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-1 py-1.5">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {dateHeading(date)}
-                </p>
-                <div className="flex gap-3 text-xs font-semibold tabular-nums">
-                  {incomeKrw > 0 && <span className="text-success">+{krw.format(incomeKrw)}</span>}
-                  {expenseKrw > 0 && (
-                    <span className="text-foreground">−{krw.format(expenseKrw)}</span>
-                  )}
+        <div className="space-y-6">
+          {grouped.map(({ date, items, incomeKrw, expenseKrw }) => {
+            const headingId = `transactions-day-${date}`
+            return (
+              <section key={date} aria-labelledby={headingId} className="min-w-0">
+                <div className={DAY_HEADER_CLASS}>
+                  <h2 id={headingId} className="text-sm font-semibold text-foreground">
+                    {dayHeading(date)}
+                  </h2>
+                  <p className="flex gap-3 text-sm tabular-nums text-muted-foreground">
+                    {incomeKrw > 0 && (
+                      <span className="font-medium text-success">
+                        <span className="sr-only">Income </span>
+                        <AmountText value={`+${krw.format(incomeKrw)}`} />
+                      </span>
+                    )}
+                    {expenseKrw > 0 && (
+                      <span className="font-medium text-foreground">
+                        <span className="sr-only">Spent </span>
+                        <AmountText value={`−${krw.format(expenseKrw)}`} />
+                      </span>
+                    )}
+                  </p>
                 </div>
-              </div>
-              <div className="overflow-hidden rounded-2xl border bg-card">
-                <div className="divide-y divide-border">
+                <RowList>
                   {items.map((transaction) => (
                     <TransactionRow
                       key={transaction.id}
@@ -522,10 +508,10 @@ export function TransactionList() {
                       }
                     />
                   ))}
-                </div>
-              </div>
-            </div>
-          ))}
+                </RowList>
+              </section>
+            )
+          })}
 
           {list.isFetchNextPageError && (
             <p

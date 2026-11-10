@@ -1,48 +1,118 @@
 "use client"
 
-import { ArrowDownRight, ArrowUpRight, Landmark, PiggyBank } from "lucide-react"
-import { FinanceMetricCard, FinanceMetricGrid } from "@/components/finance/ui/finance-primitives"
+import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react"
+import { AmountText } from "@/components/finance/ui/finance-primitives"
 import { krw } from "@/lib/finance-format"
+import { monthDelta, pointsDelta, type MonthDelta } from "@/lib/finance/analytics-display"
+import { signedKrw } from "@/lib/finance/overview-display"
+import { cn } from "@/lib/utils"
 import type { MonthTotals } from "@/types/finance"
 
-function signedAmount(value: number): string {
-  if (value > 0) return `+${krw.format(value)}`
-  return krw.format(value)
-}
+const DELTA_ICON = { up: ArrowUpRight, down: ArrowDownRight, flat: Minus } as const
+const DELTA_CLASS = {
+  positive: "text-success",
+  negative: "text-destructive",
+  neutral: "text-muted-foreground",
+} as const
 
-export function AnalyticsSummaryCards({ totals }: { totals: MonthTotals }) {
+/**
+ * Income, expenses, net cash flow and savings rate — once — each with its
+ * change since last month. One surface with dividers; this replaces the four
+ * tiles, the chart's totals caption and the separate Month comparison list.
+ */
+export function AnalyticsSummary({
+  totals,
+  previousTotals,
+}: {
+  totals: MonthTotals
+  previousTotals: MonthTotals
+}) {
+  const net = totals.netCashFlowKrw
   return (
-    <FinanceMetricGrid>
-      <FinanceMetricCard
+    <dl
+      id="analytics-comparison"
+      className="app-surface grid min-w-0 grid-cols-2 gap-px overflow-hidden bg-border lg:grid-cols-4"
+    >
+      <Figure
         label="Income"
         value={krw.format(totals.totalIncomeKrw)}
-        detail={`${totals.transactionCount} transactions`}
-        icon={ArrowUpRight}
-        tone="positive"
+        delta={monthDelta(totals.totalIncomeKrw, previousTotals.totalIncomeKrw)}
+        was={krw.format(previousTotals.totalIncomeKrw)}
       />
-      <FinanceMetricCard
+      <Figure
         label="Expenses"
         value={krw.format(totals.totalExpenseKrw)}
-        detail="Recorded this month"
-        icon={ArrowDownRight}
-        tone="expense"
+        delta={monthDelta(totals.totalExpenseKrw, previousTotals.totalExpenseKrw, {
+          lowerIsBetter: true,
+        })}
+        was={krw.format(previousTotals.totalExpenseKrw)}
       />
-      <FinanceMetricCard
+      <Figure
         label="Net cash flow"
-        value={signedAmount(totals.netCashFlowKrw)}
-        detail="Income minus expenses"
-        icon={Landmark}
-        tone={
-          totals.netCashFlowKrw > 0 ? "positive" : totals.netCashFlowKrw < 0 ? "expense" : "neutral"
-        }
+        value={signedKrw(net)}
+        valueClass={net > 0 ? "text-success" : net < 0 ? "text-destructive" : undefined}
+        delta={monthDelta(net, previousTotals.netCashFlowKrw)}
+        was={signedKrw(previousTotals.netCashFlowKrw)}
       />
-      <FinanceMetricCard
+      <Figure
         label="Savings rate"
         value={`${totals.savingsRatePct}%`}
-        detail={totals.totalIncomeKrw > 0 ? "Share of income retained" : "Add income to calculate"}
-        icon={PiggyBank}
-        tone={totals.savingsRatePct >= 0 ? "positive" : "expense"}
+        delta={
+          totals.totalIncomeKrw > 0
+            ? pointsDelta(totals.savingsRatePct, previousTotals.savingsRatePct)
+            : null
+        }
+        note={totals.totalIncomeKrw > 0 ? undefined : "Add income to calculate"}
+        was={`${previousTotals.savingsRatePct}%`}
       />
-    </FinanceMetricGrid>
+    </dl>
+  )
+}
+
+function Figure({
+  label,
+  value,
+  valueClass,
+  delta,
+  note,
+  was,
+}: {
+  label: string
+  value: string
+  valueClass?: string
+  delta: MonthDelta | null
+  note?: string
+  was: string
+}) {
+  const Icon = delta ? DELTA_ICON[delta.direction] : null
+  return (
+    <div className="min-w-0 bg-card px-3 py-4 xs:px-4 sm:px-5">
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd
+        className={cn(
+          "mt-1 [overflow-wrap:anywhere] text-lg font-semibold leading-tight tracking-tight tabular-nums sm:text-xl",
+          valueClass,
+        )}
+        title={value}
+      >
+        <AmountText value={value} />
+      </dd>
+      {delta && Icon ? (
+        <dd
+          className={cn(
+            "mt-1.5 flex items-start gap-1 text-sm font-medium",
+            DELTA_CLASS[delta.tone],
+          )}
+        >
+          <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <span>{delta.text}</span>
+        </dd>
+      ) : note ? (
+        <dd className="mt-1.5 text-sm text-muted-foreground">{note}</dd>
+      ) : null}
+      <dd className="mt-0.5 [overflow-wrap:anywhere] text-sm text-muted-foreground tabular-nums">
+        {was} last month
+      </dd>
+    </div>
   )
 }

@@ -80,7 +80,7 @@ export function PaymentMethodsSection() {
   if (loading) {
     return (
       <div
-        className="h-32 rounded-2xl bg-secondary motion-safe:animate-pulse"
+        className="h-32 rounded-lg bg-secondary motion-safe:animate-pulse"
         aria-busy="true"
         aria-label="Loading payment methods"
       />
@@ -111,11 +111,20 @@ export function PaymentMethodsSection() {
         />
       ) : (
         <>
-          <ul className="divide-y divide-border overflow-hidden rounded-2xl border bg-card">
+          <ul className="app-surface divide-y divide-border overflow-hidden">
             {paymentMethods.map((paymentMethod) => (
-              <li key={paymentMethod.id} className="flex items-center gap-3 px-3 py-2">
-                <CategoryIcon icon={paymentMethod.icon} color={null} />
-                <p className="min-w-0 flex-1 truncate text-sm font-medium">{paymentMethod.name}</p>
+              <li
+                key={paymentMethod.id}
+                className="flex min-h-14 items-center gap-3 py-1.5 pr-1.5 pl-3 sm:pl-4"
+              >
+                <CategoryIcon
+                  icon={paymentMethod.icon}
+                  color={null}
+                  className="size-9 rounded-lg border-0 text-base"
+                />
+                <p className="min-w-0 flex-1 truncate text-base font-medium">
+                  {paymentMethod.name}
+                </p>
                 <LookupRowActions
                   name={paymentMethod.name}
                   onEdit={() => {
