@@ -8,6 +8,7 @@
 // updating them fails the build instead of shipping a wrong description.
 import type { McpServer } from "@modelcontextprotocol/server"
 import type { McpContext } from "../context"
+import { isNotesEnabled } from "../../feature-flags"
 import { registerGoalTools } from "./goals"
 import { registerTaskTools } from "./tasks"
 import { registerTodayOverviewTool } from "./today-overview"
@@ -25,7 +26,28 @@ import {
   registerProjectKnowledgeWriteTools,
 } from "./project-knowledge"
 
-export const READ_TOOL_NAMES = [
+/**
+ * The project-knowledge (Notes) tools exist only while Notes is on. Notes was
+ * retired on 2026-11-10 (lib/feature-flags.ts `isNotesEnabled`): with it off,
+ * an AI client could otherwise create and edit notes the owner can no longer
+ * see or re-permission in the app. Read once — `NEXT_PUBLIC_*` is inlined at
+ * build time.
+ */
+const NOTES_ENABLED = isNotesEnabled()
+
+const PROJECT_NOTE_READ_TOOL_NAMES = [
+  "list_knowledge_projects",
+  "list_project_notes",
+  "get_project_note",
+] as const
+
+const PROJECT_NOTE_WRITE_TOOL_NAMES = [
+  "create_knowledge_project",
+  "create_project_note",
+  "update_project_note",
+] as const
+
+export const READ_TOOL_NAMES: readonly string[] = [
   "get_today_overview",
   "list_goals",
   "get_goal",
@@ -33,12 +55,10 @@ export const READ_TOOL_NAMES = [
   "get_goal_tasks",
   "get_learning_progress",
   "get_weekly_progress",
-  "list_knowledge_projects",
-  "list_project_notes",
-  "get_project_note",
-] as const
+  ...(NOTES_ENABLED ? PROJECT_NOTE_READ_TOOL_NAMES : []),
+]
 
-export const WRITE_TOOL_NAMES = [
+export const WRITE_TOOL_NAMES: readonly string[] = [
   "create_task",
   "update_task",
   "complete_task",
@@ -46,10 +66,8 @@ export const WRITE_TOOL_NAMES = [
   "update_goal",
   "capture_reflection",
   "capture_korean_phrase",
-  "create_knowledge_project",
-  "create_project_note",
-  "update_project_note",
-] as const
+  ...(NOTES_ENABLED ? PROJECT_NOTE_WRITE_TOOL_NAMES : []),
+]
 
 export function registerReadTools(server: McpServer, ctx: McpContext): void {
   registerTodayOverviewTool(server, ctx)
@@ -57,7 +75,7 @@ export function registerReadTools(server: McpServer, ctx: McpContext): void {
   registerTaskTools(server, ctx)
   registerLearningProgressTool(server, ctx)
   registerWeeklyProgressTool(server, ctx)
-  registerProjectKnowledgeReadTools(server, ctx)
+  if (NOTES_ENABLED) registerProjectKnowledgeReadTools(server, ctx)
 }
 
 /** Only ever called when ctx.writeEnabled is true — see lib/mcp/server.ts. */
@@ -69,5 +87,5 @@ export function registerWriteTools(server: McpServer, ctx: McpContext): void {
   registerUpdateGoalTool(server, ctx)
   registerCaptureReflectionTool(server, ctx)
   registerCaptureKoreanPhraseTool(server, ctx)
-  registerProjectKnowledgeWriteTools(server, ctx)
+  if (NOTES_ENABLED) registerProjectKnowledgeWriteTools(server, ctx)
 }

@@ -1,3 +1,29 @@
+## 2026-11-10 - Finance redesign Phases D–F handoff snapshot
+
+# HANDOFF
+
+## Snapshot
+
+- **Updated:** 2026-11-10.
+- **Checkout:** branch `feat/finance-redesign-de` from `main` at `271ac3a` (PR #122), worked in the worktree `../h-space-finance-de` so the owner's checkout (`feat/ask-hengo-entry`, untracked `.env.example`) stayed untouched. PR #111 (MCP consent) has since been merged by the owner; whether its token-hook migration was applied was not re-checked this session.
+- **This session: Finance redesign Phases D, E and F** (UI only; record: `apps/web/docs/finance-redesign.md` §4 and §7).
+  - **D — Transactions:** the floating + is the only Add; one search + "Filters"; flat day groups with sticky headings; two-line rows with details in the row menu; the sheet runs type → amount → currency → description → category → payment method → "More details".
+  - **E — Budgets, Savings, Subscriptions** as one summary line + rows (Remove/Edit/Delete inside the sheets; merchant names behind a disclosure); **Review** as a narrative lede + flat lists; **Analytics** de-duplicated, keyboard/tap trend chart, ranked rows instead of donuts; **Settings** in three groups that save independently via the existing partial-update preferences endpoint.
+  - **F — Validation:** `apps/web/tests/e2e/finance-screens.e2e.ts` (synthetic data) — overflow at 320–1440 light/dark on the seven routes, single Add, Filters by keyboard, chart by keyboard, and the add-transaction sheet at iPhone 15 Pro Max size (fit, 44px targets, ≥16px inputs, button contrast). Screenshot review fixed Analytics' ranked rows on phones and two small targets in the USD rate editor.
+  - No API, type, query key, schema, validation, currency, calculation, auth or env change. Section ids that moved: `#analytics-comparison`, `#review-subscriptions`, `#settings-money-rule`, `#settings-email-reports`.
+  - The three design skills the owner installed in `~/.claude/skills` (`frontend-design`, `ui-design-principles`, `ui-color-palettes`) were used as a checklist; the repo's visual system won where `frontend-design` pushed for a new look.
+- **Verification (local, in the worktree):** `pnpm lint` 0 errors / 6 existing warnings; `pnpm test` 221 files, 2,404 tests passed (before the last two small fixes; their unit tests, tsc and eslint re-passed); `pnpm build:web` passed (needs `NEXT_TURBOPACK_EXPERIMENTAL_USE_SYSTEM_TLS_CERTS=1`); Playwright finance e2e 27/27 in local Chrome.
+- **Playwright on this machine:** the config's `webServer` command (`pnpm dev -- --port 3100`) fails because pnpm passes the `--` to Next; start `pnpm exec next dev --port 3100` yourself and set `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100`. No Playwright browser is installed; set `PLAYWRIGHT_EXECUTABLE_PATH` to the installed Chrome.
+- **GitHub Actions** was down for a billing lock as of 2026-11-09; not re-checked. Run lint/test/build locally before merging.
+
+## Current focus
+
+1. **Finance:** owner reviews and merges the D–F PR, then tries adding a transaction on a real iPhone (keyboard over the sheet, Safari toolbar, safe areas — emulation can't check these). Follow-ups in `finance-redesign.md` §7: `FinanceProgress` `div` inside row buttons, unused `hashSeriesColor`, no error on a failed budget removal, sheet-to-sheet focus return, `UI_SWEEP=1` route sweep, and fix the Playwright `webServer` command.
+2. **MCP live (from #111):** confirm whether the token hook is applied and the Vercel `MCP_*` env is set; then register ChatGPT as a second client.
+3. **Connected apps** (Settings → Security): list and revoke connector grants via Supabase `GET`/`DELETE /user/oauth/grants`.
+4. **UI audit follow-ups (unchanged):** History "★" filters never match; `UnitEditor` `FieldLabel` is a `<p>`; sign-in tiles one colour per app; `public/app-process.png` artwork; Phase 6 sweep; remaining restyles (Chat leftovers, Interview, Roadmap, Recovery, vocab components).
+5. **Carried over:** native-speaker pass on `lib/korean-phrasebook/work-seed.ts`; Planner slices 3–10; second-brain T2–T7; long-term MCP auth via h-space-api (#36); generic-error treatment for `chat/stream`, `goals/coach`, `memory/ask`, `recovery-coach`; independent H-Vault security audit and restore drill.
+
 ## 2026-11-09 - MCP consent spike (#111) and #106-#110 handoff snapshot
 
 # HANDOFF

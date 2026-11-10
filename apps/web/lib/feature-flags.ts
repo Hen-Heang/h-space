@@ -26,3 +26,15 @@ export const isVaultLiveEnabled = (): boolean =>
  */
 export const isSpringInboxEnabled = (): boolean =>
   process.env.NEXT_PUBLIC_DATA_SOURCE_INBOX === "spring"
+
+/**
+ * Long-form Notes (`/notes`, its projects, and the MCP project-knowledge
+ * tools). Retired on 2026-11-10 — notes moved to Obsidian — so it is **off
+ * unless set to "true"**. Off hides Notes from every nav surface, redirects
+ * `/notes*` to `/inbox`, hides Inbox's "Convert to note", drops notes from
+ * Ask Hengo's workspace search, and stops registering the MCP note tools.
+ * Nothing is deleted: `kori_notes` / `kori_note_projects` and all Notes code
+ * stay, so setting it back to "true" (and redeploying — it's inlined at build
+ * time) restores the feature as it was.
+ */
+export const isNotesEnabled = (): boolean => process.env.NEXT_PUBLIC_FEATURE_NOTES === "true"

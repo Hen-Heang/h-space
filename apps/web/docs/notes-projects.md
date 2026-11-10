@@ -1,5 +1,26 @@
 # Notes 2.0 — Projects
 
+> **Retired 2026-11-10** — the owner's notes moved to Obsidian. Notes is hidden behind
+> `NEXT_PUBLIC_FEATURE_NOTES` (`isNotesEnabled()` in `lib/feature-flags.ts`), **off unless set to
+> `"true"`**. While off: no nav entry, `/notes*` redirects to `/inbox`
+> (`app/(main)/notes/layout.tsx`), Inbox has no "Convert to note", Ask Hengo doesn't search
+> `kori_notes`, and the MCP project-knowledge tools (`list_knowledge_projects`,
+> `list_project_notes`, `get_project_note`, `create_knowledge_project`, `create_project_note`,
+> `update_project_note`) aren't registered. "Save to inbox" lives on Home (Quick Capture) and in
+> the Inbox (Capture). Everything below still describes the code and data as they are when the
+> flag is on; the tables, RLS and `ai_access` / `ai_can_edit` values were not changed.
+>
+> **Turn it back on:** set `NEXT_PUBLIC_FEATURE_NOTES=true` in the Vercel project (and
+> `.env.local` for local dev), then redeploy / restart — the value is inlined at build time.
+>
+> **Later cleanup (not done):** after a few weeks without needing it, remove the Notes code
+> (`app/(main)/notes`, `components/notes`, `lib/notes*`, `lib/note-projects*`,
+> `lib/api/notes.ts`, `lib/api/note-projects.ts`, `hooks/useNotes.ts`, `hooks/useNoteProjects.ts`,
+> `lib/mcp/tools/project-knowledge*`, the flag) and, separately and only with an explicit
+> decision plus a backup, drop `kori_notes` / `kori_note_projects` — the Supabase database is
+> shared with Orbit. Inbox items with `converted_to_type = 'note'` and memories with
+> `source_type = 'note'` would then point at missing rows; the UI shows them as labels only.
+
 Status: **step 1 implemented** (Notes Home redesign + projects + Project Workspace).
 Source design: "Notes · Home" and "Notes · Project workspace" on the H-Space design canvas,
 and section 4 of the H-Space Design Handoff.

@@ -71,15 +71,24 @@ test.describe("public responsive shell", () => {
     expect(box!.y + box!.height).toBeLessThanOrEqual(926)
   })
 
-  test("registration step two remains usable on the primary mobile viewport", async ({ page }) => {
+  // Sign-up is one page since 2026-10-27 (name, username, email, password →
+  // Create account); there is no second step any more. The form is filled
+  // but never submitted — no request reaches h-space-api.
+  test("registration form stays usable on the primary mobile viewport", async ({ page }) => {
     await page.goto("/register")
     await page.getByPlaceholder("Your name").fill("Responsive Tester")
+    await page.getByPlaceholder("e.g. jane.doe").fill("responsive.tester")
     await page.getByPlaceholder("name@example.com").fill("responsive@example.com")
-    await page.getByPlaceholder("At least 8 characters").fill("safe-test-password")
-    await page.getByRole("button", { name: "Continue" }).click()
+    await page.getByPlaceholder(/^At least \d+ characters$/).fill("synthetic-test-passphrase")
 
-    await expect(page.getByRole("heading", { name: "Tell us about you" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Create account" })).toBeVisible()
+    const submit = page.getByRole("button", { name: "Create account" })
+    await expect(submit).toBeVisible()
+    await expect(submit).toBeEnabled()
+    await submit.scrollIntoViewIfNeeded()
+    const box = await submit.boundingBox()
+    expect(box).not.toBeNull()
+    expect(box!.height).toBeGreaterThanOrEqual(44)
+    expect(box!.x + box!.width).toBeLessThanOrEqual(428)
     await expectNoDocumentOverflow(page)
   })
 

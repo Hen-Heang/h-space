@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { registerReadTools, registerWriteTools } from "./index"
 import { captureRegisteredTools, fakeContext, fakeDb, fakeQuery } from "./test-support"
 
@@ -20,9 +20,6 @@ describe("registerReadTools", () => {
         "get_weekly_progress",
         "list_goals",
         "list_tasks",
-        "list_knowledge_projects",
-        "list_project_notes",
-        "get_project_note",
       ].sort(),
     )
     for (const tool of tools.values()) {
@@ -100,9 +97,6 @@ describe("registerWriteTools", () => {
         "create_task",
         "update_goal",
         "update_task",
-        "create_knowledge_project",
-        "create_project_note",
-        "update_project_note",
       ].sort(),
     )
     for (const tool of tools.values()) {
@@ -227,5 +221,47 @@ describe("registerWriteTools", () => {
     const structured = result.structuredContent as { reflection: { id: string }; created: boolean }
     expect(structured.reflection.id).toBe("j1")
     expect(JSON.stringify(structured)).not.toContain("Today went well")
+  })
+})
+
+// Notes is retired by default (NEXT_PUBLIC_FEATURE_NOTES unset), so the
+// project-knowledge tools above are absent. The flag is read once at module
+// load, so the flag-on registry needs a fresh copy of the module.
+describe("project-knowledge (Notes) tools", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  const NOTE_READ = ["list_knowledge_projects", "list_project_notes", "get_project_note"]
+  const NOTE_WRITE = ["create_knowledge_project", "create_project_note", "update_project_note"]
+
+  it("are neither registered nor advertised while Notes is retired", async () => {
+    vi.resetModules()
+    const mod = await import("./index")
+    const { fakeServer, tools } = captureRegisteredTools()
+    mod.registerReadTools(fakeServer, fakeContext(fakeDb({})))
+    mod.registerWriteTools(fakeServer, fakeContext(fakeDb({}), { writeEnabled: true }))
+    for (const name of [...NOTE_READ, ...NOTE_WRITE]) {
+      expect(tools.has(name), name).toBe(false)
+      expect([...mod.READ_TOOL_NAMES, ...mod.WRITE_TOOL_NAMES]).not.toContain(name)
+    }
+  })
+
+  it("come back, registered and advertised, with NEXT_PUBLIC_FEATURE_NOTES=true", async () => {
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_NOTES", "true")
+    vi.resetModules()
+    const mod = await import("./index")
+    const { fakeServer, tools } = captureRegisteredTools()
+    mod.registerReadTools(fakeServer, fakeContext(fakeDb({})))
+    mod.registerWriteTools(fakeServer, fakeContext(fakeDb({}), { writeEnabled: true }))
+    for (const name of NOTE_READ) {
+      expect(tools.has(name), name).toBe(true)
+      expect(mod.READ_TOOL_NAMES).toContain(name)
+    }
+    for (const name of NOTE_WRITE) {
+      expect(tools.has(name), name).toBe(true)
+      expect(mod.WRITE_TOOL_NAMES).toContain(name)
+    }
   })
 })

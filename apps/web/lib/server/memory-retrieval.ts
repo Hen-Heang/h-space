@@ -47,6 +47,12 @@ export interface RetrievalSources {
    * English semantics; must already be scoped to the caller.
    */
   searchInbox?: (query: string, limit: number) => Promise<InboxSearchRow[]>
+  /**
+   * Search kori_notes too. Defaults to true; the route passes
+   * `isNotesEnabled()`, so while Notes is retired its rows are never cited —
+   * their `/notes/<slug>` links would only redirect to the Inbox.
+   */
+  includeNotes?: boolean
 }
 
 export interface InboxSearchRow {
@@ -63,7 +69,7 @@ export async function retrieveMemoryContext(
 ): Promise<RetrievedItem[]> {
   const searchQuery = sanitizeSearchQuery(question)
   const ftsOptions = { type: "websearch" as const, config: "english" }
-  const { searchInbox } = sources
+  const { searchInbox, includeNotes = true } = sources
 
   const [
     notesRes,
@@ -76,7 +82,7 @@ export async function retrieveMemoryContext(
     tasksRes,
     activitiesRes,
   ] = await Promise.all([
-    searchQuery
+    searchQuery && includeNotes
       ? db
           .from("kori_notes")
           .select("id, slug, title, description, content")

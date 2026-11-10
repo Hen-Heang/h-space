@@ -327,9 +327,11 @@ const ROUTES = [
   "/korean-coach",
   "/interview",
   "/chat",
-  "/notes",
-  "/notes/new",
-  `/notes/projects/${NOTE_PROJECT_ID}`,
+  // Notes routes only render while NEXT_PUBLIC_FEATURE_NOTES=true; otherwise
+  // they redirect to /inbox, which is already swept.
+  ...(process.env.NEXT_PUBLIC_FEATURE_NOTES === "true"
+    ? ["/notes", "/notes/new", `/notes/projects/${NOTE_PROJECT_ID}`]
+    : []),
   "/ask-hengo",
   "/ask-hengo/memories",
   "/timeline",

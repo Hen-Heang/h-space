@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useAskHengo } from "@/hooks/useMemory"
 import type { AskHengoAnswer } from "@/lib/api"
+import { isNotesEnabled } from "@/lib/feature-flags"
 
 const EXAMPLE_QUESTIONS = [
   "What did I complete yesterday?",
@@ -57,7 +58,11 @@ export function AskHengoChat() {
         <Textarea
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Ask about your notes, goals, habits, journal, or Korean practice…"
+          placeholder={
+            isNotesEnabled()
+              ? "Ask about your notes, goals, habits, journal, or Korean practice…"
+              : "Ask about your goals, habits, journal, or Korean practice…"
+          }
           className="min-h-20"
           maxLength={500}
           onKeyDown={(e) => {

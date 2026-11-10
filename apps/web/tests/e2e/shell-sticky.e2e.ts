@@ -152,8 +152,11 @@ test("calendar keeps its clipped, non-scrolling main", async ({ page }) => {
     const s = getComputedStyle(document.querySelector("main")!)
     return { x: s.overflowX, y: s.overflowY }
   })
-  // overflow-x-clip with overflow-y-hidden computes to hidden on both axes — as before.
-  expect(overflow).toEqual({ x: "hidden", y: "hidden" })
+  // overflow-x-clip with overflow-y-hidden: older Chrome computed x as "hidden",
+  // Chrome 157 keeps "clip". Either way sideways overflow is clipped and the
+  // main never scrolls, which is what this guards.
+  expect(["hidden", "clip"]).toContain(overflow.x)
+  expect(overflow.y).toBe("hidden")
 })
 
 for (const viewport of [
@@ -193,6 +196,11 @@ for (const viewport of [
 }
 
 test("note view's action bar sticks below the shell header (desktop)", async ({ page }) => {
+  // /notes* redirects to /inbox unless the app runs with NEXT_PUBLIC_FEATURE_NOTES=true.
+  test.skip(
+    process.env.NEXT_PUBLIC_FEATURE_NOTES !== "true",
+    "Notes is retired (NEXT_PUBLIC_FEATURE_NOTES unset)",
+  )
   await page.setViewportSize({ width: 1440, height: 800 })
   await installMocks(page)
   await page.goto("/notes/sticky-test")

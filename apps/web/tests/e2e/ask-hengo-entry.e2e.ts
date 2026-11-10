@@ -156,7 +156,8 @@ for (const width of [320, 375, 1280]) {
     await expect(
       page.locator("main").getByRole("heading", { name: "Search my workspace" }),
     ).toBeAttached()
-    await expect(page.getByText(/saved notes, inbox captures, and journal entries/)).toBeVisible()
+    // "saved notes, " is only listed while Notes is on (NEXT_PUBLIC_FEATURE_NOTES=true).
+    await expect(page.getByText(/inbox captures, and journal entries/)).toBeVisible()
     await page.screenshot({ path: `test-results/ask-hengo/workspace-${width}.png` })
 
     const overflow = await page.evaluate(
