@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
   aiLevelOf,
+  projectNameKey,
   registerProjectKnowledgeReadTools,
   registerProjectKnowledgeWriteTools,
 } from "./project-knowledge"
@@ -604,5 +605,86 @@ describe("project knowledge MCP — AI permission levels", () => {
       [PROJECT_ID, true],
       [OTHER_PROJECT_ID, false],
     ])
+  })
+})
+
+describe("create_knowledge_project — duplicate names", () => {
+  const EXISTING = { id: PROJECT_ID, name: "OLV Project" }
+
+  /** Projects fake: the name lookup resolves to `rows`; the access lookup to `access`. */
+  function projectsFake(rows: unknown[], access: unknown) {
+    const query = fakeQuery({ data: rows, error: null })
+    const inserts: Record<string, unknown>[] = []
+    query.maybeSingle = () => Promise.resolve({ data: access, error: null })
+    query.insert = (row: Record<string, unknown>) => {
+      inserts.push(row)
+      return query
+    }
+    query.single = () =>
+      Promise.resolve({
+        data: {
+          id: OTHER_PROJECT_ID,
+          name: "New one",
+          description: "",
+          project_type: "personal",
+          status: "active",
+          updated_at: "2026-11-09T00:00:00Z",
+        },
+        error: null,
+      })
+    return { query, inserts }
+  }
+
+  async function create(name: string, projects: ReturnType<typeof projectsFake>) {
+    vi.stubEnv("MCP_KNOWLEDGE_PROJECT_IDS", "")
+    const { fakeServer, tools } = captureRegisteredTools()
+    registerProjectKnowledgeWriteTools(
+      fakeServer,
+      fakeContext(fakeDb({ kori_note_projects: projects.query }), { writeEnabled: true }),
+    )
+    return tools.get("create_knowledge_project")!.handler({
+      name,
+      description: "",
+      projectType: "personal",
+    })
+  }
+
+  it("normalizes names for comparison", () => {
+    expect(projectNameKey("  OLV   Project ")).toBe("olv project")
+    expect(projectNameKey("ＯＬＶ Project")).toBe("olv project")
+  })
+
+  it("points the AI at a same-name project it can already see, without creating one", async () => {
+    const projects = projectsFake([EXISTING], {
+      id: PROJECT_ID,
+      ai_access: true,
+      ai_can_edit: true,
+    })
+    const result = await create("olv  project", projects)
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toContain(PROJECT_ID)
+    expect(projects.inserts).toHaveLength(0)
+  })
+
+  it("refuses a name used by a project hidden from AI, without revealing its id", async () => {
+    const projects = projectsFake([EXISTING], {
+      id: PROJECT_ID,
+      ai_access: false,
+      ai_can_edit: false,
+    })
+    const result = await create("OLV Project", projects)
+    expect(result.isError).toBe(true)
+    expect(result.content[0].text).toMatch(/isn't open to AI/)
+    expect(result.content[0].text).toMatch(/Read & edit/)
+    expect(result.content[0].text).not.toContain(PROJECT_ID)
+    expect(projects.inserts).toHaveLength(0)
+  })
+
+  it("creates the project when the name is new", async () => {
+    const projects = projectsFake([EXISTING], null)
+    const result = await create("Backend study", projects)
+    expect(result.isError).toBeFalsy()
+    expect(projects.inserts).toHaveLength(1)
+    expect(projects.inserts[0]).toMatchObject({ name: "Backend study", ai_access: true })
   })
 })

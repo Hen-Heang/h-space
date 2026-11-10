@@ -30,8 +30,11 @@ Migrations: `20261109150000_note_projects_ai_access.sql` (`ai_access`) and
 `20261109170000_note_projects_ai_edit_level.sql` (`ai_can_edit`; projects that already had access
 were backfilled to Read & edit). A UUID in the env allowlist below grants **Read only**.
 
-`create_knowledge_project` creates a new, empty project at Read & edit. No MCP tool can change an
-existing project's level. Because an MCP token is a full Supabase user token (its claims carry the
+`create_knowledge_project` creates a new, empty project at Read & edit. It refuses a name the user
+already has (ignoring case and spacing): for a project the AI can see it returns that project's id
+to reuse; for a project with AI access Off it says only that the name is taken and asks the user to
+open it in the app (no id), so the AI doesn't create a look-alike duplicate. No MCP tool can change
+an existing project's level. Because an MCP token is a full Supabase user token (its claims carry the
 connector's `client_id`) that could call the data API directly, the database enforces this too,
 for any token with a `client_id`:
 
