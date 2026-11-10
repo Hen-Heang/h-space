@@ -14,20 +14,25 @@
 --
 -- Additive only: one function and its grants. No table, row or policy changes.
 --
--- BEFORE APPLYING — this runs on the database shared with Orbit/DailyGoalMap:
---   1. Replace both placeholders below (<your-domain>, <claude-code-client-id>).
---      The guard at the end aborts the migration while either is still present.
---   2. Check Authentication -> Hooks: if a Customize Access Token hook already
---      exists (e.g. Orbit's), MERGE this logic into it instead — Supabase runs
---      only one, and replacing it would drop its claims.
---   3. After applying, run the three test selects in the comment at the bottom,
---      then enable the hook in the dashboard (Authentication -> Hooks ->
---      Customize Access Token -> Postgres -> public.kori_mcp_access_token_hook).
---      A hook that raises blocks EVERY sign-in, Orbit's included.
+-- LIVE STATE (2026-11-09): applied to the production project as two recorded
+-- migrations — `20261109043447 mcp_access_token_hook` (Claude Code) and
+-- `20261109054032 mcp_access_token_hook_add_chatgpt` (adds ChatGPT) — and
+-- enabled as the Customize Access Token hook (no other hook existed). This
+-- file matches the live function. Approved clients (non-secret OAuth ids):
+-- Claude Code 0d636b5e-…, ChatGPT 425b2b56-…; both are also in Vercel's
+-- MCP_ALLOWED_CLIENT_IDS. Verified live: the hook receives `client_id` for
+-- OAuth-server tokens, and the data API accepts the array `aud`.
 --
--- Unverified until the live connector test (PR #111): that Supabase includes
--- `client_id` in the hook's claims for OAuth-server tokens, and that its data
--- API accepts an array `aud` containing "authenticated".
+-- ADDING A CLIENT: register it in Supabase -> Authentication -> OAuth Apps,
+-- add its id to approved_clients below (a live SQL change — needs approval)
+-- AND to MCP_ALLOWED_CLIENT_IDS, then redeploy.
+--
+-- On a fresh environment: change mcp_resource and approved_clients first, run
+-- the three test selects at the bottom, then enable the hook in the dashboard
+-- (Authentication -> Hooks -> Customize Access Token -> Postgres ->
+-- public.kori_mcp_access_token_hook). If another Customize Access Token hook
+-- already exists, MERGE this logic into it — Supabase runs only one. A hook
+-- that raises blocks EVERY sign-in, Orbit's included.
 --
 -- ROLLBACK:
 --   1. Dashboard: disable the Customize Access Token hook (immediate for new tokens).
@@ -43,9 +48,12 @@ declare
   claims jsonb := event -> 'claims';
   token_client_id text := claims ->> 'client_id';
   -- Must equal MCP_RESOURCE_URL exactly (no trailing slash).
-  mcp_resource constant text := 'https://<your-domain>/mcp';
-  -- Same ids as MCP_ALLOWED_CLIENT_IDS. Add ChatGPT's id here when registered.
-  approved_clients constant text[] := array['<claude-code-client-id>'];
+  mcp_resource constant text := 'https://hengo.henheang.site/mcp';
+  -- Same ids as MCP_ALLOWED_CLIENT_IDS.
+  approved_clients constant text[] := array[
+    '0d636b5e-03d0-4d6b-8e69-244f03cee0aa', -- Claude Code
+    '425b2b56-1ccb-41ac-ad65-67b9bd4d778e'  -- ChatGPT
+  ];
 begin
   if token_client_id is null or not (token_client_id = any (approved_clients)) then
     return event;
@@ -86,6 +94,6 @@ $$;
 --   -- Unknown client: unchanged.
 --   select public.kori_mcp_access_token_hook(
 --     '{"claims":{"aud":"authenticated","role":"authenticated","client_id":"someone-else"}}'::jsonb);
---   -- Approved client: aud = ["https://<your-domain>/mcp","authenticated"].
+--   -- Approved client: aud = ["https://hengo.henheang.site/mcp","authenticated"].
 --   select public.kori_mcp_access_token_hook(
---     '{"claims":{"aud":"authenticated","role":"authenticated","client_id":"<claude-code-client-id>"}}'::jsonb);
+--     '{"claims":{"aud":"authenticated","role":"authenticated","client_id":"0d636b5e-03d0-4d6b-8e69-244f03cee0aa"}}'::jsonb);
