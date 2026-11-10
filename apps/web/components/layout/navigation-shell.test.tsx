@@ -99,11 +99,11 @@ describe("MobileBottomNav", () => {
     render(<MobileBottomNav pathname={pathname} searchParams={searchParams} />)
   }
 
-  it("renders Home · Plan · Learn · Finance plus a More trigger", () => {
+  it("renders Home · Plan · Notes · Finance plus a More trigger", () => {
     setup("/home")
     const nav = screen.getByRole("navigation", { name: "Primary" })
     expect(within(nav).getAllByRole("listitem")).toHaveLength(5)
-    for (const label of ["Home", "Plan", "Learn", "Finance", "More"]) {
+    for (const label of ["Home", "Plan", "Notes", "Finance", "More"]) {
       expect(within(nav).getByText(label)).toBeTruthy()
     }
     expect(within(nav).getByRole("button", { name: "More" })).toBeTruthy()
@@ -112,7 +112,7 @@ describe("MobileBottomNav", () => {
   it("uses the workspace route mapping, in order", () => {
     setup("/home")
     const hrefs = screen.getAllByRole("link").map((el) => el.getAttribute("href"))
-    expect(hrefs).toEqual(["/home", "/goals", "/learn", "/finance"])
+    expect(hrefs).toEqual(["/home", "/goals", "/notes", "/finance"])
   })
 
   it("marks the current destination with aria-current", () => {
@@ -128,7 +128,8 @@ describe("MobileBottomNav", () => {
     for (const route of [
       "/apps",
       "/vault",
-      "/notes",
+      "/learn",
+      "/vocab",
       "/growth/recovery",
       "/progress",
       "/chat",
@@ -143,10 +144,16 @@ describe("MobileBottomNav", () => {
     }
   })
 
-  it("lights the Learn tab on every Learning route, not just /learn", () => {
-    for (const route of ["/learn", "/vocab", "/practice", "/korean-coach", "/history"]) {
+  it("lights the Notes tab on every Notes route, not just /notes", () => {
+    for (const route of [
+      "/notes",
+      "/notes/new",
+      "/notes/projects/abc-123",
+      "/ask-hengo/memories",
+      "/timeline",
+    ]) {
       setup(route)
-      expect(screen.getByRole("link", { name: "Learn" }).getAttribute("aria-current")).toBe("page")
+      expect(screen.getByRole("link", { name: "Notes" }).getAttribute("aria-current")).toBe("page")
       cleanup()
     }
   })
@@ -198,7 +205,7 @@ describe("MoreSheet", () => {
     expect(within(dialog).getByRole("button", { name: "Toggle theme" })).toBeTruthy()
   })
 
-  it("leads with Notes, Growth and Settings", () => {
+  it("leads with Learning, Growth and Settings", () => {
     setup(true)
     const lead = screen.getByRole("navigation", { name: "More destinations" })
     expect(
@@ -208,9 +215,9 @@ describe("MoreSheet", () => {
     ).toEqual(moreNavItems.map((item) => item.href))
     expect(
       within(lead)
-        .getByRole("link", { name: /^Notes/ })
+        .getByRole("link", { name: /^Learning/ })
         .getAttribute("href"),
-    ).toBe("/notes")
+    ).toBe("/learn")
     expect(
       within(lead)
         .getByRole("link", { name: /^Settings/ })

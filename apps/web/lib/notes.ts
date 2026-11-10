@@ -177,3 +177,20 @@ export function sortNotesMeta(notes: NoteMeta[]): NoteMeta[] {
     return new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
   })
 }
+
+// Reading speeds behind readingMinutes: ~220 words a minute for space-separated
+// text, ~500 characters a minute for Hangul, CJK and Khmer (written without
+// spaces between words, so counting "words" would undercount them).
+const WORDS_PER_MINUTE = 220
+const CHARS_PER_MINUTE = 500
+const UNSPACED_SCRIPTS =
+  /[\p{Script=Hangul}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Khmer}]/gu
+
+/** Estimated reading time in whole minutes (at least 1) for a note's markdown. */
+export function readingMinutes(markdown: string): number {
+  // Markdown punctuation isn't read; code is, so it counts like prose.
+  const text = markdown.replace(/[#>*_`~[\]()|-]/g, " ")
+  const unspaced = text.match(UNSPACED_SCRIPTS)?.length ?? 0
+  const words = text.replace(UNSPACED_SCRIPTS, " ").split(/\s+/).filter(Boolean).length
+  return Math.max(1, Math.round(words / WORDS_PER_MINUTE + unspaced / CHARS_PER_MINUTE))
+}

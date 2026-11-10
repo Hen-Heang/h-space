@@ -21,8 +21,8 @@ const SAVED: Record<ProjectAiLevel, string> = {
  * or Read & edit. They can never delete notes. The database enforces the
  * edit level too (migration 20261109170000_note_projects_ai_edit_level.sql).
  *
- * Hidden while loading and when AI access isn't set up on this database, so
- * the workspace never shows a control that can't save. Before the
+ * Lives in Project settings. Hidden while loading and when AI access isn't
+ * set up on this database, so it never shows a control that can't save. Before the
  * ai_can_edit migration, Read only is shown but disabled.
  */
 export function ProjectAiAccess({ projectId }: { projectId: string }) {
@@ -64,28 +64,19 @@ export function ProjectAiAccess({ projectId }: { projectId: string }) {
   }
 
   return (
-    <section
-      aria-labelledby="project-ai-access-label"
-      className="flex flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3 sm:flex-row sm:items-center"
-    >
-      <div className="flex min-w-0 flex-1 items-start gap-3">
-        <Bot size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-muted-foreground" />
-        <div className="min-w-0">
-          <p id="project-ai-access-label" className="text-sm font-semibold text-foreground">
-            AI access
-          </p>
-          <p id="project-ai-access-hint" className="mt-0.5 text-xs text-muted-foreground">
-            {current.hint}
-            {access.level !== "off" &&
-              " Don't keep confidential work material here while AI access is on."}
-          </p>
-        </div>
+    <section aria-labelledby="project-ai-access-label" className="space-y-2.5">
+      <div className="flex items-center gap-2">
+        <Bot size={16} aria-hidden="true" className="shrink-0 text-muted-foreground" />
+        <h3 id="project-ai-access-label" className="text-sm font-semibold text-foreground">
+          AI access
+        </h3>
+        <span className="ml-auto text-xs font-medium text-muted-foreground">{current.label}</span>
       </div>
       <div
         role="radiogroup"
         aria-labelledby="project-ai-access-label"
         aria-describedby="project-ai-access-hint"
-        className="flex shrink-0 rounded-lg border border-border bg-muted/40 p-0.5"
+        className="flex rounded-lg border border-border bg-muted/40 p-0.5"
       >
         {options.map((option, index) => {
           const checked = option.value === access.level
@@ -104,7 +95,7 @@ export function ProjectAiAccess({ projectId }: { projectId: string }) {
               onClick={() => void choose(option.value)}
               onKeyDown={(event) => onKeyDown(event, index)}
               className={cn(
-                "min-h-10 flex-1 rounded-md px-3 text-xs font-semibold whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed sm:flex-none",
+                "min-h-11 flex-1 rounded-md px-2 text-xs font-semibold whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed sm:text-sm",
                 checked
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
@@ -116,6 +107,11 @@ export function ProjectAiAccess({ projectId }: { projectId: string }) {
           )
         })}
       </div>
+      <p id="project-ai-access-hint" className="text-xs text-muted-foreground">
+        {current.hint}
+        {access.level !== "off" &&
+          " Don't keep confidential work material here while AI access is on."}
+      </p>
     </section>
   )
 }

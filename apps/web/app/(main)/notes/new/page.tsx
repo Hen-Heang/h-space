@@ -69,7 +69,7 @@ function NewNoteForm() {
     <div className="mx-auto max-w-4xl pb-6 sm:pb-8">
       <Link
         href={backHref}
-        className="mb-4 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        className="mb-4 hidden min-h-11 lg:inline-flex items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
       >
         <ChevronLeft size={14} />
         {projectParam ? "Back to project" : "All notes"}

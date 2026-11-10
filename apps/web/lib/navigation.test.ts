@@ -438,17 +438,17 @@ describe("workspace tabs (secondary navigation)", () => {
 })
 
 describe("mobile bottom bar + More", () => {
-  it("has Home · Plan · Learn · Finance before the More trigger", () => {
+  it("has Home · Plan · Notes · Finance before the More trigger", () => {
     expect(mobileNavItems.map((i) => i.shortLabel ?? i.label)).toEqual([
       "Home",
       "Plan",
-      "Learn",
+      "Notes",
       "Finance",
     ])
   })
 
   it("leads the More sheet with every workspace and tool that has no tab", () => {
-    expect(moreNavItems.map((i) => i.label)).toEqual(["Notes", "Growth", "Settings"])
+    expect(moreNavItems.map((i) => i.label)).toEqual(["Learning", "Growth", "Settings"])
   })
 
   it("lights exactly one tab on tab-owned routes and More nowhere there", () => {
@@ -456,8 +456,10 @@ describe("mobile bottom bar + More", () => {
       "/home",
       "/goals/calendar",
       "/inbox",
-      "/vocab",
-      "/history",
+      "/notes",
+      "/notes/projects/abc-123",
+      "/timeline",
+      "/ask-hengo/memories",
       "/finance/transactions",
     ]) {
       const lit = mobileNavItems.filter((item) => isNavigationItemActive({ pathname: route, item }))
@@ -470,8 +472,9 @@ describe("mobile bottom bar + More", () => {
     for (const route of [
       "/apps",
       "/vault",
-      "/notes",
-      "/timeline",
+      "/learn",
+      "/vocab",
+      "/history",
       "/growth",
       "/progress",
       "/settings",

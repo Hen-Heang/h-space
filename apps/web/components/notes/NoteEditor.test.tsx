@@ -4,8 +4,9 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("@/lib/supabase", () => ({ supabase: {} }))
+const mockProjects = vi.hoisted(() => ({ list: [] as { id: string; name: string }[] }))
 vi.mock("@/hooks/useNoteProjects", () => ({
-  useNoteProjects: () => ({ projects: [], unavailable: false }),
+  useNoteProjects: () => ({ projects: mockProjects.list, unavailable: false }),
 }))
 
 import { NoteConflictError } from "@/lib/api"
@@ -43,6 +44,7 @@ const body = () => screen.getByPlaceholderText("Write your markdown here...") as
 
 beforeEach(() => {
   window.localStorage.clear()
+  mockProjects.list = []
 })
 
 afterEach(() => {
@@ -52,7 +54,13 @@ afterEach(() => {
 describe("NoteEditor drafts", () => {
   it("keeps no draft when nothing changed", async () => {
     render(
-      <NoteEditor mode="edit" initial={existing} baseUpdatedAt={BASE} onSave={vi.fn()} onCancel={vi.fn()} />,
+      <NoteEditor
+        mode="edit"
+        initial={existing}
+        baseUpdatedAt={BASE}
+        onSave={vi.fn()}
+        onCancel={vi.fn()}
+      />,
     )
     await flushAutosave()
     expect(window.localStorage.getItem(EDIT_KEY)).toBeNull()
@@ -63,7 +71,13 @@ describe("NoteEditor drafts", () => {
   it("keeps changes with the version they started from, and removes them on discard", async () => {
     const onCancel = vi.fn()
     render(
-      <NoteEditor mode="edit" initial={existing} baseUpdatedAt={BASE} onSave={vi.fn()} onCancel={onCancel} />,
+      <NoteEditor
+        mode="edit"
+        initial={existing}
+        baseUpdatedAt={BASE}
+        onSave={vi.fn()}
+        onCancel={onCancel}
+      />,
     )
     fireEvent.change(body(), { target: { value: "Edited body" } })
     await flushAutosave()
@@ -82,16 +96,31 @@ describe("NoteEditor drafts", () => {
   it("leaves straight away on Cancel when nothing changed", () => {
     const onCancel = vi.fn()
     render(
-      <NoteEditor mode="edit" initial={existing} baseUpdatedAt={BASE} onSave={vi.fn()} onCancel={onCancel} />,
+      <NoteEditor
+        mode="edit"
+        initial={existing}
+        baseUpdatedAt={BASE}
+        onSave={vi.fn()}
+        onCancel={onCancel}
+      />,
     )
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
     expect(onCancel).toHaveBeenCalledOnce()
   })
 
   it("restores a draft that started from the note's current version", () => {
-    window.localStorage.setItem(EDIT_KEY, serializeNoteDraft({ ...existing, content: "Draft body" }, BASE))
+    window.localStorage.setItem(
+      EDIT_KEY,
+      serializeNoteDraft({ ...existing, content: "Draft body" }, BASE),
+    )
     render(
-      <NoteEditor mode="edit" initial={existing} baseUpdatedAt={BASE} onSave={vi.fn()} onCancel={vi.fn()} />,
+      <NoteEditor
+        mode="edit"
+        initial={existing}
+        baseUpdatedAt={BASE}
+        onSave={vi.fn()}
+        onCancel={vi.fn()}
+      />,
     )
     expect(body().value).toBe("Draft body")
     expect(screen.getByText(/Restored your unsaved changes/)).toBeTruthy()
@@ -101,7 +130,13 @@ describe("NoteEditor drafts", () => {
     const stale = serializeNoteDraft({ ...existing, content: "Old draft" }, "2026-11-08T00:00:00Z")
     window.localStorage.setItem(EDIT_KEY, stale)
     render(
-      <NoteEditor mode="edit" initial={existing} baseUpdatedAt={BASE} onSave={vi.fn()} onCancel={vi.fn()} />,
+      <NoteEditor
+        mode="edit"
+        initial={existing}
+        baseUpdatedAt={BASE}
+        onSave={vi.fn()}
+        onCancel={vi.fn()}
+      />,
     )
     expect(body().value).toBe("Saved body")
     expect(screen.getByText(/from an earlier version of this note/)).toBeTruthy()
@@ -116,7 +151,13 @@ describe("NoteEditor drafts", () => {
   it("asks before using a draft written before drafts were versioned", () => {
     window.localStorage.setItem(EDIT_KEY, JSON.stringify({ ...existing, content: "Legacy draft" }))
     render(
-      <NoteEditor mode="edit" initial={existing} baseUpdatedAt={BASE} onSave={vi.fn()} onCancel={vi.fn()} />,
+      <NoteEditor
+        mode="edit"
+        initial={existing}
+        baseUpdatedAt={BASE}
+        onSave={vi.fn()}
+        onCancel={vi.fn()}
+      />,
     )
     expect(body().value).toBe("Saved body")
     fireEvent.click(screen.getByRole("button", { name: "Discard changes" }))
@@ -130,7 +171,12 @@ describe("NoteEditor drafts", () => {
       serializeNoteDraft({ ...blank, title: "Elsewhere", content: "Other draft" }, null),
     )
     render(
-      <NoteEditor mode="create" initial={{ ...blank, projectId: "p1" }} onSave={vi.fn()} onCancel={vi.fn()} />,
+      <NoteEditor
+        mode="create"
+        initial={{ ...blank, projectId: "p1" }}
+        onSave={vi.fn()}
+        onCancel={vi.fn()}
+      />,
     )
     expect(body().value).toBe("Body")
     expect(screen.queryByText(/Restored your unsaved changes/)).toBeNull()
@@ -139,14 +185,22 @@ describe("NoteEditor drafts", () => {
   it("keeps the draft and explains when the note changed before saving", async () => {
     const onSave = vi.fn().mockRejectedValue(new NoteConflictError())
     render(
-      <NoteEditor mode="edit" initial={existing} baseUpdatedAt={BASE} onSave={onSave} onCancel={vi.fn()} />,
+      <NoteEditor
+        mode="edit"
+        initial={existing}
+        baseUpdatedAt={BASE}
+        onSave={onSave}
+        onCancel={vi.fn()}
+      />,
     )
     fireEvent.change(body(), { target: { value: "My edits" } })
     await flushAutosave()
-    fireEvent.click(screen.getByRole("button", { name: "Save" }))
+    fireEvent.click(screen.getByRole("button", { name: "Save note" }))
     const alert = await screen.findByRole("alert")
     expect(alert.textContent).toMatch(/changed or deleted somewhere else/)
-    expect(JSON.parse(window.localStorage.getItem(EDIT_KEY) ?? "{}").values.content).toBe("My edits")
+    expect(JSON.parse(window.localStorage.getItem(EDIT_KEY) ?? "{}").values.content).toBe(
+      "My edits",
+    )
   })
 })
 
@@ -165,7 +219,9 @@ describe("NoteEditor accessibility", () => {
     const pin = screen.getByRole("button", { name: "Pin note" })
     expect(screen.queryByRole("switch")).toBeNull()
     fireEvent.click(pin)
-    expect(screen.getByRole("button", { name: "Unpin note" }).getAttribute("aria-pressed")).toBe("true")
+    expect(screen.getByRole("button", { name: "Unpin note" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    )
   })
 
   it("says which editor mode is selected", () => {
@@ -191,7 +247,7 @@ describe("NoteEditor slugs", () => {
     fireEvent.change(screen.getByLabelText("Note title"), { target: { value: "한국어 공부 노트" } })
     expect((screen.getByLabelText("Note URL slug") as HTMLInputElement).value).toBe(slugInput.value)
 
-    fireEvent.click(screen.getByRole("button", { name: "Save" }))
+    fireEvent.click(screen.getByRole("button", { name: "Save note" }))
     await waitFor(() => expect(onSave).toHaveBeenCalledOnce())
     expect(onSave.mock.calls[0][0].slug).toBe(slugInput.value)
   })
@@ -212,7 +268,7 @@ describe("NoteEditor slugs", () => {
     render(<NoteEditor mode="create" initial={blank} onSave={onSave} onCancel={vi.fn()} />)
     fireEvent.change(screen.getByLabelText("Note title"), { target: { value: "Notes" } })
     fireEvent.change(screen.getByLabelText("Note URL slug"), { target: { value: "공부" } })
-    fireEvent.click(screen.getByRole("button", { name: "Save" }))
+    fireEvent.click(screen.getByRole("button", { name: "Save note" }))
     expect(await screen.findByText(/Use English letters, numbers and dashes/)).toBeTruthy()
     expect(onSave).not.toHaveBeenCalled()
   })
@@ -221,7 +277,78 @@ describe("NoteEditor slugs", () => {
     const onSave = vi.fn().mockRejectedValue({ code: "23505", message: "duplicate key value" })
     render(<NoteEditor mode="create" initial={blank} onSave={onSave} onCancel={vi.fn()} />)
     fireEvent.change(screen.getByLabelText("Note title"), { target: { value: "Spring tips" } })
-    fireEvent.click(screen.getByRole("button", { name: "Save" }))
-    expect(await screen.findByText("Another note already uses /notes/spring-tips. Change the URL and save again.")).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "Save note" }))
+    expect(
+      await screen.findByText(
+        "Another note already uses /notes/spring-tips. Change the URL and save again.",
+      ),
+    ).toBeTruthy()
+  })
+})
+
+describe("NoteEditor details", () => {
+  it("leads with title and content and keeps the details closed", () => {
+    render(<NoteEditor mode="create" initial={blank} onSave={vi.fn()} onCancel={vi.fn()} />)
+    const toggle = screen.getByRole("button", { name: /Note details/ })
+    expect(toggle.getAttribute("aria-expanded")).toBe("false")
+    expect(document.getElementById("note-details")?.hidden).toBe(true)
+    expect(screen.getByLabelText("Note title")).toBeTruthy()
+    expect(body()).toBeTruthy()
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute("aria-expanded")).toBe("true")
+    expect(document.getElementById("note-details")?.hidden).toBe(false)
+  })
+
+  it("shows the selected project while the details are closed", () => {
+    mockProjects.list = [{ id: "p1", name: "Sample API" }]
+    render(
+      <NoteEditor
+        mode="create"
+        initial={{ ...blank, projectId: "p1" }}
+        onSave={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+    expect(screen.getByRole("button", { name: /Note details/ }).textContent).toContain("Sample API")
+  })
+
+  it("says No project, or Current project for one it can't find", () => {
+    const { unmount } = render(
+      <NoteEditor mode="create" initial={blank} onSave={vi.fn()} onCancel={vi.fn()} />,
+    )
+    expect(screen.getByRole("button", { name: /Note details/ }).textContent).toContain("No project")
+    unmount()
+    render(
+      <NoteEditor
+        mode="create"
+        initial={{ ...blank, projectId: "gone" }}
+        onSave={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+    expect(screen.getByRole("button", { name: /Note details/ }).textContent).toContain(
+      "Current project",
+    )
+  })
+
+  it("opens the details when a save fails on a field inside them, and stays editable", async () => {
+    const onSave = vi.fn().mockRejectedValue({ code: "23505", message: "duplicate key value" })
+    render(<NoteEditor mode="create" initial={blank} onSave={onSave} onCancel={vi.fn()} />)
+    fireEvent.change(screen.getByLabelText("Note title"), { target: { value: "Spring tips" } })
+    fireEvent.click(screen.getByRole("button", { name: "Save note" }))
+    await screen.findByRole("alert")
+    expect(screen.getByRole("button", { name: /Note details/ }).getAttribute("aria-expanded")).toBe(
+      "true",
+    )
+    expect((screen.getByLabelText("Note title") as HTMLTextAreaElement).value).toBe("Spring tips")
+    expect((screen.getByRole("button", { name: "Save note" }) as HTMLButtonElement).disabled).toBe(
+      false,
+    )
+  })
+
+  it("keeps a title on one line", () => {
+    render(<NoteEditor mode="create" initial={blank} onSave={vi.fn()} onCancel={vi.fn()} />)
+    fireEvent.change(screen.getByLabelText("Note title"), { target: { value: "One\ntwo" } })
+    expect((screen.getByLabelText("Note title") as HTMLTextAreaElement).value).toBe("One two")
   })
 })

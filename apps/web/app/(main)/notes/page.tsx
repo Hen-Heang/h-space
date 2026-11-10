@@ -3,11 +3,12 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { FolderPlus, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import { motion } from "motion/react"
 import { toast } from "sonner"
 
 import { WorkspaceTabs } from "@/components/layout/WorkspaceTabs"
+import { NotesCaptureButton } from "@/components/notes/NotesCaptureButton"
 import { NotesHome } from "@/components/notes/NotesHome"
 import { ProjectFormDialog } from "@/components/notes/ProjectFormDialog"
 import { Button } from "@/components/ui/button"
@@ -44,24 +45,14 @@ export default function NotesPage() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="space-y-6 pb-12 sm:space-y-7"
+      className="space-y-5 pb-12"
     >
-      <motion.div variants={itemVariants} className="space-y-3">
+      <motion.div variants={itemVariants}>
         <WorkspaceTabs
           sectionId="memory"
           actions={
             <div className="flex gap-2">
-              {!projectsUnavailable && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 gap-1.5 rounded-md"
-                  onClick={() => setProjectDialogOpen(true)}
-                >
-                  <FolderPlus size={16} aria-hidden="true" />
-                  New project
-                </Button>
-              )}
+              <NotesCaptureButton />
               <Button asChild size="sm" className="h-9 gap-1.5 rounded-md">
                 <Link href="/notes/new">
                   <Plus size={16} aria-hidden="true" />
@@ -71,31 +62,21 @@ export default function NotesPage() {
             </div>
           }
         />
-        <p className="text-sm text-muted-foreground">
-          Your projects, ideas and knowledge in one place.
-          {!loading && !error && (
-            <>
-              {" "}
-              <span className="font-medium text-foreground tabular-nums">{notes.length}</span>{" "}
-              {notes.length === 1 ? "note" : "notes"}.
-            </>
-          )}
-        </p>
       </motion.div>
 
       <motion.div variants={itemVariants}>
         {loading ? (
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
-            <div className="space-y-3">
-              <Skeleton className="h-12 w-full rounded-xl" />
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="rounded-xl border border-border bg-card p-4">
-                  <Skeleton className="h-5 w-1/3" />
-                  <Skeleton className="mt-3 h-4 w-4/5" />
+          <div className="space-y-3" aria-busy="true" aria-label="Loading notes">
+            <Skeleton className="h-11 w-48 rounded-lg" />
+            <Skeleton className="h-11 w-full rounded-xl" />
+            <div className="divide-y divide-border rounded-xl border border-border bg-card">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="space-y-2 px-4 py-3">
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-3 w-1/2" />
                 </div>
               ))}
             </div>
-            <Skeleton className="hidden h-40 w-full rounded-xl lg:block" />
           </div>
         ) : error ? (
           <div

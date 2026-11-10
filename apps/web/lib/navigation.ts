@@ -828,7 +828,7 @@ export const workspaceNavItems: NavItem[] = [
 export const toolNavItems: NavItem[] = [settingsItem]
 
 /** Mobile bottom bar: four tabs; the fifth slot is the "More" sheet trigger. */
-export const mobileNavItems: NavItem[] = ["nav-today", "nav-plan", "nav-learn", "nav-finance"].map(
+export const mobileNavItems: NavItem[] = ["nav-today", "nav-plan", "nav-memory", "nav-finance"].map(
   (id) => workspaceNavItems.find((item) => item.id === id)!,
 )
 

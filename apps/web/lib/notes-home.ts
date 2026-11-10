@@ -7,8 +7,8 @@
 // "No project" bucket, so they still appear everywhere.
 
 import type { InboxItemInput } from "@/lib/inbox"
-import type { Project } from "@/lib/note-projects"
-import type { NoteMeta, NoteType } from "@/lib/notes"
+import { projectStatusLabel, type Project, type ProjectStatus } from "@/lib/note-projects"
+import { NOTE_TYPES, type NoteMeta, type NoteType } from "@/lib/notes"
 
 // ── Project grouping ─────────────────────────────────────────────────────────
 
@@ -123,12 +123,18 @@ export function buildNoteSearchResults({
   projects,
   noteMatches,
   noteType = "all",
+  pinnedOnly = false,
+  projectStatus = "all",
 }: {
   query: string
   scope: NoteSearchScope
   projects: NoteProject[]
   noteMatches: NoteMeta[]
   noteType?: NoteType | "all"
+  /** Keep only pinned notes (the same filter the note list uses). */
+  pinnedOnly?: boolean
+  /** Keep only project hits with this status (the Projects list's filter). */
+  projectStatus?: ProjectStatus | "all"
 }): NoteSearchResults {
   const normalizedQuery = query.trim().toLowerCase()
   const scopedProject = scope === "all" ? undefined : projects.find((p) => p.id === scope)
@@ -137,7 +143,10 @@ export function buildNoteSearchResults({
   const projectHits =
     normalizedQuery && !scopedProject
       ? projects.filter(
-          (p) => !p.isInbox && includesQuery([p.name, p.description, ...p.tags], normalizedQuery),
+          (p) =>
+            !p.isInbox &&
+            (projectStatus === "all" || p.project?.status === projectStatus) &&
+            includesQuery([p.name, p.description, ...p.tags], normalizedQuery),
         )
       : []
 
@@ -146,7 +155,8 @@ export function buildNoteSearchResults({
     ? noteMatches.filter(
         (note) =>
           (!scopedProject || projectIdOf(note, known) === scopedProject.id) &&
-          (noteType === "all" || note.noteType === noteType),
+          (noteType === "all" || note.noteType === noteType) &&
+          (!pinnedOnly || note.pinned),
       )
     : []
 
@@ -158,6 +168,65 @@ export function buildNoteSearchResults({
     scopeLabel,
     summary: `${total} ${total === 1 ? "result" : "results"} in ${scopeLabel}`,
   }
+}
+
+// ── Filters ──────────────────────────────────────────────────────────────────
+
+/** Every filter on Notes Home. One state for both the Notes and Projects views. */
+export interface NotesHomeFilters {
+  /** "all", a project id, or NO_PROJECT_ID — applies to the note list and search. */
+  scope: NoteSearchScope
+  noteType: NoteType | "all"
+  pinnedOnly: boolean
+  /** Applies to the project list and project search hits. */
+  projectStatus: ProjectStatus | "all"
+}
+
+export const DEFAULT_NOTES_HOME_FILTERS: NotesHomeFilters = {
+  scope: "all",
+  noteType: "all",
+  pinnedOnly: false,
+  projectStatus: "all",
+}
+
+/** The note list's filters: scope (a project or "No project"), type and pinned. */
+export function filterHomeNotes(
+  notes: NoteMeta[],
+  filters: Pick<NotesHomeFilters, "scope" | "noteType" | "pinnedOnly">,
+  knownProjectIds: Set<string>,
+): NoteMeta[] {
+  return notes.filter(
+    (note) =>
+      (filters.scope === "all" || projectIdOf(note, knownProjectIds) === filters.scope) &&
+      (filters.noteType === "all" || note.noteType === filters.noteType) &&
+      (!filters.pinnedOnly || note.pinned),
+  )
+}
+
+/**
+ * Active filters written out for the line under search ("In: Sample API ·
+ * Decision · Pinned only"). `kinds` limits it to the filters the current view
+ * uses. A scope whose project no longer exists isn't listed (it's ignored).
+ */
+export function describeActiveFilters(
+  filters: NotesHomeFilters,
+  projects: NoteProject[],
+  kinds: { notes: boolean; projects: boolean } = { notes: true, projects: true },
+): string[] {
+  const labels: string[] = []
+  if (kinds.notes) {
+    const scoped =
+      filters.scope === "all" ? undefined : projects.find((p) => p.id === filters.scope)
+    if (scoped) labels.push(scoped.isInbox ? "No project" : `In: ${scoped.name}`)
+    if (filters.noteType !== "all") {
+      labels.push(NOTE_TYPES.find((t) => t.value === filters.noteType)?.label ?? filters.noteType)
+    }
+    if (filters.pinnedOnly) labels.push("Pinned only")
+  }
+  if (kinds.projects && filters.projectStatus !== "all") {
+    labels.push(`Status: ${projectStatusLabel(filters.projectStatus)}`)
+  }
+  return labels
 }
 
 // ── Default view lists ───────────────────────────────────────────────────────

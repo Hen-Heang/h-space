@@ -7,6 +7,9 @@ import {
   buildNoteSearchResults,
   CAPTURE_TITLE_LENGTH,
   countNotesByType,
+  DEFAULT_NOTES_HOME_FILTERS,
+  describeActiveFilters,
+  filterHomeNotes,
   groupNotesIntoProjects,
   NO_PROJECT_ID,
   selectPinnedNotes,
@@ -226,5 +229,118 @@ describe("buildCaptureInput", () => {
     expect(input?.title).toHaveLength(CAPTURE_TITLE_LENGTH)
     expect(input?.title?.endsWith("…")).toBe(true)
     expect(input?.content).toHaveLength(100)
+  })
+})
+
+describe("search filters for pinned and project status", () => {
+  const hits = [makeNote({ slug: "a", pinned: true }), makeNote({ slug: "b" })]
+  const groups = groupNotesIntoProjects(
+    [],
+    [
+      makeProject({ id: "p1", name: "Spring A" }),
+      makeProject({ id: "p2", name: "Spring B", status: "archived" }),
+    ],
+  )
+
+  it("keeps only pinned note hits when asked", () => {
+    const res = buildNoteSearchResults({
+      query: "x",
+      scope: "all",
+      projects: [],
+      noteMatches: hits,
+      pinnedOnly: true,
+    })
+    expect(res.noteHits.map((n) => n.slug)).toEqual(["a"])
+  })
+
+  it("keeps only project hits with the chosen status", () => {
+    const all = buildNoteSearchResults({
+      query: "spring",
+      scope: "all",
+      projects: groups,
+      noteMatches: [],
+    })
+    expect(all.projectHits.map((p) => p.id)).toEqual(["p1", "p2"])
+    const archived = buildNoteSearchResults({
+      query: "spring",
+      scope: "all",
+      projects: groups,
+      noteMatches: [],
+      projectStatus: "archived",
+    })
+    expect(archived.projectHits.map((p) => p.id)).toEqual(["p2"])
+  })
+})
+
+describe("filterHomeNotes", () => {
+  const known = new Set(["p1"])
+  const notes = [
+    makeNote({ slug: "in", projectId: "p1", noteType: "decision", pinned: true }),
+    makeNote({ slug: "loose" }),
+    makeNote({ slug: "orphan", projectId: "deleted" }),
+  ]
+  const slugs = (list: NoteMeta[]) => list.map((n) => n.slug)
+
+  it("returns every note with the default filters", () => {
+    expect(slugs(filterHomeNotes(notes, DEFAULT_NOTES_HOME_FILTERS, known))).toEqual([
+      "in",
+      "loose",
+      "orphan",
+    ])
+  })
+
+  it("scopes to a project or to notes with no known project", () => {
+    expect(
+      slugs(filterHomeNotes(notes, { ...DEFAULT_NOTES_HOME_FILTERS, scope: "p1" }, known)),
+    ).toEqual(["in"])
+    expect(
+      slugs(filterHomeNotes(notes, { ...DEFAULT_NOTES_HOME_FILTERS, scope: NO_PROJECT_ID }, known)),
+    ).toEqual(["loose", "orphan"])
+  })
+
+  it("combines type and pinned filters", () => {
+    const f = { ...DEFAULT_NOTES_HOME_FILTERS, noteType: "decision" as const, pinnedOnly: true }
+    expect(slugs(filterHomeNotes(notes, f, known))).toEqual(["in"])
+    expect(slugs(filterHomeNotes(notes, { ...f, noteType: "idea" }, known))).toEqual([])
+  })
+})
+
+describe("describeActiveFilters", () => {
+  const groups = groupNotesIntoProjects([makeNote({ slug: "loose" })], [makeProject()])
+
+  it("lists nothing for the defaults", () => {
+    expect(describeActiveFilters(DEFAULT_NOTES_HOME_FILTERS, groups)).toEqual([])
+  })
+
+  it("writes out each active filter", () => {
+    const labels = describeActiveFilters(
+      { scope: "p1", noteType: "decision", pinnedOnly: true, projectStatus: "on_hold" },
+      groups,
+    )
+    expect(labels).toEqual([
+      "In: Sample API",
+      "Decision",
+      "Pinned only",
+      expect.stringMatching(/^Status: /),
+    ])
+  })
+
+  it("names the No project scope and ignores a scope that no longer exists", () => {
+    expect(
+      describeActiveFilters({ ...DEFAULT_NOTES_HOME_FILTERS, scope: NO_PROJECT_ID }, groups),
+    ).toEqual(["No project"])
+    expect(describeActiveFilters({ ...DEFAULT_NOTES_HOME_FILTERS, scope: "gone" }, groups)).toEqual(
+      [],
+    )
+  })
+
+  it("limits the list to the kinds the view uses", () => {
+    const f = { ...DEFAULT_NOTES_HOME_FILTERS, pinnedOnly: true, projectStatus: "active" as const }
+    expect(describeActiveFilters(f, groups, { notes: false, projects: true })).toEqual([
+      "Status: Active",
+    ])
+    expect(describeActiveFilters(f, groups, { notes: true, projects: false })).toEqual([
+      "Pinned only",
+    ])
   })
 })
