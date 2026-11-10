@@ -1,6 +1,9 @@
 import { expect, test, type Locator, type Page } from "@playwright/test"
 
 const authState = process.env.HENGO_E2E_STORAGE_STATE
+// Long-form Notes is retired unless the app runs with NEXT_PUBLIC_FEATURE_NOTES=true
+// (lib/feature-flags.ts). Set the same variable for this run to cover Notes.
+const notesOn = process.env.NEXT_PUBLIC_FEATURE_NOTES === "true"
 
 test.use({
   storageState: authState || { cookies: [], origins: [] },
@@ -45,17 +48,27 @@ test.describe("authenticated second-brain journey at 428 × 926", () => {
     const inboxItem = page.locator("div").filter({ hasText: unique }).last()
     await expect(inboxItem).toBeVisible()
     await inboxItem.getByRole("button", { name: "Convert" }).click()
-    await page.getByRole("menuitem", { name: "Convert to note" }).click()
+    if (!notesOn) {
+      // Retired Notes: no note conversion; the reminder goes on the inbox item.
+      await expect(page.getByRole("menuitem", { name: "Convert to note" })).toHaveCount(0)
+      await page.keyboard.press("Escape")
+    } else {
+      await page.getByRole("menuitem", { name: "Convert to note" }).click()
 
-    await page.goto("/notes")
-    await page.getByText(unique, { exact: true }).first().click()
-    await page.getByRole("button", { name: "Edit" }).click()
-    await page.getByRole("button", { name: /Note details/ }).click()
-    await page.getByLabel("Short description").fill("Edited during the responsive audit")
-    await page.getByRole("button", { name: "Save note" }).click()
+      await page.goto("/notes")
+      await page.getByText(unique, { exact: true }).first().click()
+      await page.getByRole("button", { name: "Edit" }).click()
+      await page.getByRole("button", { name: /Note details/ }).click()
+      await page.getByLabel("Short description").fill("Edited during the responsive audit")
+      await page.getByRole("button", { name: "Save note" }).click()
+    }
 
-    const addReminder = page.getByRole("button", { name: "Add reminder" })
-    await expectTouchTarget(addReminder)
+    const addReminder = notesOn
+      ? page.getByRole("button", { name: "Add reminder" })
+      : inboxItem.getByRole("button", { name: "Add reminder" })
+    // The 44px check was written for the note page's reminder button; the
+    // inbox row's bell is a compact icon button and hasn't been measured.
+    if (notesOn) await expectTouchTarget(addReminder)
     await addReminder.click()
     const reminderDialog = page.getByRole("dialog", { name: "New reminder" })
     await expect(reminderDialog).toBeVisible()
@@ -74,7 +87,7 @@ test.describe("authenticated second-brain journey at 428 × 926", () => {
     await page.goto("/ask-hengo")
     // /ask-hengo opens the assistant's Search my workspace mode.
     await expect(page.getByRole("heading", { name: "Search my workspace" })).toBeVisible()
-    await expect(page.getByPlaceholder(/Ask about your notes/)).toBeVisible()
+    await expect(page.getByPlaceholder(/Ask about your/)).toBeVisible()
     await expectNoDocumentOverflow(page)
 
     await page.goto("/review/morning")

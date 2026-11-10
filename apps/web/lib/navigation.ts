@@ -44,6 +44,14 @@ import {
   Gift,
 } from "lucide-react"
 
+import { isNotesEnabled } from "./feature-flags"
+
+/**
+ * Long-form Notes is retired unless NEXT_PUBLIC_FEATURE_NOTES=true (see
+ * `isNotesEnabled`). Read once: `NEXT_PUBLIC_*` is inlined at build time.
+ */
+const NOTES_ENABLED = isNotesEnabled()
+
 // Single source of truth for the whole nav surface — desktop sidebar, tablet
 // rail, mobile bottom bar, the "More" sheet, and the Quick Switcher all render
 // from this file. Adding a new module later (Career, Fitness, …) means adding
@@ -196,7 +204,9 @@ export const askHengoItem: NavItem = {
   shortLabel: "Search workspace",
   icon: BrainCircuit,
   color: "text-sky-500",
-  description: "Ask about your saved notes, inbox captures, and journal",
+  description: NOTES_ENABLED
+    ? "Ask about your saved notes, inbox captures, and journal"
+    : "Ask about your inbox captures, journal, goals, and memories",
   keywords: [
     "ask hengo",
     "memory",
@@ -655,18 +665,31 @@ export const navSections: NavSection[] = [
       { id: "growth-rewards", href: "/growth/rewards", label: "Rewards", icon: Gift, soon: true },
     ],
   },
-  {
-    // Notes: what you've written down and what Hengo remembers —
-    // freeform Notes, the Memories hub (facts extracted from notes/goals/
-    // habits/journal), and the cross-app Timeline. The "memory" id is kept
-    // because last-visited tracking stores it in localStorage.
-    id: "memory",
-    label: "Notes",
-    icon: NotebookPen,
-    color: "text-indigo-500",
-    href: notesItem.href,
-    items: [notesItem, memoryHubItem, timelineItem],
-  },
+  // Notes: what you've written down and what Hengo remembers —
+  // freeform Notes, the Memories hub (facts extracted from notes/goals/
+  // habits/journal), and the cross-app Timeline. The "memory" id is kept
+  // because last-visited tracking stores it in localStorage.
+  // With Notes retired (`isNotesEnabled()` false, the default since
+  // 2026-11-10) the workspace is "Memory": Memories · Timeline, and the
+  // Notes item leaves the registry, so no menu, tab or Quick Switcher result
+  // links to it.
+  NOTES_ENABLED
+    ? {
+        id: "memory",
+        label: "Notes",
+        icon: NotebookPen,
+        color: "text-indigo-500",
+        href: notesItem.href,
+        items: [notesItem, memoryHubItem, timelineItem],
+      }
+    : {
+        id: "memory",
+        label: "Memory",
+        icon: BrainCircuit,
+        color: "text-indigo-500",
+        href: memoryHubItem.href,
+        items: [memoryHubItem, timelineItem],
+      },
   {
     id: "apps",
     label: "My Apps",
@@ -816,7 +839,9 @@ export const workspaceNavItems: NavItem[] = [
     shortLabel: "Learn",
     description: "Korean, software engineering, and AI",
   }),
-  workspaceEntry("memory", { description: "Notes, memories, and timeline" }),
+  workspaceEntry("memory", {
+    description: NOTES_ENABLED ? "Notes, memories, and timeline" : "Memories and timeline",
+  }),
   workspaceEntry("grow", { description: "Habits, reflection, and progress" }),
 ]
 
@@ -827,10 +852,18 @@ export const workspaceNavItems: NavItem[] = [
  */
 export const toolNavItems: NavItem[] = [settingsItem]
 
-/** Mobile bottom bar: four tabs; the fifth slot is the "More" sheet trigger. */
-export const mobileNavItems: NavItem[] = ["nav-today", "nav-plan", "nav-memory", "nav-finance"].map(
-  (id) => workspaceNavItems.find((item) => item.id === id)!,
-)
+/**
+ * Mobile bottom bar: four tabs; the fifth slot is the "More" sheet trigger.
+ * The third tab is Notes while Notes is on, and Learn (as before 2026-11-10)
+ * while it's retired. Quick capture stays one tap away on Home (Quick
+ * Capture) and in the Inbox (Capture), both writing the same inbox items.
+ */
+export const mobileNavItems: NavItem[] = [
+  "nav-today",
+  "nav-plan",
+  NOTES_ENABLED ? "nav-memory" : "nav-learn",
+  "nav-finance",
+].map((id) => workspaceNavItems.find((item) => item.id === id)!)
 
 /** Workspaces and tools the "More" sheet leads with — everything without a tab. */
 export const moreNavItems: NavItem[] = [
@@ -860,7 +893,9 @@ export const workspaceTabs: Partial<Record<NavSectionId, NavItem[]>> = {
   plan: ["goals-tasks", "goals-goals", "goals-calendar", "goals-overview", "plan-inbox"].map(
     navItem,
   ),
-  memory: ["memory-notes", "memory-hub", "review-timeline"].map(navItem),
+  memory: [...(NOTES_ENABLED ? ["memory-notes"] : []), "memory-hub", "review-timeline"].map(
+    navItem,
+  ),
   grow: ["growth-hub", "growth-habits", "growth-journal", "grow-progress"].map(navItem),
   learn: [
     "learn-hub",

@@ -193,6 +193,11 @@ for (const viewport of [
 }
 
 test("note view's action bar sticks below the shell header (desktop)", async ({ page }) => {
+  // /notes* redirects to /inbox unless the app runs with NEXT_PUBLIC_FEATURE_NOTES=true.
+  test.skip(
+    process.env.NEXT_PUBLIC_FEATURE_NOTES !== "true",
+    "Notes is retired (NEXT_PUBLIC_FEATURE_NOTES unset)",
+  )
   await page.setViewportSize({ width: 1440, height: 800 })
   await installMocks(page)
   await page.goto("/notes/sticky-test")

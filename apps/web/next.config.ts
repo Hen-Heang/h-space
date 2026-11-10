@@ -1,6 +1,7 @@
 import type { NextConfig } from "next"
 
 import { buildContentSecurityPolicy } from "./lib/csp"
+import { isNotesEnabled } from "./lib/feature-flags"
 
 const contentSecurityPolicy = buildContentSecurityPolicy({
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -11,6 +12,18 @@ const contentSecurityPolicy = buildContentSecurityPolicy({
 })
 
 const nextConfig: NextConfig = {
+  // Notes is retired unless NEXT_PUBLIC_FEATURE_NOTES=true (lib/feature-flags.ts):
+  // old /notes bookmarks get a real HTTP redirect to the Inbox before anything
+  // renders. Temporary (307), not permanent, so browsers don't cache it and
+  // turning the flag back on works immediately. app/(main)/notes/layout.tsx
+  // redirects too, so the Notes pages never mount even without this rule.
+  async redirects() {
+    if (isNotesEnabled()) return []
+    return [
+      { source: "/notes", destination: "/inbox", permanent: false },
+      { source: "/notes/:path*", destination: "/inbox", permanent: false },
+    ]
+  },
   async headers() {
     return [
       {

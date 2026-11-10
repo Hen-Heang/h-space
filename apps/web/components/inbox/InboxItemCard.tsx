@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { ReminderButton } from "@/components/reminders/ReminderButton"
-import { isSpringInboxEnabled } from "@/lib/feature-flags"
+import { isNotesEnabled, isSpringInboxEnabled } from "@/lib/feature-flags"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -152,12 +152,18 @@ export function InboxItemCard({ item }: { item: InboxItem }) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-48 rounded-xl">
-                <DropdownMenuItem
-                  className="rounded-lg"
-                  onClick={() => run(() => convertToNote.mutateAsync(item), "Converted to a note")}
-                >
-                  <NotebookPen size={14} aria-hidden="true" /> Convert to note
-                </DropdownMenuItem>
+                {/* Notes is retired unless NEXT_PUBLIC_FEATURE_NOTES=true; a converted
+                    note would land somewhere the app no longer opens. */}
+                {isNotesEnabled() && (
+                  <DropdownMenuItem
+                    className="rounded-lg"
+                    onClick={() =>
+                      run(() => convertToNote.mutateAsync(item), "Converted to a note")
+                    }
+                  >
+                    <NotebookPen size={14} aria-hidden="true" /> Convert to note
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   className="rounded-lg"
                   onClick={() =>

@@ -99,11 +99,13 @@ describe("MobileBottomNav", () => {
     render(<MobileBottomNav pathname={pathname} searchParams={searchParams} />)
   }
 
-  it("renders Home · Plan · Notes · Finance plus a More trigger", () => {
+  // Notes is retired by default (NEXT_PUBLIC_FEATURE_NOTES unset): the third
+  // tab is Learn again. lib/navigation.test.ts covers the flag-on bar.
+  it("renders Home · Plan · Learn · Finance plus a More trigger", () => {
     setup("/home")
     const nav = screen.getByRole("navigation", { name: "Primary" })
     expect(within(nav).getAllByRole("listitem")).toHaveLength(5)
-    for (const label of ["Home", "Plan", "Notes", "Finance", "More"]) {
+    for (const label of ["Home", "Plan", "Learn", "Finance", "More"]) {
       expect(within(nav).getByText(label)).toBeTruthy()
     }
     expect(within(nav).getByRole("button", { name: "More" })).toBeTruthy()
@@ -112,7 +114,7 @@ describe("MobileBottomNav", () => {
   it("uses the workspace route mapping, in order", () => {
     setup("/home")
     const hrefs = screen.getAllByRole("link").map((el) => el.getAttribute("href"))
-    expect(hrefs).toEqual(["/home", "/goals", "/notes", "/finance"])
+    expect(hrefs).toEqual(["/home", "/goals", "/learn", "/finance"])
   })
 
   it("marks the current destination with aria-current", () => {
@@ -128,8 +130,8 @@ describe("MobileBottomNav", () => {
     for (const route of [
       "/apps",
       "/vault",
-      "/learn",
-      "/vocab",
+      "/ask-hengo/memories",
+      "/timeline",
       "/growth/recovery",
       "/progress",
       "/chat",
@@ -144,16 +146,10 @@ describe("MobileBottomNav", () => {
     }
   })
 
-  it("lights the Notes tab on every Notes route, not just /notes", () => {
-    for (const route of [
-      "/notes",
-      "/notes/new",
-      "/notes/projects/abc-123",
-      "/ask-hengo/memories",
-      "/timeline",
-    ]) {
+  it("lights the Learn tab on every Learning route, not just /learn", () => {
+    for (const route of ["/learn", "/vocab", "/practice", "/korean-coach", "/history"]) {
       setup(route)
-      expect(screen.getByRole("link", { name: "Notes" }).getAttribute("aria-current")).toBe("page")
+      expect(screen.getByRole("link", { name: "Learn" }).getAttribute("aria-current")).toBe("page")
       cleanup()
     }
   })
@@ -205,7 +201,7 @@ describe("MoreSheet", () => {
     expect(within(dialog).getByRole("button", { name: "Toggle theme" })).toBeTruthy()
   })
 
-  it("leads with Learning, Growth and Settings", () => {
+  it("leads with Memory, Growth and Settings", () => {
     setup(true)
     const lead = screen.getByRole("navigation", { name: "More destinations" })
     expect(
@@ -215,9 +211,9 @@ describe("MoreSheet", () => {
     ).toEqual(moreNavItems.map((item) => item.href))
     expect(
       within(lead)
-        .getByRole("link", { name: /^Learning/ })
+        .getByRole("link", { name: /^Memory/ })
         .getAttribute("href"),
-    ).toBe("/learn")
+    ).toBe("/ask-hengo/memories")
     expect(
       within(lead)
         .getByRole("link", { name: /^Settings/ })
@@ -403,7 +399,7 @@ describe("DesktopSidebar", () => {
   it("lights the owning workspace for a child route", () => {
     setup("/practice", false)
     expect(screen.getByRole("link", { name: "Learning" }).getAttribute("aria-current")).toBe("page")
-    for (const label of ["Overview", "Planner", "Notes"]) {
+    for (const label of ["Overview", "Planner", "Memory"]) {
       expect(screen.getByRole("link", { name: label }).getAttribute("aria-current")).toBeNull()
     }
   })
@@ -506,10 +502,11 @@ describe("WorkspaceTabs", () => {
   })
 
   it("renders actions beside the tabs", () => {
-    mockPathname.value = "/notes"
-    render(<WorkspaceTabs sectionId="memory" actions={<button type="button">New note</button>} />)
-    expect(screen.getByRole("button", { name: "New note" })).toBeTruthy()
-    expect(screen.getByRole("link", { name: "Notes" }).getAttribute("aria-current")).toBe("page")
+    mockPathname.value = "/timeline"
+    render(<WorkspaceTabs sectionId="memory" actions={<button type="button">Log activity</button>} />)
+    expect(screen.getByRole("button", { name: "Log activity" })).toBeTruthy()
+    expect(screen.getByRole("link", { name: "Timeline" }).getAttribute("aria-current")).toBe("page")
+    expect(screen.queryByRole("link", { name: "Notes" })).toBeNull()
   })
 })
 
@@ -563,9 +560,11 @@ describe("QuickSwitcher", () => {
     expect(screen.queryByText("Pages")).toBeNull()
     // Section headings — getAllByText because a section label can also appear
     // inside an entry's own description text.
-    for (const label of ["Learning", "Planner", "Growth", "Notes"]) {
+    for (const label of ["Learning", "Planner", "Growth", "Memory"]) {
       expect(screen.getAllByText(label).length).toBeGreaterThan(0)
     }
+    // Retired Notes is not a Quick Switcher result.
+    expect(screen.queryByRole("option", { name: /^notes$/i })).toBeNull()
     expect(screen.getByRole("option", { name: /vocabulary/i })).toBeTruthy()
     expect(screen.getByRole("option", { name: /^goals$/i })).toBeTruthy()
   })

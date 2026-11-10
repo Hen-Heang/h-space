@@ -2,7 +2,8 @@
 //
 // Authentication (handler.ts), the per-request context (context.ts) and the
 // domain tools (tools/*: seven read tools, plus seven write tools when
-// MCP_WRITE_ENABLED=true) are all wired here, next to the one foundation tool
+// MCP_WRITE_ENABLED=true; three more of each while Notes is on — see
+// isNotesEnabled) are all wired here, next to the one foundation tool
 // (`get_hengo_server_info`). The `instructions` a client receives are built
 // per request from the same tool lists, so they always describe the tools
 // that connection really has.
@@ -18,6 +19,7 @@
 import { McpServer } from "@modelcontextprotocol/server"
 import { z } from "zod"
 import type { McpContext } from "./context"
+import { isNotesEnabled } from "../feature-flags"
 import { READ_TOOL_NAMES, WRITE_TOOL_NAMES, registerReadTools, registerWriteTools } from "./tools"
 
 /**
@@ -72,13 +74,18 @@ const INSTRUCTIONS_MODE: Record<McpSurface, string> = {
     "changed through this server.",
   "read-write":
     "Write tools are on — use them only when the user asks. No tool deletes anything. They can " +
-    "create or update the user's tasks and goals, capture reflections or Korean phrases, and " +
-    "create notes projects and create or edit notes in owner-approved knowledge projects.",
+    "create or update the user's tasks and goals, capture reflections or Korean phrases" +
+    (isNotesEnabled()
+      ? ", and create notes projects and create or edit notes in owner-approved knowledge projects."
+      : "."),
 }
 
-const INSTRUCTIONS_SCOPE =
-  "Project notes are available only in projects the owner opened to AI access. " +
-  "The server cannot read other notes, inbox items, journal entries, finances or saved credentials."
+// With Notes retired (isNotesEnabled() false) the project-note tools aren't
+// registered, so the scope line says no notes are reachable at all.
+const INSTRUCTIONS_SCOPE = isNotesEnabled()
+  ? "Project notes are available only in projects the owner opened to AI access. " +
+    "The server cannot read other notes, inbox items, journal entries, finances or saved credentials."
+  : "The server cannot read notes, inbox items, journal entries, finances or saved credentials."
 
 /**
  * Sent to the client at initialize. The first ~512 characters carry the

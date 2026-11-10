@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
   ASK_HENGO_HREF,
@@ -52,13 +52,15 @@ describe("nav model integrity", () => {
     ])
   })
 
+  // Notes is retired by default (NEXT_PUBLIC_FEATURE_NOTES unset), so the
+  // "memory" workspace is Memory. The flag-on shape is covered at the end.
   it("labels the sections as the seven H-Space workspaces", () => {
     expect(navSections.map((s) => s.label)).toEqual([
       "Overview",
       "Learning",
       "Planner",
       "Growth",
-      "Notes",
+      "Memory",
       "My Apps",
       "Ask Hengo",
     ])
@@ -94,7 +96,6 @@ describe("nav model integrity", () => {
       "/goals/tasks",
       "/goals/calendar",
       "/roadmap",
-      "/notes",
       "/inbox",
       "/growth",
       "/growth/habits",
@@ -117,6 +118,14 @@ describe("nav model integrity", () => {
     ]) {
       expect(hrefs).toContain(href)
     }
+  })
+
+  it("has no Notes entry anywhere while Notes is retired", () => {
+    expect(allNavItems.some((i) => linkPath(i.href).startsWith("/notes"))).toBe(false)
+    expect(allNavItems.some((i) => i.id === "memory-notes")).toBe(false)
+    expect(() => navItem("memory-notes")).toThrow()
+    expect(browseSections.flatMap((s) => s.items).some((i) => i.href === "/notes")).toBe(false)
+    expect(workspaceNavItems.some((i) => i.href === "/notes")).toBe(false)
   })
 
   it("has no separate Account nav item — /account is a legacy alias for Settings, not a distinct destination", () => {
@@ -234,7 +243,8 @@ describe("section (workspace) selection", () => {
     expect(getSectionForPath("/statistics")?.id).toBe("grow")
     expect(getSectionForPath("/ask-hengo/memories")?.id).toBe("memory")
     expect(getSectionForPath("/chat", "mode=memory")?.id).toBe("ai")
-    expect(getSectionForPath("/notes")?.id).toBe("memory")
+    // Retired Notes has no owning section (its routes redirect to /inbox).
+    expect(getSectionForPath("/notes")).toBeUndefined()
     expect(getSectionForPath("/timeline")?.id).toBe("memory")
     expect(getSectionForPath("/history")?.id).toBe("learn")
     expect(getSectionForPath("/apps")?.id).toBe("apps")
@@ -272,7 +282,7 @@ describe("global sidebar: workspaces and tools", () => {
       "Finance",
       "Planner",
       "Learning",
-      "Notes",
+      "Memory",
       "Growth",
     ])
     expect(workspaceNavItems.map((i) => i.href)).toEqual([
@@ -280,7 +290,7 @@ describe("global sidebar: workspaces and tools", () => {
       "/finance",
       "/goals",
       "/learn",
-      "/notes",
+      "/ask-hengo/memories",
       "/growth",
     ])
   })
@@ -354,8 +364,8 @@ describe("workspace tabs (secondary navigation)", () => {
     ])
   })
 
-  it("gives Notes, Growth and My Apps their pages", () => {
-    expect(ids(workspaceTabs.memory)).toEqual(["memory-notes", "memory-hub", "review-timeline"])
+  it("gives Memory, Growth and My Apps their pages", () => {
+    expect(ids(workspaceTabs.memory)).toEqual(["memory-hub", "review-timeline"])
     expect(ids(workspaceTabs.grow)).toEqual([
       "growth-hub",
       "growth-habits",
@@ -438,17 +448,17 @@ describe("workspace tabs (secondary navigation)", () => {
 })
 
 describe("mobile bottom bar + More", () => {
-  it("has Home · Plan · Notes · Finance before the More trigger", () => {
+  it("has Home · Plan · Learn · Finance before the More trigger", () => {
     expect(mobileNavItems.map((i) => i.shortLabel ?? i.label)).toEqual([
       "Home",
       "Plan",
-      "Notes",
+      "Learn",
       "Finance",
     ])
   })
 
   it("leads the More sheet with every workspace and tool that has no tab", () => {
-    expect(moreNavItems.map((i) => i.label)).toEqual(["Learning", "Growth", "Settings"])
+    expect(moreNavItems.map((i) => i.label)).toEqual(["Memory", "Growth", "Settings"])
   })
 
   it("lights exactly one tab on tab-owned routes and More nowhere there", () => {
@@ -456,10 +466,9 @@ describe("mobile bottom bar + More", () => {
       "/home",
       "/goals/calendar",
       "/inbox",
-      "/notes",
-      "/notes/projects/abc-123",
-      "/timeline",
-      "/ask-hengo/memories",
+      "/learn",
+      "/vocab",
+      "/history",
       "/finance/transactions",
     ]) {
       const lit = mobileNavItems.filter((item) => isNavigationItemActive({ pathname: route, item }))
@@ -472,9 +481,8 @@ describe("mobile bottom bar + More", () => {
     for (const route of [
       "/apps",
       "/vault",
-      "/learn",
-      "/vocab",
-      "/history",
+      "/timeline",
+      "/ask-hengo/memories",
       "/growth",
       "/progress",
       "/settings",
@@ -550,10 +558,10 @@ describe("Ask Hengo routes", () => {
 })
 
 describe("workspace registry details", () => {
-  it("groups Notes, Memories and Timeline under Notes", () => {
+  it("groups Memories and Timeline under Memory while Notes is retired", () => {
     const memory = navSections.find((s) => s.id === "memory")!
-    expect(memory).toMatchObject({ label: "Notes", href: "/notes" })
-    expect(memory.items.map((i) => i.id)).toEqual(["memory-notes", "memory-hub", "review-timeline"])
+    expect(memory).toMatchObject({ label: "Memory", href: "/ask-hengo/memories" })
+    expect(memory.items.map((i) => i.id)).toEqual(["memory-hub", "review-timeline"])
   })
 
   it("gives Growth a landing page that doesn't claim its children", () => {
@@ -656,5 +664,51 @@ describe("/home stays inside the app shell", () => {
   it("resolves a section and a title for /home like any other route", () => {
     expect(getSectionForPath("/home")?.label).toBe("Overview")
     expect(getActiveNavItem("/home")?.label).toBe("Overview")
+  })
+})
+
+// NEXT_PUBLIC_FEATURE_NOTES is read once at module load (Next inlines it at
+// build time), so the flag-on shape needs a fresh copy of the module.
+describe("with Notes turned back on (NEXT_PUBLIC_FEATURE_NOTES=true)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  async function loadWithNotes() {
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_NOTES", "true")
+    vi.resetModules()
+    return import("./navigation")
+  }
+
+  it("restores the Notes workspace, its tab, and the Notes mobile tab", async () => {
+    const nav = await loadWithNotes()
+    const memory = nav.navSections.find((s) => s.id === "memory")!
+    expect(memory).toMatchObject({ label: "Notes", href: "/notes" })
+    expect(memory.items.map((i) => i.id)).toEqual(["memory-notes", "memory-hub", "review-timeline"])
+    expect(nav.workspaceTabs.memory?.map((i) => i.id)).toEqual([
+      "memory-notes",
+      "memory-hub",
+      "review-timeline",
+    ])
+    expect(nav.mobileNavItems.map((i) => i.shortLabel ?? i.label)).toEqual([
+      "Home",
+      "Plan",
+      "Notes",
+      "Finance",
+    ])
+    expect(nav.moreNavItems.map((i) => i.label)).toEqual(["Learning", "Growth", "Settings"])
+  })
+
+  it("makes /notes routes findable and lit again", async () => {
+    const nav = await loadWithNotes()
+    expect(nav.allNavItems.map((i) => i.href)).toContain("/notes")
+    expect(nav.getSectionForPath("/notes")?.id).toBe("memory")
+    for (const route of ["/notes", "/notes/projects/abc-123", "/timeline"]) {
+      const lit = nav.mobileNavItems.filter((item) =>
+        nav.isNavigationItemActive({ pathname: route, item }),
+      )
+      expect(lit.map((i) => i.id), route).toEqual(["nav-memory"])
+    }
   })
 })

@@ -39,6 +39,7 @@ import { useConversations } from "@/hooks/useConversations"
 import { useSessionTimer } from "@/hooks/useSessionTimer"
 import { chatApi, scenarioApi } from "@/lib/api"
 import { aiModeHref, isAiMode, resolveAiMode, type AiMode } from "@/lib/chat-modes"
+import { isNotesEnabled } from "@/lib/feature-flags"
 import { ASK_HENGO_LABEL, aiCoachItem, askHengoItem } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
@@ -472,7 +473,8 @@ function ChatPageContent() {
                   {/* Keep in step with lib/server/memory-retrieval.ts — the
                       sources it actually reads. */}
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Searches your saved notes, inbox captures, and journal entries, and also uses
+                    Searches your {isNotesEnabled() ? "saved notes, " : ""}inbox captures, and
+                    journal entries, and also uses
                     your approved memories, goals, completed tasks, and logged activity. Answers
                     come only from these and link back to where they came from.
                   </p>

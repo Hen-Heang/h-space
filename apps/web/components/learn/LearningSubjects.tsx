@@ -1,6 +1,8 @@
 import Link from "next/link"
 import { ArrowRight, BrainCircuit, Code2, Languages, type LucideIcon } from "lucide-react"
 
+import { isNotesEnabled } from "@/lib/feature-flags"
+
 type Subject = {
   id: string
   title: string
@@ -16,7 +18,11 @@ type Subject = {
 // The Learning workspace's subjects. Korean is the only one with a dedicated
 // module — the rest of this page. The other two don't get placeholder feature
 // systems: Software Engineering points at the study notes that already exist,
-// and AI Engineering says plainly that it isn't set up.
+// and AI Engineering says plainly that it isn't set up. While Notes is retired
+// (isNotesEnabled() false) those notes live outside H-Space, so neither card
+// links to /notes.
+const NOTES_ENABLED = isNotesEnabled()
+
 const SUBJECTS: Subject[] = [
   {
     id: "korean",
@@ -29,15 +35,19 @@ const SUBJECTS: Subject[] = [
   {
     id: "software-engineering",
     title: "Software Engineering",
-    description: "Study notes on Java, Spring, SQL, and system design live in Notes.",
+    description: NOTES_ENABLED
+      ? "Study notes on Java, Spring, SQL, and system design live in Notes."
+      : "Study notes on Java, Spring, SQL, and system design are kept outside H-Space.",
     icon: Code2,
-    href: "/notes",
+    href: NOTES_ENABLED ? "/notes" : null,
     linkLabel: "Open notes",
   },
   {
     id: "ai-engineering",
     title: "AI Engineering",
-    description: "No module yet. Keep AI study notes in Notes until this one exists.",
+    description: NOTES_ENABLED
+      ? "No module yet. Keep AI study notes in Notes until this one exists."
+      : "No module yet.",
     icon: BrainCircuit,
     href: null,
   },
