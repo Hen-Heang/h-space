@@ -1,165 +1,161 @@
 /** @vitest-environment jsdom */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
+
+const signOut = vi.hoisted(() => vi.fn())
+const getSession = vi.hoisted(() => vi.fn())
+const authListeners = vi.hoisted(() => [] as Array<() => void>)
+
+vi.mock("@/lib/supabase", () => ({
+  SUPABASE_STORAGE_KEY: "koriai-auth",
+  supabase: {
+    auth: {
+      signOut,
+      getSession,
+      onAuthStateChange: (cb: () => void) => {
+        authListeners.push(cb)
+        return { data: { subscription: { unsubscribe: vi.fn() } } }
+      },
+    },
+  },
+}))
 
 import {
   clearAuth,
   getSupabaseAccessToken,
+  getUserEmail,
   getUserId,
-  getValidAccessToken,
   isAuthenticated,
+  needsMfa,
   onAuthChange,
-  saveSession,
+  requireUserId,
+  tokenAal,
 } from "./auth-store"
 
-const USER = { id: "user-1", email: "a@example.com", name: "A", imageUrl: null }
+// Unsigned test tokens: only the payload matters to tokenAal().
+function jwt(claims: Record<string, unknown>) {
+  const encode = (value: unknown) =>
+    btoa(JSON.stringify(value)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
+  return `${encode({ alg: "HS256" })}.${encode(claims)}.signature`
+}
 
-function envelope(data: unknown, init: { status?: number; code?: number; message?: string } = {}) {
-  return new Response(
+function storeSession(opts: { aal?: string; factors?: Array<{ status: string }> } = {}) {
+  window.localStorage.setItem(
+    "koriai-auth",
     JSON.stringify({
-      status: { code: init.code ?? 200, message: init.message ?? "Success" },
-      data,
+      access_token: jwt({ sub: "user-1", aal: opts.aal ?? "aal1" }),
+      refresh_token: "refresh",
+      user: { id: "user-1", email: "a@example.com", factors: opts.factors ?? [] },
     }),
-    { status: init.status ?? 200, headers: { "Content-Type": "application/json" } },
   )
 }
 
-function stored() {
-  return JSON.parse(window.localStorage.getItem("hspace-auth") ?? "null")
-}
-
-const fetchMock = vi.fn<typeof fetch>()
-
-beforeEach(() => {
-  vi.stubGlobal("fetch", fetchMock)
-})
-
 afterEach(() => {
-  fetchMock.mockReset()
-  vi.unstubAllGlobals()
   window.localStorage.clear()
+  signOut.mockReset()
+  getSession.mockReset()
+  authListeners.length = 0
 })
 
-describe("session", () => {
-  it("is readable synchronously after saveSession and drops the legacy Supabase key", () => {
-    window.localStorage.setItem("koriai-auth", "{}")
-    saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 3600 }, USER)
+describe("tokenAal", () => {
+  it("reads the aal claim from a base64url payload", () => {
+    expect(tokenAal(jwt({ aal: "aal2" }))).toBe("aal2")
+    // ">>>???" encodes to "+" and "/" in base64, so "-" and "_" in base64url.
+    expect(tokenAal(jwt({ aal: "aal1", name: ">>>???" }))).toBe("aal1")
+  })
 
+  it("returns null for missing or malformed tokens", () => {
+    expect(tokenAal(null)).toBeNull()
+    expect(tokenAal("not-a-jwt")).toBeNull()
+    expect(tokenAal("a.!!!.c")).toBeNull()
+    expect(tokenAal(jwt({ sub: "x" }))).toBeNull()
+  })
+})
+
+describe("session reads", () => {
+  it("is signed out with no stored session", () => {
+    expect(isAuthenticated()).toBe(false)
+    expect(getUserId()).toBeNull()
+    expect(() => requireUserId()).toThrow("Not signed in")
+  })
+
+  it("is signed in with a session and no authenticator", () => {
+    storeSession()
     expect(isAuthenticated()).toBe(true)
     expect(getUserId()).toBe("user-1")
-    expect(window.localStorage.getItem("koriai-auth")).toBeNull()
+    expect(getUserEmail()).toBe("a@example.com")
   })
 
-  it("notifies listeners on sign-in and sign-out", async () => {
-    const listener = vi.fn()
-    const unsubscribe = onAuthChange(listener)
-    saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 3600 }, USER)
-    fetchMock.mockResolvedValueOnce(envelope(null))
-    await clearAuth()
-    unsubscribe()
-
-    expect(listener).toHaveBeenCalledTimes(2)
+  it("is not signed in while a verified authenticator's code is still owed", () => {
+    storeSession({ aal: "aal1", factors: [{ status: "verified" }] })
+    expect(needsMfa(JSON.parse(window.localStorage.getItem("koriai-auth")!))).toBe(true)
     expect(isAuthenticated()).toBe(false)
   })
 
-  it("revokes the refresh token on sign-out", async () => {
-    saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 3600 }, USER)
-    fetchMock.mockResolvedValueOnce(envelope(null))
-    await clearAuth()
-
-    const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toMatch(/\/api\/auth\/logout$/)
-    expect(JSON.parse(String(init?.body))).toEqual({ refreshToken: "r1" })
-    expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer a1")
-  })
-})
-
-describe("getValidAccessToken", () => {
-  it("returns the stored token while it's fresh", async () => {
-    saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 3600 }, USER)
-    expect(await getValidAccessToken()).toBe("a1")
-    expect(fetchMock).not.toHaveBeenCalled()
-  })
-
-  it("refreshes once for concurrent callers when the token is about to expire", async () => {
-    saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 30 }, USER)
-    fetchMock.mockResolvedValueOnce(
-      envelope({ accessToken: "a2", refreshToken: "r2", expiresIn: 3600 }),
-    )
-
-    const [first, second] = await Promise.all([getValidAccessToken(), getValidAccessToken()])
-
-    expect([first, second]).toEqual(["a2", "a2"])
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(stored().refreshToken).toBe("r2")
-  })
-
-  it("ends the session when the refresh token is rejected", async () => {
-    saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 30 }, USER)
-    fetchMock.mockResolvedValueOnce(
-      envelope(null, { status: 401, code: 1003, message: "Refresh token is expired." }),
-    )
-
-    expect(await getValidAccessToken()).toBeNull()
-    expect(isAuthenticated()).toBe(false)
-  })
-
-  it("keeps the session when the server is unreachable", async () => {
-    saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 30 }, USER)
-    fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch"))
-
-    await expect(getValidAccessToken()).rejects.toThrow(/Can't reach/)
+  it("is signed in once that session is aal2", () => {
+    storeSession({ aal: "aal2", factors: [{ status: "verified" }] })
     expect(isAuthenticated()).toBe(true)
+  })
+
+  it("ignores an unverified (abandoned) authenticator", () => {
+    storeSession({ aal: "aal1", factors: [{ status: "unverified" }] })
+    expect(isAuthenticated()).toBe(true)
+  })
+
+  it("treats unreadable storage as signed out", () => {
+    window.localStorage.setItem("koriai-auth", "{not json")
+    expect(isAuthenticated()).toBe(false)
   })
 })
 
 describe("getSupabaseAccessToken", () => {
-  it("is null when signed out, without calling the bridge", async () => {
-    expect(await getSupabaseAccessToken()).toBeNull()
-    expect(fetchMock).not.toHaveBeenCalled()
+  it("returns the session's token, or null when signed out", async () => {
+    getSession.mockResolvedValueOnce({ data: { session: { access_token: "tok" } } })
+    await expect(getSupabaseAccessToken()).resolves.toBe("tok")
+    getSession.mockResolvedValueOnce({ data: { session: null } })
+    await expect(getSupabaseAccessToken()).resolves.toBeNull()
+  })
+})
+
+describe("clearAuth", () => {
+  it("signs out this session only and forgets the Spring-era entry", async () => {
+    window.localStorage.setItem("hspace-auth", "{}")
+    signOut.mockResolvedValueOnce({ error: null })
+    await clearAuth()
+    expect(signOut).toHaveBeenCalledWith({ scope: "local" })
+    expect(window.localStorage.getItem("hspace-auth")).toBeNull()
   })
 
-  it("exchanges the access token at the bridge and caches the result", async () => {
-    saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 3600 }, USER)
-    fetchMock.mockResolvedValueOnce(envelope({ accessToken: "sb1", expiresIn: 3600 }))
+  it("still forgets the session locally when Supabase can't be reached", async () => {
+    storeSession()
+    signOut.mockResolvedValueOnce({ error: new Error("offline") })
+    await clearAuth()
+    expect(window.localStorage.getItem("koriai-auth")).toBeNull()
 
-    expect(await getSupabaseAccessToken()).toBe("sb1")
-    expect(await getSupabaseAccessToken()).toBe("sb1")
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-
-    const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toMatch(/\/api\/auth\/supabase-token$/)
-    expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer a1")
+    storeSession()
+    signOut.mockRejectedValueOnce(new Error("offline"))
+    await clearAuth()
+    expect(window.localStorage.getItem("koriai-auth")).toBeNull()
   })
 
-  it("fetches a new token once the cached one is about to expire", async () => {
-    saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 3600 }, USER)
-    fetchMock
-      .mockResolvedValueOnce(envelope({ accessToken: "sb1", expiresIn: 30 }))
-      .mockResolvedValueOnce(envelope({ accessToken: "sb2", expiresIn: 3600 }))
-
-    expect(await getSupabaseAccessToken()).toBe("sb1")
-    expect(await getSupabaseAccessToken()).toBe("sb2")
+  it("notifies listeners", async () => {
+    const callback = vi.fn()
+    const off = onAuthChange(callback)
+    signOut.mockResolvedValueOnce({ error: null })
+    await clearAuth()
+    expect(callback).toHaveBeenCalled()
+    off()
   })
+})
 
-  it.each([401, 403])(
-    "ends the session when the bridge refuses the access token (%i)",
-    async (status) => {
-      saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 3600 }, USER)
-      fetchMock.mockResolvedValueOnce(envelope(null, { status, code: status, message: "Refused" }))
-
-      expect(await getSupabaseAccessToken()).toBeNull()
-      expect(isAuthenticated()).toBe(false)
-    },
-  )
-
-  it("surfaces the bridge's error, e.g. when it isn't configured", async () => {
-    saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 3600 }, USER)
-    fetchMock.mockResolvedValueOnce(
-      envelope(null, { status: 503, code: 503, message: "The Supabase bridge isn't configured" }),
-    )
-
-    await expect(getSupabaseAccessToken()).rejects.toThrow(/bridge isn't configured/)
-    expect(isAuthenticated()).toBe(true)
+describe("onAuthChange", () => {
+  it("fires for supabase-js auth events and other tabs' storage changes", () => {
+    const callback = vi.fn()
+    const off = onAuthChange(callback)
+    authListeners.forEach((listener) => listener())
+    window.dispatchEvent(new StorageEvent("storage", { key: "koriai-auth" }))
+    window.dispatchEvent(new StorageEvent("storage", { key: "unrelated" }))
+    expect(callback).toHaveBeenCalledTimes(2)
+    off()
   })
 })

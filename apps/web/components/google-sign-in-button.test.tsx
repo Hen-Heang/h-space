@@ -59,7 +59,7 @@ describe("GoogleSignInButton", () => {
 
     await signInWithGoogle({ status: "signed_in", userId: "u1", email: "a@example.com" })
 
-    expect(handleGoogleCredential).toHaveBeenCalledWith("google-id-token")
+    expect(handleGoogleCredential).toHaveBeenCalledWith("google-id-token", "n")
     expect(push).toHaveBeenCalledWith("/home")
     expect(onMfaRequired).not.toHaveBeenCalled()
   })
@@ -69,9 +69,9 @@ describe("GoogleSignInButton", () => {
     const onError = vi.fn()
     render(<GoogleSignInButton onMfaRequired={onMfaRequired} onError={onError} />)
 
-    await signInWithGoogle({ status: "mfa_required", mfaToken: "mfa-challenge" })
+    await signInWithGoogle({ status: "mfa_required", factorId: "factor-1" })
 
-    expect(onMfaRequired).toHaveBeenCalledWith("mfa-challenge")
+    expect(onMfaRequired).toHaveBeenCalledWith("factor-1")
     expect(push).not.toHaveBeenCalled()
     expect(onError).not.toHaveBeenCalled()
   })
@@ -80,7 +80,7 @@ describe("GoogleSignInButton", () => {
     const onError = vi.fn()
     render(<GoogleSignInButton onError={onError} />)
 
-    await signInWithGoogle({ status: "mfa_required", mfaToken: "mfa-challenge" })
+    await signInWithGoogle({ status: "mfa_required", factorId: "factor-1" })
 
     expect(onError).toHaveBeenCalledWith(expect.stringContaining("Two-step verification"))
     expect(push).not.toHaveBeenCalled()

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
-import { Check, Copy, Download, Loader2, RefreshCw, ShieldCheck, ShieldOff } from "lucide-react"
+import { Check, Copy, Loader2, ShieldCheck, ShieldOff } from "lucide-react"
 import { motion } from "motion/react"
 import { toast } from "sonner"
 
@@ -11,36 +11,28 @@ import { Button } from "@/components/ui/button"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  MFA_ALREADY_ENABLED,
-  MFA_CODE_INVALID,
-  getApiErrorMessage,
-  mfaApi,
-  type MfaSetup,
-} from "@/lib/api"
-import { AuthApiError } from "@/lib/api/auth-http"
+import { MFA_CODE_INVALID, getApiErrorMessage, mfaApi, type MfaSetup } from "@/lib/api"
 import { containerVariants, itemVariants } from "@/lib/motion"
 import { cn } from "@/lib/utils"
 
-// Two-step verification (TOTP) setup and management. h-space-api has no
-// "is MFA on?" read, so opening the page starts setup once: a secret means
-// it's off (and stays off until a live code confirms the app), and
-// MFA_ALREADY_ENABLED means it's on. Backup codes are shown once, only in
-// component state, and never written to storage.
+// Two-step verification (TOTP) setup and management over Supabase Auth MFA.
+// Opening the page reads the factors: a verified one means it's on; otherwise
+// setup starts once (a new secret, off until a live code confirms the app).
+// The secret and QR code live only in component state. Supabase has no
+// backup codes: a lost phone is reset by a project admin in the dashboard.
 
 type View =
   | { kind: "loading" }
   | { kind: "error"; message: string }
   | { kind: "setup"; setup: MfaSetup }
-  | { kind: "enabled" }
-  | { kind: "backup-codes"; codes: string[]; reason: "enabled" | "regenerated" }
+  | { kind: "enabled"; factorId: string; justEnabled?: boolean }
   | { kind: "disabled" }
 
 const codeInputClass =
   "h-14 rounded-xl text-center text-xl font-semibold tracking-[0.4em] placeholder:tracking-[0.4em]"
 
 function errorMessage(error: unknown, fallback: string) {
-  if (error instanceof AuthApiError && error.code === MFA_CODE_INVALID) {
+  if ((error as { code?: unknown } | null)?.code === MFA_CODE_INVALID) {
     return "That code didn't match. Check your app and try the newest code."
   }
   return getApiErrorMessage(error, fallback)
@@ -94,7 +86,6 @@ function CodeForm({
   hint,
   submitLabel,
   busyLabel,
-  allowBackupCode,
   destructive,
   onSubmit,
 }: {
@@ -103,7 +94,6 @@ function CodeForm({
   hint?: string
   submitLabel: string
   busyLabel: string
-  allowBackupCode?: boolean
   destructive?: boolean
   onSubmit: (code: string) => Promise<void>
 }) {
@@ -111,8 +101,7 @@ function CodeForm({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const trimmed = code.trim()
-  // Authenticator codes are 6 digits; backup codes are longer and lettered.
-  const ready = allowBackupCode ? trimmed.length >= 6 : /^\d{6}$/.test(trimmed)
+  const ready = /^\d{6}$/.test(trimmed)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -136,15 +125,12 @@ function CodeForm({
         id={id}
         name="one-time-code"
         autoComplete="one-time-code"
-        inputMode={allowBackupCode ? "text" : "numeric"}
-        autoCapitalize="characters"
+        inputMode="numeric"
         spellCheck={false}
-        maxLength={allowBackupCode ? 32 : 6}
+        maxLength={6}
         placeholder="123456"
         value={code}
-        onChange={(e) =>
-          setCode(allowBackupCode ? e.target.value : e.target.value.replace(/\D/g, ""))
-        }
+        onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
         className={codeInputClass}
@@ -179,13 +165,7 @@ function CodeForm({
   )
 }
 
-function SetupView({
-  setup,
-  onEnabled,
-}: {
-  setup: MfaSetup
-  onEnabled: (codes: string[]) => void
-}) {
+function SetupView({ setup, onEnabled }: { setup: MfaSetup; onEnabled: () => void }) {
   return (
     <>
       <Card>
@@ -200,11 +180,11 @@ function SetupView({
               </p>
             </div>
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-              {setup.qrCodeImageBase64 ? (
-                // A server-rendered data: URI; next/image adds nothing here.
+              {setup.qrCode ? (
+                // Supabase's data:image/svg+xml URI; next/image adds nothing here.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={`data:image/png;base64,${setup.qrCodeImageBase64}`}
+                  src={setup.qrCode}
                   alt="QR code for adding H-Space to your authenticator app"
                   width={176}
                   height={176}
@@ -256,10 +236,13 @@ function SetupView({
             <CodeForm
               id="mfa-enable-code"
               label="Authenticator code"
-              hint="After verifying, you'll get one-time backup codes. Save them somewhere safe — they're the only way in if you lose your phone."
+              hint="There are no backup codes. If you lose your phone, the H-Space owner resets two-step verification in Supabase."
               submitLabel="Verify and turn on"
               busyLabel="Verifying…"
-              onSubmit={async (code) => onEnabled(await mfaApi.enable(code))}
+              onSubmit={async (code) => {
+                await mfaApi.enable(setup.factorId, code)
+                onEnabled()
+              }}
             />
           </div>
         </div>
@@ -272,96 +255,13 @@ function SetupView({
   )
 }
 
-function BackupCodesView({
-  codes,
-  reason,
-}: {
-  codes: string[]
-  reason: "enabled" | "regenerated"
-}) {
-  const [saved, setSaved] = useState(false)
-  const text = codes.join("\n")
-
-  function download() {
-    const blob = new Blob([`H-Space backup codes\nEach code works once.\n\n${text}\n`], {
-      type: "text/plain",
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "h-space-backup-codes.txt"
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  return (
-    <Card className="space-y-5">
-      <div className="flex items-start gap-3">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600">
-          <ShieldCheck size={20} />
-        </div>
-        <div>
-          <h2 className="text-base font-semibold text-foreground">
-            {reason === "enabled" ? "Two-step verification is on" : "New backup codes ready"}
-          </h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            Save these backup codes now — they won&apos;t be shown again. Each one works once if you
-            lose your authenticator.
-            {reason === "regenerated" && " Your old backup codes no longer work."}
-          </p>
-        </div>
-      </div>
-
-      <ul
-        aria-label="Backup codes"
-        className="grid grid-cols-1 gap-2 rounded-xl border border-border bg-accent/5 p-4 font-mono text-sm font-semibold text-foreground min-[400px]:grid-cols-2"
-      >
-        {codes.map((c) => (
-          <li key={c} className="tracking-wide">
-            {c}
-          </li>
-        ))}
-      </ul>
-
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" onClick={() => copyText(text, "Backup codes")}>
-          <Copy size={15} />
-          Copy
-        </Button>
-        <Button type="button" variant="outline" onClick={download}>
-          <Download size={15} />
-          Download
-        </Button>
-      </div>
-
-      <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-foreground">
-        <input
-          type="checkbox"
-          checked={saved}
-          onChange={(e) => setSaved(e.target.checked)}
-          className="size-4 accent-primary"
-        />
-        I&apos;ve saved my backup codes somewhere safe
-      </label>
-
-      {saved ? (
-        <Button asChild className="h-12 w-full rounded-xl text-sm font-semibold">
-          <Link href="/settings">Done</Link>
-        </Button>
-      ) : (
-        <Button type="button" className="h-12 w-full rounded-xl text-sm font-semibold" disabled>
-          Done
-        </Button>
-      )}
-    </Card>
-  )
-}
-
 function EnabledView({
-  onRegenerated,
+  factorId,
+  justEnabled,
   onDisabled,
 }: {
-  onRegenerated: (codes: string[]) => void
+  factorId: string
+  justEnabled?: boolean
   onDisabled: () => void
 }) {
   return (
@@ -374,31 +274,16 @@ function EnabledView({
           <div>
             <h2 className="text-base font-semibold text-foreground">Two-step verification is on</h2>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Each sign-in asks for a code from your authenticator app, or one of your backup codes.
+              {justEnabled ? "Done. " : ""}Each sign-in now asks for a code from your authenticator
+              app.
             </p>
           </div>
         </div>
-      </Card>
-
-      <Card className="space-y-4">
-        <div className="flex items-start gap-3">
-          <RefreshCw size={18} className="mt-0.5 shrink-0 text-muted-foreground" />
-          <div>
-            <h2 className="text-base font-semibold text-foreground">New backup codes</h2>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Replaces all your backup codes. Use this if you&apos;ve used most of them or think
-              they were seen.
-            </p>
-          </div>
-        </div>
-        <CodeForm
-          id="mfa-regenerate-code"
-          label="Authenticator or backup code"
-          submitLabel="Get new backup codes"
-          busyLabel="Generating…"
-          allowBackupCode
-          onSubmit={async (code) => onRegenerated(await mfaApi.regenerateBackupCodes(code))}
-        />
+        {justEnabled && (
+          <Button asChild className="mt-5 h-12 w-full rounded-xl text-sm font-semibold">
+            <Link href="/settings">Done</Link>
+          </Button>
+        )}
       </Card>
 
       <Card className="space-y-4">
@@ -409,20 +294,19 @@ function EnabledView({
               Turn off two-step verification
             </h2>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Your account will be protected by your password or sign-in email only. Your
-              authenticator link and backup codes stop working.
+              Your account will be protected by your password or sign-in email only, and your
+              authenticator link stops working. H-Vault needs two-step verification.
             </p>
           </div>
         </div>
         <CodeForm
           id="mfa-disable-code"
-          label="Authenticator or backup code"
+          label="Authenticator code"
           submitLabel="Turn off"
           busyLabel="Turning off…"
-          allowBackupCode
           destructive
           onSubmit={async (code) => {
-            await mfaApi.disable(code)
+            await mfaApi.disable(factorId, code)
             onDisabled()
           }}
         />
@@ -433,11 +317,10 @@ function EnabledView({
 
 async function loadView(): Promise<View> {
   try {
+    const status = await mfaApi.status()
+    if (status.enabled) return { kind: "enabled", factorId: status.factorId }
     return { kind: "setup", setup: await mfaApi.startSetup() }
   } catch (error) {
-    if (error instanceof AuthApiError && error.code === MFA_ALREADY_ENABLED) {
-      return { kind: "enabled" }
-    }
     return {
       kind: "error",
       message: getApiErrorMessage(error, "Couldn't load two-step verification."),
@@ -447,7 +330,7 @@ async function loadView(): Promise<View> {
 
 export default function SecuritySettingsPage() {
   const [view, setView] = useState<View>({ kind: "loading" })
-  // Each setup call replaces the pending secret, so a second call (React
+  // Each setup call replaces the pending factor, so a second call (React
   // dev double-mount) would leave the QR on screen out of date.
   const started = useRef(false)
 
@@ -505,15 +388,16 @@ export default function SecuritySettingsPage() {
       {view.kind === "setup" && (
         <SetupView
           setup={view.setup}
-          onEnabled={(codes) => setView({ kind: "backup-codes", codes, reason: "enabled" })}
+          onEnabled={() =>
+            setView({ kind: "enabled", factorId: view.setup.factorId, justEnabled: true })
+          }
         />
       )}
 
-      {view.kind === "backup-codes" && <BackupCodesView codes={view.codes} reason={view.reason} />}
-
       {view.kind === "enabled" && (
         <EnabledView
-          onRegenerated={(codes) => setView({ kind: "backup-codes", codes, reason: "regenerated" })}
+          factorId={view.factorId}
+          justEnabled={view.justEnabled}
           onDisabled={() => setView({ kind: "disabled" })}
         />
       )}

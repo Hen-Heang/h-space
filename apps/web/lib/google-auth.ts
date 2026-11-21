@@ -27,7 +27,7 @@ export function loadGoogleScript(): Promise<void> {
 
 /**
  * Produces a nonce pair for the Google One Tap flow. Google is initialized with the
- * SHA-256 hash; the raw value can be forwarded to the backend to confirm they match
+ * SHA-256 hash; the raw value goes to Supabase, which confirms they match
  * (replay protection).
  */
 export async function makeNonce(): Promise<{ nonce: string; hashedNonce: string }> {
@@ -41,12 +41,11 @@ export async function makeNonce(): Promise<{ nonce: string; hashedNonce: string 
 }
 
 /**
- * Establishes an h-space-api session from a Google credential (ID token).
- * h-space-api verifies it against the client IDs in its `google.client-ids`
- * setting, which must include NEXT_PUBLIC_GOOGLE_CLIENT_ID. Like a password,
- * Google is only the first factor: an account with two-step verification
- * answers mfa_required, finished with authApi.verifyMfa.
+ * Establishes a Supabase session from a Google credential (ID token). The
+ * Google provider in Supabase Auth must list NEXT_PUBLIC_GOOGLE_CLIENT_ID.
+ * Like a password, Google is only the first factor: an account with two-step
+ * verification answers mfa_required, finished with authApi.verifyMfa.
  */
-export function handleGoogleCredential(credential: string): Promise<SignInResult> {
-  return authApi.loginWithGoogle(credential)
+export function handleGoogleCredential(credential: string, nonce?: string): Promise<SignInResult> {
+  return authApi.loginWithGoogle(credential, nonce)
 }

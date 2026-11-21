@@ -23,8 +23,9 @@ H-Space is a small monorepo with two independently deployable applications:
 - `apps/luyra`: standalone Next.js Finance app with its own npm lockfile and
   Vercel deployment configuration
 
-Auth is h-space-api (Spring); domain data still lives in Supabase under RLS,
-reached through a temporary token bridge. The only server-side code here is
+Auth is Supabase Auth (since 2026-11-21 — the Spring service h-space-api is
+being retired, plan in `docs/SPRING_EXIT_PLAN.md`); domain data lives in
+Supabase under RLS. The only server-side code here is
 the Next.js route handlers in `apps/web/app/api` (`ai/*`, the Notion
 capture route in `integrations/notion`, and `finance/*` as Luyra moves in —
 see `docs/LUYRA_MIGRATION.md`). Read the instructions nearest to the files being
@@ -83,14 +84,14 @@ Product promise: **My Projects. One Space.** Keep the Hengo Learning experience 
 
 - This repository: Next.js 16 / React 19 / TypeScript / Tailwind v4 pnpm workspace. `apps/web` is the main hub; `apps/luyra` is a separately deployable finance app.
 - Separate backend: `Hen-Heang/h-space-api`, Java 17, Spring Boot 3.5, Gradle multi-module (`api-core`, `security-api` for auth, `hub-api` for the Inbox and H-Vault, a `finance-api` scaffold, and the `open-api` sample). Verified web integrations are **authentication** and **H-Vault** (`/api/hub/vault`), not the sample todo API.
-- H-Space web domain data still uses Supabase/PostgreSQL with Row Level Security. The Spring authentication service issues JWTs and currently provides a **temporary Supabase token bridge**. Treat this as migration compatibility; never expand it into a permanent new-feature dependency.
+- H-Space web domain data uses Supabase/PostgreSQL with Row Level Security, and sign-in is **Supabase Auth** again (2026-11-21, owner decision: retire h-space-api and its VPS — `docs/SPRING_EXIT_PLAN.md`). The Spring token bridge is no longer used by the web app; H-Vault moves to a Vercel route over its existing Neon tables in that plan's step 3.
 - Luyra has its own deployment and database decisions; do not merge or reconfigure it as a side effect of hub work.
 - This repository has detailed instructions in `AGENTS.md`, `HANDOFF.md`, and `apps/web/AGENTS.md`; read them and relevant source code. Older prose can lag behind the current auth integration. Do not revive the removed `apps/api` folder.
 - Product and engineering planning: [H-Space Notion Project Hub](https://app.notion.com/p/3b9acd8b74508151ac22ecff24718832). **GitHub** owns code, tests, and runtime configuration; **Notion** owns plans, decisions, and delivery notes; **databases** own runtime user data. Never copy secrets or private content into Notion.
 
 ## Non-negotiable security requirements
 
-- **Authentication is not vault encryption.** `h-space-api` already provides email-code login, verified Google ID-token login, refresh-token rotation, and optional TOTP MFA compatible with an iPhone authenticator application. Reuse and integration-test these flows rather than creating a second identity provider. For sensitive vault actions, design step-up authentication and safe session expiry.
+- **Authentication is not vault encryption.** Supabase Auth provides email-code login, verified Google ID-token login (with nonce), refresh-token rotation, and optional TOTP MFA compatible with an iPhone authenticator application. Reuse and test these flows rather than creating a second identity provider. MFA is enforced in the app only until RLS requires `aal2` (see `docs/SPRING_EXIT_PLAN.md`). For sensitive vault actions, design step-up authentication and safe session expiry.
 - Prefer **TOTP MFA** over email as the second factor; email codes can support sign-in/verification but are not equivalent to an independent possession factor. Require explicit MFA enrollment confirmation, one-time backup codes, replay resistance, rate limits, and safe recovery.
 - Before any real credential storage: write a threat model and cryptography design, get an independent security review, and test recovery/backup flows. The target is client-side authenticated encryption of vault records with independently generated nonces and a key derived from a user-controlled secret using a reviewed KDF. Store only versioned ciphertext, never plaintext passwords or a decryptable master secret on the server. Do not call a feature `zero-knowledge` until the complete flow has been verified.
 - Authentication passwords are **hashed** with a vetted adaptive password-hashing algorithm, not reversibly encrypted. Vault contents need **authenticated encryption**, not hashing.
