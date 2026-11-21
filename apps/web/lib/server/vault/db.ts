@@ -1,5 +1,5 @@
 import "server-only"
-import { neon, type NeonQueryFunction } from "@neondatabase/serverless"
+import { neon, neonConfig, type NeonQueryFunction } from "@neondatabase/serverless"
 
 import { normalizeFinanceDatabaseUrl } from "@/lib/server/finance/database-url"
 
@@ -16,6 +16,25 @@ import { normalizeFinanceDatabaseUrl } from "@/lib/server/finance/database-url"
 
 let client: NeonQueryFunction<false, false> | undefined
 
+/** The only host the local-proxy override applies to (resolves to 127.0.0.1). */
+export const LOCAL_NEON_HOST = "db.localtest.me"
+
+/**
+ * Local development only: lets the vault's Neon driver talk to Neon's local
+ * HTTP proxy (a throwaway Postgres in Docker) instead of Neon. Applies only
+ * outside production, only when VAULT_LOCAL_NEON_PROXY is set, and only to
+ * the host `db.localtest.me` — every other host (finance's Neon, a real vault
+ * URL) keeps the driver's default `https://<host>/sql`. neonConfig is global,
+ * hence the host check.
+ */
+export function localNeonFetchEndpoint(
+  env: Record<string, string | undefined> = process.env,
+): ((host: string) => string) | null {
+  const proxy = env.VAULT_LOCAL_NEON_PROXY?.trim()
+  if (!proxy || env.NODE_ENV === "production") return null
+  return (host) => (host === LOCAL_NEON_HOST ? proxy : `https://${host}/sql`)
+}
+
 export function vaultDatabaseUrl(env: Record<string, string | undefined> = process.env) {
   return normalizeFinanceDatabaseUrl(env.VAULT_DATABASE_URL)
 }
@@ -27,5 +46,10 @@ export function isVaultDatabaseConfigured(): boolean {
 export function vaultSql(): NeonQueryFunction<false, false> {
   const url = vaultDatabaseUrl()
   if (!url) throw new Error("VAULT_DATABASE_URL is not configured")
-  return (client ??= neon(url))
+  if (!client) {
+    const local = localNeonFetchEndpoint()
+    if (local) neonConfig.fetchEndpoint = local
+    client = neon(url)
+  }
+  return client
 }
