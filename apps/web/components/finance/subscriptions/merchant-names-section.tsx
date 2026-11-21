@@ -15,7 +15,7 @@ import {
 } from "@/lib/api/finance"
 import { krw } from "@/lib/finance-format"
 import { mergedNamesLabel, similarNamesLabel } from "@/lib/finance/subscriptions-display"
-import { financeKeys } from "@/lib/query/finance-queries"
+import { financeKeys, shouldRetryFinanceQuery } from "@/lib/query/finance-queries"
 import { cn } from "@/lib/utils"
 
 const VISIBLE_SUGGESTIONS = 3
@@ -54,7 +54,11 @@ const merchantNamesKey = () => [...financeKeys.user(), "merchant-names"] as cons
  */
 export function MerchantNamesSection({ onChanged }: { onChanged: () => void }) {
   const queryClient = useQueryClient()
-  const names = useQuery({ queryKey: merchantNamesKey(), queryFn: getMerchantNames })
+  const names = useQuery({
+    queryKey: merchantNamesKey(),
+    queryFn: getMerchantNames,
+    retry: shouldRetryFinanceQuery,
+  })
   const [dismissed, setDismissed] = useState<Set<string>>(() =>
     typeof window === "undefined" ? new Set() : readDismissed(),
   )

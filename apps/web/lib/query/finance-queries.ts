@@ -25,6 +25,7 @@ import {
   listTemplates,
   listTransactions,
 } from "@/lib/api/finance"
+import { ApiError } from "@/lib/api/finance-client"
 import { getUserId } from "@/lib/auth-store"
 import type { CreateTransactionTemplateInput, TransactionSort } from "@/lib/validation/finance"
 import type { Transaction, TransactionTemplate, TransactionType } from "@/types/finance"
@@ -57,6 +58,19 @@ export const financeKeys = {
   savingsGoals: () => [...financeKeys.user(), "savings-goals"] as const,
   recurring: () => [...financeKeys.user(), "recurring"] as const,
   exchangeRate: () => [...financeKeys.user(), "exchange-rate"] as const,
+}
+
+/**
+ * Retry rule for every Finance read. A 503 means Finance is switched off or
+ * its database is unreachable (e.g. the Neon quota is spent), which won't
+ * change within a retry's backoff — retrying only held a loading skeleton
+ * for ~15 s before the "Finance is unavailable" message. Show it at once;
+ * the error state's Try again button still refetches. Anything else keeps
+ * React Query's default of three retries.
+ */
+export function shouldRetryFinanceQuery(failureCount: number, error: unknown): boolean {
+  if (error instanceof ApiError && error.status === 503) return false
+  return failureCount < 3
 }
 
 // What each kind of write makes stale. Writes call invalidateAfter(kind) so
@@ -111,6 +125,7 @@ export type TransactionListFilters = Omit<Parameters<typeof listTransactions>[0]
 export function transactionListQuery(filters: TransactionListFilters) {
   return infiniteQueryOptions({
     enabled: getUserId() != null,
+    retry: shouldRetryFinanceQuery,
     queryKey: financeKeys.transactionList(filters),
     queryFn: ({ pageParam }) => listTransactions({ ...filters, page: pageParam }),
     initialPageParam: 0,
@@ -224,6 +239,7 @@ export function useDescriptionSuggestions(
     ] as const,
     queryFn: () => getDescriptionSuggestions(q, type),
     enabled: enabled && getUserId() != null && q.length > 0,
+    retry: shouldRetryFinanceQuery,
     staleTime: 5 * 60_000,
     placeholderData: (previous, previousQuery) =>
       previousQuery?.queryKey[1] === getUserId() ? previous : undefined,
@@ -241,6 +257,7 @@ export function useDescriptionSuggestions(
 export function overviewQuery(month: string) {
   return queryOptions({
     enabled: getUserId() != null,
+    retry: shouldRetryFinanceQuery,
     queryKey: financeKeys.overview(month),
     queryFn: () => getFinanceOverview(month),
     staleTime: 30_000,
@@ -250,6 +267,7 @@ export function overviewQuery(month: string) {
 export function analyticsQuery(month: string) {
   return queryOptions({
     enabled: getUserId() != null,
+    retry: shouldRetryFinanceQuery,
     queryKey: financeKeys.analytics(month),
     queryFn: () => getAnalyticsSummary(month),
   })
@@ -258,6 +276,7 @@ export function analyticsQuery(month: string) {
 export function budgetsQuery(start: string, end: string) {
   return queryOptions({
     enabled: getUserId() != null,
+    retry: shouldRetryFinanceQuery,
     queryKey: financeKeys.budgets({ start, end }),
     queryFn: () => listBudgets(start, end),
   })
@@ -266,6 +285,7 @@ export function budgetsQuery(start: string, end: string) {
 export const savingsGoalsQuery = () =>
   queryOptions({
     enabled: getUserId() != null,
+    retry: shouldRetryFinanceQuery,
     queryKey: financeKeys.savingsGoals(),
     queryFn: listSavingsGoals,
   })
@@ -273,6 +293,7 @@ export const savingsGoalsQuery = () =>
 export const recurringRulesQuery = () =>
   queryOptions({
     enabled: getUserId() != null,
+    retry: shouldRetryFinanceQuery,
     queryKey: financeKeys.recurring(),
     queryFn: listRecurringRules,
   })
@@ -284,6 +305,7 @@ const LOOKUP_STALE_MS = 5 * 60_000
 export const categoriesQuery = () =>
   queryOptions({
     enabled: getUserId() != null,
+    retry: shouldRetryFinanceQuery,
     queryKey: financeKeys.categories(),
     queryFn: listCategories,
     staleTime: LOOKUP_STALE_MS,
@@ -292,6 +314,7 @@ export const categoriesQuery = () =>
 export const paymentMethodsQuery = () =>
   queryOptions({
     enabled: getUserId() != null,
+    retry: shouldRetryFinanceQuery,
     queryKey: financeKeys.paymentMethods(),
     queryFn: listPaymentMethods,
     staleTime: LOOKUP_STALE_MS,
@@ -300,6 +323,7 @@ export const paymentMethodsQuery = () =>
 export const templatesQuery = () =>
   queryOptions({
     enabled: getUserId() != null,
+    retry: shouldRetryFinanceQuery,
     queryKey: financeKeys.templates(),
     queryFn: listTemplates,
     staleTime: LOOKUP_STALE_MS,
@@ -308,6 +332,7 @@ export const templatesQuery = () =>
 export const preferencesQuery = () =>
   queryOptions({
     enabled: getUserId() != null,
+    retry: shouldRetryFinanceQuery,
     queryKey: financeKeys.preferences(),
     queryFn: getPreferences,
     staleTime: LOOKUP_STALE_MS,
@@ -322,6 +347,7 @@ export const preferencesQuery = () =>
 export const exchangeRateQuery = () =>
   queryOptions({
     enabled: getUserId() != null,
+    retry: shouldRetryFinanceQuery,
     queryKey: financeKeys.exchangeRate(),
     queryFn: getExchangeRate,
     staleTime: 15 * 60_000,

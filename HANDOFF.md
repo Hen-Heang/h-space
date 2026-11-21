@@ -10,7 +10,7 @@
   - **#134** (`351574c`): #132's matcher missed the real error (it expected 429/5xx and "compute time quota"). It now also matches HTTP **402** and "exceeded the quota", with a test using the exact production error.
   - **#133**: handoff only.
   - **Checked in production, signed in (owner signed in to the Claude Chrome tab):** `/api/finance/overview?month=2026-11` returns 503 and the page shows the new message. Local checks on #134: `pnpm test` 226 files / 2,472 tests, lint 0 errors / 5 old warnings, `tsc` clean.
-- **Known nit:** on a 503 the overview still retries 4 times (about 15 s of skeleton) before showing the message. Not changed yet. It could skip retries on 503.
+- **PR open: finance reads skip retries on a 503** (`fix/finance-skip-retry-503`). `shouldRetryFinanceQuery` in `lib/query/finance-queries.ts` is on every finance query: no retry for a 503, React Query's default 3 retries otherwise. The "Finance is unavailable" message now shows after one request instead of about 8–15 s of skeleton. Locally: `pnpm test` 226 files / 2,475 tests, lint 0 errors / 5 old warnings, `tsc` clean. `pnpm build` not run. Not yet checked in production.
 - **Test account (kept by the owner):** `hspace-e2e-c011d2@example.com` in live Supabase, now empty. Its password is not in the repo. How to run the signed-in journey: the header of `apps/web/tests/e2e/signed-in-journey.e2e.ts`.
 
 ## Current focus
@@ -22,7 +22,7 @@
 5. **Owner, before 2026-12-01:** stop the Spring container on the VPS, then shut the VPS down and archive h-space-api. Decide on rotating the legacy Supabase JWT secret (affects Orbit).
 6. **After Neon is back (needs owner approval):** create the least-privilege `vault_app` role (SQL in the plan), set `VAULT_DATABASE_URL` in Vercel, run the vault on a Neon branch, then unlock in production. Copy any Spring-only `inbox_items` into `kori_inbox_items`.
 7. **MFA database rule:** apply `20261121120000_require_mfa_when_enrolled.sql` only with the owner's go-ahead, after the owner's authenticators are enrolled. Then check the app and the MCP connector with MFA on (connector tokens may be `aal1`).
-8. **Optional:** skip finance query retries on a 503 (the nit above).
+8. **Owner:** review and merge the skip-retries-on-503 PR, then open `/finance` while Neon is still down to see the message appear at once.
 9. **Carried over:** the H-Vault step-up code and route rate limits; the independent H-Vault security audit (must cover `/api/vault`) and restore drill; Finance D–F follow-ups (`apps/web/docs/finance-redesign.md` §7); MCP live checks; UI audit follow-ups.
 
 ## Notes for the next session
