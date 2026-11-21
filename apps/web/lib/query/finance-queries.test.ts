@@ -34,9 +34,11 @@ import {
   preferencesQuery,
   recurringRulesQuery,
   savingsGoalsQuery,
+  shouldRetryFinanceQuery,
   templatesQuery,
   transactionListQuery,
 } from "./finance-queries"
+import { ApiError } from "@/lib/api/finance-client"
 import type { Transaction } from "@/types/finance"
 
 afterEach(() => {
@@ -81,7 +83,7 @@ describe("finance account isolation", () => {
     const unlinkedQuery = savingsGoalsQuery()
     expect(client.getQueryData(unlinkedQuery.queryKey)).toBeUndefined()
     api.listSavingsGoals.mockRejectedValueOnce(new Error("403 Forbidden"))
-    await expect(client.fetchQuery(unlinkedQuery)).rejects.toThrow("403")
+    await expect(client.fetchQuery({ ...unlinkedQuery, retry: false })).rejects.toThrow("403")
     expect(client.getQueryData(unlinkedQuery.queryKey)).toBeUndefined()
     expect(client.getQueryData(ownerQuery.queryKey)).toEqual(ownerGoals)
     client.clear()
@@ -102,6 +104,40 @@ describe("finance account isolation", () => {
     client.setQueryData(listKey, data)
     placeTransactionInLists(client, { id: "old-save" } as Transaction, "owner-a")
     expect(client.getQueryData(listKey)).toEqual(data)
+    client.clear()
+  })
+})
+
+describe("finance query retries", () => {
+  const unavailable = () =>
+    new ApiError("FINANCE_DATABASE_UNAVAILABLE", "Finance is unavailable right now.", 503)
+
+  it("never retries a 503 and keeps the default three retries otherwise", () => {
+    expect(shouldRetryFinanceQuery(0, unavailable())).toBe(false)
+    const serverError = new ApiError("INTERNAL_ERROR", "Something went wrong.", 500)
+    expect(shouldRetryFinanceQuery(0, serverError)).toBe(true)
+    expect(shouldRetryFinanceQuery(2, serverError)).toBe(true)
+    expect(shouldRetryFinanceQuery(3, serverError)).toBe(false)
+    expect(shouldRetryFinanceQuery(0, new TypeError("Failed to fetch"))).toBe(true)
+  })
+
+  it("applies the rule to every finance query", () => {
+    options().forEach((option) => expect(option.retry).toBe(shouldRetryFinanceQuery))
+  })
+
+  it("fails a 503 after one request and still retries a 500", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retryDelay: 0 } } })
+    api.listSavingsGoals.mockRejectedValue(unavailable())
+    await expect(client.fetchQuery(savingsGoalsQuery())).rejects.toMatchObject({ status: 503 })
+    expect(api.listSavingsGoals).toHaveBeenCalledTimes(1)
+
+    client.clear()
+    api.listSavingsGoals.mockReset()
+    api.listSavingsGoals.mockRejectedValue(
+      new ApiError("INTERNAL_ERROR", "Something went wrong.", 500),
+    )
+    await expect(client.fetchQuery(savingsGoalsQuery())).rejects.toMatchObject({ status: 500 })
+    expect(api.listSavingsGoals).toHaveBeenCalledTimes(4)
     client.clear()
   })
 })
