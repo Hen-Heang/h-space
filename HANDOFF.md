@@ -15,7 +15,7 @@
 
 ## Current focus
 
-1. **Owner: Neon decision.** Either wait for the 2026-12-01 reset or upgrade the `h-space-api` Neon project now. Finance and H-Vault depend on it. Once it's back, open `/finance` to confirm the data loads.
+1. **Owner: Neon decision.** Either wait for the 2026-12-01 reset or upgrade the `h-space-api` Neon project now. Finance and H-Vault depend on it. **Stop the Spring container on the VPS before upgrading** — its pool kept the database awake 24/7, which used up the free quota and would keep billing on a paid plan. Don't point Finance at the old `luyra` Neon project as a stopgap: it's the frozen 2026-11-04 archive and the working copy has diverged. Once Neon is back, open `/finance` to confirm the data loads.
 2. **Owner, Supabase dashboard (project-wide, shared with Orbit):** Google provider with the same client ID as `NEXT_PUBLIC_GOOGLE_CLIENT_ID`; `{{ .Token }}` in the Magic link template; `https://hengo.henheang.site/reset-password` (and preview origins) in the redirect URLs. Until then, only password sign-in works.
 3. **Owner:** enroll an authenticator **and a backup** under Settings → Security (production sign-in works). Then try email-code sign-in and the reset-email link by hand.
 4. **Owner, Vercel and `apps/web/.env.example` (tidying):** delete `NEXT_PUBLIC_DATA_SOURCE_INBOX`, `NEXT_PUBLIC_AUTH_API_URL` and `NEXT_PUBLIC_HSPACE_API_URL`. Nothing reads them since #130.
