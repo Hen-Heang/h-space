@@ -82,8 +82,10 @@ The project is shared with Orbit, so these are project-wide.
 ## Known gaps after step 1 — decide before relying on MFA
 
 - **MFA must be enrolled again.** TOTP secrets can't move from Spring to
-  Supabase. Supabase has no backup codes; if a phone is lost, a project admin
-  removes the factor in the dashboard.
+  Supabase. Supabase has no backup codes, so the backup is a **second
+  authenticator** (`feature/backup-authenticator`): link two devices, pick
+  either at sign-in, remove a lost one with the other. With only one device,
+  a lost phone still needs a project admin to remove the factor.
 - **MFA in the database: written, not applied.**
   `apps/web/supabase/migrations/20261121120000_require_mfa_when_enrolled.sql`
   adds a restrictive policy to every RLS table in `public`, Orbit's shared
