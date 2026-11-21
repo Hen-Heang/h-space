@@ -84,12 +84,17 @@ The project is shared with Orbit, so these are project-wide.
 - **MFA must be enrolled again.** TOTP secrets can't move from Spring to
   Supabase. Supabase has no backup codes; if a phone is lost, a project admin
   removes the factor in the dashboard.
-- **MFA is enforced in the app, not yet in the database.** With a password
-  only, Supabase issues an `aal1` session. The app treats it as signed out
-  until the code is entered, but RLS accepts any session. Closing that needs a
-  restrictive RLS policy (require `aal2` when the user has a verified factor)
-  on H-Space's tables: a live-database migration, written and applied only with
-  approval.
+- **MFA in the database: written, not applied.**
+  `apps/web/supabase/migrations/20261121120000_require_mfa_when_enrolled.sql`
+  adds a restrictive policy to every RLS table in `public`, Orbit's shared
+  tables included (owner decision, 2026-11-21). It requires `aal2` only when
+  the user has a verified factor. Tested on a throwaway local Postgres
+  (`apps/web/supabase/tests/require_mfa_when_enrolled.test.sh`, all 16
+  checks passed). Apply it after this PR merges and the owner has enrolled
+  MFA in Supabase. It's a live-database change and needs the owner's go-ahead.
+  After applying, check the MCP connector with MFA on (its tokens may be
+  `aal1`). Not covered: `storage.objects` and Orbit's older
+  security-definer functions.
 - **Legacy JWT secret.** Retiring the bridge stops the VPS from minting tokens,
   but whoever has the secret still could. Rotating to Supabase's asymmetric
   signing keys closes that; it affects Orbit too, so it's a separate decision.

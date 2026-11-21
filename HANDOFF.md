@@ -20,8 +20,8 @@
 
 1. **Owner, before merging step 1:** Supabase dashboard settings from `docs/SPRING_EXIT_PLAN.md`: Google provider client ID, the Magic link template with `{{ .Token }}`, a redirect URL for `/reset-password`, and TOTP MFA on. Then try every sign-in path on a preview deployment. If you changed your password in Spring after the import, use "Forgot password" or an email code.
 2. **Owner, before 2026-12-01:** stop the Spring container on the VPS so it can't use up December's Neon compute.
-3. **Decision needed: MFA in the database.** RLS accepts `aal1` sessions, so for an account with an authenticator, MFA is enforced only by the app. That breaks `AGENTS.md` ("never only in UI route guards"). Proposal: a restrictive RLS policy that requires `aal2` when the user has a verified factor, on H-Space's tables. It's a live-DB migration and needs approval.
-4. **Decision needed: backup codes.** `AGENTS.md` requires one-time backup codes; Supabase MFA has none. Options: allow a second authenticator, or accept admin reset in the dashboard. Update the rule either way.
+3. **MFA in the database: written and tested, not applied.** `20261121120000_require_mfa_when_enrolled.sql` (restrictive `aal2`-when-enrolled policy on every RLS table in `public`, Orbit's included, as the owner decided). The local test script passed 16/16. Apply only with the owner's go-ahead, after #126 merges and MFA is enrolled; then check the MCP connector with MFA on.
+4. **Backup codes → second authenticator (owner decision 2026-11-21, next to build).** Supabase MFA has no backup codes, so allow enrolling a second TOTP factor, let sign-in choose which device, and update the `AGENTS.md` backup-code rule.
 5. **Step 2:** unset `NEXT_PUBLIC_DATA_SOURCE_INBOX` in Vercel. After Neon is back, copy any Spring-only `inbox_items` into `kori_inbox_items` (needs approval).
 6. **Step 3:** H-Vault route `app/api/vault/*` over Neon `hspace` (Neon HTTP driver, requires `aal2`, every query scoped by user). Read `.claude/rules/vault.md`, `apps/web/docs/h-vault.md` and the h-space-api `docs/vault-design.md` first.
 7. **Step 4 cleanup** and the legacy JWT-secret rotation decision (affects Orbit).
