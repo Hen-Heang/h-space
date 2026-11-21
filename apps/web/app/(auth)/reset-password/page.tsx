@@ -14,6 +14,7 @@ import {
   authLinkClass,
   authSubmitClass,
 } from "@/components/auth/auth-shell"
+import { MfaDevicePicker, useMfaDevices } from "@/components/auth/mfa-device-picker"
 import { Button } from "@/components/ui/button"
 import { Field, FieldContent, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -34,6 +35,7 @@ export default function ResetPasswordPage() {
   const [invalidLink, setInvalidLink] = useState(false)
   const [factorId, setFactorId] = useState<string | null>(null)
   const [mfaCode, setMfaCode] = useState("")
+  const mfaDevices = useMfaDevices(factorId !== null)
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -150,22 +152,25 @@ export default function ResetPasswordPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <FieldGroup>
               {factorId ? (
-                <Field>
-                  <FieldLabel>Verification code</FieldLabel>
-                  <FieldContent>
-                    <Input
-                      name="one-time-code"
-                      autoComplete="one-time-code"
-                      inputMode="numeric"
-                      placeholder="123456"
-                      value={mfaCode}
-                      onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      required
-                      autoFocus
-                      className={cn(authInputClass, "text-center text-lg tracking-[0.4em]")}
-                    />
-                  </FieldContent>
-                </Field>
+                <>
+                  <MfaDevicePicker devices={mfaDevices} value={factorId} onChange={setFactorId} />
+                  <Field>
+                    <FieldLabel>Verification code</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        name="one-time-code"
+                        autoComplete="one-time-code"
+                        inputMode="numeric"
+                        placeholder="123456"
+                        value={mfaCode}
+                        onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        required
+                        autoFocus
+                        className={cn(authInputClass, "text-center text-lg tracking-[0.4em]")}
+                      />
+                    </FieldContent>
+                  </Field>
+                </>
               ) : (
                 <Field>
                   <FieldLabel>New password</FieldLabel>

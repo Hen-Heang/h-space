@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Field, FieldContent, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { authApi } from "@/lib/api"
+import { MfaDevicePicker, useMfaDevices } from "@/components/auth/mfa-device-picker"
 import { EmailCodeSignIn } from "@/components/email-code-sign-in"
 import { GoogleSignInButton } from "@/components/google-sign-in-button"
 import { DEFAULT_AFTER_SIGN_IN, safeNextPath } from "@/lib/safe-next-path"
@@ -43,6 +44,8 @@ export default function LoginPage() {
   // verification; the form then asks for the authenticator code instead.
   const [factorId, setFactorId] = useState<string | null>(null)
   const [mfaCode, setMfaCode] = useState("")
+  // With a backup authenticator linked, the user picks which device the code is from.
+  const mfaDevices = useMfaDevices(factorId !== null)
   // Where to go once signed in: the page the auth gate sent us from
   // (?next=, validated as a same-site path), else Home.
   const [afterSignIn, setAfterSignIn] = useState(DEFAULT_AFTER_SIGN_IN)
@@ -175,7 +178,15 @@ export default function LoginPage() {
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
           {factorId ? (
-            <FieldGroup>
+            <FieldGroup className="gap-4">
+              <MfaDevicePicker
+                devices={mfaDevices}
+                value={factorId}
+                onChange={(id) => {
+                  setFactorId(id)
+                  setError("")
+                }}
+              />
               <Field>
                 <FieldLabel>Verification code</FieldLabel>
                 <FieldContent>
@@ -192,7 +203,9 @@ export default function LoginPage() {
                   />
                 </FieldContent>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Lost your phone? Ask the H-Space owner to reset two-step verification.
+                  {mfaDevices.length > 1
+                    ? "Lost a device? Use a code from another one you've linked."
+                    : "Lost your phone? Ask the H-Space owner to reset two-step verification."}
                 </p>
               </Field>
             </FieldGroup>
