@@ -36,10 +36,12 @@ kept an `auth.users` row for each one. Every RLS row stays linked.
 
 ## Steps
 
-**Status, 2026-11-21:** step 1 (#126) and step 3 (#128) are merged and
-deployed, along with the second authenticator (#127). Steps 0, 2 and 4 are
-open; step 3 still needs Neon (after 2026-12-01). The MFA database rule is
-in `main` but **not applied**.
+**Status, 2026-11-21:** step 1 (#126), step 3 (#128) and the code part of
+step 4 (#130) are merged and deployed, along with the second authenticator
+(#127); step 2's code change came with #130. Open: step 0 (stop the VPS
+container), step 2's inbox data copy and step 3's Neon setup (both after
+2026-12-01), and step 4's owner part (VPS, archive, JWT-secret decision).
+The MFA database rule is in `main` but **not applied**.
 
 0. **Contain the outage (owner).** Stop the Spring container on the VPS before
    2026-12-01 so it can't use up December's Neon compute. Without Spring nothing
@@ -50,7 +52,7 @@ in `main` but **not applied**.
    verify-email token pages are retired. Needs Supabase dashboard settings
    (below). Restores Home, Planner, Learning and the other Supabase pages
    without Neon.
-2. **Inbox back to Supabase.** Done in code by step 4: the Spring store and
+2. **Inbox back to Supabase.** Done in code by step 4 (#130): the Spring store and
    `NEXT_PUBLIC_DATA_SOURCE_INBOX` are gone, so the inbox always reads
    `kori_inbox_items` (deleting the variable from Vercel is just tidying).
    Still open: after Neon is back, copy any `inbox_items` created in Spring
@@ -62,7 +64,7 @@ in `main` but **not applied**.
    `aal2`** and scopes every query by the verified user id. The browser-side
    encryption doesn't change; only the transport does. No ciphertext is moved.
    The pending independent security review must cover this route.
-4. **Cleanup.** Code part done (`chore/remove-spring-leftovers`): removed
+4. **Cleanup.** Code part merged (#130): removed
    `lib/api/auth-http.ts`, `hspace-http.ts`, `lib/server/hspace-inbox.ts`,
    the Spring inbox store and `isSpringInboxEnabled`, the inbox-reminder
    guard, and the h-space-api origins in `lib/csp.ts` (`connect-src` no
