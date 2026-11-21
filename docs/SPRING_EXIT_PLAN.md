@@ -36,6 +36,11 @@ kept an `auth.users` row for each one. Every RLS row stays linked.
 
 ## Steps
 
+**Status, 2026-11-21:** step 1 (#126) and step 3 (#128) are merged and
+deployed, along with the second authenticator (#127). Steps 0, 2 and 4 are
+open; step 3 still needs Neon (after 2026-12-01). The MFA database rule is
+in `main` but **not applied**.
+
 0. **Contain the outage (owner).** Stop the Spring container on the VPS before
    2026-12-01 so it can't use up December's Neon compute. Without Spring nothing
    holds a connection, so Neon should scale to zero between requests.
@@ -63,8 +68,12 @@ kept an `auth.users` row for each one. Every RLS row stays linked.
 
 ## Step 3 status (2026-11-21)
 
-Built, unit-tested, **not yet run against a database** (Neon is suspended
-until 2026-12-01).
+**Merged and deployed 2026-11-21 (#128), not enabled against Neon yet**
+(Neon is suspended until 2026-12-01). The real SQL was exercised end to end
+in Chrome against a throwaway Postgres with hub-api's schema behind Neon's
+local HTTP proxy (`tests/e2e/signed-in-journey.e2e.ts`, all 6 passed), but
+not yet against Neon itself. In production the vault answers 503 until
+`VAULT_DATABASE_URL` is set.
 
 - Routes `app/api/vault/{keyset,reset,items,items/[id]}`; gate, schemas and
   SQL in `lib/server/vault/*`; browser transport `lib/api/vault-http.ts`.
