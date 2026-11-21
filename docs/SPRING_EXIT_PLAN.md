@@ -49,7 +49,8 @@ kept an `auth.users` row for each one. Every RLS row stays linked.
    (that's the documented rollback in `lib/feature-flags.ts`). After Neon is
    back, copy any `inbox_items` created in Spring since the switch into
    `kori_inbox_items`. Needs approval: a write to the live database.
-3. **H-Vault through a Vercel route.** `app/api/vault/*` reads and writes the
+3. **H-Vault through a Vercel route** — built on `feature/vault-route-neon`
+   (see "Step 3 status" below). `app/api/vault/*` reads and writes the
    existing `vault_keysets` / `vault_items` in Neon `hspace` with the Neon HTTP
    driver (like finance). The route verifies the Supabase session, **requires
    `aal2`** and scopes every query by the verified user id. The browser-side
@@ -59,6 +60,39 @@ kept an `auth.users` row for each one. Every RLS row stays linked.
    `api.henheang.site` from `lib/csp.ts`, `NEXT_PUBLIC_AUTH_API_URL` /
    `NEXT_PUBLIC_HSPACE_API_URL`; shut down the VPS; archive h-space-api as a
    learning repo; update `AGENTS.md`, `apps/web/AGENTS.md`, `HANDOFF.md`.
+
+## Step 3 status (2026-11-21)
+
+Built, unit-tested, **not yet run against a database** (Neon is suspended
+until 2026-12-01).
+
+- Routes `app/api/vault/{keyset,reset,items,items/[id]}`; gate, schemas and
+  SQL in `lib/server/vault/*`; browser transport `lib/api/vault-http.ts`.
+  Same contract as hub-api (versions, 409s, 1,000-item cap, ids unique across
+  users, reset deletes both, audit rows), minus the optional step-up code
+  the web app never sent.
+- **Before turning it on (owner, after Neon is back):**
+  1. A least-privilege Neon role for the route. Creating it is a live-database
+     change and needs approval. Generate the password in the Neon console,
+     never in a file:
+     ```sql
+     create role vault_app login;  -- set the password in the Neon console
+     grant connect on database hspace to vault_app;
+     grant usage on schema public to vault_app;
+     grant select, insert, update, delete on vault_keysets, vault_items to vault_app;
+     grant insert on audit_logs to vault_app;
+     ```
+  2. Set `VAULT_DATABASE_URL` (that role's pooled connection string) in Vercel
+     Production and Preview: server-only, never `NEXT_PUBLIC_`.
+  3. Run the SQL for real against a **Neon branch** of `hspace` (copy-on-write,
+     isolated): create a keyset, add/update/delete an item, a stale-version
+     409, reset. Then try it on the preview: unlock, list, and confirm the
+     items decrypt. That proves the Supabase user id equals the id the
+     envelopes are bound to.
+- **Known gaps:** the step-up code for keyset replace and reset (design §8)
+  is still not required; no rate limit on the routes (hub-api had none
+  either); vault rows reference the Spring-era `users` table (a new
+  Supabase-only account gets a clear 409).
 
 ## Supabase settings for step 1 (owner, dashboard)
 

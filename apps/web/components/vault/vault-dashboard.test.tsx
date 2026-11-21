@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 // H-Vault dashboard behaviour (fictional data only). Mostly on the demo
-// backend, which runs against jsdom's localStorage; the hspace-api client is
+// backend, which runs against jsdom's localStorage; the /api/vault client is
 // mocked so nothing can reach a real server, and the "live" tests drive it
 // through an in-memory fake.
 
@@ -12,7 +12,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 const live = vi.hoisted(() => ({
   on: false,
   handler: (path: string): unknown => {
-    throw new Error(`hspace-api must not be called in demo mode (${path})`)
+    throw new Error(`/api/vault must not be called in demo mode (${path})`)
   },
 }))
 vi.mock("@/lib/supabase", () => ({
@@ -22,8 +22,11 @@ vi.mock("@/lib/supabase", () => ({
     },
   },
 }))
-vi.mock("@/lib/api/hspace-http", () => ({
-  hspaceRequest: vi.fn(async (path: string) => live.handler(path)),
+vi.mock("@/lib/api/vault-http", async () => ({
+  VaultHttpError: (
+    await vi.importActual<typeof import("@/lib/api/vault-http")>("@/lib/api/vault-http")
+  ).VaultHttpError,
+  vaultRequest: vi.fn(async (path: string) => live.handler(path)),
 }))
 vi.mock("@/lib/auth-store", () => ({
   getUserId: () => "user-a",
@@ -39,7 +42,7 @@ const { VAULT_PASSWORD_NOTICE } = await import("@/lib/vault")
 const { createVaultKeyset, encryptVaultPassword, isVaultEnvelope } =
   await import("@/lib/vault-crypto")
 const { VAULT_DEMO_KEYSET_KEY } = await import("@/lib/api/vault")
-const { AuthApiError } = await import("@/lib/api/auth-http")
+const { VaultHttpError } = await import("@/lib/api/vault-http")
 const { lockVault } = await import("@/lib/vault-session")
 
 // Fictional values for the password flow tests.
@@ -66,7 +69,7 @@ beforeAll(() => {
 beforeEach(() => {
   live.on = false
   live.handler = (path: string) => {
-    throw new Error(`hspace-api must not be called in demo mode (${path})`)
+    throw new Error(`/api/vault must not be called in demo mode (${path})`)
   }
   window.localStorage.clear()
   clipboardWrite.mockClear()
@@ -370,13 +373,14 @@ async function seedDemoVaultWithPassword() {
   return { recoveryKey }
 }
 
-describe("H-Vault synced through hspace-api", () => {
+describe("H-Vault synced through /api/vault", () => {
   it("shows nothing until the vault is set up and unlocked", async () => {
     live.on = true
     const sent: string[] = []
     live.handler = (path: string) => {
       sent.push(path)
-      if (path.endsWith("/keyset")) throw new AuthApiError("Vault isn't set up yet.", 404, 40400)
+      if (path.endsWith("/keyset"))
+        throw new VaultHttpError("Vault isn't set up yet.", 404, "NOT_FOUND")
       throw new Error(`unexpected ${path}`)
     }
     renderDashboard()
@@ -392,7 +396,11 @@ describe("H-Vault synced through hspace-api", () => {
   it("asks to turn on two-step verification when the account has no MFA", async () => {
     live.on = true
     live.handler = () => {
-      throw new AuthApiError("Turn on authenticator-app MFA to use the vault", 403, 40301)
+      throw new VaultHttpError(
+        "Turn on authenticator-app MFA to use the vault",
+        403,
+        "VAULT_MFA_REQUIRED",
+      )
     }
     renderDashboard()
     expect(

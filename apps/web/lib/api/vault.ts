@@ -1,5 +1,4 @@
-import { AuthApiError } from "@/lib/api/auth-http"
-import { hspaceRequest } from "@/lib/api/hspace-http"
+import { VaultHttpError, vaultRequest as vaultHttp } from "@/lib/api/vault-http"
 import { isVaultLiveEnabled } from "@/lib/feature-flags"
 import { DEMO_VAULT_ACCOUNTS } from "@/lib/vault-demo"
 import {
@@ -24,11 +23,13 @@ import {
 // domains. Design: h-space-api docs/vault-design.md.
 //
 // Two backends share one interface:
-// - `springVault` — hspace-api /api/hub/vault. The server stores ciphertext
-//   only: each account is encrypted whole in the browser (encryptItemPayload,
-//   bound to its user and id), and the keyset holds the vault key wrapped
-//   under the master password and the recovery key. Listing needs the
-//   unlocked key. Requires an MFA-enabled account (403 otherwise).
+// - `liveVault` — this app's /api/vault routes over the vault tables in Neon
+//   (lib/server/vault/*; hub-api's /api/hub/vault until 2026-11-21). The
+//   server stores ciphertext only: each account is encrypted whole in the
+//   browser (encryptItemPayload, bound to its user and id), and the keyset
+//   holds the vault key wrapped under the master password and the recovery
+//   key. Listing needs the unlocked key. Requires a session that used an
+//   authenticator (aal2); 403 otherwise.
 // - `demoVault` — fictional accounts in this browser's localStorage, used
 //   until `NEXT_PUBLIC_FEATURE_VAULT_LIVE` is on (lib/feature-flags.ts).
 //   Account names stay readable there (they're sample data), but saved
@@ -51,7 +52,7 @@ export class VaultLockedError extends Error {
   }
 }
 
-/** The H-Space account doesn't have authenticator-app MFA turned on (hspace-api 40301). */
+/** No authenticator on the account, or this session didn't use one (route code VAULT_MFA_REQUIRED). */
 export class VaultMfaRequiredError extends Error {
   constructor() {
     super("Turn on two-step verification with an authenticator app to use H-Vault.")
@@ -59,7 +60,7 @@ export class VaultMfaRequiredError extends Error {
   }
 }
 
-const VAULT_MFA_REQUIRED = 40301
+const VAULT_MFA_REQUIRED = "VAULT_MFA_REQUIRED"
 
 /** Rebuilds input from allowlisted fields only, refusing anything secret-like. */
 export function pickInput(data: Partial<VaultAccountInput>): Partial<VaultAccountInput> {
@@ -117,9 +118,7 @@ export type VaultBackend = {
   remove: (id: string) => Promise<void>
 }
 
-// ─── hspace-api (Spring) ─────────────────────────────────────────────────────
-
-const VAULT_PATH = "/api/hub/vault"
+// ─── Live (/api/vault over Neon) ──────────────────────────────────────────────
 
 type ItemRow = {
   id: string
@@ -137,9 +136,9 @@ async function vaultRequest<T>(
   options: { method?: "GET" | "POST" | "PUT" | "DELETE"; body?: unknown } = {},
 ): Promise<T> {
   try {
-    return await hspaceRequest<T>(`${VAULT_PATH}${path}`, options)
+    return await vaultHttp<T>(path, options)
   } catch (error) {
-    if (error instanceof AuthApiError && error.code === VAULT_MFA_REQUIRED) {
+    if (error instanceof VaultHttpError && error.code === VAULT_MFA_REQUIRED) {
       throw new VaultMfaRequiredError()
     }
     throw error
@@ -196,7 +195,7 @@ async function decryptRow(row: ItemRow, key: VaultKey): Promise<VaultAccount> {
   return fromRow(row, await decryptItemPayload(row.payloadCiphertext, row.id, key))
 }
 
-export const springVault: VaultBackend = {
+export const liveVault: VaultBackend = {
   live: true,
   listNeedsUnlock: true,
 
@@ -205,7 +204,7 @@ export const springVault: VaultBackend = {
       return await vaultRequest<VaultKeysetRecord>("/keyset")
     } catch (error) {
       // 404 = the vault hasn't been set up yet.
-      if (error instanceof AuthApiError && error.httpStatus === 404) return null
+      if (error instanceof VaultHttpError && error.httpStatus === 404) return null
       throw error
     }
   },
@@ -371,10 +370,10 @@ export function resetVaultDemoData(): void {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-const backend = (): VaultBackend => (isVaultLiveEnabled() ? springVault : demoVault)
+const backend = (): VaultBackend => (isVaultLiveEnabled() ? liveVault : demoVault)
 
 export const vaultApi = {
-  /** Whether rows sync through hspace-api (true) or are the browser-local demo set (false). */
+  /** Whether rows sync through /api/vault (true) or are the browser-local demo set (false). */
   isLive: (): boolean => backend().live,
   listNeedsUnlock: (): boolean => backend().listNeedsUnlock,
   getKeyset: (): Promise<VaultKeysetRecord | null> => backend().getKeyset(),

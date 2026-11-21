@@ -2,7 +2,8 @@
 
 Full detail: `apps/web/docs/h-vault.md`, and h-space-api `docs/vault-design.md`.
 Read both before touching `apps/web/lib/vault-*.ts`, `lib/api/vault.ts`,
-`hooks/useVault.ts`, `components/vault/*`, `app/(main)/vault/*` or `lib/csp.ts`.
+`lib/api/vault-http.ts`, `hooks/useVault.ts`, `components/vault/*`,
+`app/(main)/vault/*`, `app/api/vault/*`, `lib/server/vault/*` or `lib/csp.ts`.
 
 - H-Vault holds **real** credentials in production (since 2026-11-01) and the
   independent security review is **still pending**. Until it's done: no new
@@ -10,7 +11,10 @@ Read both before touching `apps/web/lib/vault-*.ts`, `lib/api/vault.ts`,
   never describe it as "zero-knowledge" in code, docs or UI copy.
 - Encryption happens **only in the browser** (`lib/vault-crypto.ts`, v2
   envelopes). Only `v2.` ciphertext may leave the browser. Never add a
-  plaintext path to hub-api, the AI routes, Supabase or any other service.
+  plaintext path to `/api/vault`, the AI routes, Supabase or any other
+  service. The routes accept ids, versions, KDF settings and v2 envelopes
+  only (strict schemas); keep it that way, and keep their logs free of
+  database error messages (they can quote ciphertext).
 - Never persist the master password, recovery key or vault key — not in
   `localStorage`, `sessionStorage`, IndexedDB, cookies, URLs or query
   caches. The unlocked key stays non-extractable and in memory only
