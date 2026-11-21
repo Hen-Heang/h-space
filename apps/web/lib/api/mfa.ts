@@ -72,7 +72,10 @@ export const mfaApi = {
       const { error } = await supabase.auth.mfa.unenroll({ factorId: stale.id })
       if (error) throw error
     }
-    const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: name })
+    const { data, error } = await supabase.auth.mfa.enroll({
+      factorType: "totp",
+      friendlyName: name,
+    })
     if (error) throw error
     return {
       factorId: data.id,
