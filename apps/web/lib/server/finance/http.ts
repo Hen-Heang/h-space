@@ -11,13 +11,17 @@ export function apiSuccess<T>(data: T, status = 200) {
 // query is wrong": 08 connection exception, 53 insufficient resources, 57P
 // operator intervention (shutdown, cannot connect now).
 const UNAVAILABLE_SQLSTATE = /^(08|53|57P)/
-// Neon's answers when the compute can't start: a used-up compute quota, or an
-// endpoint that was disabled or suspended.
+// Neon's answers when the compute can't start: a used-up quota ("Your account
+// or project has exceeded the quota", sent as HTTP 402 — seen in production
+// 2026-11-21; older wording says "compute time quota"), or an endpoint that was
+// disabled or suspended.
 const UNAVAILABLE_NEON_MESSAGE =
-  /compute time quota|endpoint (?:has been|is) (?:disabled|suspended)/i
+  /exceeded the (?:compute time )?quota|endpoint (?:has been|is) (?:disabled|suspended)/i
+// Neon HTTP statuses that mean "not now": 402 quota/payment, 429 rate limit, 5xx.
+const UNAVAILABLE_NEON_HTTP = /^Server error \(HTTP status (402|429|5\d\d)\)/
 
 /**
- * Why finance's database can't be reached (network failure, Neon 5xx/429,
+ * Why finance's database can't be reached (network failure, Neon 402/429/5xx,
  * used-up quota or suspended compute), or null when the error is something
  * else, such as a bug in a query. Unavailable answers 503, so the page can
  * say "unavailable" instead of a generic 500. The reason is for the server
@@ -27,7 +31,7 @@ export function financeDatabaseUnavailableReason(error: unknown): string | null 
   if (!(error instanceof NeonDbError)) return null
   if (UNAVAILABLE_NEON_MESSAGE.test(error.message)) return "Neon compute quota or endpoint state"
   if (error.message.startsWith("Error connecting to database")) return "network"
-  const http = /^Server error \(HTTP status (429|5\d\d)\)/.exec(error.message)
+  const http = UNAVAILABLE_NEON_HTTP.exec(error.message)
   if (http) return `Neon HTTP ${http[1]}`
   if (typeof error.code === "string" && UNAVAILABLE_SQLSTATE.test(error.code)) {
     return `SQLSTATE ${error.code}`
