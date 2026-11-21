@@ -1,114 +1,80 @@
-import { authRequest } from "@/lib/api/auth-http"
-import { type AuthTokens, type AuthUser, clearAuth, saveSession } from "@/lib/auth-store"
+import type { User } from "@supabase/supabase-js"
+
+import { clearAuth, forgetLegacySession } from "@/lib/auth-store"
 import { assertSupabaseConfigured, supabase } from "@/lib/supabase"
 
-// Auth over h-space-api (see lib/auth-store.ts for the session itself).
-// Three ways in: email-or-username + password, a 6-digit code emailed for
-// "continue with email" (which also signs up a new address), and Google.
-// h-space-api only knows name/username/email/password, so the onboarding
-// answers from signup are kept in localStorage until the first sign-in, when
-// ensureProfile() writes them into kori_profiles. Password signup never signs
-// in: h-space-api requires the email to be verified first.
-
-export interface RegisterInput {
-  email: string
-  password: string
-  /** Second sign-in identifier; see lib/username.ts for the rules. */
-  username: string
-  displayName: string
-  koreanLevel?: string
-  country?: string
-  nativeLanguage?: string
-  occupation?: string
-  yearsOfExperience?: number
-  learningGoal?: string
-}
+// Auth over Supabase Auth (see lib/auth-store.ts for the session itself).
+// Three ways in: email + password, a 6-digit code emailed for "Email code",
+// and Google. Each gives an aal1 session; an account with a verified
+// authenticator then answers mfa_required and finishes with verifyMfa().
+//
+// H-Space has no self sign-up: the email code never creates an account
+// (shouldCreateUser: false), and new people are added by the owner in the
+// Supabase dashboard (docs/SPRING_EXIT_PLAN.md).
 
 export type SignInResult =
   | { status: "signed_in"; userId: string; email: string }
-  /** Password was right; finish with verifyMfa(mfaToken, code). */
-  | { status: "mfa_required"; mfaToken: string }
-
-/** Shape of h-space-api's UserResponse. */
-interface UserResponse {
-  id: string
-  name: string | null
-  email: string | null
-  imageUrl: string | null
-}
-
-type PendingProfile = Omit<RegisterInput, "email" | "password">
-
-const pendingProfileKey = (email: string) => `hspace-pending-profile:${email.trim().toLowerCase()}`
-
-function savePendingProfile(input: RegisterInput) {
-  const { email, ...rest } = input
-  const profile: PendingProfile & { password?: string } = { ...rest }
-  delete profile.password
-  try {
-    window.localStorage.setItem(pendingProfileKey(email), JSON.stringify(profile))
-  } catch {
-    // Storage unavailable: the profile gets defaults and onboarding fills it in.
-  }
-}
-
-function takePendingProfile(email: string | null): PendingProfile | null {
-  if (!email) return null
-  try {
-    const raw = window.localStorage.getItem(pendingProfileKey(email))
-    return raw ? (JSON.parse(raw) as PendingProfile) : null
-  } catch {
-    return null
-  }
-}
-
-// Creates the kori_profiles row on first sign-in; an existing row is left as is.
-async function ensureProfile(user: UserResponse) {
-  const pending = takePendingProfile(user.email)
-  const { error } = await supabase.from("kori_profiles").upsert(
-    {
-      id: user.id,
-      display_name: pending?.displayName ?? user.name ?? null,
-      korean_level: pending?.koreanLevel ?? "BEGINNER",
-      country: pending?.country ?? null,
-      native_language: pending?.nativeLanguage ?? null,
-      occupation: pending?.occupation ?? null,
-      years_of_experience: pending?.yearsOfExperience ?? null,
-      learning_goal: pending?.learningGoal ?? null,
-      avatar_url: user.imageUrl ?? null,
-    },
-    { onConflict: "id", ignoreDuplicates: true },
-  )
-  if (error) throw error
-  if (pending && user.email) window.localStorage.removeItem(pendingProfileKey(user.email))
-}
+  /** First factor accepted; finish with verifyMfa(factorId, code). */
+  | { status: "mfa_required"; factorId: string }
 
 export const PROFILE_LOAD_FAILED =
   "You signed in, but H-Space couldn't load your data, so you've been signed out. Try again in a moment."
 
-async function completeSignIn(tokens: AuthTokens): Promise<SignInResult> {
-  if (tokens.mfaRequired) {
-    if (!tokens.mfaToken)
-      throw new Error("Two-step verification is required but no challenge was issued.")
-    return { status: "mfa_required", mfaToken: tokens.mfaToken }
-  }
+/** Supabase's answer to an email code for an address with no account. */
+export function isNoAccountOtpError(error: { code?: string; message?: string }): boolean {
+  return error.code === "otp_disabled" || /signups not allowed/i.test(error.message ?? "")
+}
 
-  const user = await authRequest<UserResponse>("/api/auth/user", { token: tokens.accessToken })
-  const authUser: AuthUser = {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    imageUrl: user.imageUrl,
+function metadataString(user: User, ...keys: string[]): string | null {
+  const meta = (user.user_metadata ?? {}) as Record<string, unknown>
+  for (const key of keys) {
+    const value = meta[key]
+    if (typeof value === "string" && value.trim()) return value.trim()
   }
-  saveSession(tokens, authUser)
+  return null
+}
 
-  // The first Supabase call also proves the data bridge works; if it doesn't,
+// Creates the kori_profiles row on first sign-in; an existing row is left as is.
+async function ensureProfile(user: User) {
+  const { error } = await supabase.from("kori_profiles").upsert(
+    {
+      id: user.id,
+      display_name: metadataString(user, "display_name", "full_name", "name"),
+      korean_level: "BEGINNER",
+      avatar_url: metadataString(user, "avatar_url", "picture"),
+    },
+    { onConflict: "id", ignoreDuplicates: true },
+  )
+  if (error) throw error
+}
+
+/**
+ * The authenticator to verify when the current session still needs its
+ * second step (aal1 with a verified factor), else null.
+ */
+async function pendingMfaFactorId(): Promise<string | null> {
+  const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+  if (error) throw error
+  if (data.nextLevel !== "aal2" || data.currentLevel === "aal2") return null
+  const factors = await supabase.auth.mfa.listFactors()
+  if (factors.error) throw factors.error
+  const factor = factors.data.totp.find((f) => f.status === "verified")
+  return factor?.id ?? null
+}
+
+async function completeSignIn(): Promise<SignInResult> {
+  forgetLegacySession()
+  const factorId = await pendingMfaFactorId()
+  if (factorId) return { status: "mfa_required", factorId }
+
+  const { data, error } = await supabase.auth.getUser()
+  if (error || !data.user) throw error ?? new Error("Sign-in failed. Try again.")
+  const user = data.user
+
+  // The first data call also proves RLS accepts the session; if it doesn't,
   // undo the sign-in rather than leave the user in an app that can't load.
   // supabase-js reports a failure as a plain { message, ... } object, not an
-  // Error, so the forms would fall back to "Invalid email, username or
-  // password" — wrong, since the credentials were accepted. Say what happened.
-  // clearAuth() also revokes the tokens server-side, so undoing the sign-in
-  // doesn't leave a live refresh token behind.
+  // Error, so say what happened instead of "Invalid login credentials".
   try {
     await ensureProfile(user)
   } catch (error) {
@@ -119,129 +85,97 @@ async function completeSignIn(tokens: AuthTokens): Promise<SignInResult> {
 }
 
 export const authApi = {
-  register: async (input: RegisterInput) => {
+  login: async (input: { email: string; password: string }): Promise<SignInResult> => {
     assertSupabaseConfigured()
-    savePendingProfile(input)
-    const tokens = await authRequest<Partial<AuthTokens>>("/api/auth/signup", {
-      method: "POST",
-      body: {
-        name: input.displayName,
-        email: input.email,
-        password: input.password,
-        username: input.username,
-      },
+    const { error } = await supabase.auth.signInWithPassword({
+      email: input.email.trim(),
+      password: input.password,
     })
-    // h-space-api issues no tokens until the email is verified. An older
-    // deployment still returned some — revoke those rather than keep a
-    // session that skips that step.
-    if (tokens.refreshToken) {
-      await authRequest("/api/auth/logout", {
-        method: "POST",
-        body: { refreshToken: tokens.refreshToken },
-        token: tokens.accessToken,
-      }).catch(() => undefined)
-    }
-    return { userId: null, email: input.email, needsEmailConfirmation: true }
+    if (error) throw error
+    return completeSignIn()
   },
 
-  /** `identifier` is an email or a username. */
-  login: async (input: { identifier: string; password: string }): Promise<SignInResult> => {
-    assertSupabaseConfigured()
-    const tokens = await authRequest<AuthTokens>("/api/auth/login", {
-      method: "POST",
-      body: input,
-    })
-    return completeSignIn(tokens)
-  },
-
-  isUsernameAvailable: async (username: string): Promise<boolean> => {
-    const res = await authRequest<{ available: boolean }>(
-      `/api/auth/username-available?username=${encodeURIComponent(username)}`,
-    )
-    return res?.available === true
-  },
-
-  // "Continue with email", step 1: h-space-api emails a 6-digit code. It
-  // answers OK even when it skips a resend inside its 60s cooldown.
+  // "Email code", step 1. Never creates an account. For an address without
+  // one Supabase answers "Signups not allowed for otp"; that's swallowed so
+  // the form answers the same either way and doesn't reveal who has an
+  // account (the page doesn't promise a code was sent).
   requestEmailCode: async (email: string) => {
     assertSupabaseConfigured()
-    await authRequest("/api/auth/email-code/request", { method: "POST", body: { email } })
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { shouldCreateUser: false },
+    })
+    if (error && !isNoAccountOtpError(error)) throw error
   },
 
-  // Step 2: signs in — creating the account first if the address is new.
+  // Step 2: the code from the email signs in.
   verifyEmailCode: async (email: string, code: string): Promise<SignInResult> => {
-    const tokens = await authRequest<AuthTokens>("/api/auth/email-code/verify", {
-      method: "POST",
-      body: { email, code },
-    })
-    return completeSignIn(tokens)
-  },
-
-  // Second step of a login that answered mfa_required. `code` is a 6-digit
-  // authenticator code or a backup code.
-  verifyMfa: async (mfaToken: string, code: string): Promise<SignInResult> => {
-    const tokens = await authRequest<AuthTokens>("/api/auth/mfa/verify", {
-      method: "POST",
-      body: { mfaToken, code },
-    })
-    return completeSignIn(tokens)
-  },
-
-  // Google Identity Services ID token → h-space-api session. h-space-api
-  // verifies the token's signature, issuer, audience and expiry, but doesn't
-  // take a nonce, so there's no replay check on the nonce Google embeds.
-  loginWithGoogle: async (idToken: string): Promise<SignInResult> => {
     assertSupabaseConfigured()
-    const tokens = await authRequest<AuthTokens>("/api/auth/oauth2/google", {
-      method: "POST",
-      body: { idToken },
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token: code.trim(),
+      type: "email",
     })
-    return completeSignIn(tokens)
+    if (error) throw error
+    return completeSignIn()
+  },
+
+  /** Second step of a sign-in that answered mfa_required: a 6-digit authenticator code. */
+  verifyMfa: async (factorId: string, code: string): Promise<SignInResult> => {
+    assertSupabaseConfigured()
+    const { error } = await supabase.auth.mfa.challengeAndVerify({
+      factorId,
+      code: code.replace(/\s+/g, ""),
+    })
+    if (error) throw error
+    return completeSignIn()
+  },
+
+  /**
+   * A half-finished sign-in left in this browser (first factor done, code not
+   * yet entered) — the login page resumes it at the code step.
+   */
+  pendingMfa: async (): Promise<string | null> => {
+    const { data } = await supabase.auth.getSession()
+    if (!data.session) return null
+    return pendingMfaFactorId()
+  },
+
+  // Google Identity Services ID token → Supabase session. The Google provider
+  // (with the same client ID) must be enabled under Supabase Auth > Providers.
+  // `nonce` is the raw value whose SHA-256 Google embedded in the token;
+  // Supabase checks they match, so a captured token can't be replayed.
+  loginWithGoogle: async (idToken: string, nonce?: string): Promise<SignInResult> => {
+    assertSupabaseConfigured()
+    const { error } = await supabase.auth.signInWithIdToken({
+      provider: "google",
+      token: idToken,
+      nonce,
+    })
+    if (error) throw error
+    return completeSignIn()
   },
 
   logout: async () => {
     await clearAuth()
   },
 
-  // h-space-api emails a link to /reset-password?token=…. It answers the
-  // same way whether or not the address has an account.
+  // Emails a reset link. It lands on /reset-password, where supabase-js's
+  // detectSessionInUrl turns it into a short recovery session.
   requestPasswordReset: async (email: string) => {
-    await authRequest("/api/auth/forgot-password", { method: "POST", body: { email } })
-  },
-
-  validateResetToken: async (token: string): Promise<boolean> => {
-    const res = await authRequest<{ valid: boolean }>(
-      `/api/auth/reset-password?token=${encodeURIComponent(token)}`,
-    )
-    return res?.valid === true
-  },
-
-  // h-space-api emails /verify-email?token=… after password sign-up; a
-  // password login is refused until this succeeds. (An email code also
-  // verifies the address, as a fallback.)
-  verifyEmail: async (token: string) => {
-    await authRequest("/api/auth/verify-email", { method: "POST", body: { token } })
-  },
-
-  // Answers OK whether or not the address has an unverified account.
-  resendVerification: async (email: string) => {
-    await authRequest("/api/auth/resend-verification", { method: "POST", body: { email } })
-  },
-
-  // h-space-api locks an account after repeated failed logins and emails
-  // /unlock-account?token=…; the lock also lifts on its own after a while.
-  unlockAccount: async (token: string) => {
-    await authRequest("/api/auth/unlock-account", { method: "POST", body: { token } })
-  },
-
-  resendUnlockLink: async (email: string) => {
-    await authRequest("/api/auth/resend-unlock-link", { method: "POST", body: { email } })
-  },
-
-  resetPassword: async (token: string, newPassword: string) => {
-    await authRequest("/api/auth/reset-password", {
-      method: "POST",
-      body: { token, newPassword },
+    assertSupabaseConfigured()
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
     })
+    if (error) throw error
+  },
+
+  // Sets a new password on the current (recovery) session. Supabase refuses
+  // this for an account with an authenticator until the session is aal2, so
+  // /reset-password asks for the code first (verifyMfa).
+  updatePassword: async (newPassword: string) => {
+    assertSupabaseConfigured()
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) throw error
   },
 }

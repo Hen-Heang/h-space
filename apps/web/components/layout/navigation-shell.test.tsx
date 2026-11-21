@@ -503,7 +503,9 @@ describe("WorkspaceTabs", () => {
 
   it("renders actions beside the tabs", () => {
     mockPathname.value = "/timeline"
-    render(<WorkspaceTabs sectionId="memory" actions={<button type="button">Log activity</button>} />)
+    render(
+      <WorkspaceTabs sectionId="memory" actions={<button type="button">Log activity</button>} />,
+    )
     expect(screen.getByRole("button", { name: "Log activity" })).toBeTruthy()
     expect(screen.getByRole("link", { name: "Timeline" }).getAttribute("aria-current")).toBe("page")
     expect(screen.queryByRole("link", { name: "Notes" })).toBeNull()

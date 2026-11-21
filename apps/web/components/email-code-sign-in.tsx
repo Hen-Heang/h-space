@@ -15,22 +15,24 @@ import { Input } from "@/components/ui/input"
 import { authApi } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
-// h-space-api ignores a repeat request inside this window (and the code
-// expires after 10 minutes), so the resend button waits it out.
+// Supabase refuses a repeat request inside this window, so the resend button
+// waits it out.
 const RESEND_COOLDOWN_SECONDS = 60
+// Supabase's email OTP length is a project setting (6 by default).
+const MIN_CODE_LENGTH = 6
+const MAX_CODE_LENGTH = 10
 
 /**
- * "Continue with email": email → 6-digit code → signed in. The same flow
- * signs up an address that has no account yet (if it's invited, or sign-up
- * is open), so it serves both the login and register pages.
+ * "Email code": email → code from the email → signed in. Only for existing
+ * accounts — H-Space has no self sign-up (lib/api/auth.ts).
  */
 export function EmailCodeSignIn({
   onSignedIn,
   onMfaRequired,
 }: {
   onSignedIn: () => void
-  /** The account has two-step verification; finish with authApi.verifyMfa. */
-  onMfaRequired: (mfaToken: string) => void
+  /** The account has two-step verification; finish with authApi.verifyMfa(factorId, code). */
+  onMfaRequired: (factorId: string) => void
 }) {
   const [step, setStep] = useState<"email" | "code">("email")
   const [email, setEmail] = useState("")
@@ -65,7 +67,7 @@ export function EmailCodeSignIn({
     setLoading(true)
     try {
       const result = await authApi.verifyEmailCode(email.trim(), code)
-      if (result.status === "mfa_required") onMfaRequired(result.mfaToken)
+      if (result.status === "mfa_required") onMfaRequired(result.factorId)
       else onSignedIn()
     } catch (error) {
       setError(error instanceof Error ? error.message : "That code didn't work. Try again.")
@@ -99,18 +101,17 @@ export function EmailCodeSignIn({
               />
             </FieldContent>
             <p className="text-xs leading-relaxed text-muted-foreground">
-              We&apos;ll email you a 6-digit code — no password needed. Invited but new here? This
-              creates your account.
+              We&apos;ll email you a sign-in code — no password needed.
             </p>
           </Field>
         </FieldGroup>
       ) : (
         <FieldGroup className="gap-4">
-          {/* h-space-api answers the same whether or not it sent a code
-              (sign-up is invite-only), so this can't promise one. */}
+          {/* The form answers the same whether or not the address has an
+              account (lib/api/auth.ts), so this can't promise a code. */}
           <AuthAlert tone="info" icon={MailCheck}>
-            If <span className="font-semibold text-foreground">{email}</span> has an account or an
-            invite, a code is on its way. It expires in 10 minutes.
+            If <span className="font-semibold text-foreground">{email}</span> has an H-Space
+            account, a code is on its way. It expires after a few minutes.
           </AuthAlert>
           <Field>
             <FieldLabel>Sign-in code</FieldLabel>
@@ -119,11 +120,13 @@ export function EmailCodeSignIn({
                 name="one-time-code"
                 autoComplete="one-time-code"
                 inputMode="numeric"
-                pattern="\d{6}"
-                maxLength={6}
+                pattern={`\\d{${MIN_CODE_LENGTH},${MAX_CODE_LENGTH}}`}
+                maxLength={MAX_CODE_LENGTH}
                 placeholder="123456"
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) =>
+                  setCode(e.target.value.replace(/\D/g, "").slice(0, MAX_CODE_LENGTH))
+                }
                 required
                 autoFocus
                 className={cn(authInputClass, "text-center text-lg tracking-[0.5em]")}
@@ -160,7 +163,7 @@ export function EmailCodeSignIn({
 
       <Button
         type="submit"
-        disabled={loading || (step === "code" && code.length !== 6)}
+        disabled={loading || (step === "code" && code.length < MIN_CODE_LENGTH)}
         className={authSubmitClass}
       >
         {loading ? (

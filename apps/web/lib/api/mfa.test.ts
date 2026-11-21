@@ -1,107 +1,96 @@
-/** @vitest-environment jsdom */
+import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+const mfa = vi.hoisted(() => ({
+  listFactors: vi.fn(),
+  enroll: vi.fn(),
+  unenroll: vi.fn(),
+  challengeAndVerify: vi.fn(),
+}))
 
-import { saveSession } from "@/lib/auth-store"
+vi.mock("@/lib/supabase", () => ({
+  assertSupabaseConfigured: vi.fn(),
+  supabase: { auth: { mfa } },
+}))
 
-import { AuthApiError } from "./auth-http"
-import { MFA_ALREADY_ENABLED, MFA_CODE_INVALID, mfaApi } from "./mfa"
+import { mfaApi } from "./mfa"
 
-const USER = { id: "user-1", email: "a@example.com", name: "A", imageUrl: null }
-
-function envelope(data: unknown, init: { status?: number; code?: number; message?: string } = {}) {
-  return new Response(
-    JSON.stringify({
-      status: { code: init.code ?? 200, message: init.message ?? "Success" },
-      data,
-    }),
-    { status: init.status ?? 200, headers: { "Content-Type": "application/json" } },
-  )
+function factors(list: Array<{ id: string; status: string }>) {
+  mfa.listFactors.mockResolvedValueOnce({ data: { all: list, totp: list }, error: null })
 }
-
-const fetchMock = vi.fn<typeof fetch>()
-
-function lastRequest() {
-  const [url, init] = fetchMock.mock.calls.at(-1)!
-  return {
-    url: String(url),
-    method: init?.method,
-    auth: (init?.headers as Record<string, string>).Authorization,
-    body: init?.body ? JSON.parse(String(init.body)) : undefined,
-  }
-}
-
-beforeEach(() => {
-  vi.stubGlobal("fetch", fetchMock)
-  saveSession({ accessToken: "a1", refreshToken: "r1", expiresIn: 3600 }, USER)
-})
 
 afterEach(() => {
-  fetchMock.mockReset()
-  vi.unstubAllGlobals()
-  window.localStorage.clear()
+  vi.clearAllMocks()
 })
 
-describe("mfaApi", () => {
-  it("starts setup with the session's bearer token", async () => {
-    const setup = {
-      secret: "JBSWY3DPEHPK3PXP",
-      otpAuthUri: "otpauth://totp/x",
-      qrCodeImageBase64: null,
-    }
-    fetchMock.mockResolvedValueOnce(envelope(setup))
+describe("mfaApi.status", () => {
+  it("is on only with a verified factor", async () => {
+    factors([{ id: "f1", status: "verified" }])
+    await expect(mfaApi.status()).resolves.toEqual({ enabled: true, factorId: "f1" })
 
-    await expect(mfaApi.startSetup()).resolves.toEqual(setup)
-    expect(lastRequest()).toMatchObject({
-      method: "POST",
-      auth: "Bearer a1",
+    factors([{ id: "f2", status: "unverified" }])
+    await expect(mfaApi.status()).resolves.toEqual({ enabled: false })
+  })
+
+  it("throws when the factors can't be read", async () => {
+    mfa.listFactors.mockResolvedValueOnce({ data: null, error: new Error("offline") })
+    await expect(mfaApi.status()).rejects.toThrow("offline")
+  })
+})
+
+describe("mfaApi.startSetup", () => {
+  it("removes abandoned factors, then enrolls a new TOTP factor", async () => {
+    factors([
+      { id: "stale", status: "unverified" },
+      { id: "kept", status: "verified" },
+    ])
+    mfa.unenroll.mockResolvedValue({ error: null })
+    mfa.enroll.mockResolvedValueOnce({
+      data: {
+        id: "new",
+        totp: {
+          secret: "ABCD",
+          uri: "otpauth://totp/x",
+          qr_code: "data:image/svg+xml;utf-8,<svg/>",
+        },
+      },
+      error: null,
     })
-    expect(lastRequest().url).toMatch(/\/api\/auth\/mfa\/setup$/)
+
+    const setup = await mfaApi.startSetup()
+
+    expect(mfa.unenroll).toHaveBeenCalledTimes(1)
+    expect(mfa.unenroll).toHaveBeenCalledWith({ factorId: "stale" })
+    expect(mfa.enroll).toHaveBeenCalledWith(expect.objectContaining({ factorType: "totp" }))
+    expect(setup).toEqual({
+      factorId: "new",
+      secret: "ABCD",
+      otpAuthUri: "otpauth://totp/x",
+      qrCode: "data:image/svg+xml;utf-8,<svg/>",
+    })
+  })
+})
+
+describe("mfaApi.enable / disable", () => {
+  it("enables with a verified code", async () => {
+    mfa.challengeAndVerify.mockResolvedValueOnce({ error: null })
+    await mfaApi.enable("f1", " 123456 ")
+    expect(mfa.challengeAndVerify).toHaveBeenCalledWith({ factorId: "f1", code: "123456" })
   })
 
-  it("surfaces MFA_ALREADY_ENABLED so the page can show the enabled state", async () => {
-    fetchMock.mockResolvedValueOnce(
-      envelope(null, { status: 400, code: MFA_ALREADY_ENABLED, message: "already enabled" }),
-    )
-
-    const error = await mfaApi.startSetup().catch((e: unknown) => e)
-    expect(error).toBeInstanceOf(AuthApiError)
-    expect((error as AuthApiError).code).toBe(MFA_ALREADY_ENABLED)
+  it("won't remove the factor when the code is wrong", async () => {
+    mfa.challengeAndVerify.mockResolvedValueOnce({
+      error: { code: "mfa_verification_failed", message: "Invalid TOTP code" },
+    })
+    await expect(mfaApi.disable("f1", "000000")).rejects.toMatchObject({
+      code: "mfa_verification_failed",
+    })
+    expect(mfa.unenroll).not.toHaveBeenCalled()
   })
 
-  it("enables with a trimmed code and returns the backup codes", async () => {
-    fetchMock.mockResolvedValueOnce(envelope({ backupCodes: ["7K2NQ-8XPRT4", "M3VBH-2ZQWY9"] }))
-
-    await expect(mfaApi.enable(" 123456 ")).resolves.toEqual(["7K2NQ-8XPRT4", "M3VBH-2ZQWY9"])
-    expect(lastRequest().url).toMatch(/\/api\/auth\/mfa\/enable$/)
-    expect(lastRequest().body).toEqual({ code: "123456" })
-  })
-
-  it("rejects a wrong code with MFA_CODE_INVALID", async () => {
-    fetchMock.mockResolvedValueOnce(
-      envelope(null, { status: 400, code: MFA_CODE_INVALID, message: "Invalid code" }),
-    )
-
-    const error = await mfaApi.enable("000000").catch((e: unknown) => e)
-    expect((error as AuthApiError).code).toBe(MFA_CODE_INVALID)
-  })
-
-  it("disables and regenerates with the code in the body", async () => {
-    fetchMock.mockResolvedValueOnce(envelope(null))
-    await mfaApi.disable("7K2NQ-8XPRT4")
-    expect(lastRequest().url).toMatch(/\/api\/auth\/mfa\/disable$/)
-    expect(lastRequest().body).toEqual({ code: "7K2NQ-8XPRT4" })
-
-    fetchMock.mockResolvedValueOnce(envelope({ backupCodes: ["NEW01-AAAAAA"] }))
-    await expect(mfaApi.regenerateBackupCodes("123456")).resolves.toEqual(["NEW01-AAAAAA"])
-    expect(lastRequest().url).toMatch(/\/api\/auth\/mfa\/backup-codes\/regenerate$/)
-  })
-
-  it("refuses without a session and never calls the API", async () => {
-    window.localStorage.clear()
-
-    const error = await mfaApi.startSetup().catch((e: unknown) => e)
-    expect((error as AuthApiError).httpStatus).toBe(401)
-    expect(fetchMock).not.toHaveBeenCalled()
+  it("verifies the code, then removes the factor", async () => {
+    mfa.challengeAndVerify.mockResolvedValueOnce({ error: null })
+    mfa.unenroll.mockResolvedValueOnce({ error: null })
+    await mfaApi.disable("f1", "123456")
+    expect(mfa.unenroll).toHaveBeenCalledWith({ factorId: "f1" })
   })
 })

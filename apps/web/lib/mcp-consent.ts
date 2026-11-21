@@ -1,19 +1,17 @@
 // Browser-side client for Supabase Auth's OAuth 2.1 consent endpoints, used by
 // /oauth/consent when an MCP connector (Claude, ChatGPT, ...) asks for access.
 //
-// Why not `supabase.auth.oauth.*`: lib/supabase.ts passes the h-space-api
-// bridge token through supabase-js's `accessToken` option, which makes every
-// `supabase.auth.*` call throw. These are the same two requests auth-js
-// makes (GET /oauth/authorizations/{id}, POST .../consent), sent with the
-// bridge token as the user JWT. Supabase Auth authenticates them like `/user`
-// (`requireAuthentication` + user lookup, no session required) and binds the
-// authorization to that user; consent by any other user is refused server-side.
+// These are the same two requests auth-js makes (GET
+// /oauth/authorizations/{id}, POST .../consent), sent with the signed-in
+// user's Supabase access token. Supabase Auth authenticates them like `/user`
+// and binds the authorization to that user; consent by any other user is
+// refused server-side. The MCP access token is issued by Supabase's OAuth
+// server for the connector (its own aud/client_id), never this user token.
 //
-// SPIKE: this ties MCP consent to the temporary token bridge. The bridge is
-// used only to *approve* a request; the MCP access token is still issued by
-// Supabase's OAuth server for the connector (its own aud/client_id), never the
-// bridge token itself. When the bridge is removed, consent must move to
-// h-space-api (Hen-Heang/h-space-api#36). Not a long-term design.
+// Written this way while sign-in went through h-space-api's token bridge
+// (which disabled `supabase.auth.*`); since 2026-11-21 sign-in is Supabase
+// Auth again, so `supabase.auth.oauth.*` would also work.
+
 import { getSupabaseAccessToken } from "@/lib/auth-store"
 import { assertSupabaseConfigured, SUPABASE_KEY, SUPABASE_URL } from "@/lib/supabase"
 

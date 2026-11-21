@@ -27,8 +27,8 @@ export function GoogleSignInButton({
   redirectTo = "/home",
 }: {
   onError?: (message: string) => void
-  /** The Google account has two-step verification; finish with authApi.verifyMfa. */
-  onMfaRequired?: (mfaToken: string) => void
+  /** The account has two-step verification; finish with authApi.verifyMfa(factorId, code). */
+  onMfaRequired?: (factorId: string) => void
   redirectTo?: string
 }) {
   const router = useRouter()
@@ -53,19 +53,19 @@ export function GoogleSignInButton({
         await loadGoogleScript()
         if (cancelled || !containerRef.current || !window.google) return
 
-        // h-space-api doesn't check the nonce yet; Google still embeds it, so
-        // the token is ready for that check once the backend adds it.
-        const { hashedNonce } = await makeNonce()
+        // Google embeds the hash; Supabase gets the raw value and checks they
+        // match, so a captured ID token can't be replayed.
+        const { nonce, hashedNonce } = await makeNonce()
 
         window.google.accounts.id.initialize({
           client_id: CLIENT_ID,
           nonce: hashedNonce,
           callback: async (response: { credential: string }) => {
             try {
-              const result = await handleGoogleCredential(response.credential)
+              const result = await handleGoogleCredential(response.credential, nonce)
               if (result.status === "mfa_required") {
                 const handleMfa = onMfaRequiredRef.current
-                if (handleMfa) handleMfa(result.mfaToken)
+                if (handleMfa) handleMfa(result.factorId)
                 else onError?.("Two-step verification is required. Sign in from the login page.")
                 return
               }

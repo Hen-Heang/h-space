@@ -1,60 +1,70 @@
-import { AuthApiError, authRequest } from "@/lib/api/auth-http"
-import { getValidAccessToken } from "@/lib/auth-store"
+import { assertSupabaseConfigured, supabase } from "@/lib/supabase"
 
-// Two-step verification (TOTP) management over h-space-api's /api/auth/mfa.
-// Signing in with a code lives in authApi.verifyMfa; these calls are for a
-// signed-in user turning it on or off. h-space-api doesn't report whether
-// MFA is on, so the setup call is also how the page finds out: it answers
-// MFA_ALREADY_ENABLED instead of issuing a secret.
-
-// h-space-api ExitCode values for /api/auth/mfa.
-export const MFA_CODE_INVALID = 1008
-export const MFA_ALREADY_ENABLED = 1009
-export const MFA_NOT_ENABLED = 1010
-export const MFA_SETUP_REQUIRED = 1011
+// Two-step verification (TOTP) management over Supabase Auth MFA. Signing in
+// with a code lives in authApi.verifyMfa; these calls are for a signed-in
+// user turning it on or off. Supabase has no backup codes: if the phone is
+// lost, a project admin removes the factor in the Supabase dashboard.
 
 export interface MfaSetup {
+  factorId: string
   /** Base32 key for typing into the authenticator app by hand. */
   secret: string
   otpAuthUri: string
-  /** PNG QR code, base64 without the data: prefix; null if the server couldn't render it. */
-  qrCodeImageBase64: string | null
+  /** `data:image/svg+xml` QR code from Supabase; never logged. */
+  qrCode: string
 }
 
-async function requireToken() {
-  const token = await getValidAccessToken()
-  if (!token) throw new AuthApiError("Your session has ended. Sign in again to continue.", 401)
-  return token
-}
+export type MfaStatus = { enabled: true; factorId: string } | { enabled: false }
 
-async function backupCodes(path: string, code: string): Promise<string[]> {
-  const res = await authRequest<{ backupCodes: string[] }>(path, {
-    method: "POST",
-    body: { code: code.trim() },
-    token: await requireToken(),
-  })
-  return res?.backupCodes ?? []
-}
+// Supabase error code for a wrong or expired TOTP code.
+export const MFA_CODE_INVALID = "mfa_verification_failed"
 
 export const mfaApi = {
-  // Issues a fresh pending secret; MFA stays off until enable() confirms a
-  // live code. Calling it again replaces the pending secret.
-  startSetup: async (): Promise<MfaSetup> =>
-    authRequest<MfaSetup>("/api/auth/mfa/setup", { method: "POST", token: await requireToken() }),
-
-  /** Turns MFA on with a code from the app; returns one-time backup codes, shown once only. */
-  enable: (code: string) => backupCodes("/api/auth/mfa/enable", code),
-
-  /** `code` is an authenticator or backup code. */
-  disable: async (code: string) => {
-    await authRequest("/api/auth/mfa/disable", {
-      method: "POST",
-      body: { code: code.trim() },
-      token: await requireToken(),
-    })
+  status: async (): Promise<MfaStatus> => {
+    assertSupabaseConfigured()
+    const { data, error } = await supabase.auth.mfa.listFactors()
+    if (error) throw error
+    const verified = data.totp.find((f) => f.status === "verified")
+    return verified ? { enabled: true, factorId: verified.id } : { enabled: false }
   },
 
-  /** Replaces every backup code; `code` is an authenticator or backup code. */
-  regenerateBackupCodes: (code: string) =>
-    backupCodes("/api/auth/mfa/backup-codes/regenerate", code),
+  // Issues a fresh secret; MFA stays off until enable() confirms a live code.
+  // Unverified factors from an abandoned setup are removed first — Supabase
+  // caps how many a user may hold.
+  startSetup: async (): Promise<MfaSetup> => {
+    assertSupabaseConfigured()
+    const { data: factors, error: listError } = await supabase.auth.mfa.listFactors()
+    if (listError) throw listError
+    for (const stale of factors.all.filter((f) => f.status !== "verified")) {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId: stale.id })
+      if (error) throw error
+    }
+    const { data, error } = await supabase.auth.mfa.enroll({
+      factorType: "totp",
+      // Must be unique per user; the date tells the user which phone it was.
+      friendlyName: `H-Space ${new Date().toISOString().slice(0, 16).replace("T", " ")}`,
+    })
+    if (error) throw error
+    return {
+      factorId: data.id,
+      secret: data.totp.secret,
+      otpAuthUri: data.totp.uri,
+      qrCode: data.totp.qr_code,
+    }
+  },
+
+  /** Turns MFA on with a code from the app; the session becomes aal2. */
+  enable: async (factorId: string, code: string) => {
+    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code: code.trim() })
+    if (error) throw error
+  },
+
+  // Supabase only lets an aal2 session remove a verified factor, so the code
+  // is verified first — which also proves the person still has the phone.
+  disable: async (factorId: string, code: string) => {
+    const verified = await supabase.auth.mfa.challengeAndVerify({ factorId, code: code.trim() })
+    if (verified.error) throw verified.error
+    const { error } = await supabase.auth.mfa.unenroll({ factorId })
+    if (error) throw error
+  },
 }

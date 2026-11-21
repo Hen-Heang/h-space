@@ -20,16 +20,12 @@ import { Button } from "@/components/ui/button"
 import { Field, FieldContent, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { authApi } from "@/lib/api"
-import { AuthApiError } from "@/lib/api/auth-http"
 import { EmailCodeSignIn } from "@/components/email-code-sign-in"
 import { GoogleSignInButton } from "@/components/google-sign-in-button"
 import { DEFAULT_AFTER_SIGN_IN, safeNextPath } from "@/lib/safe-next-path"
 import { cn } from "@/lib/utils"
 
 type SignInMethod = "password" | "email-code"
-
-// h-space-api ExitCode.ACCOUNT_DISABLED: right password, unverified email.
-const ACCOUNT_DISABLED = 1003
 
 const SIGN_IN_METHODS: Array<{ id: SignInMethod; label: string }> = [
   { id: "password", label: "Password" },
@@ -39,16 +35,13 @@ const SIGN_IN_METHODS: Array<{ id: SignInMethod; label: string }> = [
 export default function LoginPage() {
   const router = useRouter()
   const [method, setMethod] = useState<SignInMethod>("password")
-  const [identifier, setIdentifier] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-  // The password was right but the email was never verified: offer the
-  // email-code option, since a correct code verifies the address too.
-  const [needsVerification, setNeedsVerification] = useState(false)
   const [loading, setLoading] = useState(false)
-  // Set once the password is accepted for an account with two-step
+  // Set once the first factor is accepted for an account with two-step
   // verification; the form then asks for the authenticator code instead.
-  const [mfaToken, setMfaToken] = useState<string | null>(null)
+  const [factorId, setFactorId] = useState<string | null>(null)
   const [mfaCode, setMfaCode] = useState("")
   // Where to go once signed in: the page the auth gate sent us from
   // (?next=, validated as a same-site path), else Home.
@@ -60,68 +53,81 @@ export default function LoginPage() {
     if (params.get("method") === "email-code") setMethod("email-code")
     const next = safeNextPath(params.get("next"))
     if (next) setAfterSignIn(next)
+    // A sign-in left half-finished in this browser (code never entered):
+    // pick it up at the code step rather than asking for the password again.
+    let active = true
+    authApi
+      .pendingMfa()
+      .then((pending) => {
+        if (active && pending) setFactorId(pending)
+      })
+      .catch(() => undefined)
+    return () => {
+      active = false
+    }
   }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError("")
-    setNeedsVerification(false)
     setLoading(true)
     try {
-      const result = mfaToken
-        ? await authApi.verifyMfa(mfaToken, mfaCode.trim())
-        : await authApi.login({ identifier: identifier.trim(), password })
+      const result = factorId
+        ? await authApi.verifyMfa(factorId, mfaCode.trim())
+        : await authApi.login({ email: email.trim(), password })
       if (result.status === "mfa_required") {
-        setMfaToken(result.mfaToken)
+        setFactorId(result.factorId)
         setPassword("")
         return
       }
       router.push(afterSignIn)
     } catch (error) {
       setError(error instanceof Error ? error.message : "Sign-in failed. Try again.")
-      setNeedsVerification(error instanceof AuthApiError && error.code === ACCOUNT_DISABLED)
     } finally {
       setLoading(false)
     }
   }
 
-  function cancelMfa() {
-    setMfaToken(null)
+  // The first factor already created a (half-signed-in) session; end it so
+  // the next person starts clean.
+  async function cancelMfa() {
+    await authApi.logout()
+    setFactorId(null)
     setMfaCode("")
     setError("")
   }
 
   return (
     <AuthShell
-      footer={!mfaToken && <AuthLegal action="signing in" />}
+      footer={!factorId && <AuthLegal action="signing in" />}
       topAction={
-        !mfaToken && (
+        !factorId && (
           <>
             New to H-Space?{" "}
             <Link href="/register" className={authLinkClass}>
-              Create account
+              Get access
             </Link>
           </>
         )
       }
     >
-      {mfaToken ? (
+      {factorId ? (
         <AuthHeading
           icon={ShieldCheck}
           title="Two-step verification"
-          description="Enter the 6-digit code from your authenticator app, or one of your backup codes."
+          description="Enter the 6-digit code from your authenticator app."
         />
       ) : (
         <AuthHeading title="Welcome back" description="Sign in to your H-Space." />
       )}
 
-      {!mfaToken && (
+      {!factorId && (
         <>
           <GoogleSignInButton
             onError={setError}
-            onMfaRequired={(token) => {
+            onMfaRequired={(id) => {
               setError("")
-              setMfaToken(token)
+              setFactorId(id)
             }}
             redirectTo={afterSignIn}
           />
@@ -129,7 +135,7 @@ export default function LoginPage() {
         </>
       )}
 
-      {!mfaToken && (
+      {!factorId && (
         <div
           role="tablist"
           aria-label="Sign-in method"
@@ -158,17 +164,17 @@ export default function LoginPage() {
         </div>
       )}
 
-      {!mfaToken && method === "email-code" ? (
+      {!factorId && method === "email-code" ? (
         <EmailCodeSignIn
           onSignedIn={() => router.push(afterSignIn)}
-          onMfaRequired={(token) => {
+          onMfaRequired={(id) => {
             setError("")
-            setMfaToken(token)
+            setFactorId(id)
           }}
         />
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
-          {mfaToken ? (
+          {factorId ? (
             <FieldGroup>
               <Field>
                 <FieldLabel>Verification code</FieldLabel>
@@ -176,7 +182,7 @@ export default function LoginPage() {
                   <Input
                     name="one-time-code"
                     autoComplete="one-time-code"
-                    inputMode="text"
+                    inputMode="numeric"
                     placeholder="123456"
                     value={mfaCode}
                     onChange={(e) => setMfaCode(e.target.value)}
@@ -186,24 +192,24 @@ export default function LoginPage() {
                   />
                 </FieldContent>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  The code expires 5 minutes after your password was accepted.
+                  Lost your phone? Ask the H-Space owner to reset two-step verification.
                 </p>
               </Field>
             </FieldGroup>
           ) : (
             <FieldGroup className="gap-4">
               <Field>
-                <FieldLabel>Email or username</FieldLabel>
+                <FieldLabel>Email</FieldLabel>
                 <FieldContent>
                   <Input
-                    type="text"
-                    name="username"
+                    type="email"
+                    name="email"
                     autoComplete="username"
                     autoCapitalize="none"
                     spellCheck={false}
                     placeholder="name@example.com"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                     autoFocus
                     className={authInputClass}
@@ -232,42 +238,24 @@ export default function LoginPage() {
           )}
 
           {error && <AuthAlert>{error}</AuthAlert>}
-          {needsVerification && (
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Can&apos;t find the verification email?{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  setMethod("email-code")
-                  setError("")
-                  setNeedsVerification(false)
-                }}
-                className={authLinkClass}
-              >
-                Sign in with an email code
-              </button>{" "}
-              — it verifies your address too.
-            </p>
-          )}
-
           <Button type="submit" disabled={loading} className={authSubmitClass}>
             {loading ? (
               <>
                 <Loader2 className="animate-spin" />
-                {mfaToken ? "Verifying…" : "Signing in…"}
+                {factorId ? "Verifying…" : "Signing in…"}
               </>
             ) : (
               <>
-                {mfaToken ? "Verify" : "Sign in"}
+                {factorId ? "Verify" : "Sign in"}
                 <ArrowRight />
               </>
             )}
           </Button>
 
-          {mfaToken && (
+          {factorId && (
             <button
               type="button"
-              onClick={cancelMfa}
+              onClick={() => void cancelMfa()}
               className={cn(authLinkClass, "block w-full text-center text-sm")}
             >
               Use a different account
@@ -276,7 +264,7 @@ export default function LoginPage() {
         </form>
       )}
 
-      {!mfaToken && (
+      {!factorId && (
         <p className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <ShieldCheck
             size={15}
