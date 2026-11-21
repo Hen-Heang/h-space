@@ -21,7 +21,7 @@ describe("Notes route layout", () => {
     expect(redirect).toHaveBeenCalledWith("/inbox")
   })
 
-  it("treats anything other than \"true\" as off", () => {
+  it('treats anything other than "true" as off', () => {
     vi.stubEnv("NEXT_PUBLIC_FEATURE_NOTES", "1")
     expect(() => NotesLayout({ children: "notes page" })).toThrow("NEXT_REDIRECT /inbox")
   })

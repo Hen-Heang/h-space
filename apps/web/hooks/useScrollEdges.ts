@@ -10,7 +10,11 @@ export interface ScrollEdges {
 }
 
 /** Which sides of a horizontal scroller still hide content (1px tolerance for subpixel widths). */
-export function scrollEdges(scrollLeft: number, scrollWidth: number, clientWidth: number): ScrollEdges {
+export function scrollEdges(
+  scrollLeft: number,
+  scrollWidth: number,
+  clientWidth: number,
+): ScrollEdges {
   return {
     left: scrollLeft > 1,
     right: scrollLeft + clientWidth < scrollWidth - 1,

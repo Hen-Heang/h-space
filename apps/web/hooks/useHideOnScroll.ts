@@ -53,7 +53,9 @@ export function useHideOnScroll(
       frame = window.requestAnimationFrame(() => {
         frame = 0
         const y = window.scrollY
-        setHidden((current) => nextHiddenOnScroll(current, lastY.current, y, { threshold, topOffset }))
+        setHidden((current) =>
+          nextHiddenOnScroll(current, lastY.current, y, { threshold, topOffset }),
+        )
         lastY.current = y
       })
     }

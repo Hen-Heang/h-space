@@ -82,7 +82,9 @@ export async function POST(req: Request): Promise<Response> {
     // search hspace-api, or skip the inbox rather than cite old rows. Retired
     // Notes (isNotesEnabled() false) are left out so no answer links to them.
     const items = await retrieveMemoryContext(db, question, {
-      ...(isSpringInboxEnabled() ? { searchInbox: hspaceInboxSearch(req) ?? (async () => []) } : {}),
+      ...(isSpringInboxEnabled()
+        ? { searchInbox: hspaceInboxSearch(req) ?? (async () => []) }
+        : {}),
       includeNotes: isNotesEnabled(),
     })
     const prompt =
