@@ -69,7 +69,10 @@ describe("CompactSummary", () => {
 
   it("uses the accent only for an emphasised next step", () => {
     render(
-      <CompactSummary title="Korean practice" action={{ href: "/practice", label: "Start practice", emphasis: true }}>
+      <CompactSummary
+        title="Korean practice"
+        action={{ href: "/practice", label: "Start practice", emphasis: true }}
+      >
         <p>rows</p>
       </CompactSummary>,
     )
@@ -116,7 +119,9 @@ describe("TodayHabitCheckins", () => {
   it("names its link 'All habits'", () => {
     habitState.habits = [habit("h1", "Read")]
     render(<TodayHabitCheckins />)
-    expect(screen.getByRole("link", { name: "All habits" }).getAttribute("href")).toBe("/growth/habits")
+    expect(screen.getByRole("link", { name: "All habits" }).getAttribute("href")).toBe(
+      "/growth/habits",
+    )
   })
 
   it("shows habit streaks as plain text, not a flame", () => {

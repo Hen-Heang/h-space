@@ -66,34 +66,83 @@ describe("draftRestoreAction", () => {
   const base = "2026-11-09T01:00:00Z"
 
   it("discards a draft with no changes, in either mode", () => {
-    expect(draftRestoreAction({ mode: "create", draft: draft(initial, null), initial, baseUpdatedAt: null })).toBe("discard")
-    expect(draftRestoreAction({ mode: "edit", draft: draft(initial, "old"), initial, baseUpdatedAt: base })).toBe("discard")
+    expect(
+      draftRestoreAction({
+        mode: "create",
+        draft: draft(initial, null),
+        initial,
+        baseUpdatedAt: null,
+      }),
+    ).toBe("discard")
+    expect(
+      draftRestoreAction({
+        mode: "edit",
+        draft: draft(initial, "old"),
+        initial,
+        baseUpdatedAt: base,
+      }),
+    ).toBe("discard")
   })
 
   it("treats fields missing from an older draft as unchanged", () => {
     const partial = draft({ title: "A", content: "Body" } as Values, null, true)
-    expect(draftRestoreAction({ mode: "create", draft: partial, initial, baseUpdatedAt: null })).toBe("discard")
+    expect(
+      draftRestoreAction({ mode: "create", draft: partial, initial, baseUpdatedAt: null }),
+    ).toBe("discard")
   })
 
   it("applies a new-note draft with changes", () => {
-    expect(draftRestoreAction({ mode: "create", draft: draft(changed, null), initial, baseUpdatedAt: null })).toBe("apply")
+    expect(
+      draftRestoreAction({
+        mode: "create",
+        draft: draft(changed, null),
+        initial,
+        baseUpdatedAt: null,
+      }),
+    ).toBe("apply")
   })
 
   it("applies an edit draft that started from the note's current version", () => {
-    expect(draftRestoreAction({ mode: "edit", draft: draft(changed, base), initial, baseUpdatedAt: base })).toBe("apply")
+    expect(
+      draftRestoreAction({
+        mode: "edit",
+        draft: draft(changed, base),
+        initial,
+        baseUpdatedAt: base,
+      }),
+    ).toBe("apply")
   })
 
   it("asks when the note changed after the draft started", () => {
     expect(
-      draftRestoreAction({ mode: "edit", draft: draft(changed, base), initial, baseUpdatedAt: "2026-11-09T02:00:00Z" }),
+      draftRestoreAction({
+        mode: "edit",
+        draft: draft(changed, base),
+        initial,
+        baseUpdatedAt: "2026-11-09T02:00:00Z",
+      }),
     ).toBe("ask")
   })
 
   it("asks for a legacy edit draft, whose base version is unknown", () => {
-    expect(draftRestoreAction({ mode: "edit", draft: draft(changed, null, true), initial, baseUpdatedAt: base })).toBe("ask")
+    expect(
+      draftRestoreAction({
+        mode: "edit",
+        draft: draft(changed, null, true),
+        initial,
+        baseUpdatedAt: base,
+      }),
+    ).toBe("ask")
   })
 
   it("asks when the current version is unknown", () => {
-    expect(draftRestoreAction({ mode: "edit", draft: draft(changed, base), initial, baseUpdatedAt: null })).toBe("ask")
+    expect(
+      draftRestoreAction({
+        mode: "edit",
+        draft: draft(changed, base),
+        initial,
+        baseUpdatedAt: null,
+      }),
+    ).toBe("ask")
   })
 })
