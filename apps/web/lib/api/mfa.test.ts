@@ -47,7 +47,11 @@ describe("mfaApi.startSetup", () => {
     mfa.enroll.mockResolvedValueOnce({
       data: {
         id: "new",
-        totp: { secret: "ABCD", uri: "otpauth://totp/x", qr_code: "data:image/svg+xml;utf-8,<svg/>" },
+        totp: {
+          secret: "ABCD",
+          uri: "otpauth://totp/x",
+          qr_code: "data:image/svg+xml;utf-8,<svg/>",
+        },
       },
       error: null,
     })
