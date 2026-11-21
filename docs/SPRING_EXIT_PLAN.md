@@ -21,14 +21,14 @@ patch, pay for or keep awake.
 
 ## Target
 
-| Area | Before | After |
-| --- | --- | --- |
-| Sign-in, sessions, TOTP MFA | h-space-api (`users`, `refresh_tokens`, … in Neon `hspace`) | **Supabase Auth** (same user UUIDs) |
-| Supabase data access | bridge-issued token | the Supabase session's own token |
-| App data (Planner, Learning, …) | Supabase + RLS | unchanged |
-| Inbox | hub-api (`NEXT_PUBLIC_DATA_SOURCE_INBOX=spring`) | Supabase `kori_inbox_items` (flag unset) |
-| H-Vault ciphertext | hub-api → Neon `hspace` | **Neon `hspace`, unchanged**, through a Vercel route (step 3) |
-| Finance | Vercel route → Neon `luyra` | unchanged |
+| Area                            | Before                                                      | After                                                         |
+| ------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------- |
+| Sign-in, sessions, TOTP MFA     | h-space-api (`users`, `refresh_tokens`, … in Neon `hspace`) | **Supabase Auth** (same user UUIDs)                           |
+| Supabase data access            | bridge-issued token                                         | the Supabase session's own token                              |
+| App data (Planner, Learning, …) | Supabase + RLS                                              | unchanged                                                     |
+| Inbox                           | hub-api (`NEXT_PUBLIC_DATA_SOURCE_INBOX=spring`)            | Supabase `kori_inbox_items` (flag unset)                      |
+| H-Vault ciphertext              | hub-api → Neon `hspace`                                     | **Neon `hspace`, unchanged**, through a Vercel route (step 3) |
+| Finance                         | Vercel route → Neon `luyra`                                 | unchanged                                                     |
 
 User ids don't change: accounts were first imported from Supabase into Spring
 with the same UUIDs (h-space-api `docs/supabase-user-import.md`) and the bridge
