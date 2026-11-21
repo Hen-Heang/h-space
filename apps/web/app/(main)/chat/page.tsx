@@ -474,9 +474,9 @@ function ChatPageContent() {
                       sources it actually reads. */}
                   <p className="mt-1 text-sm text-muted-foreground">
                     Searches your {isNotesEnabled() ? "saved notes, " : ""}inbox captures, and
-                    journal entries, and also uses
-                    your approved memories, goals, completed tasks, and logged activity. Answers
-                    come only from these and link back to where they came from.
+                    journal entries, and also uses your approved memories, goals, completed tasks,
+                    and logged activity. Answers come only from these and link back to where they
+                    came from.
                   </p>
                 </div>
                 <Button asChild variant="outline" size="sm" className="shrink-0">

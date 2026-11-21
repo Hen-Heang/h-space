@@ -708,7 +708,10 @@ describe("with Notes turned back on (NEXT_PUBLIC_FEATURE_NOTES=true)", () => {
       const lit = nav.mobileNavItems.filter((item) =>
         nav.isNavigationItemActive({ pathname: route, item }),
       )
-      expect(lit.map((i) => i.id), route).toEqual(["nav-memory"])
+      expect(
+        lit.map((i) => i.id),
+        route,
+      ).toEqual(["nav-memory"])
     }
   })
 })
