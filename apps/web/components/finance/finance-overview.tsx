@@ -44,6 +44,10 @@ export function overviewErrorMessage(error: unknown): string {
     // The code/status pair is what makes a report diagnosable ("500
     // INTERNAL_ERROR" vs "504 HTTP_ERROR" from a platform timeout).
     const detail = error.status ? `${error.status} ${error.code}` : error.code
+    // 503: finance is switched off or its database is unreachable — a retry
+    // in a moment won't help, and nothing is wrong with the user's data.
+    if (error.status === 503)
+      return `Finance is unavailable right now (${detail}). Your data is safe; try again later.`
     return `We couldn't load your Finance overview (${detail}). Try again in a moment.`
   }
   if (error instanceof TypeError)
