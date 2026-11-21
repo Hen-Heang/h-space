@@ -27,6 +27,7 @@ vi.mock("@/lib/api", async () => {
     vaultApi: api,
     newVaultItemId: () => "generated-id",
     VaultMfaRequiredError: actual.VaultMfaRequiredError,
+    VaultLockedError: actual.VaultLockedError,
   }
 })
 vi.mock("@/lib/auth-store", () => ({ getUserId: () => auth.userId }))
@@ -37,9 +38,11 @@ const {
   useVaultMutations,
   vaultAccountsQueryKey,
   currentVaultKey,
+  shouldRetryVaultQuery,
 } = await import("./useVault")
 const { lockVault, setVaultKey } = await import("@/lib/vault-session")
-const { VaultMfaRequiredError } = await import("@/lib/api/vault")
+const { VaultLockedError, VaultMfaRequiredError } = await import("@/lib/api/vault")
+const { VaultHttpError } = await import("@/lib/api/vault-http")
 
 const KEY = { key: {} as CryptoKey, userId: "user-a" }
 
@@ -99,16 +102,23 @@ describe("useVaultAccounts", () => {
   })
 
   it("reports a load error, and an MFA requirement separately", async () => {
-    api.list.mockRejectedValueOnce(new Error("network down"))
+    // A lasting network failure: retried twice (shouldRetryVaultQuery), then shown.
+    api.list.mockRejectedValue(new Error("network down"))
     const { wrapper } = setup()
     const { result } = renderHook(() => useVaultAccounts(), { wrapper })
-    await waitFor(() => expect(result.current.error).toBe("Couldn't load your accounts."))
+    await waitFor(() => expect(result.current.error).toBe("Couldn't load your accounts."), {
+      timeout: 8000,
+    })
+    expect(api.list).toHaveBeenCalledTimes(3)
+    api.list.mockResolvedValue([])
 
     api.getKeyset.mockRejectedValueOnce(new VaultMfaRequiredError())
     const keyset = renderHook(() => useVaultKeyset(), { wrapper: setup().wrapper })
     await waitFor(() => expect(keyset.result.current.mfaRequired).toBe(true))
     expect(keyset.result.current.error).toBe("")
-  })
+    // Shown on the first answer — a refusal isn't retried.
+    expect(api.getKeyset).toHaveBeenCalledTimes(1)
+  }, 15_000)
 
   it("keys the cache by user and data source", () => {
     expect(vaultAccountsQueryKey("user-a", false)).toEqual(["vault-accounts", "user-a", "demo"])
@@ -194,5 +204,23 @@ describe("useVaultMutations", () => {
       await result.current.reset.mutateAsync()
     })
     expect(currentVaultKey()).toBeNull()
+  })
+})
+
+describe("shouldRetryVaultQuery", () => {
+  it("never retries a refusal, so its message shows at once", () => {
+    expect(shouldRetryVaultQuery(0, new VaultMfaRequiredError())).toBe(false)
+    expect(shouldRetryVaultQuery(0, new VaultLockedError())).toBe(false)
+    for (const status of [400, 401, 403, 404, 409, 413]) {
+      expect(shouldRetryVaultQuery(0, new VaultHttpError("no", status))).toBe(false)
+    }
+  })
+
+  it("retries network and server failures twice", () => {
+    for (const error of [new VaultHttpError("offline", 0), new VaultHttpError("boom", 500)]) {
+      expect(shouldRetryVaultQuery(0, error)).toBe(true)
+      expect(shouldRetryVaultQuery(1, error)).toBe(true)
+      expect(shouldRetryVaultQuery(2, error)).toBe(false)
+    }
   })
 })
