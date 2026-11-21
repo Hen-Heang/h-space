@@ -2,8 +2,8 @@
 
 // Tests for vaultApi's two backends.
 //
-// SAFETY: `@/lib/api/hspace-http` is replaced by an in-memory fake of
-// hspace-api's /api/hub/vault that records every request, so nothing here can
+// SAFETY: `@/lib/api/vault-http` is replaced by an in-memory fake of the
+// app's /api/vault routes that records every request, so nothing here can
 // reach a real server. Like the real one it scopes rows to the signed-in user
 // and only ever sees what the client sends — which is what the "only
 // ciphertext leaves the browser" tests inspect. All values are fictional.
@@ -18,13 +18,14 @@ const state = vi.hoisted(() => ({
   rows: [] as Array<{ id: string; userId: string; payloadCiphertext: string; version: number }>,
   keysets: {} as Record<string, Record<string, unknown>>,
   sent: [] as Array<{ path: string; method: string; body?: unknown }>,
-  failNext: null as { status: number; code?: number; message: string } | null,
+  failNext: null as { status: number; code?: string; message: string } | null,
 }))
 
 vi.mock("@/lib/feature-flags", () => ({ isVaultLiveEnabled: () => state.live }))
 
-vi.mock("@/lib/api/hspace-http", async () => {
-  const { AuthApiError } = await import("@/lib/api/auth-http")
+vi.mock("@/lib/api/vault-http", async () => {
+  const { VaultHttpError } =
+    await vi.importActual<typeof import("@/lib/api/vault-http")>("@/lib/api/vault-http")
   const stamp = "2026-11-01T00:00:00Z"
   const toItem = (r: Row) => ({
     id: r.id,
@@ -34,61 +35,61 @@ vi.mock("@/lib/api/hspace-http", async () => {
     version: r.version,
   })
   return {
-    hspaceRequest: vi.fn(
-      async (path: string, options: { method?: string; body?: unknown } = {}) => {
-        const method = options.method ?? "GET"
-        state.sent.push({ path, method, body: options.body })
-        if (state.failNext) {
-          const f = state.failNext
-          state.failNext = null
-          throw new AuthApiError(f.message, f.status, f.code)
+    VaultHttpError,
+    vaultRequest: vi.fn(async (path: string, options: { method?: string; body?: unknown } = {}) => {
+      const method = options.method ?? "GET"
+      state.sent.push({ path, method, body: options.body })
+      if (state.failNext) {
+        const f = state.failNext
+        state.failNext = null
+        throw new VaultHttpError(f.message, f.status, f.code)
+      }
+      const me = state.currentUser
+      const body = (options.body ?? {}) as Record<string, unknown>
+      const itemId = path.match(/\/items\/(.+)$/)?.[1]
+      if (path === "/keyset" && method === "GET") {
+        if (!state.keysets[me])
+          throw new VaultHttpError("Vault isn't set up yet.", 404, "NOT_FOUND")
+        return state.keysets[me]
+      }
+      if (path === "/keyset" && method === "PUT") {
+        const current = state.keysets[me]
+        state.keysets[me] = { ...body, version: current ? (current.version as number) + 1 : 0 }
+        return state.keysets[me]
+      }
+      if (path === "/reset") {
+        state.rows = state.rows.filter((r) => r.userId !== me)
+        delete state.keysets[me]
+        return {}
+      }
+      if (path === "/items" && method === "GET") {
+        return state.rows.filter((r) => r.userId === me).map(toItem)
+      }
+      if (path === "/items" && method === "POST") {
+        const row = {
+          id: body.id as string,
+          userId: me,
+          payloadCiphertext: body.payloadCiphertext as string,
+          version: 0,
         }
-        const me = state.currentUser
-        const body = (options.body ?? {}) as Record<string, unknown>
-        const itemId = path.match(/\/items\/(.+)$/)?.[1]
-        if (path === "/api/hub/vault/keyset" && method === "GET") {
-          if (!state.keysets[me]) throw new AuthApiError("Vault isn't set up yet.", 404, 40400)
-          return state.keysets[me]
-        }
-        if (path === "/api/hub/vault/keyset" && method === "PUT") {
-          const current = state.keysets[me]
-          state.keysets[me] = { ...body, version: current ? (current.version as number) + 1 : 0 }
-          return state.keysets[me]
-        }
-        if (path === "/api/hub/vault/reset") {
-          state.rows = state.rows.filter((r) => r.userId !== me)
-          delete state.keysets[me]
-          return {}
-        }
-        if (path === "/api/hub/vault/items" && method === "GET") {
-          return state.rows.filter((r) => r.userId === me).map(toItem)
-        }
-        if (path === "/api/hub/vault/items" && method === "POST") {
-          const row = {
-            id: body.id as string,
-            userId: me,
-            payloadCiphertext: body.payloadCiphertext as string,
-            version: 0,
-          }
-          state.rows.push(row)
-          return toItem(row)
-        }
-        const row = state.rows.find((r) => r.id === itemId && r.userId === me)
-        if (!row) throw new AuthApiError("Vault item not found", 404, 40400)
-        if (method === "PUT") {
-          if (body.version !== row.version)
-            throw new AuthApiError("Changed on another device.", 409, 40900)
-          row.payloadCiphertext = body.payloadCiphertext as string
-          row.version += 1
-          return toItem(row)
-        }
-        if (method === "DELETE") {
-          state.rows = state.rows.filter((r) => r !== row)
-          return {}
-        }
-        throw new Error(`unexpected ${method} ${path}`)
-      },
-    ),
+        state.rows.push(row)
+        return toItem(row)
+      }
+      const row = state.rows.find((r) => r.id === itemId && r.userId === me)
+      if (!row) throw new VaultHttpError("Vault item not found", 404, "NOT_FOUND")
+      if (method === "PUT") {
+        if (body.version !== row.version)
+          throw new VaultHttpError("Changed on another device.", 409, "CONFLICT")
+        row.payloadCiphertext = body.payloadCiphertext as string
+        row.version += 1
+        return toItem(row)
+      }
+      if (method === "DELETE") {
+        state.rows = state.rows.filter((r) => r !== row)
+        return {}
+      }
+      throw new Error(`unexpected ${method} ${path}`)
+    }),
   }
 })
 
@@ -131,7 +132,7 @@ beforeEach(() => {
   window.localStorage.clear()
 })
 
-describe("hspace-api backend", () => {
+describe("live backend (/api/vault)", () => {
   it("sends only the id and ciphertext — nothing readable leaves the browser", async () => {
     const key = await unlock()
     const password = await encryptVaultPassword("not-a-real-password", ITEM, key)
@@ -177,7 +178,7 @@ describe("hspace-api backend", () => {
 
     expect(updated).toMatchObject({ ...input, accountLabel: "Work", version: 1 })
     const put = state.sent.find((r) => r.method === "PUT")!
-    expect(put.path).toBe(`/api/hub/vault/items/${ITEM}`)
+    expect(put.path).toBe(`/items/${ITEM}`)
     expect(put.body).toMatchObject({ version: 0 })
     expect(JSON.stringify(put.body)).not.toContain("Work")
   })
@@ -233,7 +234,7 @@ describe("hspace-api backend", () => {
   })
 
   it("maps the server's MFA requirement to VaultMfaRequiredError", async () => {
-    state.failNext = { status: 403, code: 40301, message: "Turn on MFA" }
+    state.failNext = { status: 403, code: "VAULT_MFA_REQUIRED", message: "Turn on MFA" }
     await expect(vaultApi.getKeyset()).rejects.toBeInstanceOf(VaultMfaRequiredError)
   })
 
@@ -243,12 +244,12 @@ describe("hspace-api backend", () => {
     await vaultApi.remove(ITEM)
     expect(state.sent.at(-1)).toMatchObject({
       method: "DELETE",
-      path: `/api/hub/vault/items/${ITEM}`,
+      path: `/items/${ITEM}`,
     })
     await vaultApi.reset()
     expect(state.sent.at(-1)).toMatchObject({
       method: "POST",
-      path: "/api/hub/vault/reset",
+      path: "/reset",
       body: { confirm: "RESET" },
     })
   })

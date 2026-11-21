@@ -1,11 +1,13 @@
 # H-Vault — private account directory
 
 _Implemented 2026-10-23 (demo). Rebuilt 2026-11-01 for the hub-api backend
-with the v2 key hierarchy (h-space-api `docs/vault-design.md`). Status: works
-end to end against hub-api behind `NEXT_PUBLIC_FEATURE_VAULT_LIVE`, which is
-**on in Production and Preview since 2026-11-01** — turned on by the owner
-before the independent security review (design §9–10), which is still
-open._
+with the v2 key hierarchy (h-space-api `docs/vault-design.md`). **Moved
+2026-11-21 from hub-api to this app's `/api/vault` routes over the same Neon
+tables** (`docs/SPRING_EXIT_PLAN.md` step 3 at the repo root) — no ciphertext
+moved, and the browser-side encryption is unchanged. Live behind
+`NEXT_PUBLIC_FEATURE_VAULT_LIVE`, **on in Production and Preview since
+2026-11-01** — turned on by the owner before the independent security review
+(design §9–10), which is still open and must now cover these routes._
 
 H-Vault answers "which account do I use for this service?". It organizes
 accounts by category, supports several accounts per service (GitHub ·
@@ -16,22 +18,24 @@ and synced to every device; the server stores ciphertext only.
 
 ## Where it lives
 
-| Piece                          | Path                                                                                          |
-| ------------------------------ | --------------------------------------------------------------------------------------------- |
-| Route (authenticated shell)    | `app/(main)/vault/page.tsx` → `/vault`                                                        |
-| Nav entry (My Apps workspace)  | `vaultItem` in `lib/navigation.ts`                                                            |
-| Public catalog card (generic)  | `h-vault` in `lib/projects.ts`, rendered by `components/home/MyAppsSection.tsx` (also on `/`) |
-| Domain types, rules, filtering | `lib/vault.ts` (+ `lib/vault.test.ts`)                                                        |
-| Encryption (v2 key hierarchy)  | `lib/vault-crypto.ts` (+ `lib/vault-crypto.test.ts`)                                          |
-| CSV import (e.g. Notion)       | `lib/vault-import.ts` (+ test), `components/vault/VaultImportDialog.tsx`                      |
-| Unlock state (memory only)     | `lib/vault-session.ts`                                                                        |
-| Fictional sample data          | `lib/vault-demo.ts` — `example.com` / `example.org` identifiers, no passwords                 |
-| Data access                    | `lib/api/vault.ts` (+ test) — `vaultApi`, hub-api + demo backends                             |
-| Query hooks                    | `hooks/useVault.ts` (+ test)                                                                  |
-| UI                             | `components/vault/*` — dashboard, setup/unlock/recovery, change password, form, details, …    |
-| Content-Security-Policy        | `lib/csp.ts` (+ test), applied in `next.config.ts`                                            |
-| Server (owner of the data)     | h-space-api `hub-api`, `/api/hub/vault` — tables `vault_keysets`, `vault_items` (Neon)        |
-| E2E (signed-out surface)       | `tests/e2e/vault.e2e.ts`                                                                      |
+| Piece                          | Path                                                                                             |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Route (authenticated shell)    | `app/(main)/vault/page.tsx` → `/vault`                                                           |
+| Nav entry (My Apps workspace)  | `vaultItem` in `lib/navigation.ts`                                                               |
+| Public catalog card (generic)  | `h-vault` in `lib/projects.ts`, rendered by `components/home/MyAppsSection.tsx` (also on `/`)    |
+| Domain types, rules, filtering | `lib/vault.ts` (+ `lib/vault.test.ts`)                                                           |
+| Encryption (v2 key hierarchy)  | `lib/vault-crypto.ts` (+ `lib/vault-crypto.test.ts`)                                             |
+| CSV import (e.g. Notion)       | `lib/vault-import.ts` (+ test), `components/vault/VaultImportDialog.tsx`                         |
+| Unlock state (memory only)     | `lib/vault-session.ts`                                                                           |
+| Fictional sample data          | `lib/vault-demo.ts` — `example.com` / `example.org` identifiers, no passwords                    |
+| Data access                    | `lib/api/vault.ts` (+ test) — `vaultApi`, live + demo backends; `lib/api/vault-http.ts` (+ test) |
+| Query hooks                    | `hooks/useVault.ts` (+ test)                                                                     |
+| UI                             | `components/vault/*` — dashboard, setup/unlock/recovery, change password, form, details, …       |
+| Content-Security-Policy        | `lib/csp.ts` (+ test), applied in `next.config.ts`                                               |
+| Server routes                  | `app/api/vault/{keyset,reset,items,items/[id]}` (+ `routes.test.ts`)                             |
+| Server gate / rules / storage  | `lib/server/vault/{auth,validation,service,db,http}.ts` (+ tests)                                |
+| Data (owner)                   | Neon `hspace` — `vault_keysets`, `vault_items`, `audit_logs` (hub-api's tables, unchanged)       |
+| E2E (signed-out surface)       | `tests/e2e/vault.e2e.ts`                                                                         |
 
 The old Supabase design (`kori_vault_accounts`) was never applied and has
 been removed; Supabase never holds vault data.
@@ -71,15 +75,22 @@ been removed; Supabase never holds vault data.
 
 ## Security controls
 
-- **Server sees ciphertext only** (hub-api): requests carry an id and an
-  envelope, nothing readable (a request-capture test checks this). The
-  server validates envelope shapes and rejects unknown fields.
-- **MFA required:** hub-api refuses vault calls from accounts without
-  authenticator-app MFA (403, code 40301); the page then links to
-  `/settings/security`.
-- **Ownership on the server:** the user comes from the JWT; another user's
-  item is 404. A key unlocked by one user is never used for another
-  (`currentVaultKey`).
+- **Server sees ciphertext only:** requests carry an id and an envelope,
+  nothing readable (a request-capture test checks this). `/api/vault`
+  validates envelope shapes with strict schemas that reject unknown fields
+  (`lib/server/vault/validation.ts`), and the tables' CHECK constraints
+  check them again. Bodies over 32 KB are refused before parsing.
+- **MFA required, checked on every call** (`lib/server/vault/auth.ts`):
+  Supabase verifies the session, the account must have a verified
+  authenticator _now_ (read from Supabase, not the token, so removing the
+  last one closes the vault at once), and the session must be `aal2`. Else
+  403 `VAULT_MFA_REQUIRED`; the page links to `/settings/security`.
+- **Ownership on the server:** the user id comes only from the verified
+  session; every query is scoped by it; another user's item is 404. A key
+  unlocked by one user is never used for another (`currentVaultKey`).
+- **Audit:** each create, update, delete, keyset change and reset writes an
+  `audit_logs` row in the same SQL statement, with ids only. Server logs
+  never include database error messages (they can quote ciphertext).
 - **Unlock-gated list:** with hub-api the list query only runs while
   unlocked, and the decrypted list is removed from the query cache the moment
   the vault locks.
@@ -132,8 +143,8 @@ been removed; Supabase never holds vault data.
   in `hengo-vault-demo-keyset`). The server is never called. The list is
   readable without unlocking (it's sample data); saved passwords use the same
   v2 keyset and envelopes. "Restore sample data" resets the accounts.
-- **`"true"`:** the hub-api backend (`/api/hub/vault` on
-  `NEXT_PUBLIC_HSPACE_API_URL`, defaulting to the auth API's URL). The list
+- **`"true"`:** the live backend: this app's `/api/vault` routes, which read
+  and write the Neon tables with `VAULT_DATABASE_URL` (server-only). The list
   appears only after unlocking.
 
 ### Going live (status 2026-11-01)

@@ -6,15 +6,31 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   newVaultItemId,
   vaultApi,
+  VaultLockedError,
   VaultMfaRequiredError,
   type VaultAccount,
   type VaultAccountInput,
 } from "@/lib/api"
+import { VaultHttpError } from "@/lib/api/vault-http"
 import { getUserId } from "@/lib/auth-store"
 import type { VaultKeysetData } from "@/lib/vault-crypto"
 import { getVaultKey, isVaultUnlocked, lockVault, subscribeVaultSession } from "@/lib/vault-session"
 
-// `live` is part of the keys so switching the data source (demo ↔ hspace-api)
+/**
+ * Retry only failures that might go away: a network error or a 5xx, twice.
+ * A refusal — MFA required, signed out, locked, not found, conflict — gets the
+ * same answer every time, and retrying it would leave the user looking at an
+ * empty vault for seconds before the real message appears.
+ */
+export function shouldRetryVaultQuery(failureCount: number, error: unknown): boolean {
+  if (error instanceof VaultMfaRequiredError || error instanceof VaultLockedError) return false
+  if (error instanceof VaultHttpError && error.httpStatus >= 400 && error.httpStatus < 500) {
+    return false
+  }
+  return failureCount < 2
+}
+
+// `live` is part of the keys so switching the data source (demo ↔ /api/vault)
 // can never serve one source's cached rows as the other's.
 export const vaultAccountsQueryKey = (userId?: string | null, live = vaultApi.isLive()) =>
   ["vault-accounts", userId, live ? "live" : "demo"] as const
@@ -38,6 +54,7 @@ export function useVaultKeyset() {
     queryKey: vaultKeysetQueryKey(userId),
     queryFn: vaultApi.getKeyset,
     enabled: userId != null,
+    retry: shouldRetryVaultQuery,
   })
   return {
     keyset: data ?? null,
@@ -67,6 +84,7 @@ export function useVaultAccounts() {
     queryKey: vaultAccountsQueryKey(userId),
     queryFn: () => vaultApi.list(currentVaultKey()),
     enabled,
+    retry: shouldRetryVaultQuery,
   })
 
   return {
