@@ -18,24 +18,24 @@ and synced to every device; the server stores ciphertext only.
 
 ## Where it lives
 
-| Piece                          | Path                                                                                          |
-| ------------------------------ | --------------------------------------------------------------------------------------------- |
-| Route (authenticated shell)    | `app/(main)/vault/page.tsx` → `/vault`                                                        |
-| Nav entry (My Apps workspace)  | `vaultItem` in `lib/navigation.ts`                                                            |
-| Public catalog card (generic)  | `h-vault` in `lib/projects.ts`, rendered by `components/home/MyAppsSection.tsx` (also on `/`) |
-| Domain types, rules, filtering | `lib/vault.ts` (+ `lib/vault.test.ts`)                                                        |
-| Encryption (v2 key hierarchy)  | `lib/vault-crypto.ts` (+ `lib/vault-crypto.test.ts`)                                          |
-| CSV import (e.g. Notion)       | `lib/vault-import.ts` (+ test), `components/vault/VaultImportDialog.tsx`                      |
-| Unlock state (memory only)     | `lib/vault-session.ts`                                                                        |
-| Fictional sample data          | `lib/vault-demo.ts` — `example.com` / `example.org` identifiers, no passwords                 |
+| Piece                          | Path                                                                                             |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Route (authenticated shell)    | `app/(main)/vault/page.tsx` → `/vault`                                                           |
+| Nav entry (My Apps workspace)  | `vaultItem` in `lib/navigation.ts`                                                               |
+| Public catalog card (generic)  | `h-vault` in `lib/projects.ts`, rendered by `components/home/MyAppsSection.tsx` (also on `/`)    |
+| Domain types, rules, filtering | `lib/vault.ts` (+ `lib/vault.test.ts`)                                                           |
+| Encryption (v2 key hierarchy)  | `lib/vault-crypto.ts` (+ `lib/vault-crypto.test.ts`)                                             |
+| CSV import (e.g. Notion)       | `lib/vault-import.ts` (+ test), `components/vault/VaultImportDialog.tsx`                         |
+| Unlock state (memory only)     | `lib/vault-session.ts`                                                                           |
+| Fictional sample data          | `lib/vault-demo.ts` — `example.com` / `example.org` identifiers, no passwords                    |
 | Data access                    | `lib/api/vault.ts` (+ test) — `vaultApi`, live + demo backends; `lib/api/vault-http.ts` (+ test) |
-| Query hooks                    | `hooks/useVault.ts` (+ test)                                                                  |
-| UI                             | `components/vault/*` — dashboard, setup/unlock/recovery, change password, form, details, …    |
-| Content-Security-Policy        | `lib/csp.ts` (+ test), applied in `next.config.ts`                                            |
-| Server routes                  | `app/api/vault/{keyset,reset,items,items/[id]}` (+ `routes.test.ts`)                          |
-| Server gate / rules / storage  | `lib/server/vault/{auth,validation,service,db,http}.ts` (+ tests)                             |
-| Data (owner)                   | Neon `hspace` — `vault_keysets`, `vault_items`, `audit_logs` (hub-api's tables, unchanged)    |
-| E2E (signed-out surface)       | `tests/e2e/vault.e2e.ts`                                                                      |
+| Query hooks                    | `hooks/useVault.ts` (+ test)                                                                     |
+| UI                             | `components/vault/*` — dashboard, setup/unlock/recovery, change password, form, details, …       |
+| Content-Security-Policy        | `lib/csp.ts` (+ test), applied in `next.config.ts`                                               |
+| Server routes                  | `app/api/vault/{keyset,reset,items,items/[id]}` (+ `routes.test.ts`)                             |
+| Server gate / rules / storage  | `lib/server/vault/{auth,validation,service,db,http}.ts` (+ tests)                                |
+| Data (owner)                   | Neon `hspace` — `vault_keysets`, `vault_items`, `audit_logs` (hub-api's tables, unchanged)       |
+| E2E (signed-out surface)       | `tests/e2e/vault.e2e.ts`                                                                         |
 
 The old Supabase design (`kori_vault_accounts`) was never applied and has
 been removed; Supabase never holds vault data.
@@ -82,7 +82,7 @@ been removed; Supabase never holds vault data.
   check them again. Bodies over 32 KB are refused before parsing.
 - **MFA required, checked on every call** (`lib/server/vault/auth.ts`):
   Supabase verifies the session, the account must have a verified
-  authenticator *now* (read from Supabase, not the token, so removing the
+  authenticator _now_ (read from Supabase, not the token, so removing the
   last one closes the vault at once), and the session must be `aal2`. Else
   403 `VAULT_MFA_REQUIRED`; the page links to `/settings/security`.
 - **Ownership on the server:** the user id comes only from the verified
