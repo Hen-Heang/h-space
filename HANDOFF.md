@@ -15,12 +15,12 @@
 ## Current focus
 
 1. **Owner, now, Supabase dashboard (project-wide, shared with Orbit):** Google provider with the same client ID as `NEXT_PUBLIC_GOOGLE_CLIENT_ID`; `{{ .Token }}` in the Magic link template; `https://hengo.henheang.site/reset-password` (and preview origins) in the redirect URLs. Until then, only password sign-in works.
-2. **Owner, now, Vercel:** remove `NEXT_PUBLIC_DATA_SOURCE_INBOX` and redeploy (step 2). The inbox reads Supabase again.
+2. **Owner, Vercel (tidying):** delete `NEXT_PUBLIC_DATA_SOURCE_INBOX`, `NEXT_PUBLIC_AUTH_API_URL` and `NEXT_PUBLIC_HSPACE_API_URL`. Once `chore/remove-spring-leftovers` is merged, nothing reads them and the inbox always uses Supabase. Until it's merged, removing `NEXT_PUBLIC_DATA_SOURCE_INBOX` and redeploying is what brings the inbox back.
 3. **Owner:** sign in to production. Use "Forgot password" or an email code if a password changed in Spring. Enroll an authenticator **and a backup** under Settings → Security. Then try email-code sign-in and the reset-email link by hand (not automated).
 4. **Owner, before 2026-12-01:** stop the Spring container on the VPS.
 5. **After 2026-12-01 (needs owner approval):** create the least-privilege `vault_app` Neon role (SQL in the plan), set `VAULT_DATABASE_URL` in Vercel, run the vault on a Neon branch, then unlock in production (proves the user id still matches the envelopes). Copy any Spring-only `inbox_items` into `kori_inbox_items`.
 6. **MFA database rule:** apply `20261121120000_require_mfa_when_enrolled.sql` only with the owner's go-ahead, after the owner's authenticators are enrolled. Then check the app and the MCP connector with MFA on (connector tokens may be `aal1`).
-7. **Step 4 cleanup:** remove `lib/api/auth-http.ts` / `hspace-http.ts` / `lib/server/hspace-inbox.ts`, take `api.henheang.site` out of `lib/csp.ts`, drop `NEXT_PUBLIC_AUTH_API_URL` / `NEXT_PUBLIC_HSPACE_API_URL`, shut down the VPS, archive h-space-api. Decide on rotating the legacy Supabase JWT secret (affects Orbit).
+7. **Step 4 cleanup: code done on `chore/remove-spring-leftovers`** (Spring HTTP clients, Spring inbox store and flag, inbox-reminder guard, the h-space-api CSP origins). Owner part: shut down the VPS, archive h-space-api, and decide on rotating the legacy Supabase JWT secret (affects Orbit).
 8. **Carried over:** the H-Vault step-up code and route rate limits (known gaps in the plan); the independent H-Vault security audit (must now cover `/api/vault`) and restore drill; Finance D–F follow-ups (`apps/web/docs/finance-redesign.md` §7); MCP live checks; UI audit follow-ups.
 
 ## Notes for the next session

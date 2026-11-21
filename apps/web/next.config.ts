@@ -5,8 +5,6 @@ import { isNotesEnabled } from "./lib/feature-flags"
 
 const contentSecurityPolicy = buildContentSecurityPolicy({
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  authApiUrl: process.env.NEXT_PUBLIC_AUTH_API_URL,
-  hspaceApiUrl: process.env.NEXT_PUBLIC_HSPACE_API_URL,
   development: process.env.NODE_ENV === "development",
   vercelPreview: process.env.VERCEL_ENV === "preview",
 })

@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { ReminderButton } from "@/components/reminders/ReminderButton"
-import { isNotesEnabled, isSpringInboxEnabled } from "@/lib/feature-flags"
+import { isNotesEnabled } from "@/lib/feature-flags"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -192,9 +192,6 @@ export function InboxItemCard({ item }: { item: InboxItem }) {
             entityId={item.id}
             deepLink="https://hengo.henheang.site/inbox"
             defaultTitle={item.title?.trim() || item.content.slice(0, 60)}
-            // Reminders can't follow an item that lives only in hspace-api yet
-            // (see remindersApi.create).
-            allowCreate={!isSpringInboxEnabled()}
           />
 
           <DropdownMenu>

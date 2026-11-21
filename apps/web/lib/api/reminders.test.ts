@@ -1,13 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
-const flags = vi.hoisted(() => ({ isSpringInboxEnabled: vi.fn(() => false) }))
-vi.mock("@/lib/feature-flags", () => flags)
 vi.mock("@/lib/auth-store", () => ({ requireUserId: () => "user-1" }))
 
 const supabase = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn() }))
 vi.mock("@/lib/supabase", () => ({ supabase }))
 
-import { INBOX_REMINDERS_UNAVAILABLE, remindersApi } from "./reminders"
+import { remindersApi } from "./reminders"
 
 const row = {
   id: "rem-1",
@@ -47,23 +45,12 @@ const inboxReminder = {
   scheduledFor: "2026-11-02T00:00:00Z",
 }
 
-beforeEach(() => {
-  flags.isSpringInboxEnabled.mockReturnValue(false)
-})
-
 afterEach(() => {
   vi.clearAllMocks()
 })
 
 describe("remindersApi.create for inbox items", () => {
-  it("refuses while the inbox runs on hspace-api, without writing anything", async () => {
-    flags.isSpringInboxEnabled.mockReturnValue(true)
-
-    await expect(remindersApi.create(inboxReminder)).rejects.toThrow(INBOX_REMINDERS_UNAVAILABLE)
-    expect(supabase.from).not.toHaveBeenCalled()
-  })
-
-  it("saves while the inbox is on Supabase", async () => {
+  it("saves an inbox item's reminder in kori_reminders", async () => {
     const query = insertQuery()
 
     await expect(remindersApi.create(inboxReminder)).resolves.toMatchObject({ id: "rem-1" })
@@ -77,8 +64,7 @@ describe("remindersApi.create for inbox items", () => {
     )
   })
 
-  it("still saves reminders for other entities while the inbox runs on hspace-api", async () => {
-    flags.isSpringInboxEnabled.mockReturnValue(true)
+  it("saves reminders for other entities too", async () => {
     insertQuery()
 
     await expect(

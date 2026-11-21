@@ -1,16 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
-const http = vi.hoisted(() => ({ hspaceRequest: vi.fn() }))
-vi.mock("./hspace-http", () => http)
-
-const flags = vi.hoisted(() => ({
-  isSpringInboxEnabled: vi.fn(() => true),
-  isVaultLiveEnabled: vi.fn(() => false),
-}))
-vi.mock("@/lib/feature-flags", () => flags)
-
-// The Supabase store and the conversion targets must not be touched while the
-// Spring store is selected.
+vi.mock("@/lib/auth-store", () => ({ requireUserId: () => "user-1" }))
 const supabaseFrom = vi.hoisted(() => vi.fn())
 vi.mock("@/lib/supabase", () => ({ supabase: { from: supabaseFrom } }))
 const conversions = vi.hoisted(() => ({
@@ -45,115 +35,12 @@ const item: InboxItem = {
   updatedAt: "2026-10-30T00:00:00Z",
 }
 
-beforeEach(() => {
-  flags.isSpringInboxEnabled.mockReturnValue(true)
-  http.hspaceRequest.mockResolvedValue(item)
-})
-
 afterEach(() => {
   vi.clearAllMocks()
 })
 
-describe("inboxApi on hspace-api", () => {
-  it("lists with only the filters that narrow the result", async () => {
-    http.hspaceRequest.mockResolvedValue([item])
-
-    await expect(inboxApi.list({ status: "all", itemType: "idea" })).resolves.toEqual([item])
-    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/hub/inbox-items?itemType=idea&limit=500")
-
-    await inboxApi.list({ status: "archived", limit: 20 })
-    expect(http.hspaceRequest).toHaveBeenLastCalledWith(
-      "/api/hub/inbox-items?status=archived&limit=20",
-    )
-  })
-
-  it("treats an empty list response as no items", async () => {
-    http.hspaceRequest.mockResolvedValue(undefined)
-    await expect(inboxApi.list()).resolves.toEqual([])
-  })
-
-  it("creates with trimmed text and defaults, never sending a user id", async () => {
-    await inboxApi.create({ title: "  ", content: "  Buy milk  ", itemType: "task" })
-
-    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/hub/inbox-items", {
-      method: "POST",
-      body: {
-        title: null,
-        content: "Buy milk",
-        itemType: "task",
-        tags: [],
-        eventAt: null,
-        goalId: null,
-        source: "manual",
-      },
-    })
-  })
-
-  it("patches only the given fields, keeping explicit nulls", async () => {
-    await inboxApi.update("item-1", { title: null, pinned: true })
-
-    const [path, options] = http.hspaceRequest.mock.calls[0]
-    expect(path).toBe("/api/hub/inbox-items/item-1")
-    expect(options.method).toBe("PATCH")
-    expect(JSON.parse(JSON.stringify(options.body))).toEqual({ title: null, pinned: true })
-  })
-
-  it("archives, restores and deletes through hspace-api", async () => {
-    await inboxApi.archive("item-1")
-    await inboxApi.restore("item-1")
-    await inboxApi.remove("item-1")
-
-    expect(http.hspaceRequest.mock.calls).toEqual([
-      ["/api/hub/inbox-items/item-1", { method: "PATCH", body: { status: "archived" } }],
-      ["/api/hub/inbox-items/item-1", { method: "PATCH", body: { status: "inbox" } }],
-      ["/api/hub/inbox-items/item-1", { method: "DELETE" }],
-    ])
-  })
-
-  it("cancels the deleted item's reminders, which the Supabase dispatcher can no longer check", async () => {
-    await inboxApi.remove("item-1")
-
-    expect(reminders.cancelForEntity).toHaveBeenCalledWith("inbox_item", "item-1")
-  })
-
-  it("still deletes when cancelling its reminders fails", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
-    reminders.cancelForEntity.mockRejectedValueOnce(new Error("offline"))
-
-    await expect(inboxApi.remove("item-1")).resolves.toBeUndefined()
-    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/hub/inbox-items/item-1", {
-      method: "DELETE",
-    })
-    warn.mockRestore()
-  })
-
-  it("does not cancel reminders when the delete itself fails", async () => {
-    http.hspaceRequest.mockRejectedValueOnce(new Error("404"))
-
-    await expect(inboxApi.remove("item-1")).rejects.toThrow("404")
-    expect(reminders.cancelForEntity).not.toHaveBeenCalled()
-  })
-
-  it("stamps a conversion on the hspace-api item", async () => {
-    await expect(inboxApi.convertToTask(item, "2026-10-31")).resolves.toEqual({ id: "task-1" })
-
-    expect(conversions.tasks.create).toHaveBeenCalled()
-    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/hub/inbox-items/item-1", {
-      method: "PATCH",
-      body: { convertedToType: "task", convertedToId: "task-1", status: "processed" },
-    })
-    expect(supabaseFrom).not.toHaveBeenCalled()
-  })
-
-  it("encodes ids into the path", async () => {
-    await inboxApi.get("a/b")
-    expect(http.hspaceRequest).toHaveBeenCalledWith("/api/hub/inbox-items/a%2Fb")
-  })
-})
-
-describe("inboxApi with the flag off", () => {
-  it("stays on Supabase", async () => {
-    flags.isSpringInboxEnabled.mockReturnValue(false)
+describe("inboxApi on Supabase", () => {
+  it("reads kori_inbox_items", async () => {
     const query = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -164,11 +51,9 @@ describe("inboxApi with the flag off", () => {
     await inboxApi.get("item-1")
 
     expect(supabaseFrom).toHaveBeenCalledWith("kori_inbox_items")
-    expect(http.hspaceRequest).not.toHaveBeenCalled()
   })
 
-  it("leaves reminders to the dispatcher when deleting from Supabase", async () => {
-    flags.isSpringInboxEnabled.mockReturnValue(false)
+  it("leaves reminders to the dispatcher when deleting", async () => {
     supabaseFrom.mockReturnValue({
       delete: vi.fn().mockReturnThis(),
       eq: vi.fn(async () => ({ error: null })),
@@ -178,5 +63,21 @@ describe("inboxApi with the flag off", () => {
 
     expect(supabaseFrom).toHaveBeenCalledWith("kori_inbox_items")
     expect(reminders.cancelForEntity).not.toHaveBeenCalled()
+  })
+
+  it("stamps a conversion on the source row without deleting it", async () => {
+    const eq = vi.fn(async () => ({ error: null }))
+    const update = vi.fn(() => ({ eq }))
+    supabaseFrom.mockReturnValue({ update })
+
+    await expect(inboxApi.convertToTask(item, "2026-10-31")).resolves.toEqual({ id: "task-1" })
+
+    expect(conversions.tasks.create).toHaveBeenCalled()
+    expect(update).toHaveBeenCalledWith({
+      converted_to_type: "task",
+      converted_to_id: "task-1",
+      status: "processed",
+    })
+    expect(eq).toHaveBeenCalledWith("id", "item-1")
   })
 })

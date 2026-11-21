@@ -13,21 +13,6 @@ export const isVaultLiveEnabled = (): boolean =>
   process.env.NEXT_PUBLIC_FEATURE_VAULT_LIVE === "true"
 
 /**
- * Quick Capture Inbox reads and writes hspace-api (Spring) instead of
- * Supabase's `kori_inbox_items` — the first area moved off Supabase
- * (h-space-api docs/spring-migration-plan.md, Phase 1). Off by default; turn
- * on only after the inbox rows have been copied across. Turning it back off
- * is the rollback: the copy leaves the Supabase table untouched.
- *
- * While on, new reminders can't be set on inbox items: the reminder
- * dispatcher only checks `kori_inbox_items`, so it would cancel them
- * (remindersApi.create refuses; existing reminders stay manageable, and
- * deleting an item cancels its reminders).
- */
-export const isSpringInboxEnabled = (): boolean =>
-  process.env.NEXT_PUBLIC_DATA_SOURCE_INBOX === "spring"
-
-/**
  * Long-form Notes (`/notes`, its projects, and the MCP project-knowledge
  * tools). Retired on 2026-11-10 — notes moved to Obsidian — so it is **off
  * unless set to "true"**. Off hides Notes from every nav surface, redirects

@@ -1,6 +1,5 @@
 import { supabase } from "@/lib/supabase"
 import { requireUserId } from "@/lib/auth-store"
-import { isSpringInboxEnabled } from "@/lib/feature-flags"
 import {
   DEFAULT_REMINDER_TIMEZONE,
   type Reminder,
@@ -17,9 +16,6 @@ import {
 // DB trigger — matches the rest of the codebase's convention) by calling the
 // same kori_next_reminder_run RPC the UI uses for its live preview, so
 // creation-time and preview-time next-run values can never disagree.
-
-export const INBOX_REMINDERS_UNAVAILABLE =
-  "Reminders for Inbox items aren't available yet while the Inbox moves to the new backend."
 
 type ReminderRow = {
   id: string
@@ -103,13 +99,6 @@ export const remindersApi = {
   },
 
   create: async (input: ReminderInput): Promise<Reminder> => {
-    // The dispatcher (kori_dispatch_reminders) only finds inbox items in
-    // Supabase's kori_inbox_items and cancels a reminder whose item it can't
-    // find. Items captured while the inbox runs on hspace-api exist only
-    // there, so such a reminder would save and then never be delivered.
-    if (input.entityType === "inbox_item" && isSpringInboxEnabled()) {
-      throw new Error(INBOX_REMINDERS_UNAVAILABLE)
-    }
     const timezone = input.timezone ?? DEFAULT_REMINDER_TIMEZONE
     const nextRunAt = input.recurrence
       ? await previewNextRun(input.recurrence, timezone)

@@ -11,9 +11,11 @@
 // RLS-scoped client and are audited to kori_mcp_audit
 // (docs/chatgpt-mcp-integration.md §6–§11).
 //
-// Known gap (2026-11-04): tokens come from Supabase's OAuth server, but
-// sign-in moved to h-space-api, so no current user can complete the
-// /oauth/consent flow — docs/SECOND_BRAIN_ARCHITECTURE.md §4.1 (repo root).
+// Tokens come from Supabase's OAuth server. From 2026-10-27 sign-in went
+// through h-space-api, which blocked the /oauth/consent flow
+// (docs/SECOND_BRAIN_ARCHITECTURE.md §4.1, repo root). Since 2026-11-21
+// sign-in is Supabase Auth again, so consent should complete; not yet
+// re-verified end to end with a connector.
 import { tryLoadMcpAuthConfig, type McpAuthConfig } from "@/lib/mcp/config"
 import { SupabaseMcpTokenVerifier } from "@/lib/mcp/auth"
 import { createAuthenticatedMcpHandler, type AuthenticatedMcpHandler } from "@/lib/mcp/handler"

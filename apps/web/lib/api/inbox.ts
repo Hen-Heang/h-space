@@ -1,6 +1,5 @@
 import { supabase } from "@/lib/supabase"
 import { requireUserId } from "@/lib/auth-store"
-import { isSpringInboxEnabled } from "@/lib/feature-flags"
 import {
   buildJournalConversionPayload,
   buildNoteConversionPayload,
@@ -12,21 +11,17 @@ import {
   type InboxItemType,
 } from "@/lib/inbox"
 
-import { hspaceRequest } from "./hspace-http"
 import { notesApi } from "./notes"
 import { tasksApi } from "./goals"
 import { journalApi } from "./journal"
-import { remindersApi } from "./reminders"
 
 // Quick Capture Inbox. Mirrors the notesApi shape: plain async functions,
 // requireUserId() on Supabase writes.
 //
-// Two stores share one interface while the inbox moves off Supabase
-// (h-space-api docs/spring-migration-plan.md, Phase 1):
-// - `supabaseInbox` — kori_inbox_items, owner-scoped by RLS.
-// - `springInbox` — hspace-api /api/hub/inbox-items, owner taken from the JWT.
-// `isSpringInboxEnabled()` picks one; conversions still create the Note /
-// Task / Journal entry in Supabase until those areas move too.
+// Storage is Supabase's kori_inbox_items, owner-scoped by RLS. A second,
+// hspace-api (Spring) store existed behind NEXT_PUBLIC_DATA_SOURCE_INBOX
+// until the Spring API was retired on 2026-11-21 (docs/SPRING_EXIT_PLAN.md);
+// the InboxStore seam is kept so a future store can slot in the same way.
 
 export interface InboxListParams {
   status?: InboxItemStatus | "all"
@@ -180,69 +175,7 @@ const supabaseInbox: InboxStore = {
   },
 }
 
-// ─── hspace-api (Spring) ─────────────────────────────────────────────────────
-
-const INBOX_PATH = "/api/hub/inbox-items"
-
-// The API answers with the same camelCase fields as InboxItem.
-export const springInbox: InboxStore = {
-  list: async (params) => {
-    const query = new URLSearchParams()
-    if (params.status && params.status !== "all") query.set("status", params.status)
-    if (params.itemType && params.itemType !== "all") query.set("itemType", params.itemType)
-    query.set("limit", String(params.limit ?? 500))
-    return (await hspaceRequest<InboxItem[]>(`${INBOX_PATH}?${query}`)) ?? []
-  },
-
-  get: (id) => hspaceRequest<InboxItem>(`${INBOX_PATH}/${encodeURIComponent(id)}`),
-
-  create: (input) =>
-    hspaceRequest<InboxItem>(INBOX_PATH, {
-      method: "POST",
-      body: {
-        title: input.title?.trim() || null,
-        content: input.content.trim(),
-        itemType: input.itemType,
-        tags: input.tags ?? [],
-        eventAt: input.eventAt ?? null,
-        goalId: input.goalId ?? null,
-        source: input.source ?? "manual",
-      },
-    }),
-
-  // JSON.stringify drops undefined keys, so only the fields in `patch` are
-  // sent; an explicit null clears the field (PATCH semantics on the server).
-  update: (id, patch) =>
-    hspaceRequest<InboxItem>(`${INBOX_PATH}/${encodeURIComponent(id)}`, {
-      method: "PATCH",
-      body: patch,
-    }),
-
-  remove: async (id) => {
-    await hspaceRequest(`${INBOX_PATH}/${encodeURIComponent(id)}`, { method: "DELETE" })
-    // Reminders still live in Supabase, where the copied kori_inbox_items row
-    // outlives this delete, so the dispatcher would keep firing them for an
-    // item that's gone. Best effort: the item is already deleted.
-    try {
-      await remindersApi.cancelForEntity("inbox_item", id)
-    } catch (error) {
-      console.warn("Couldn't cancel reminders for a deleted inbox item", error)
-    }
-  },
-
-  markConverted: async (id, type, convertedId) => {
-    await hspaceRequest(`${INBOX_PATH}/${encodeURIComponent(id)}`, {
-      method: "PATCH",
-      body: {
-        convertedToType: type,
-        ...(convertedId !== undefined ? { convertedToId: convertedId } : {}),
-        status: "processed",
-      },
-    })
-  },
-}
-
-const store = (): InboxStore => (isSpringInboxEnabled() ? springInbox : supabaseInbox)
+const store = (): InboxStore => supabaseInbox
 
 export const inboxApi = {
   list: (params: InboxListParams = {}): Promise<InboxItem[]> => store().list(params),

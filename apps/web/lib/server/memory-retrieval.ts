@@ -42,8 +42,8 @@ const emptyResult = Promise.resolve({ data: [] as Record<string, unknown>[], err
  */
 export interface RetrievalSources {
   /**
-   * Full-text search over inbox items held outside Supabase (hspace-api, once
-   * the inbox has moved — see lib/server/hspace-inbox.ts). Same websearch /
+   * Full-text search over inbox items held outside Supabase, should the inbox
+   * ever move again (it did, to hspace-api, until 2026-11-21). Same websearch /
    * English semantics; must already be scoped to the caller.
    */
   searchInbox?: (query: string, limit: number) => Promise<InboxSearchRow[]>
