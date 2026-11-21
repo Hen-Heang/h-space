@@ -24,6 +24,19 @@ describe("financeDatabaseUnavailableReason", () => {
     ["Neon 5xx", neonError("Server error (HTTP status 503): upstream"), "Neon HTTP 503"],
     ["Neon rate limit", neonError("Server error (HTTP status 429): slow down"), "Neon HTTP 429"],
     [
+      // The exact shape production returned on 2026-11-21 (body trimmed).
+      "used-up quota (HTTP 402, as seen in production)",
+      neonError(
+        'Server error (HTTP status 402): {"message":"Your account or project has exceeded the quota. Upgrade your plan to increase limits.","code":""}',
+      ),
+      "Neon compute quota or endpoint state",
+    ],
+    [
+      "Neon 402 with another body",
+      neonError("Server error (HTTP status 402): {}"),
+      "Neon HTTP 402",
+    ],
+    [
       "used-up compute quota",
       neonError(
         "Your account or project has exceeded the compute time quota. Upgrade your plan to increase limits.",
@@ -52,6 +65,7 @@ describe("financeDatabaseUnavailableReason", () => {
     ["a constraint violation", neonError("duplicate key value", "23505")],
     ["a Neon 4xx", neonError("Server error (HTTP status 401): bad auth")],
     ["a plain Error", new Error("Error connecting to database: looks similar")],
+    ["a Neon 404", neonError("Server error (HTTP status 404): not found")],
     ["a non-error", "compute time quota"],
   ])("%s → not unavailable", (_label, error) => {
     expect(financeDatabaseUnavailableReason(error)).toBeNull()
