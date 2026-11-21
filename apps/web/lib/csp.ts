@@ -11,8 +11,6 @@
 
 export type CspEnv = {
   supabaseUrl?: string
-  authApiUrl?: string
-  hspaceApiUrl?: string
   /** `next dev`: React needs eval and the dev server a websocket. */
   development?: boolean
   /** Vercel preview deployments inject the Vercel toolbar. */
@@ -32,7 +30,6 @@ const GOOGLE_SIGN_IN = "https://accounts.google.com/gsi/"
 
 export function buildContentSecurityPolicy(env: CspEnv): string {
   const supabase = origin(env.supabaseUrl)
-  const api = [origin(env.authApiUrl) ?? "http://localhost:8080", origin(env.hspaceApiUrl)]
   const preview = env.vercelPreview ? ["https://vercel.live"] : []
 
   const directives: Record<string, Array<string | null | false | undefined>> = {
@@ -51,7 +48,6 @@ export function buildContentSecurityPolicy(env: CspEnv): string {
       "'self'",
       supabase,
       supabase && supabase.replace(/^https:/, "wss:"),
-      ...api,
       GOOGLE_SIGN_IN,
       // Voice coach (WebRTC session set-up) and the calendar's weather badge.
       "https://api.openai.com",

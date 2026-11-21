@@ -50,10 +50,11 @@ in `main` but **not applied**.
    verify-email token pages are retired. Needs Supabase dashboard settings
    (below). Restores Home, Planner, Learning and the other Supabase pages
    without Neon.
-2. **Inbox back to Supabase.** Unset `NEXT_PUBLIC_DATA_SOURCE_INBOX` in Vercel
-   (that's the documented rollback in `lib/feature-flags.ts`). After Neon is
-   back, copy any `inbox_items` created in Spring since the switch into
-   `kori_inbox_items`. Needs approval: a write to the live database.
+2. **Inbox back to Supabase.** Done in code by step 4: the Spring store and
+   `NEXT_PUBLIC_DATA_SOURCE_INBOX` are gone, so the inbox always reads
+   `kori_inbox_items` (deleting the variable from Vercel is just tidying).
+   Still open: after Neon is back, copy any `inbox_items` created in Spring
+   into `kori_inbox_items`. Needs approval: a write to the live database.
 3. **H-Vault through a Vercel route** — built on `feature/vault-route-neon`
    (see "Step 3 status" below). `app/api/vault/*` reads and writes the
    existing `vault_keysets` / `vault_items` in Neon `hspace` with the Neon HTTP
@@ -61,10 +62,15 @@ in `main` but **not applied**.
    `aal2`** and scopes every query by the verified user id. The browser-side
    encryption doesn't change; only the transport does. No ciphertext is moved.
    The pending independent security review must cover this route.
-4. **Cleanup.** Remove `lib/api/auth-http.ts` / `hspace-http.ts` callers,
-   `api.henheang.site` from `lib/csp.ts`, `NEXT_PUBLIC_AUTH_API_URL` /
-   `NEXT_PUBLIC_HSPACE_API_URL`; shut down the VPS; archive h-space-api as a
-   learning repo; update `AGENTS.md`, `apps/web/AGENTS.md`, `HANDOFF.md`.
+4. **Cleanup.** Code part done (`chore/remove-spring-leftovers`): removed
+   `lib/api/auth-http.ts`, `hspace-http.ts`, `lib/server/hspace-inbox.ts`,
+   the Spring inbox store and `isSpringInboxEnabled`, the inbox-reminder
+   guard, and the h-space-api origins in `lib/csp.ts` (`connect-src` no
+   longer lists `api.henheang.site` or `localhost:8080`). Owner part, still
+   open: delete `NEXT_PUBLIC_AUTH_API_URL`, `NEXT_PUBLIC_HSPACE_API_URL`
+   and `NEXT_PUBLIC_DATA_SOURCE_INBOX` from Vercel; shut down the VPS (after
+   the inbox copy, which needs Spring's data in Neon, not the VPS); archive
+   h-space-api as a learning repo; decide on rotating the legacy JWT secret.
 
 ## Step 3 status (2026-11-21)
 

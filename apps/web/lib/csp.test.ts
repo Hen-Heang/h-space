@@ -11,8 +11,6 @@ const directive = (policy: string, name: string) =>
 
 const prod = buildContentSecurityPolicy({
   supabaseUrl: "https://project.supabase.co",
-  authApiUrl: "https://api.example.com/",
-  hspaceApiUrl: "https://api.example.com",
 })
 
 describe("content security policy", () => {
@@ -21,7 +19,6 @@ describe("content security policy", () => {
       "'self'",
       "https://project.supabase.co",
       "wss://project.supabase.co",
-      "https://api.example.com",
       "https://accounts.google.com/gsi/",
       "https://api.openai.com",
       "https://api.open-meteo.com",
@@ -46,9 +43,10 @@ describe("content security policy", () => {
   it("adapts to local development and Vercel previews", () => {
     const dev = buildContentSecurityPolicy({ development: true })
     expect(directive(dev, "script-src")).toContain("'unsafe-eval'")
-    expect(directive(dev, "connect-src")).toEqual(
-      expect.arrayContaining(["http://localhost:8080", "ws:"]),
-    )
+    expect(directive(dev, "connect-src")).toContain("ws:")
+    // H-Vault and every other server call are same-origin since the Spring
+    // API was retired (2026-11-21); no API host needs a hole in the policy.
+    expect(directive(dev, "connect-src")).not.toContain("http://localhost:8080")
     expect(dev).not.toContain("upgrade-insecure-requests")
 
     const preview = buildContentSecurityPolicy({ vercelPreview: true })

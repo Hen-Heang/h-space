@@ -59,7 +59,7 @@ export function VaultUnlockDialog({
   open: boolean
   userId: string
   keyset: VaultKeysetRecord | null
-  /** Whether a reset deletes whole accounts (hspace-api) or just saved passwords (demo). */
+  /** Whether a reset deletes whole accounts (live, /api/vault) or just saved passwords (demo). */
   live: boolean
   saveKeyset: (data: VaultKeysetData, version: number | null) => Promise<VaultKeysetRecord>
   onReset: () => Promise<void>
