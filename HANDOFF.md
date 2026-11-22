@@ -26,7 +26,7 @@
 
 ## Current focus
 
-1. **Owner: Neon decision.** Either wait for the 2026-12-01 reset or upgrade the `h-space-api` Neon project now. Finance and H-Vault depend on it. **Stop the Spring container on the VPS before upgrading** — its pool kept the database awake 24/7, which used up the free quota and would keep billing on a paid plan. Don't point Finance at the old `luyra` Neon project as a stopgap: it's the frozen 2026-11-04 archive and the working copy has diverged. Once Neon is back, open `/finance` to confirm the data loads.
+1. **Owner: Neon decision.** Either wait for the 2026-12-01 reset or upgrade the `h-space-api` Neon project now. Finance and H-Vault depend on it. The Spring container's pool on the VPS kept the database awake 24/7 and used up the free quota; the owner no longer uses the VPS (2026-11-22), and Neon has shown no activity since its 2026-11-19 suspension. If anything wakes it again, look for a leftover Spring connection first. Don't point Finance at the old `luyra` Neon project as a stopgap: it's the frozen 2026-11-04 archive and the working copy has diverged. Once Neon is back, open `/finance` to confirm the data loads.
 2. **To bring H-Vault back (after Neon, needs owner approval):**
    1. Create the least-privilege `vault_app` role on Neon `hspace` with SQL as the database owner: `create role vault_app login;`, then `\password vault_app` in the owner's own `psql`, then the grants in `docs/SPRING_EXIT_PLAN.md`. Don't use Neon's "New role" button, which adds `neon_superuser`. Keep the password out of this chat, the repo and the SQL Editor's history.
    2. Check the grants and `pg_has_role('vault_app', 'neon_superuser', 'member') = false`.
@@ -37,7 +37,7 @@
 3. **Owner, Supabase dashboard (project-wide, shared with Orbit):** Google provider with the same client ID as `NEXT_PUBLIC_GOOGLE_CLIENT_ID`; `{{ .Token }}` in the Magic link template; `https://hengo.henheang.site/reset-password` (and preview origins) in the redirect URLs. Until then, only password sign-in works.
 4. **Owner:** enroll an authenticator **and a backup** under Settings → Security (production sign-in works). Then try email-code sign-in and the reset-email link by hand.
 5. **Owner, Vercel and `apps/web/.env.example` (tidying):** delete `NEXT_PUBLIC_DATA_SOURCE_INBOX`, `NEXT_PUBLIC_AUTH_API_URL` and `NEXT_PUBLIC_HSPACE_API_URL`. Nothing reads them since #130.
-6. **Owner, before 2026-12-01:** stop the Spring container on the VPS, then shut the VPS down and archive h-space-api. Decide on rotating the legacy Supabase JWT secret (affects Orbit).
+6. **Owner:** archive h-space-api, and decide on rotating the legacy Supabase JWT secret (affects Orbit). The VPS is no longer in use (owner, 2026-11-22).
 7. **MFA database rule:** apply `20261121120000_require_mfa_when_enrolled.sql` only with the owner's go-ahead, after the owner's authenticators are enrolled. Then check the app and the MCP connector with MFA on (connector tokens may be `aal1`).
 8. **Owner:** open `/finance` while Neon is still down to confirm #136 shows the "unavailable" message at once.
 9. **Carried over:** the H-Vault step-up code and route rate limits; the independent H-Vault security audit (must cover `/api/vault`) and restore drill; Finance D–F follow-ups (`apps/web/docs/finance-redesign.md` §7); MCP live checks; UI audit follow-ups.
