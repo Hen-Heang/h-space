@@ -1,4 +1,5 @@
 import "server-only"
+import { describeDatabaseError } from "@/lib/server/finance/http"
 import {
   findLatestRate,
   findRecentRate,
@@ -39,7 +40,9 @@ async function staleOrHardcodedFallback(): Promise<ExchangeRateResult> {
     if (latest)
       return { rate: latest.rate, fetchedAt: latest.fetchedAt, cached: true, fallback: true }
   } catch (error) {
-    console.error("[finance] stored exchange rate lookup failed, using hardcoded fallback", error)
+    console.error(
+      `[finance] stored exchange rate lookup failed, using hardcoded fallback: ${describeDatabaseError(error)}`,
+    )
   }
   return hardcodedFallback()
 }
@@ -95,7 +98,7 @@ export async function getUsdToKrwRate(): Promise<ExchangeRateResult> {
     if (cached)
       return { rate: cached.rate, fetchedAt: cached.fetchedAt, cached: true, fallback: false }
   } catch (error) {
-    console.error("[finance] cached exchange rate lookup failed", error)
+    console.error(`[finance] cached exchange rate lookup failed: ${describeDatabaseError(error)}`)
     return hardcodedFallback()
   }
 
@@ -114,7 +117,9 @@ export async function getUsdToKrwRate(): Promise<ExchangeRateResult> {
     await insertRate("USD", "KRW", rate, fetchedAt)
   } catch (error) {
     // The live rate is still correct; only the cache write failed.
-    console.error("[finance] failed to store fetched exchange rate", error)
+    console.error(
+      `[finance] failed to store fetched exchange rate: ${describeDatabaseError(error)}`,
+    )
   }
   return { rate, fetchedAt, cached: false, fallback: false }
 }

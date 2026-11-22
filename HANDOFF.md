@@ -21,7 +21,12 @@
   - **Refusals:** reading `users`, other tables or `audit_logs`, changing or deleting audit rows, and DDL (create, alter, truncate, create role) all get 42501.
   - **Audit log:** one row per action, counts match, and no `v2.` text in `details`.
   - **Not covered:** Neon itself (`\password`, `neon_superuser` behaviour) and whether the owner's id is still in Neon's `users` table. Containers and the test password were deleted afterwards; nothing touched Neon or production.
-- **Finance outage messaging is merged and deployed:** #132 and #134 (503 `FINANCE_DATABASE_UNAVAILABLE`, matching Neon's 402 quota error) and #136 (`8d194f4`, finance reads don't retry a 503). #132/#134 were checked in production; #136 hasn't been checked in production yet.
+- **Finance outage messaging is merged and deployed:** #132 and #134 (503 `FINANCE_DATABASE_UNAVAILABLE`, matching Neon's 402 quota error) and #136 (`8d194f4`, finance reads don't retry a 503). All three are checked in production. **#136 checked on 2026-11-22, owner signed in:** `/finance` shows "Finance overview unavailable … (503 FINANCE_DATABASE_UNAVAILABLE). Your data is safe; try again later.", and **Try again** sends exactly one `/api/finance/overview` request (503) with no retries.
+- **PR #140 open: `fix/finance-exchange-rate-log`.** The same production check showed the overview's log holding the whole `NeonDbError` (Neon's JSON body and a stack). It came from `console.error("[finance] cached exchange rate lookup failed", error)` in `lib/server/finance/services/finance-exchange-rate-service.ts`.
+  - **Fix:** a new `describeDatabaseError` in `lib/server/finance/http.ts` returns the unavailable reason, or the error's name and SQLSTATE, never the message. It's used at that line and the file's two other database logs (stored-rate fallback, cache write). The live-rate fetch log is unchanged.
+  - **Tests:** a new `finance-exchange-rate-service.test.ts` fails 3/3 on the old code and passes with the fix.
+  - **Local checks:** `pnpm test` 227 files / 2,484 tests, lint 0 errors / 5 old warnings, `tsc` clean, `pnpm build:web` passed. Not yet checked in production.
+  - **Left alone on purpose:** `apiError`'s `console.error(error)` for unexpected 500s, so query bugs stay debuggable (see carried-over item).
 - **Test account (kept by the owner):** `hspace-e2e-c011d2@example.com` in live Supabase, now empty. Its password is not in the repo. How to run the signed-in journey: the header of `apps/web/tests/e2e/signed-in-journey.e2e.ts`.
 
 ## Current focus
@@ -39,8 +44,8 @@
 5. **Owner, Vercel and `apps/web/.env.example` (tidying):** delete `NEXT_PUBLIC_DATA_SOURCE_INBOX`, `NEXT_PUBLIC_AUTH_API_URL` and `NEXT_PUBLIC_HSPACE_API_URL`. Nothing reads them since #130.
 6. **Owner:** archive h-space-api, and decide on rotating the legacy Supabase JWT secret (affects Orbit). The VPS is no longer in use (owner, 2026-11-22).
 7. **MFA database rule:** apply `20261121120000_require_mfa_when_enrolled.sql` only with the owner's go-ahead, after the owner's authenticators are enrolled. Then check the app and the MCP connector with MFA on (connector tokens may be `aal1`).
-8. **Owner:** open `/finance` while Neon is still down to confirm #136 shows the "unavailable" message at once.
-9. **Carried over:** the H-Vault step-up code and route rate limits; the independent H-Vault security audit (must cover `/api/vault`) and restore drill; Finance D–F follow-ups (`apps/web/docs/finance-redesign.md` §7); MCP live checks; UI audit follow-ups.
+8. **Owner:** review and merge #140 (`! gh pr merge 140 --merge`). After it deploys, the next `/finance` visit while Neon is down should log `[finance] cached exchange rate lookup failed: database unavailable (Neon compute quota or endpoint state)`, a single line.
+9. **Carried over:** the H-Vault step-up code and route rate limits; the independent H-Vault security audit (must cover `/api/vault`) and restore drill; Finance D–F follow-ups (`apps/web/docs/finance-redesign.md` §7); MCP live checks; UI audit follow-ups; decide whether `apiError`'s 500 path (`lib/server/finance/http.ts`) should also log only the error's name and SQLSTATE.
 
 ## Notes for the next session
 
@@ -49,4 +54,5 @@
 - `.claude/settings.json` denies `gh pr merge` and `psql` on purpose. The owner merges; `! gh pr merge <n> --merge` worked on 2026-11-22 when three browser merges didn't register. Database tests run as scripts the owner executes, or in Docker.
 - **Vault role test, to repeat on a Neon branch:** h-space-api is checked out at `~/Documents/h-space-api` for the DDL. Vitest won't apply `vi.mock("server-only")` to a test file outside `apps/web`, so the test file has to sit inside `apps/web` for the run and be deleted afterwards. Docker Desktop isn't running by default (`open -a Docker`).
 - Agents can't enter passwords. For a signed-in browser check, the owner signs in in the Claude tab group's tab.
+- **Two Chrome browsers are connected to Claude** ("Browser 1" and "Browser 2", both macOS). The owner signs in to H-Space in **Browser 2**. The session started on Browser 1, which showed only the login page, so pick Browser 2 with `select_browser` before a signed-in check.
 - Merged branches still exist locally and on origin: `fix/finance-db-unavailable-503`, `docs/handoff-finance-503`, `fix/finance-neon-402-quota`, `fix/finance-skip-retry-503` (delete only with the owner's OK). `test/e2e-integration` is obsolete.

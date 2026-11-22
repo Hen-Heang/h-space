@@ -2,7 +2,11 @@ import { NeonDbError } from "@neondatabase/serverless"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { ZodError } from "zod"
 import { AppError } from "@/lib/server/finance/errors"
-import { apiError, financeDatabaseUnavailableReason } from "@/lib/server/finance/http"
+import {
+  apiError,
+  describeDatabaseError,
+  financeDatabaseUnavailableReason,
+} from "@/lib/server/finance/http"
 
 function neonError(message: string, code?: string): NeonDbError {
   const error = new NeonDbError(message)
@@ -105,5 +109,26 @@ describe("apiError", () => {
 
     const zodError = apiError(new ZodError([]))
     expect(zodError.status).toBe(422)
+  })
+})
+
+describe("describeDatabaseError", () => {
+  it("names an unavailable database by its reason", () => {
+    const quota = neonError(
+      'Server error (HTTP status 402): {"message":"Your account or project has exceeded the quota. Upgrade your plan to increase limits."}',
+    )
+    expect(describeDatabaseError(quota)).toBe(
+      "database unavailable (Neon compute quota or endpoint state)",
+    )
+  })
+
+  it("gives only the name and SQLSTATE of any other error, never its message", () => {
+    const leak = neonError(
+      "duplicate key value violates unique constraint: (USD, KRW, 1371.5)",
+      "23505",
+    )
+    expect(describeDatabaseError(leak)).toBe("NeonDbError (23505)")
+    expect(describeDatabaseError(new TypeError("row 1371.5"))).toBe("TypeError")
+    expect(describeDatabaseError("plain string")).toBe("string")
   })
 })
