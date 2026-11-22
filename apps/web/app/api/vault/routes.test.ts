@@ -1,3 +1,4 @@
+import { NeonDbError } from "@neondatabase/serverless"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("server-only", () => ({}))
@@ -175,6 +176,25 @@ describe("errors", () => {
     )
     expect(res.status).toBe(409)
     expect((await res.json()).error.message).toContain("isn't set up for H-Vault")
+  })
+
+  it("answers 503 when Neon refuses for a used-up quota, without logging its message", async () => {
+    // The exact wording Neon sent finance in production on 2026-11-21.
+    const quota = new NeonDbError(
+      'Server error (HTTP status 402): {"message":"Your account or project has exceeded the quota. Upgrade your plan to increase limits."}',
+    )
+    service.getKeyset.mockRejectedValue(quota)
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    const res = await getKeyset(req("/keyset"))
+
+    expect(res.status).toBe(503)
+    expect((await res.json()).error).toEqual({
+      code: "VAULT_DATABASE_UNAVAILABLE",
+      message: "H-Vault is not available right now.",
+    })
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("[vault] database unavailable"))
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("Upgrade your plan")
   })
 
   it("hides database errors and doesn't log their message", async () => {

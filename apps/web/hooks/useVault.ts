@@ -17,13 +17,30 @@ import type { VaultKeysetData } from "@/lib/vault-crypto"
 import { getVaultKey, isVaultUnlocked, lockVault, subscribeVaultSession } from "@/lib/vault-session"
 
 /**
- * Retry only failures that might go away: a network error or a 5xx, twice.
- * A refusal — MFA required, signed out, locked, not found, conflict — gets the
- * same answer every time, and retrying it would leave the user looking at an
- * empty vault for seconds before the real message appears.
+ * True when the server says H-Vault can't run right now (503): its database
+ * isn't configured or can't be reached. The saved accounts are untouched.
+ */
+export function isVaultUnavailable(error: unknown): boolean {
+  return error instanceof VaultHttpError && error.httpStatus === 503
+}
+
+/** What the page says when a vault read fails (empty when there's no error). */
+function vaultLoadError(isError: boolean, error: unknown, fallback: string): string {
+  if (!isError || error instanceof VaultMfaRequiredError) return ""
+  return isVaultUnavailable(error) ? "H-Vault is unavailable right now." : fallback
+}
+
+/**
+ * Retry only failures that might go away soon: a network error or a 5xx,
+ * twice. A refusal — MFA required, signed out, locked, not found, conflict —
+ * gets the same answer every time, and so does a 503 (the vault's database is
+ * down or not set up, which lasts far longer than a retry); retrying would
+ * leave the user looking at an empty vault for seconds before the real
+ * message appears. The error state's Try again button still refetches.
  */
 export function shouldRetryVaultQuery(failureCount: number, error: unknown): boolean {
   if (error instanceof VaultMfaRequiredError || error instanceof VaultLockedError) return false
+  if (isVaultUnavailable(error)) return false
   if (error instanceof VaultHttpError && error.httpStatus >= 400 && error.httpStatus < 500) {
     return false
   }
@@ -50,7 +67,7 @@ export function useVaultUnlocked(): boolean {
 
 export function useVaultKeyset() {
   const userId = getUserId()
-  const { data, isPending, isError, error, refetch } = useQuery({
+  const { data, isPending, isError, error, refetch, isRefetching } = useQuery({
     queryKey: vaultKeysetQueryKey(userId),
     queryFn: vaultApi.getKeyset,
     enabled: userId != null,
@@ -60,8 +77,10 @@ export function useVaultKeyset() {
     keyset: data ?? null,
     loading: userId != null && isPending,
     mfaRequired: error instanceof VaultMfaRequiredError,
-    error: isError && !(error instanceof VaultMfaRequiredError) ? "Couldn't load your vault." : "",
+    unavailable: isVaultUnavailable(error),
+    error: vaultLoadError(isError, error, "Couldn't load your vault."),
     retry: refetch,
+    retrying: isRefetching,
   }
 }
 
@@ -93,8 +112,8 @@ export function useVaultAccounts() {
     /** True while an encrypted vault is locked: there is nothing to show yet. */
     locked: needsUnlock && !unlocked,
     mfaRequired: error instanceof VaultMfaRequiredError,
-    error:
-      isError && !(error instanceof VaultMfaRequiredError) ? "Couldn't load your accounts." : "",
+    unavailable: isVaultUnavailable(error),
+    error: vaultLoadError(isError, error, "Couldn't load your accounts."),
     retry: refetch,
     retrying: isRefetching,
     isLive: vaultApi.isLive(),

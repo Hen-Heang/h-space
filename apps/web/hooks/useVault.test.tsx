@@ -38,6 +38,7 @@ const {
   useVaultMutations,
   vaultAccountsQueryKey,
   currentVaultKey,
+  isVaultUnavailable,
   shouldRetryVaultQuery,
 } = await import("./useVault")
 const { lockVault, setVaultKey } = await import("@/lib/vault-session")
@@ -216,11 +217,39 @@ describe("shouldRetryVaultQuery", () => {
     }
   })
 
+  it("never retries a 503: the vault's database is down or not set up", () => {
+    const unavailable = new VaultHttpError("H-Vault is not available right now.", 503)
+    expect(isVaultUnavailable(unavailable)).toBe(true)
+    expect(shouldRetryVaultQuery(0, unavailable)).toBe(false)
+    expect(isVaultUnavailable(new VaultHttpError("boom", 500))).toBe(false)
+    expect(isVaultUnavailable(new Error("network down"))).toBe(false)
+  })
+
   it("retries network and server failures twice", () => {
     for (const error of [new VaultHttpError("offline", 0), new VaultHttpError("boom", 500)]) {
       expect(shouldRetryVaultQuery(0, error)).toBe(true)
       expect(shouldRetryVaultQuery(1, error)).toBe(true)
       expect(shouldRetryVaultQuery(2, error)).toBe(false)
     }
+  })
+})
+
+describe("useVaultKeyset when H-Vault is unavailable", () => {
+  it("says so after one request and marks it unavailable", async () => {
+    api.getKeyset.mockRejectedValue(
+      new VaultHttpError("H-Vault is not available right now.", 503, "VAULT_NOT_CONFIGURED"),
+    )
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retryDelay: 0 } },
+    })
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(() => useVaultKeyset(), { wrapper })
+    await waitFor(() => expect(result.current.error).toBe("H-Vault is unavailable right now."))
+    expect(result.current.unavailable).toBe(true)
+    expect(result.current.mfaRequired).toBe(false)
+    expect(api.getKeyset).toHaveBeenCalledTimes(1)
+    api.getKeyset.mockReset()
   })
 })
