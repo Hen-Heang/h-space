@@ -39,6 +39,19 @@ export function financeDatabaseUnavailableReason(error: unknown): string | null 
   return null
 }
 
+/**
+ * One line about a database error for the server log: why the database is
+ * unavailable, or else the error's name and SQLSTATE. Never the message or
+ * stack — a database error can quote the row it was writing.
+ */
+export function describeDatabaseError(error: unknown): string {
+  const unavailable = financeDatabaseUnavailableReason(error)
+  if (unavailable) return `database unavailable (${unavailable})`
+  const name = error instanceof Error ? error.name : typeof error
+  const code = (error as { code?: unknown } | null)?.code
+  return typeof code === "string" && code !== "" ? `${name} (${code})` : name
+}
+
 export function apiError(error: unknown) {
   if (error instanceof AppError) {
     return NextResponse.json(
