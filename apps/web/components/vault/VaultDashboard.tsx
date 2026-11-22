@@ -13,6 +13,7 @@ import {
   LockKeyhole,
   ShieldAlert,
   Plus,
+  CloudOff,
   RefreshCw,
   SearchX,
   Star,
@@ -146,7 +147,7 @@ function AccountCollection({
 
 export function VaultDashboard() {
   const userId = getUserId()
-  const { accounts, loading, locked, error, retry, retrying, isLive, mfaRequired } =
+  const { accounts, loading, locked, error, unavailable, retry, retrying, isLive, mfaRequired } =
     useVaultAccounts()
   const vaultKeyset = useVaultKeyset()
   const { create, update, setFavorite, remove, createMany, saveKeyset, reset } = useVaultMutations()
@@ -310,6 +311,30 @@ export function VaultDashboard() {
     </Button>
   )
 
+  const renderLoadError = (
+    title: string,
+    isUnavailable: boolean,
+    onRetry: () => void,
+    isRetrying: boolean,
+  ) => (
+    <VaultEmptyState
+      tone="error"
+      icon={isUnavailable ? CloudOff : WifiOff}
+      title={title}
+      description={
+        isUnavailable
+          ? "Your saved accounts are safe and still encrypted. Nothing was changed. Try again later."
+          : "Check your connection and try again. Nothing was changed."
+      }
+      actions={
+        <Button variant="outline" onClick={onRetry} disabled={isRetrying} className="min-h-11">
+          <RefreshCw className={cn(isRetrying && "animate-spin")} aria-hidden="true" />
+          Try again
+        </Button>
+      }
+    />
+  )
+
   const renderResults = () => {
     if (needsMfa) {
       return (
@@ -324,6 +349,17 @@ export function VaultDashboard() {
             </Button>
           }
         />
+      )
+    }
+
+    // The keyset is needed to unlock, so a failure to load it is shown here,
+    // not behind a disabled Unlock button that reads like a wrong password.
+    if (vaultKeyset.error) {
+      return renderLoadError(
+        vaultKeyset.error,
+        vaultKeyset.unavailable,
+        () => vaultKeyset.retry(),
+        vaultKeyset.retrying,
       )
     }
 
@@ -376,22 +412,7 @@ export function VaultDashboard() {
       )
     }
 
-    if (error) {
-      return (
-        <VaultEmptyState
-          tone="error"
-          icon={WifiOff}
-          title={error}
-          description="Check your connection and try again. Nothing was changed."
-          actions={
-            <Button variant="outline" onClick={() => retry()} disabled={retrying}>
-              <RefreshCw className={cn(retrying && "animate-spin")} aria-hidden="true" />
-              Try again
-            </Button>
-          }
-        />
-      )
-    }
+    if (error) return renderLoadError(error, unavailable, () => retry(), retrying)
 
     if (accounts.length === 0) {
       return (

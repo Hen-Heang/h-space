@@ -2,6 +2,8 @@ import "server-only"
 import { NextResponse } from "next/server"
 import { ZodError } from "zod"
 
+import { financeDatabaseUnavailableReason } from "@/lib/server/finance/http"
+
 // Responses for app/api/vault/*. Success is the bare JSON value; failure is
 // { error: { code, message } }. Every response is no-store: vault rows are
 // ciphertext, but they still shouldn't sit in any cache.
@@ -14,6 +16,7 @@ export type VaultErrorCode =
   | "VALIDATION_ERROR"
   | "PAYLOAD_TOO_LARGE"
   | "VAULT_NOT_CONFIGURED"
+  | "VAULT_DATABASE_UNAVAILABLE"
   | "INTERNAL_ERROR"
 
 export class VaultError extends Error {
@@ -41,6 +44,8 @@ export const vaultErrors = {
   tooLarge: () => new VaultError("PAYLOAD_TOO_LARGE", "The request is too large.", 413),
   notConfigured: () =>
     new VaultError("VAULT_NOT_CONFIGURED", "H-Vault is not available right now.", 503),
+  databaseUnavailable: () =>
+    new VaultError("VAULT_DATABASE_UNAVAILABLE", "H-Vault is not available right now.", 503),
 }
 
 const NO_STORE = { "Cache-Control": "no-store" }
@@ -65,6 +70,14 @@ export function vaultFail(error: unknown) {
       },
       { status: 400, headers: NO_STORE },
     )
+  }
+  // The vault's Neon database can't be reached right now (used-up quota,
+  // suspended compute, network): 503, so the page can say "unavailable"
+  // rather than a generic 500. The reason never quotes the error message.
+  const unavailable = financeDatabaseUnavailableReason(error)
+  if (unavailable) {
+    console.warn(`[vault] database unavailable: ${unavailable}`)
+    return vaultFail(vaultErrors.databaseUnavailable())
   }
   const sqlState = (error as { code?: unknown } | null)?.code
   // foreign_key_violation: vault rows reference the Spring-era `users` table

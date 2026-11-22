@@ -393,6 +393,27 @@ describe("H-Vault synced through /api/vault", () => {
     expect(sent.some((p) => p.endsWith("/items"))).toBe(false)
   })
 
+  it("says H-Vault is unavailable instead of asking to unlock when the server can't serve it", async () => {
+    live.on = true
+    const sent: string[] = []
+    live.handler = (path: string) => {
+      sent.push(path)
+      throw new VaultHttpError("H-Vault is not available right now.", 503, "VAULT_NOT_CONFIGURED")
+    }
+    renderDashboard()
+
+    expect(
+      await screen.findByRole("heading", { name: "H-Vault is unavailable right now." }),
+    ).toBeTruthy()
+    expect(screen.getByText(/safe and still encrypted/)).toBeTruthy()
+    expect(screen.queryByRole("heading", { name: "Your vault is locked" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Unlock vault" })).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }))
+    await waitFor(() => expect(sent.filter((p) => p.endsWith("/keyset"))).toHaveLength(2))
+    expect(sent.some((p) => p.endsWith("/items"))).toBe(false)
+  })
+
   it("asks to turn on two-step verification when the account has no MFA", async () => {
     live.on = true
     live.handler = () => {
