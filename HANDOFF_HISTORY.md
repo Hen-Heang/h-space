@@ -237,6 +237,56 @@
 4. **UI audit follow-ups (unchanged):** History "★" filters never match; `UnitEditor` `FieldLabel` is a `<p>`; sign-in tiles one colour per app; `public/app-process.png` artwork; Phase 6 sweep; remaining restyles (Chat leftovers, Interview, Roadmap, Recovery, vocab components).
 5. **Carried over:** native-speaker pass on `lib/korean-phrasebook/work-seed.ts`; Planner slices 3–10; second-brain T2–T7; long-term MCP auth via h-space-api (#36); generic-error treatment for `chat/stream`, `goals/coach`, `memory/ask`, `recovery-coach`; independent H-Vault security audit and restore drill.
 
+## 2026-11-09 - MCP sign-in live in production handoff snapshot
+
+# HANDOFF
+
+## Snapshot
+
+- **Updated:** 2026-11-09.
+- **Checkout:** `main` at `882fa20` (PR #111 merged). The owner's main checkout has unrelated uncommitted work that isn't ours: a modified `apps/web/lib/api/finance-client.ts`, plus untracked `false`, `luyra-web/` and `v.title`. Leave them alone.
+- **MCP sign-in is live in production (verified 2026-11-09 ~04:58 UTC).** Claude Code connects to `https://hengo.henheang.site/mcp` and the tools return the signed-in user's own data. Steps the owner took (times UTC):
+  - Merged **#111** (consent page via Supabase OAuth REST + bridge token; return-after-sign-in). Deployed to production at 04:41.
+  - Registered Claude Code as a public OAuth client: `client_id` `0d636b5e-03d0-4d6b-8e69-244f03cee0aa`, local callback port `8765` (user-level `hspace` entry in `~/.claude.json`).
+  - Applied the access-token hook to the live Supabase project at 04:34 (`20261109043447 mcp_access_token_hook`; repo file `apps/web/supabase/migrations/20261109120000_mcp_access_token_hook.sql` still has the placeholders). The deployed `public.kori_mcp_access_token_hook` sets `aud = ["https://hengo.henheang.site/mcp", "authenticated"]` only for that `client_id`. `supabase_auth_admin` has execute on it. The owner enabled it as the Customize Access Token hook.
+  - Set Vercel env at 04:38–04:41: `MCP_RESOURCE_URL`, `SUPABASE_OAUTH_ISSUER`, `MCP_ALLOWED_CLIENT_IDS` (production + preview), `MCP_WRITE_ENABLED` (production only).
+- **The three open questions from #111 are settled:**
+  - GoTrue accepts the bridge token on the consent endpoints.
+  - The hook receives `client_id` for OAuth-server tokens.
+  - The data API accepts the array `aud` (RLS-scoped reads work).
+- **Why the first attempts failed.** At 04:22 production logged `[mcp] refusing request: MCP_ALLOWED_CLIENT_IDS is not set`. Then Claude Code reported "Got new credentials, but hspace rejected them on reconnect". That token was minted before the hook and env were all in place. A fresh `/mcp` → re-authenticate fixed it; no code change was needed. Note: `lib/mcp/auth.ts` deliberately doesn't log why a token was rejected. To diagnose, decode the token's `aud` / `client_id` / `iss` locally.
+- **Smoke test (read-only):**
+  - `get_hengo_server_info`: `hengo` v0.2.0, `ok`.
+  - `get_today_overview`: 0 tasks today, 3 active goals.
+  - `list_knowledge_projects`: `[]`.
+  - No write tool was called.
+- **Signing:** the Supabase JWKS has one ES256 key, which matches the pinned algorithms (`ES256`/`RS256`).
+- **GitHub Actions is still down (account billing lock).** Unchanged from 2026-11-09 history entry: run `pnpm lint` / `pnpm test` / `pnpm build` locally before merging and treat red Web CI as "not run".
+- **Worktrees:** `../h-space-mcp-consent-fix` (detached at `f8c3264`) wasn't created by the agent; ask before removing it. Empty leftover folders `../h-space-consent` and `../h-space-consent2` contain only `node_modules` links. Delete them in File Explorer, not with `rm -rf`.
+
+## Current focus
+
+1. **MCP follow-ups (owner decisions):**
+   1. **Write tools are ON in production.** The server's instructions say "Write tools are on", so `MCP_WRITE_ENABLED=true`. The plan was to start it at `false`. Either keep it on, or set it to `false` and redeploy.
+   2. **`MCP_KNOWLEDGE_PROJECT_IDS` is not set** on Vercel, so no Notes project is visible to the project-knowledge tools. Add the approved project ids, then redeploy.
+   3. Sync the repo copy of the hook migration with what was applied (fill the placeholders, or note that the live version differs), so `supabase db diff` / a fresh environment doesn't diverge.
+   4. Register ChatGPT as a second client. Its id must go in **both** the hook's `approved_clients` (a live SQL change; needs approval) and `MCP_ALLOWED_CLIENT_IDS`.
+2. **Connected apps** (Settings → Security): list and revoke connector grants via Supabase `GET`/`DELETE /user/oauth/grants` (same REST-plus-bridge pattern). Makes the consent copy fully true and gives a kill switch.
+3. **Owner:** follow up on the GitHub Support billing-lock ticket; re-run CI runs `42546995954` (#111), `42546156739` (#110) and `42546379616` (`main`) once it's lifted.
+4. **UI audit follow-ups (unchanged):**
+   - History "★" filters never match (`toCorrectionReview` doesn't map `rating`).
+   - `UnitEditor` `FieldLabel` is a `<p>`.
+   - Sign-in app tiles use one colour per app.
+   - `public/app-process.png` needs new artwork.
+   - Phase 6 sweep and keyboard pass.
+   - Remaining restyles: Chat leftovers, Interview, Roadmap, Recovery; vocab `SentenceChallenge`/`VocabCard`/`VocabDeck`/`DeckBuilder`.
+5. **Carried over:**
+   - Native-speaker pass on `lib/korean-phrasebook/work-seed.ts`.
+   - Planner slices 3–10; Finance redesign phases D–F; second-brain T2–T7.
+   - Long-term MCP auth via h-space-api (#36) to replace the bridge-tied consent before the bridge is removed.
+   - Generic-error treatment for `chat/stream`, `goals/coach`, `memory/ask`, `recovery-coach`.
+   - Independent H-Vault security audit and restore drill.
+
 ## 2026-11-09 - MCP consent spike (#111) and #106-#110 handoff snapshot
 
 # HANDOFF
