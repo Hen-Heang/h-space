@@ -6,8 +6,49 @@ import type { HabitCheckIn } from "./types"
 // plain calendar-date arithmetic.
 const DAY_MS = 24 * 60 * 60 * 1000
 
+/** Local YYYY-MM-DD for `d` — the format of HabitCheckIn.date. */
 function toLocalDateString(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
+
+/** True when `date` (YYYY-MM-DD) has a completed check-in. */
+export function isDoneOn(checkins: HabitCheckIn[], date: string): boolean {
+  return checkins.some((c) => c.date === date && c.completed)
+}
+
+/**
+ * `checkins` with `date` set to done or not done — the optimistic cache value
+ * for a toggle. Mirrors the API: checking in upserts one completed row per
+ * (habit, date); un-checking deletes that date's row.
+ */
+export function withCheckin(
+  checkins: HabitCheckIn[],
+  habitId: string,
+  date: string,
+  done: boolean,
+  now: Date = new Date(),
+): HabitCheckIn[] {
+  const rest = checkins.filter((c) => c.date !== date)
+  if (!done) return rest
+  const optimistic: HabitCheckIn = {
+    id: `optimistic-${habitId}-${date}`,
+    habitId,
+    date,
+    completed: true,
+    createdAt: now.toISOString(),
+  }
+  return [optimistic, ...rest]
+}
+
+/** The last `count` local dates ending today, oldest first. */
+export function lastNDates(count: number, now: Date = new Date()): string[] {
+  const dates: string[] = []
+  for (let offset = count - 1; offset >= 0; offset--) {
+    const day = new Date(now)
+    day.setDate(day.getDate() - offset)
+    dates.push(toLocalDateString(day))
+  }
+  return dates
 }
 
 function daysBetween(fromDate: string, toDate: string): number {

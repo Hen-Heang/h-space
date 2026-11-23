@@ -12,8 +12,49 @@ import { Button } from "@/components/ui/button"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { containerVariants, itemVariants } from "@/lib/motion"
-import { useHabits } from "@/hooks/useHabits"
+import { useHabits, useHabitsDoneToday } from "@/hooks/useHabits"
 import { useSessionTimer } from "@/hooks/useSessionTimer"
+
+function TodayProgress({
+  done,
+  total,
+  loading,
+}: {
+  done: number
+  total: number
+  loading: boolean
+}) {
+  if (loading) return <Skeleton className="h-[3.75rem] w-full rounded-lg" />
+  const allDone = total > 0 && done === total
+  const percent = total === 0 ? 0 : Math.round((done / total) * 100)
+
+  return (
+    <div className="rounded-lg border border-border bg-card px-4 py-3 shadow-sm">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <p className="flex items-center gap-1.5 font-medium text-foreground">
+          {allDone && <CheckCircle2 size={16} className="text-emerald-500" aria-hidden="true" />}
+          {allDone ? "All done for today" : "Today"}
+        </p>
+        <p className="tabular-nums text-muted-foreground">
+          {done} of {total} done
+        </p>
+      </div>
+      <div
+        role="progressbar"
+        aria-label="Habits done today"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={done}
+        className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
+      >
+        <div
+          className="h-full rounded-full bg-emerald-500 transition-[width] duration-300 motion-reduce:transition-none"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
+  )
+}
 
 function HabitsLoadingState() {
   return (
@@ -28,6 +69,7 @@ function HabitsLoadingState() {
 export default function HabitsPage() {
   useSessionTimer("habits")
   const { activeHabits, loading, error, addHabit } = useHabits()
+  const today = useHabitsDoneToday(activeHabits)
   const [showForm, setShowForm] = useState(false)
 
   if (loading) return <HabitsLoadingState />
@@ -53,7 +95,7 @@ export default function HabitsPage() {
         <div>
           <h2 className="text-lg font-semibold tracking-tight text-foreground">Your habits</h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Keep only a few habits you actually want to repeat. Tap the circle to check in today.
+            Tap the circle to check in today. Missed a day? Tap it in the week row.
           </p>
         </div>
         {activeHabits.length > 0 && !showForm && (
@@ -69,14 +111,9 @@ export default function HabitsPage() {
         )}
       </motion.div>
 
-      {activeHabits.length > 0 && (
-        <motion.div
-          variants={itemVariants}
-          className="flex items-center gap-2 rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-3 py-2.5 text-sm text-muted-foreground"
-        >
-          <CheckCircle2 size={16} className="shrink-0 text-emerald-500" />
-          {activeHabits.length} active habit{activeHabits.length === 1 ? "" : "s"}. Finish today
-          first; manage details only when needed.
+      {activeHabits.length > 0 && !showForm && (
+        <motion.div variants={itemVariants}>
+          <TodayProgress done={today.done} total={today.total} loading={today.loading} />
         </motion.div>
       )}
 

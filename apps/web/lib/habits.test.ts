@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest"
-import { consistencyPercent, currentStreak, daysActive, longestStreak } from "./habits"
+import {
+  consistencyPercent,
+  currentStreak,
+  daysActive,
+  isDoneOn,
+  lastNDates,
+  longestStreak,
+  withCheckin,
+} from "./habits"
 import type { HabitCheckIn } from "./types"
 
 function checkin(date: string, completed = true): HabitCheckIn {
@@ -73,5 +81,56 @@ describe("daysActive", () => {
 
   it("counts elapsed calendar days", () => {
     expect(daysActive("2026-07-01T09:00:00.000Z", new Date("2026-07-15T18:00:00"))).toBe(14)
+  })
+})
+
+describe("isDoneOn", () => {
+  it("is true only for a completed row on that date", () => {
+    const checkins = [checkin("2026-07-14"), checkin("2026-07-15", false)]
+    expect(isDoneOn(checkins, "2026-07-14")).toBe(true)
+    expect(isDoneOn(checkins, "2026-07-15")).toBe(false)
+    expect(isDoneOn(checkins, "2026-07-16")).toBe(false)
+  })
+})
+
+describe("withCheckin", () => {
+  const now = new Date("2026-07-15T12:00:00")
+
+  it("adds one completed row when checking in", () => {
+    const next = withCheckin([checkin("2026-07-14")], "h1", "2026-07-15", true, now)
+    expect(isDoneOn(next, "2026-07-15")).toBe(true)
+    expect(next.filter((c) => c.date === "2026-07-15")).toHaveLength(1)
+    expect(isDoneOn(next, "2026-07-14")).toBe(true)
+  })
+
+  it("replaces an incomplete row instead of adding a second one", () => {
+    const next = withCheckin([checkin("2026-07-15", false)], "h1", "2026-07-15", true, now)
+    expect(next).toHaveLength(1)
+    expect(next[0].completed).toBe(true)
+  })
+
+  it("removes only that date's row when un-checking", () => {
+    const next = withCheckin(
+      [checkin("2026-07-14"), checkin("2026-07-15")],
+      "h1",
+      "2026-07-15",
+      false,
+      now,
+    )
+    expect(next.map((c) => c.date)).toEqual(["2026-07-14"])
+  })
+})
+
+describe("lastNDates", () => {
+  it("lists the last 7 local dates ending today, oldest first", () => {
+    expect(lastNDates(7, new Date("2026-03-03T09:00:00"))).toEqual([
+      "2026-02-25",
+      "2026-02-26",
+      "2026-02-27",
+      "2026-02-28",
+      "2026-03-01",
+      "2026-03-02",
+      "2026-03-03",
+    ])
   })
 })
