@@ -68,8 +68,8 @@ export default function HabitDetailPage() {
 
   const handleToggle = async (date: string) => {
     const wasCompleted = checkins.some((c) => c.date === date && c.completed)
-    await toggleCheckin(date)
-    if (!wasCompleted && date === toCheckinDate()) setCelebrate(true)
+    const saved = await toggleCheckin(date)
+    if (saved && !wasCompleted && date === toCheckinDate()) setCelebrate(true)
   }
 
   return (
