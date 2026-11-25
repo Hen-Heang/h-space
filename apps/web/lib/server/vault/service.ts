@@ -76,6 +76,16 @@ function toItem(row: Row): ItemRecord {
 
 const CHANGED_ELSEWHERE = "The vault was changed on another device. Reload and try again."
 
+/**
+ * Keyset replacements plus resets allowed per user per rolling hour. Counted
+ * from this user's own audit_logs rows inside the same statement as the
+ * write, so Vercel's separate function instances share the limit with no
+ * extra store. Two requests at the very same instant could both pass the
+ * count; that's an accepted edge for a cap this size. Needs `vault_app` to
+ * read audit_logs (user_id, event_type, created_at) — docs/SPRING_EXIT_PLAN.md.
+ */
+export const MAX_DESTRUCTIVE_PER_HOUR = 5
+
 export async function getKeyset(userId: string): Promise<KeysetRecord> {
   const sql = vaultSql()
   const rows = (await sql`
@@ -120,7 +130,8 @@ export async function saveKeyset(userId: string, input: KeysetInput): Promise<Ke
     throw vaultErrors.conflict("Reset the vault before creating a new one.")
   }
 
-  // Replace (change master password, recovery): only from the version read.
+  // Replace (change master password, recovery): only from the version read,
+  // and only while under the hourly cap.
   const rows = (await sql`
     with updated as (
       update vault_keysets
@@ -132,6 +143,10 @@ export async function saveKeyset(userId: string, input: KeysetInput): Promise<Ke
           updated_at = now(),
           version = version + 1
       where user_id = ${userId}::uuid and version = ${input.version}::bigint
+        and (select count(*) from audit_logs
+             where user_id = ${userId}::uuid
+               and event_type in ('VAULT_KEYSET_CHANGED', 'VAULT_RESET')
+               and created_at > now() - interval '1 hour') < ${MAX_DESTRUCTIVE_PER_HOUR}
       returning *
     ), audit as (
       insert into audit_logs (id, event_type, user_id, created_at)
@@ -142,29 +157,50 @@ export async function saveKeyset(userId: string, input: KeysetInput): Promise<Ke
   if (rows.length > 0) return toKeyset(rows[0])
 
   const state = (await sql`
-    select exists (select 1 from vault_keysets where user_id = ${userId}::uuid) as has_keyset
+    select exists (select 1 from vault_keysets where user_id = ${userId}::uuid) as has_keyset,
+           (select count(*) from audit_logs
+            where user_id = ${userId}::uuid
+              and event_type in ('VAULT_KEYSET_CHANGED', 'VAULT_RESET')
+              and created_at > now() - interval '1 hour')::int as recent
   `) as Row[]
   if (!state[0]?.has_keyset) {
     throw vaultErrors.conflict("Vault isn't set up yet; create it without a version.")
   }
+  if (Number(state[0]?.recent ?? 0) >= MAX_DESTRUCTIVE_PER_HOUR) throw vaultErrors.rateLimited()
   throw vaultErrors.conflict(CHANGED_ELSEWHERE)
 }
 
-/** Deletes every item and the keyset in one statement; returns how many items went. */
+/**
+ * Deletes every item and the keyset in one statement; returns how many items
+ * went. Under the hourly cap only — otherwise nothing is deleted or audited
+ * and it throws 429.
+ */
 export async function resetVault(userId: string): Promise<number> {
   const sql = vaultSql()
   const rows = (await sql`
-    with deleted_items as (
-      delete from vault_items where user_id = ${userId}::uuid returning id
+    with allowed as (
+      select (select count(*) from audit_logs
+              where user_id = ${userId}::uuid
+                and event_type in ('VAULT_KEYSET_CHANGED', 'VAULT_RESET')
+                and created_at > now() - interval '1 hour') < ${MAX_DESTRUCTIVE_PER_HOUR} as ok
+    ), deleted_items as (
+      delete from vault_items
+      where user_id = ${userId}::uuid and (select ok from allowed)
+      returning id
     ), deleted_keyset as (
-      delete from vault_keysets where user_id = ${userId}::uuid returning user_id
+      delete from vault_keysets
+      where user_id = ${userId}::uuid and (select ok from allowed)
+      returning user_id
     ), audit as (
       insert into audit_logs (id, event_type, user_id, details, created_at)
       select gen_random_uuid(), 'VAULT_RESET', ${userId}::uuid,
              'items=' || (select count(*) from deleted_items), now()
+      where (select ok from allowed)
     )
-    select (select count(*) from deleted_items)::int as items
+    select (select ok from allowed) as allowed,
+           (select count(*) from deleted_items)::int as items
   `) as Row[]
+  if (rows[0]?.allowed === false) throw vaultErrors.rateLimited()
   return Number(rows[0]?.items ?? 0)
 }
 

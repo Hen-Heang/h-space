@@ -91,6 +91,17 @@ export const mfaApi = {
     if (error) throw error
   },
 
+  /**
+   * Checks a fresh code on this session (step-up). Supabase records the time
+   * in the access token's `amr`, which is what H-Vault's reset and keyset
+   * routes check (lib/server/vault/auth.ts, requireRecentMfa).
+   */
+  reverify: async (factorId: string, code: string) => {
+    assertSupabaseConfigured()
+    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code: code.trim() })
+    if (error) throw error
+  },
+
   // Supabase only lets an aal2 session remove a verified factor, so a code is
   // verified first. It may come from any linked authenticator (`verifyWith`),
   // so a lost phone can be removed with the backup one. Removing the last

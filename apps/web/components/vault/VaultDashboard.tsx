@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { motion } from "motion/react"
 import {
@@ -26,6 +26,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getApiErrorMessage, newVaultItemId, resetVaultDemoData } from "@/lib/api"
+import { setVaultStepUpPrompt } from "@/lib/api/vault-http"
 import { getUserId } from "@/lib/auth-store"
 import {
   currentVaultKey,
@@ -68,6 +69,7 @@ import { VaultDeleteDialog } from "./VaultDeleteDialog"
 import { VaultEmptyState } from "./VaultEmptyState"
 import { VaultToolbar } from "./VaultToolbar"
 import { VaultImportDialog } from "./VaultImportDialog"
+import { VaultStepUpDialog } from "./VaultStepUpDialog"
 import { VaultUnlockDialog } from "./VaultUnlockDialog"
 
 type FormState = { mode: "create" } | { mode: "edit"; account: VaultAccount } | null
@@ -167,6 +169,28 @@ export function VaultDashboard() {
     reject: (reason: Error) => void
   } | null>(null)
   const unlocked = useVaultUnlocked()
+
+  // Step-up prompt for reset and keyset replacement: vault-http asks it when a
+  // route answers VAULT_STEP_UP_REQUIRED, then retries once.
+  const [stepUpOpen, setStepUpOpen] = useState(false)
+  const stepUpResult = useRef<((verified: boolean) => void) | null>(null)
+  useEffect(
+    () =>
+      setVaultStepUpPrompt(
+        () =>
+          new Promise<boolean>((resolve) => {
+            stepUpResult.current?.(false) // an older prompt still open counts as cancelled
+            stepUpResult.current = resolve
+            setStepUpOpen(true)
+          }),
+      ),
+    [],
+  )
+  const finishStepUp = (verified: boolean) => {
+    setStepUpOpen(false)
+    stepUpResult.current?.(verified)
+    stepUpResult.current = null
+  }
 
   const stats = useMemo(() => vaultStats(accounts), [accounts])
   const categoryCounts = useMemo(() => countByCategory(accounts), [accounts])
@@ -738,6 +762,8 @@ export function VaultDashboard() {
         onCancel={() => setPendingDelete(null)}
         onConfirm={handleConfirmDelete}
       />
+
+      <VaultStepUpDialog open={stepUpOpen} onDone={finishStepUp} />
     </motion.div>
   )
 }
