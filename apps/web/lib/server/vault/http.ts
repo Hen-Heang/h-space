@@ -11,6 +11,8 @@ import { financeDatabaseUnavailableReason } from "@/lib/server/finance/http"
 export type VaultErrorCode =
   | "UNAUTHORIZED"
   | "VAULT_MFA_REQUIRED"
+  | "VAULT_STEP_UP_REQUIRED"
+  | "VAULT_RATE_LIMITED"
   | "NOT_FOUND"
   | "CONFLICT"
   | "VALIDATION_ERROR"
@@ -37,6 +39,20 @@ export const vaultErrors = {
       "VAULT_MFA_REQUIRED",
       "Turn on two-step verification with an authenticator app, then sign in with your code to use H-Vault.",
       403,
+    ),
+  // 403, never 401: the web app treats a 401 as signed out. The browser
+  // answers it by asking for a code and retrying once (lib/api/vault-http.ts).
+  stepUpRequired: () =>
+    new VaultError(
+      "VAULT_STEP_UP_REQUIRED",
+      "Enter a code from your authenticator app to confirm this change.",
+      403,
+    ),
+  rateLimited: () =>
+    new VaultError(
+      "VAULT_RATE_LIMITED",
+      "Too many vault resets or master-password changes in the last hour. Try again later.",
+      429,
     ),
   notFound: (what: string) => new VaultError("NOT_FOUND", `${what} not found.`, 404),
   conflict: (message: string) => new VaultError("CONFLICT", message, 409),

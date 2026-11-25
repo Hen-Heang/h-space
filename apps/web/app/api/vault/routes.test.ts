@@ -29,14 +29,23 @@ const ME = "00000000-0000-4000-8000-00000000000a"
 const ITEM = "0b9f3e3a-6a51-4c5e-9d0a-2f4b8c1d7e60"
 const ENVELOPE = `v2.${"C".repeat(16)}.${"D".repeat(40)}==`
 
-function bearer(aal: string) {
+const nowSeconds = () => Math.floor(Date.now() / 1000)
+
+function bearer(aal: string, totpAt?: number) {
   const encode = (v: unknown) => Buffer.from(JSON.stringify(v)).toString("base64url")
-  return `Bearer ${encode({ alg: "ES256" })}.${encode({ sub: ME, aal })}.sig`
+  const amr = [
+    { method: "password", timestamp: nowSeconds() - 86_400 },
+    ...(totpAt === undefined ? [] : [{ method: "totp", timestamp: totpAt }]),
+  ]
+  return `Bearer ${encode({ alg: "ES256" })}.${encode({ sub: ME, aal, amr })}.sig`
 }
 
-function req(path: string, init: { method?: string; body?: unknown; aal?: string | null } = {}) {
+function req(
+  path: string,
+  init: { method?: string; body?: unknown; aal?: string | null; totpAt?: number } = {},
+) {
   const headers: Record<string, string> = {}
-  if (init.aal !== null) headers.authorization = bearer(init.aal ?? "aal2")
+  if (init.aal !== null) headers.authorization = bearer(init.aal ?? "aal2", init.totpAt)
   const body =
     init.body === undefined
       ? undefined
@@ -140,10 +149,17 @@ describe("bodies", () => {
   })
 
   it("needs exactly RESET to reset", async () => {
-    expect((await postReset(req("/reset", { method: "POST", body: {} }))).status).toBe(400)
+    const fresh = nowSeconds() - 30
+    expect(
+      (await postReset(req("/reset", { method: "POST", body: {}, totpAt: fresh }))).status,
+    ).toBe(400)
     service.resetVault.mockResolvedValue(0)
     expect(
-      (await postReset(req("/reset", { method: "POST", body: { confirm: "RESET" } }))).status,
+      (
+        await postReset(
+          req("/reset", { method: "POST", body: { confirm: "RESET" }, totpAt: fresh }),
+        )
+      ).status,
     ).toBe(200)
     expect(service.resetVault).toHaveBeenCalledWith(ME)
   })
@@ -154,6 +170,75 @@ describe("bodies", () => {
     )
     expect(res.status).toBe(400)
     expect(service.saveKeyset).not.toHaveBeenCalled()
+  })
+})
+
+describe("step-up and rate limit (reset, keyset replacement)", () => {
+  const KEYSET_BODY = {
+    kdf: "PBKDF2-SHA256",
+    kdfIterations: 600_000,
+    kdfSalt: `${"E".repeat(22)}==`,
+    wrappedKey: `v2.${"A".repeat(16)}.${"B".repeat(64)}`,
+    recoveryWrappedKey: `v2.${"A".repeat(16)}.${"B".repeat(64)}`,
+  }
+
+  async function code(res: Response) {
+    return ((await res.json()) as { error?: { code?: string } }).error?.code
+  }
+
+  it("refuses a reset without a code from the last five minutes, before touching storage", async () => {
+    for (const totpAt of [undefined, nowSeconds() - 6 * 60]) {
+      const res = await postReset(
+        req("/reset", { method: "POST", body: { confirm: "RESET" }, totpAt }),
+      )
+      expect(res.status).toBe(403)
+      expect(await code(res)).toBe("VAULT_STEP_UP_REQUIRED")
+    }
+    expect(service.resetVault).not.toHaveBeenCalled()
+  })
+
+  it("refuses a keyset replacement without a fresh code", async () => {
+    const res = await putKeyset(
+      req("/keyset", { method: "PUT", body: { ...KEYSET_BODY, version: 3 } }),
+    )
+    expect(res.status).toBe(403)
+    expect(await code(res)).toBe("VAULT_STEP_UP_REQUIRED")
+    expect(service.saveKeyset).not.toHaveBeenCalled()
+  })
+
+  it("replaces the keyset with a fresh code", async () => {
+    service.saveKeyset.mockResolvedValue({ version: 4 })
+    const res = await putKeyset(
+      req("/keyset", {
+        method: "PUT",
+        body: { ...KEYSET_BODY, version: 3 },
+        totpAt: nowSeconds() - 30,
+      }),
+    )
+    expect(res.status).toBe(200)
+    expect(service.saveKeyset).toHaveBeenCalledWith(ME, { ...KEYSET_BODY, version: 3 })
+  })
+
+  it("creates the first keyset without a code; a create over an existing one is the service's 409", async () => {
+    service.saveKeyset.mockResolvedValueOnce({ version: 0 })
+    expect((await putKeyset(req("/keyset", { method: "PUT", body: KEYSET_BODY }))).status).toBe(200)
+    // Leaving out `version` can't skip step-up to overwrite: the service
+    // refuses a create when a keyset exists.
+    service.saveKeyset.mockRejectedValueOnce(vaultErrors.conflict("Changed on another device."))
+    expect((await putKeyset(req("/keyset", { method: "PUT", body: KEYSET_BODY }))).status).toBe(409)
+  })
+
+  it("passes the service's 429 on", async () => {
+    service.resetVault.mockRejectedValue(vaultErrors.rateLimited())
+    const res = await postReset(
+      req("/reset", {
+        method: "POST",
+        body: { confirm: "RESET" },
+        totpAt: nowSeconds() - 30,
+      }),
+    )
+    expect(res.status).toBe(429)
+    expect(await code(res)).toBe("VAULT_RATE_LIMITED")
   })
 })
 

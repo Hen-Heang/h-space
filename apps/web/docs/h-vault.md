@@ -85,6 +85,21 @@ been removed; Supabase never holds vault data.
   authenticator _now_ (read from Supabase, not the token, so removing the
   last one closes the vault at once), and the session must be `aal2`. Else
   403 `VAULT_MFA_REQUIRED`; the page links to `/settings/security`.
+- **Fresh code for destructive actions** (`requireRecentMfa`): reset and
+  keyset _replacement_ (master-password change, recovery) can make every item
+  unreadable, and an `aal2` session can be days old. So they also need an
+  authenticator code checked in the **last 5 minutes**: the newest `totp`
+  entry in the access token's `amr` claim. The browser gets one with
+  `VaultStepUpDialog` (`mfa.challengeAndVerify` on its own session, so
+  Supabase checks the code, lockouts and replays) and retries the request
+  once (`lib/api/vault-http.ts`). Else 403 `VAULT_STEP_UP_REQUIRED`. Creating
+  the first keyset needs no code. A token whose `amr` has no timestamps (the
+  RFC 8176 string form) can't prove freshness and is refused.
+- **Rate limit:** at most 5 keyset replacements plus resets per user per
+  rolling hour (`MAX_DESTRUCTIVE_PER_HOUR`), counted from the user's own
+  `audit_logs` rows inside the same statement as the write. Over it: 429
+  `VAULT_RATE_LIMITED`, nothing changed. Item writes aren't limited (a CSV
+  import makes up to 500); the 1,000-item cap bounds them.
 - **Ownership on the server:** the user id comes only from the verified
   session; every query is scoped by it; another user's item is 404. A key
   unlocked by one user is never used for another (`currentVaultKey`).

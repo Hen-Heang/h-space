@@ -21,10 +21,47 @@ export class VaultHttpError extends Error {
 
 type ErrorBody = { error?: { code?: unknown; message?: unknown } }
 
-export async function vaultRequest<T>(
-  path: string,
-  options: { method?: "GET" | "POST" | "PUT" | "DELETE"; body?: unknown } = {},
-): Promise<T> {
+type VaultRequestOptions = { method?: "GET" | "POST" | "PUT" | "DELETE"; body?: unknown }
+
+/** The routes' answer when a destructive action needs a fresh authenticator code. */
+export const VAULT_STEP_UP_REQUIRED = "VAULT_STEP_UP_REQUIRED"
+
+/** Asks the user for a code; resolves true once it's verified on this session. */
+export type VaultStepUpPrompt = () => Promise<boolean>
+
+let stepUpPrompt: VaultStepUpPrompt | null = null
+
+/**
+ * Registers the code prompt (VaultStepUpDialog, mounted by VaultDashboard).
+ * Returns a function that removes it again, for an effect's cleanup.
+ */
+export function setVaultStepUpPrompt(prompt: VaultStepUpPrompt): () => void {
+  stepUpPrompt = prompt
+  return () => {
+    if (stepUpPrompt === prompt) stepUpPrompt = null
+  }
+}
+
+/**
+ * A request to this app's /api/vault routes. When a reset or keyset
+ * replacement is refused for want of a fresh code (403
+ * VAULT_STEP_UP_REQUIRED), the registered prompt asks for one and the request
+ * is sent once more with the refreshed session token — never more than once.
+ */
+export async function vaultRequest<T>(path: string, options: VaultRequestOptions = {}): Promise<T> {
+  try {
+    return await sendVaultRequest<T>(path, options)
+  } catch (error) {
+    const prompt = stepUpPrompt
+    if (!(error instanceof VaultHttpError) || error.code !== VAULT_STEP_UP_REQUIRED || !prompt) {
+      throw error
+    }
+    if (!(await prompt())) throw error
+    return sendVaultRequest<T>(path, options)
+  }
+}
+
+async function sendVaultRequest<T>(path: string, options: VaultRequestOptions): Promise<T> {
   const token = await getSupabaseAccessToken()
   if (!token) {
     throw new VaultHttpError(

@@ -24,6 +24,7 @@ import {
   deleteItem,
   getKeyset,
   listItems,
+  MAX_DESTRUCTIVE_PER_HOUR,
   resetVault,
   saveKeyset,
   updateItem,
@@ -162,6 +163,23 @@ describe("keyset", () => {
     expect(db.queries[0].text).toContain("version = version + 1")
   })
 
+  it("replaces only under the hourly cap, counted in the same statement", async () => {
+    queue([keysetRow("3")])
+    await saveKeyset(ME, { ...KEYSET, version: 2 })
+    const { text, values } = db.queries[0]
+    expect(text).toContain("select count(*) from audit_logs")
+    expect(text).toContain("event_type in ('VAULT_KEYSET_CHANGED', 'VAULT_RESET')")
+    expect(values).toContain(MAX_DESTRUCTIVE_PER_HOUR)
+  })
+
+  it("is 429 when a replacement is refused for the cap", async () => {
+    queue([], [{ has_keyset: true, recent: MAX_DESTRUCTIVE_PER_HOUR }])
+    expect(await conflict(saveKeyset(ME, { ...KEYSET, version: 2 }))).toMatchObject({
+      status: 429,
+      code: "VAULT_RATE_LIMITED",
+    })
+  })
+
   it("is 409 for a stale version, or when there's nothing to replace", async () => {
     queue([], [{ has_keyset: true }])
     expect(await conflict(saveKeyset(ME, { ...KEYSET, version: 1 }))).toMatchObject({
@@ -221,6 +239,21 @@ describe("items", () => {
     queue([])
     expect(await conflict(deleteItem(ME, ITEM))).toMatchObject({ status: 404 })
     expect(db.queries[0].values).toEqual([ITEM, ME])
+  })
+
+  it("refuses a reset over the hourly cap without deleting or auditing", async () => {
+    queue([{ allowed: false, items: 0 }])
+    expect(await conflict(resetVault(ME))).toMatchObject({
+      status: 429,
+      code: "VAULT_RATE_LIMITED",
+    })
+    const { text, values } = db.queries[0]
+    // One statement: the deletes and the audit row are all gated on the count.
+    expect(text).toContain("with allowed as")
+    expect(text.match(/\(select ok from allowed\)/g)?.length).toBeGreaterThanOrEqual(3)
+    expect(text).toContain("event_type in ('VAULT_KEYSET_CHANGED', 'VAULT_RESET')")
+    expect(text).toContain("interval '1 hour'")
+    expect(values).toContain(MAX_DESTRUCTIVE_PER_HOUR)
   })
 
   it("resets items and keyset together and reports the count", async () => {

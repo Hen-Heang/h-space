@@ -5,7 +5,13 @@ vi.mock("server-only", () => ({}))
 const requireUser = vi.hoisted(() => vi.fn())
 vi.mock("@/lib/server/ai", () => ({ requireUser: (req: Request) => requireUser(req) }))
 
-import { accessTokenAal, hasVerifiedFactor, requireVaultUser } from "./auth"
+import {
+  accessTokenAal,
+  hasVerifiedFactor,
+  requireRecentMfa,
+  requireVaultUser,
+  STEP_UP_MAX_AGE_SECONDS,
+} from "./auth"
 import { VaultError } from "./http"
 
 const USER_ID = "00000000-0000-4000-8000-00000000000a"
@@ -91,6 +97,55 @@ describe("requireVaultUser", () => {
   it("is unavailable (503) when Supabase isn't configured", async () => {
     requireUser.mockResolvedValue(Response.json({ error: "not configured" }, { status: 503 }))
     expect(await failure(request("aal2"))).toMatchObject({ status: 503 })
+  })
+})
+
+describe("requireRecentMfa", () => {
+  const NOW = Date.UTC(2026, 10, 25, 3, 0, 0)
+  const nowSeconds = NOW / 1000
+  const withTotpAt = (seconds: number | null) =>
+    new Request("https://h.example/api/vault/reset", {
+      headers: {
+        authorization: `Bearer ${token({
+          sub: USER_ID,
+          aal: "aal2",
+          amr:
+            seconds === null
+              ? [{ method: "password", timestamp: nowSeconds - 10 }]
+              : [
+                  { method: "password", timestamp: nowSeconds - 86_400 },
+                  { method: "totp", timestamp: seconds },
+                ],
+        })}`,
+      },
+    })
+  const refusal = (req: Request) => {
+    try {
+      requireRecentMfa(req, NOW)
+    } catch (error) {
+      return error
+    }
+    return null
+  }
+
+  it("passes a code checked within the last five minutes", () => {
+    expect(refusal(withTotpAt(nowSeconds - 30))).toBeNull()
+    expect(refusal(withTotpAt(nowSeconds - STEP_UP_MAX_AGE_SECONDS))).toBeNull()
+  })
+
+  it("refuses an older code, no code, or a far-future one (403, never 401)", () => {
+    for (const req of [
+      withTotpAt(nowSeconds - STEP_UP_MAX_AGE_SECONDS - 1),
+      withTotpAt(nowSeconds - 86_400),
+      withTotpAt(null),
+      withTotpAt(nowSeconds + 3600),
+    ]) {
+      expect(refusal(req)).toMatchObject({ status: 403, code: "VAULT_STEP_UP_REQUIRED" })
+    }
+  })
+
+  it("tolerates a slightly fast clock", () => {
+    expect(refusal(withTotpAt(nowSeconds + 20))).toBeNull()
   })
 })
 

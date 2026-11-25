@@ -27,6 +27,8 @@ vi.mock("@/lib/api/vault-http", async () => ({
     await vi.importActual<typeof import("@/lib/api/vault-http")>("@/lib/api/vault-http")
   ).VaultHttpError,
   vaultRequest: vi.fn(async (path: string) => live.handler(path)),
+  // The dashboard registers its step-up code prompt on mount.
+  setVaultStepUpPrompt: vi.fn(() => () => {}),
 }))
 vi.mock("@/lib/auth-store", () => ({
   getUserId: () => "user-a",

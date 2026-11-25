@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 const token = vi.hoisted(() => ({ value: "access-token" as string | null }))
 vi.mock("@/lib/auth-store", () => ({ getSupabaseAccessToken: async () => token.value }))
 
-import { VaultHttpError, vaultRequest } from "./vault-http"
+import { setVaultStepUpPrompt, VaultHttpError, vaultRequest } from "./vault-http"
 
 const fetchMock = vi.fn<typeof fetch>()
 
@@ -54,5 +54,77 @@ describe("vaultRequest", () => {
   it("reports a network failure as status 0", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch"))
     await expect(vaultRequest("/items")).rejects.toMatchObject({ httpStatus: 0 })
+  })
+})
+
+describe("vaultRequest — step-up", () => {
+  const stepUpRequired = () =>
+    Response.json(
+      { error: { code: "VAULT_STEP_UP_REQUIRED", message: "Enter a code." } },
+      { status: 403 },
+    )
+  let unregister: (() => void) | null = null
+  afterEach(() => {
+    unregister?.()
+    unregister = null
+  })
+
+  it("asks for a code, then retries once with the refreshed session token", async () => {
+    const prompt = vi.fn(async () => {
+      token.value = "fresh-token" // challengeAndVerify refreshed the session
+      return true
+    })
+    unregister = setVaultStepUpPrompt(prompt)
+    fetchMock.mockResolvedValueOnce(stepUpRequired()).mockResolvedValueOnce(Response.json({}))
+
+    await expect(
+      vaultRequest("/reset", { method: "POST", body: { confirm: "RESET" } }),
+    ).resolves.toEqual({})
+    expect(prompt).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    const retry = fetchMock.mock.calls[1][1]!
+    expect((retry.headers as Record<string, string>).Authorization).toBe("Bearer fresh-token")
+    expect(retry.body).toBe('{"confirm":"RESET"}')
+  })
+
+  it("gives up without retrying when the user cancels", async () => {
+    unregister = setVaultStepUpPrompt(async () => false)
+    fetchMock.mockResolvedValueOnce(stepUpRequired())
+    await expect(vaultRequest("/reset", { method: "POST" })).rejects.toMatchObject({
+      httpStatus: 403,
+      code: "VAULT_STEP_UP_REQUIRED",
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("never loops: a second refusal is returned as-is", async () => {
+    const prompt = vi.fn(async () => true)
+    unregister = setVaultStepUpPrompt(prompt)
+    fetchMock.mockResolvedValueOnce(stepUpRequired()).mockResolvedValueOnce(stepUpRequired())
+    await expect(vaultRequest("/reset", { method: "POST" })).rejects.toMatchObject({
+      code: "VAULT_STEP_UP_REQUIRED",
+    })
+    expect(prompt).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("doesn't prompt for other errors, or when no prompt is mounted", async () => {
+    const prompt = vi.fn(async () => true)
+    unregister = setVaultStepUpPrompt(prompt)
+    fetchMock.mockResolvedValueOnce(
+      Response.json({ error: { code: "VAULT_RATE_LIMITED", message: "Later." } }, { status: 429 }),
+    )
+    await expect(vaultRequest("/reset", { method: "POST" })).rejects.toMatchObject({
+      httpStatus: 429,
+    })
+    expect(prompt).not.toHaveBeenCalled()
+
+    unregister()
+    unregister = null
+    fetchMock.mockResolvedValueOnce(stepUpRequired())
+    await expect(vaultRequest("/reset", { method: "POST" })).rejects.toMatchObject({
+      code: "VAULT_STEP_UP_REQUIRED",
+    })
+    expect(prompt).not.toHaveBeenCalled()
   })
 })

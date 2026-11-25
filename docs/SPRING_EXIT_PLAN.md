@@ -98,6 +98,8 @@ not yet against Neon itself. In production the vault answers 503 until
      grant usage on schema public to vault_app;
      grant select, insert, update, delete on vault_keysets, vault_items to vault_app;
      grant insert on audit_logs to vault_app;
+     -- the hourly reset/keyset limit counts the caller's own rows:
+     grant select (user_id, event_type, created_at) on audit_logs to vault_app;
      ```
   2. Set `VAULT_DATABASE_URL` (that role's pooled connection string) in Vercel
      Production and Preview: server-only, never `NEXT_PUBLIC_`.
@@ -106,9 +108,14 @@ not yet against Neon itself. In production the vault answers 503 until
      409, reset. Then try it on the preview: unlock, list, and confirm the
      items decrypt. That proves the Supabase user id equals the id the
      envelopes are bound to.
-- **Known gaps:** the step-up code for keyset replace and reset (design §8)
-  is still not required; no rate limit on the routes (hub-api had none
-  either); vault rows reference the Spring-era `users` table (a new
+- **Step-up and rate limit (2026-11-25):** reset and keyset replacement now
+  need an authenticator code from the last 5 minutes (the token's `amr`) and
+  are capped at 5 per user per hour (`apps/web/docs/h-vault.md`, Security
+  controls). The cap needs the column-level `audit_logs` grant above; without
+  it those two routes fail with a permission error, every other vault route
+  is unaffected. (hub-api limited these two routes to 5 a minute per client,
+  in memory; its step-up was off by default.)
+- **Known gaps:** vault rows reference the Spring-era `users` table (a new
   Supabase-only account gets a clear 409).
 
 ## Supabase settings for step 1 (owner, dashboard)

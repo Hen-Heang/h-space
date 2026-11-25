@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 
 vi.mock("server-only", () => ({}))
 
-import { accessTokenAal, hasVerifiedFactor, mfaRequirementMet } from "./session-mfa"
+import { accessTokenAal, hasVerifiedFactor, latestTotpAt, mfaRequirementMet } from "./session-mfa"
 
 function token(claims: Record<string, unknown>) {
   const encode = (v: unknown) => Buffer.from(JSON.stringify(v)).toString("base64url")
@@ -27,6 +27,31 @@ describe("mfaRequirementMet", () => {
     expect(mfaRequirementMet(verified, token({}))).toBe(false)
     expect(mfaRequirementMet(verified, "not-a-jwt")).toBe(false)
     expect(mfaRequirementMet(verified, "")).toBe(false)
+  })
+})
+
+describe("latestTotpAt", () => {
+  it("returns the newest authenticator-code time from amr", () => {
+    const amr = [
+      { method: "password", timestamp: 100 },
+      { method: "totp", timestamp: 200 },
+      { method: "mfa/totp", timestamp: 300 },
+      { method: "otp", timestamp: 400 },
+    ]
+    expect(latestTotpAt(token({ amr }))).toBe(300)
+  })
+
+  it("is null without a usable TOTP entry", () => {
+    expect(latestTotpAt(token({}))).toBeNull()
+    expect(latestTotpAt(token({ amr: [{ method: "password", timestamp: 100 }] }))).toBeNull()
+    expect(latestTotpAt(token({ amr: [{ method: "totp" }] }))).toBeNull()
+    expect(latestTotpAt(token({ amr: [{ method: "totp", timestamp: "200" }] }))).toBeNull()
+    expect(latestTotpAt(token({ amr: "totp" }))).toBeNull()
+    expect(latestTotpAt("not-a-jwt")).toBeNull()
+  })
+
+  it("is null for the timestamp-less RFC 8176 form, so freshness can't be claimed", () => {
+    expect(latestTotpAt(token({ amr: ["password", "totp"] }))).toBeNull()
   })
 })
 

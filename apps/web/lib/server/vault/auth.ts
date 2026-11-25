@@ -1,7 +1,7 @@
 import "server-only"
 
 import { requireUser } from "@/lib/server/ai"
-import { accessTokenAal, hasVerifiedFactor } from "@/lib/server/session-mfa"
+import { accessTokenAal, hasVerifiedFactor, latestTotpAt } from "@/lib/server/session-mfa"
 import { isVaultDatabaseConfigured } from "@/lib/server/vault/db"
 import { vaultErrors } from "@/lib/server/vault/http"
 
@@ -46,4 +46,32 @@ export async function requireVaultUser(req: Request): Promise<string> {
     throw vaultErrors.notConfigured()
   }
   return authed.user.id
+}
+
+/** How recent the authenticator code must be for a destructive vault action. */
+export const STEP_UP_MAX_AGE_SECONDS = 5 * 60
+// A token minted a moment "in the future" by a slightly fast clock is fine;
+// anything beyond this is not a timestamp to trust.
+const CLOCK_SKEW_SECONDS = 60
+
+/**
+ * Step-up for actions that can make every item unreadable — reset, and
+ * replacing the keyset (master-password change, recovery). An aal2 session
+ * can be days old, so these also need an authenticator code checked in the
+ * last five minutes: the browser runs `mfa.challengeAndVerify` on its own
+ * session (Supabase checks the code, its lockouts and replays), then sends
+ * the refreshed token. Call only after requireVaultUser has verified that
+ * token. Throws 403 VAULT_STEP_UP_REQUIRED.
+ */
+export function requireRecentMfa(req: Request, nowMs: number = Date.now()): void {
+  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? ""
+  const verifiedAt = latestTotpAt(token)
+  const now = nowMs / 1000
+  if (
+    verifiedAt === null ||
+    now - verifiedAt > STEP_UP_MAX_AGE_SECONDS ||
+    verifiedAt - now > CLOCK_SKEW_SECONDS
+  ) {
+    throw vaultErrors.stepUpRequired()
+  }
 }
