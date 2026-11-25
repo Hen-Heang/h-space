@@ -37,8 +37,8 @@ export const hSpaceProjects: HSpaceProject[] = [
     name: "H-Vault",
     area: "Personal accounts",
     description:
-      "A private directory of which email or username belongs to each service, with categories, favorites, and search. Passwords stay in Bitwarden — H-Vault stores account information only.",
-    stack: ["Next.js 16", "Supabase RLS", "TanStack Query", "Zod"],
+      "Saved accounts: which email or username belongs to each service, with an optional password, categories, favorites, and search. Everything is encrypted in your browser with your master password before it's saved. Independent security review pending.",
+    stack: ["Next.js 16", "Web Crypto (AES-GCM)", "Neon Postgres", "Zod"],
     links: [{ label: "Open app", href: "/vault", kind: "app" }],
   },
   {
