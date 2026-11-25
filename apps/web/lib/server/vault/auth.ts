@@ -1,6 +1,7 @@
 import "server-only"
 
 import { requireUser } from "@/lib/server/ai"
+import { accessTokenAal, hasVerifiedFactor } from "@/lib/server/session-mfa"
 import { isVaultDatabaseConfigured } from "@/lib/server/vault/db"
 import { vaultErrors } from "@/lib/server/vault/http"
 
@@ -17,26 +18,12 @@ import { vaultErrors } from "@/lib/server/vault/http"
 // The user id comes only from the verified session; nothing in the request
 // can choose it. Every query must be scoped by the returned id.
 
+// Stricter than finance's mfaRequirementMet: the vault needs an authenticator
+// even on an account that has none. Re-exported for existing callers/tests.
+export { accessTokenAal, hasVerifiedFactor }
+
 interface FactorLike {
   status?: string
-}
-
-/** The `aal` claim of an already-verified access token. */
-export function accessTokenAal(token: string): string | null {
-  const payload = token.split(".")[1]
-  if (!payload) return null
-  try {
-    const claims = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
-      aal?: unknown
-    }
-    return typeof claims.aal === "string" ? claims.aal : null
-  } catch {
-    return null
-  }
-}
-
-export function hasVerifiedFactor(factors: FactorLike[] | null | undefined): boolean {
-  return (factors ?? []).some((f) => f.status === "verified")
 }
 
 /** The verified H-Space user id, or throws a VaultError (401 / 403 / 503). */
