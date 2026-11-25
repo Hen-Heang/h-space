@@ -331,8 +331,8 @@ export const appsItem: NavItem = {
 }
 
 /**
- * H-Vault — the private account directory (metadata only; passwords live in
- * Bitwarden). An internal app inside the My Apps workspace.
+ * H-Vault — saved accounts with optional passwords, encrypted in the browser
+ * (docs/h-vault.md). An internal app inside the My Apps workspace.
  */
 export const vaultItem: NavItem = {
   id: "apps-vault",

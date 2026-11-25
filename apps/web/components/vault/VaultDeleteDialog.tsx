@@ -31,9 +31,9 @@ export function VaultDeleteDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this account entry?</AlertDialogTitle>
           <AlertDialogDescription>
-            This removes <strong>{account ? accountTitle(account) : ""}</strong> from H-Vault. It
-            doesn&apos;t touch the account itself or anything stored in Bitwarden. This can&apos;t
-            be undone.
+            This removes <strong>{account ? accountTitle(account) : ""}</strong> from H-Vault,
+            including any password saved with it. The account at the service itself isn&apos;t
+            affected. This can&apos;t be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
