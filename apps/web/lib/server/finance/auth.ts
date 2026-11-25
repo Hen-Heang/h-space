@@ -6,6 +6,7 @@ import { normalizeFinanceDatabaseUrl } from "@/lib/server/finance/database-url"
 import { isFinanceDatabaseConfigured } from "@/lib/server/finance/db"
 import { AppError, Errors } from "@/lib/server/finance/errors"
 import { findUserById } from "@/lib/server/finance/repositories/user-repository"
+import { mfaRequirementMet } from "@/lib/server/session-mfa"
 import type { AppUser } from "@/types/user"
 
 /**
@@ -43,6 +44,10 @@ export function financeConfigProblems(
  * Throws an AppError, so the route's `apiError()` answers in Luyra's
  * `{ error: { code, message } }` envelope:
  *   - no or invalid session      → 401 UNAUTHORIZED
+ *   - password-only (aal1) session on an account with an authenticator
+ *                                → 403 MFA_REQUIRED. Finance lives in Neon,
+ *     so the RLS rule kori_mfa_requirement_met() can't protect it; this
+ *     applies the same rule here, before any config or database work.
  *   - finance not configured     → 503 FINANCE_NOT_CONFIGURED
  *   - this user has no link      → 403 FINANCE_NOT_LINKED
  * The reason for a 503/403 goes to the server log (setting names, and the
@@ -79,6 +84,10 @@ export async function requireFinanceSession(req: Request): Promise<FinanceSessio
     }
     throw Errors.unauthorized()
   }
+
+  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? ""
+  const factors = (authed.user as { factors?: { status?: string }[] | null }).factors
+  if (!mfaRequirementMet(factors, token)) throw Errors.mfaRequired()
 
   const problems = financeConfigProblems()
   const links = parseFinanceAccountLinks(process.env.FINANCE_ACCOUNT_LINKS)

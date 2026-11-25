@@ -167,6 +167,54 @@ describe("requireFinanceUserId", () => {
   })
 })
 
+describe("requireFinanceUserId — two-step verification", () => {
+  const tokenWith = (aal: string) => {
+    const encode = (v: unknown) => Buffer.from(JSON.stringify(v)).toString("base64url")
+    return `${encode({ alg: "ES256" })}.${encode({ sub: HSPACE_ID, aal })}.sig`
+  }
+  const reqWith = (aal: string) =>
+    new Request("http://localhost/api/finance/overview", {
+      headers: { authorization: `Bearer ${tokenWith(aal)}` },
+    })
+  const signedIn = (factors: Array<{ status: string }>) =>
+    requireUser.mockResolvedValue({ user: { id: HSPACE_ID, factors }, db: {} })
+
+  beforeEach(() => {
+    vi.stubEnv("FINANCE_ACCOUNT_LINKS", `${HSPACE_ID}=${LUYRA_ID}`)
+    vi.stubEnv("FINANCE_DATABASE_URL", "postgres://synthetic.invalid/db")
+  })
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.restoreAllMocks()
+    requireUser.mockReset()
+  })
+
+  it("refuses a password-only (aal1) session on an account with an authenticator", async () => {
+    signedIn([{ status: "verified" }])
+    const error = await failure(requireFinanceUserId(reqWith("aal1")))
+    expect(error.status).toBe(403)
+    expect(error.code).toBe("MFA_REQUIRED")
+  })
+
+  it("allows an aal2 session on an account with an authenticator", async () => {
+    signedIn([{ status: "verified" }])
+    await expect(requireFinanceUserId(reqWith("aal2"))).resolves.toBe(LUYRA_ID)
+  })
+
+  it("allows an aal1 session when the account has no verified authenticator", async () => {
+    signedIn([{ status: "unverified" }])
+    await expect(requireFinanceUserId(reqWith("aal1"))).resolves.toBe(LUYRA_ID)
+  })
+
+  it("checks before finance config, so an aal1 caller learns nothing about it", async () => {
+    vi.stubEnv("FINANCE_ACCOUNT_LINKS", "")
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+    signedIn([{ status: "verified" }])
+    expect((await failure(requireFinanceUserId(reqWith("aal1")))).code).toBe("MFA_REQUIRED")
+    expect(warn).not.toHaveBeenCalled()
+  })
+})
+
 const { findUserById } = vi.hoisted(() => ({ findUserById: vi.fn() }))
 vi.mock("@/lib/server/finance/repositories/user-repository", () => ({
   findUserById: (...a: unknown[]) => findUserById(...a),
