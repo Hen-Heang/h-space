@@ -4,14 +4,25 @@ Owner decision, 2026-11-21: retire the Spring service `h-space-api` and its VPS.
 H-Space runs only on **Vercel + Supabase + Neon**: no server of our own to
 patch, pay for or keep awake.
 
+> **Update 2026-11-25 (owner):** h-space-api is kept as a learning sandbox on
+> Railway instead of being archived. It has its own database and no
+> `SUPABASE_*` secrets, and nothing in H-Space calls it; everything below
+> about H-Space's own architecture still holds.
+
 ## Why
 
 - **Outage, 2026-11-19.** The Neon project `h-space-api` (free plan) used up
   its monthly compute (~110 of 100 CU-hours) and Neon suspended it until
-  2026-12-01. Spring's Hikari pool held connections open 24/7
-  (`api-core` sets no `minimum-idle`, so it kept up to 20 open), so the
-  database never scaled to zero. With no database, sign-in, refresh, H-Vault,
-  the Spring inbox and `/finance` (same Neon project) all failed.
+  2026-12-01. Spring's Hikari pools kept the database awake 24/7: each prod
+  module's `application-prod.yml` kept one idle connection (`minimum-idle: 1`)
+  and HikariCP pings an idle connection every 2 minutes, so Neon's 5-minute
+  suspend never triggered (Neon's operation log shows no suspend from
+  2026-11-09 18:41 to the 11-19 cut-off). Fixed in h-space-api #39
+  (`minimum-idle: 0`, 60 s idle timeout). An earlier version of this line
+  blamed `api-core`'s pool settings; each module's own file overrides those.
+  With no database, sign-in, refresh, H-Vault, the Spring inbox and
+  `/finance` (same Neon project) all failed. The project is back on Neon's
+  paid Launch plan since 2026-11-25.
 - **Security.** The token bridge (`POST /api/auth/supabase-token`) means the
   VPS holds the Supabase JWT secret and the service-role key. Anyone who
   breaks into the VPS can forge a session for any user of the Supabase project,
