@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState, useSyncExternalStore } from "react"
 
+import { AdmissionGate } from "@/components/auth/admission-gate"
 import { AppShell } from "@/components/layout/AppShell"
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow"
 import { userApi } from "@/lib/api"
@@ -87,8 +88,10 @@ export default function MainLayout({ children }: Readonly<{ children: React.Reac
   if (!mounted) return null
   if (!isAuthenticated()) return null
 
+  // Auth V2: with NEXT_PUBLIC_HSPACE_ADMISSION=enforce nothing below mounts
+  // (no workspace query, no onboarding) until admission is confirmed.
   return (
-    <>
+    <AdmissionGate>
       <AppShell>{children}</AppShell>
       {showOnboarding && (
         <OnboardingFlow
@@ -98,6 +101,6 @@ export default function MainLayout({ children }: Readonly<{ children: React.Reac
           }}
         />
       )}
-    </>
+    </AdmissionGate>
   )
 }

@@ -9,6 +9,7 @@ import { InboxFilters } from "@/components/inbox/InboxFilters"
 import { InboxItemCard } from "@/components/inbox/InboxItemCard"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
+import { InboxPilotGate } from "@/components/inbox/inbox-pilot-gate"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useInbox } from "@/hooks/useInbox"
 import { useSessionTimer } from "@/hooks/useSessionTimer"
@@ -80,48 +81,50 @@ export default function InboxPage() {
 
       {/* One surface, divider rows — not a stack of bordered cards. */}
       <motion.div variants={itemVariants}>
-        {loading ? (
-          <div className="app-surface divide-y divide-border px-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="py-3">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="mt-2 h-4 w-3/4" />
-                <Skeleton className="mt-3 h-3 w-32" />
-              </div>
-            ))}
-          </div>
-        ) : error ? (
-          <div
-            role="alert"
-            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-          >
-            <span>{error}</span>
-            <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
-              Try again
-            </Button>
-          </div>
-        ) : visible.length === 0 ? (
-          <EmptyState
-            surface
-            icon={Inbox}
-            title={items.length === 0 ? "Nothing captured yet" : "Nothing matches these filters"}
-            description={
-              items.length === 0 ? (
-                <>
-                  Use Quick capture above to jot down your first thought.
-                  {/* Keyboard shortcut only where there's a keyboard and pointer. */}
-                  <span className="[@media(pointer:coarse)]:hidden"> Or press ⌘K / Ctrl+K.</span>
-                </>
-              ) : undefined
-            }
-          />
-        ) : (
-          <ul className="app-surface divide-y divide-border px-4">
-            {visible.map((item) => (
-              <InboxItemCard key={item.id} item={item} />
-            ))}
-          </ul>
-        )}
+        <InboxPilotGate>
+          {loading ? (
+            <div className="app-surface divide-y divide-border px-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="py-3">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="mt-2 h-4 w-3/4" />
+                  <Skeleton className="mt-3 h-3 w-32" />
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+            >
+              <span>{error}</span>
+              <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
+                Try again
+              </Button>
+            </div>
+          ) : visible.length === 0 ? (
+            <EmptyState
+              surface
+              icon={Inbox}
+              title={items.length === 0 ? "Nothing captured yet" : "Nothing matches these filters"}
+              description={
+                items.length === 0 ? (
+                  <>
+                    Use Quick capture above to jot down your first thought.
+                    {/* Keyboard shortcut only where there's a keyboard and pointer. */}
+                    <span className="[@media(pointer:coarse)]:hidden"> Or press ⌘K / Ctrl+K.</span>
+                  </>
+                ) : undefined
+              }
+            />
+          ) : (
+            <ul className="app-surface divide-y divide-border px-4">
+              {visible.map((item) => (
+                <InboxItemCard key={item.id} item={item} />
+              ))}
+            </ul>
+          )}
+        </InboxPilotGate>
       </motion.div>
     </motion.div>
   )

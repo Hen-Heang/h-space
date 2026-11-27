@@ -1,10 +1,15 @@
 import type { NextConfig } from "next"
 
 import { buildContentSecurityPolicy } from "./lib/csp"
+import { resolveHubApiConfig } from "./lib/auth-v2"
 import { isNotesEnabled } from "./lib/feature-flags"
+
+// Throws at build time if NEXT_PUBLIC_AUTHV2_INBOX_BACKEND=spring lacks a valid URL.
+const hubApi = resolveHubApiConfig()
 
 const contentSecurityPolicy = buildContentSecurityPolicy({
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  hubApiUrl: hubApi.enabled ? hubApi.baseUrl : undefined,
   development: process.env.NODE_ENV === "development",
   vercelPreview: process.env.VERCEL_ENV === "preview",
 })

@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import { requireUserId } from "@/lib/auth-store"
+import { resolveHubApiConfig } from "@/lib/auth-v2"
 import {
   buildJournalConversionPayload,
   buildNoteConversionPayload,
@@ -14,6 +15,7 @@ import {
 import { notesApi } from "./notes"
 import { tasksApi } from "./goals"
 import { journalApi } from "./journal"
+import { createInboxHttpStore } from "./inbox-http"
 
 // Quick Capture Inbox. Mirrors the notesApi shape: plain async functions,
 // requireUserId() on Supabase writes.
@@ -22,6 +24,11 @@ import { journalApi } from "./journal"
 // hspace-api (Spring) store existed behind NEXT_PUBLIC_DATA_SOURCE_INBOX
 // until the Spring API was retired on 2026-11-21 (docs/SPRING_EXIT_PLAN.md);
 // the InboxStore seam is kept so a future store can slot in the same way.
+//
+// Auth V2 pilot: NEXT_PUBLIC_AUTHV2_INBOX_BACKEND=spring (with
+// NEXT_PUBLIC_AUTHV2_API_URL) selects h-space-api's /api/hub/inbox-items over
+// the Supabase session token instead (./inbox-http.ts). Off by default: that
+// store holds different rows until an approved, reconciled copy (P1).
 
 export interface InboxListParams {
   status?: InboxItemStatus | "all"
@@ -41,7 +48,7 @@ export type InboxItemPatch = Partial<{
   status: InboxItemStatus
 }>
 
-interface InboxStore {
+export interface InboxStore {
   list(params: InboxListParams): Promise<InboxItem[]>
   get(id: string): Promise<InboxItem>
   create(input: InboxItemInput): Promise<InboxItem>
@@ -175,7 +182,13 @@ const supabaseInbox: InboxStore = {
   },
 }
 
-const store = (): InboxStore => supabaseInbox
+let httpInbox: InboxStore | null = null
+
+const store = (): InboxStore => {
+  if (!resolveHubApiConfig().enabled) return supabaseInbox
+  httpInbox ??= createInboxHttpStore()
+  return httpInbox
+}
 
 export const inboxApi = {
   list: (params: InboxListParams = {}): Promise<InboxItem[]> => store().list(params),

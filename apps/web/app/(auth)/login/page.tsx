@@ -23,6 +23,8 @@ import { authApi } from "@/lib/api"
 import { MfaDevicePicker, useMfaDevices } from "@/components/auth/mfa-device-picker"
 import { EmailCodeSignIn } from "@/components/email-code-sign-in"
 import { GoogleSignInButton } from "@/components/google-sign-in-button"
+import { GitHubSignInButton } from "@/components/auth/github-sign-in-button"
+import { ACCESS_DENIED_MESSAGE } from "@/lib/auth-v2"
 import { DEFAULT_AFTER_SIGN_IN, safeNextPath } from "@/lib/safe-next-path"
 import { cn } from "@/lib/utils"
 
@@ -54,6 +56,8 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search)
     // /register links here with ?method=email-code for password-free sign-up.
     if (params.get("method") === "email-code") setMethod("email-code")
+    // Auth V2: the admission gate signed a refused account out and sent it here.
+    if (params.get("reason") === "access_denied") setError(ACCESS_DENIED_MESSAGE)
     const next = safeNextPath(params.get("next"))
     if (next) setAfterSignIn(next)
     // A sign-in left half-finished in this browser (code never entered):
@@ -134,6 +138,7 @@ export default function LoginPage() {
             }}
             redirectTo={afterSignIn}
           />
+          <GitHubSignInButton next={afterSignIn} onError={setError} />
           <AuthDivider label="or sign in with" />
         </>
       )}
