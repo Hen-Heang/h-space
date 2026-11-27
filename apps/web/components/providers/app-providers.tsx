@@ -5,6 +5,7 @@ import { MotionConfig } from "motion/react"
 import { ThemeProvider } from "next-themes"
 import { useState } from "react"
 
+import { UserCacheReset } from "@/components/providers/user-cache-reset"
 import { Toaster } from "@/components/ui/sonner"
 
 export function AppProviders({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -23,6 +24,7 @@ export function AppProviders({ children }: Readonly<{ children: React.ReactNode 
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <QueryClientProvider client={queryClient}>
+        <UserCacheReset />
         {/* globals.css's prefers-reduced-motion rule only covers CSS; Motion's
             JS animations need this to skip transform/layout movement too. */}
         <MotionConfig reducedMotion="user">

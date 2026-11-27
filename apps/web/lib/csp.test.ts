@@ -59,3 +59,19 @@ describe("content security policy", () => {
     expect(policy).not.toContain("not a url")
   })
 })
+
+describe("Auth V2 pilot origin", () => {
+  it("is in connect-src only when given", () => {
+    const off = buildContentSecurityPolicy({ supabaseUrl: "https://ref.supabase.co" })
+    expect(off).not.toContain("api.example.invalid")
+    const on = buildContentSecurityPolicy({
+      supabaseUrl: "https://ref.supabase.co",
+      hubApiUrl: "https://api.example.invalid",
+    })
+    const connect = on.split("; ").find((d) => d.startsWith("connect-src")) ?? ""
+    expect(connect).toContain("https://api.example.invalid")
+    expect(on.split("; ").find((d) => d.startsWith("script-src"))).not.toContain(
+      "api.example.invalid",
+    )
+  })
+})

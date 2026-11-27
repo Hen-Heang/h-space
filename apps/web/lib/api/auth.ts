@@ -1,6 +1,8 @@
 import type { User } from "@supabase/supabase-js"
 
+import { admissionApi } from "@/lib/api/admission"
 import { clearAuth, forgetLegacySession } from "@/lib/auth-store"
+import { AdmissionError, isAdmissionEnforced } from "@/lib/auth-v2"
 import { assertSupabaseConfigured, supabase } from "@/lib/supabase"
 
 // Auth over Supabase Auth (see lib/auth-store.ts for the session itself).
@@ -62,8 +64,25 @@ async function pendingMfaFactorId(): Promise<string | null> {
   return factor?.id ?? null
 }
 
+/**
+ * Auth V2 admission (only when NEXT_PUBLIC_HSPACE_ADMISSION=enforce): right
+ * after the first factor, before the code step and before any profile write.
+ * Not admitted, or the answer can't be read: sign out and stop - never a
+ * fallback to "allowed".
+ */
+async function requireAdmission(): Promise<void> {
+  if (!isAdmissionEnforced()) return
+  const { data } = await supabase.auth.getSession()
+  const userId = data.session?.user?.id
+  const admission = userId ? await admissionApi.check(userId) : "unavailable"
+  if (admission === "approved") return
+  await clearAuth()
+  throw new AdmissionError(admission)
+}
+
 async function completeSignIn(): Promise<SignInResult> {
   forgetLegacySession()
+  await requireAdmission()
   const factorId = await pendingMfaFactorId()
   if (factorId) return { status: "mfa_required", factorId }
 
@@ -153,6 +172,16 @@ export const authApi = {
       nonce,
     })
     if (error) throw error
+    return completeSignIn()
+  },
+
+  /**
+   * Finishes a sign-in whose session was set by a redirect (the optional
+   * GitHub flow, app/auth/callback): the same admission, code step and
+   * profile bootstrap as every other method - nothing is skipped.
+   */
+  completeRedirectSignIn: async (): Promise<SignInResult> => {
+    assertSupabaseConfigured()
     return completeSignIn()
   },
 

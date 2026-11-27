@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState, useSyncExternalStore } from "react"
 
+import { AdmissionGate } from "@/components/auth/admission-gate"
 import { AppShell } from "@/components/layout/AppShell"
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow"
 import { userApi } from "@/lib/api"
@@ -21,7 +22,6 @@ const TRACKED_WORKSPACES = Object.keys(sectionRoutePrefixes) as WorkspaceId[]
 export default function MainLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname()
   const router = useRouter()
-  const [showOnboarding, setShowOnboarding] = useState(false)
 
   const mounted = useSyncExternalStore(
     (callback) => {
@@ -60,8 +60,31 @@ export default function MainLayout({ children }: Readonly<{ children: React.Reac
     if (workspace) recordLastVisited(workspace, pathname)
   }, [pathname])
 
+  if (!mounted) return null
+  if (!isAuthenticated()) return null
+
+  // Auth V2: with NEXT_PUBLIC_HSPACE_ADMISSION=enforce nothing below mounts
+  // until admission is confirmed - and that includes effects. Anything that
+  // reads user data (the onboarding profile lookup) must live in a component
+  // inside the gate, never in this layout's own effects.
+  return (
+    <AdmissionGate>
+      <AppShell>{children}</AppShell>
+      <OnboardingCheck />
+    </AdmissionGate>
+  )
+}
+
+/**
+ * Shows the welcome wizard once per account. Mounted only inside
+ * <AdmissionGate>, so its kori_profiles read never runs for an account that
+ * isn't (yet) admitted.
+ */
+function OnboardingCheck() {
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
   useEffect(() => {
-    if (!mounted || !isAuthenticated()) return
+    if (!isAuthenticated()) return
     const userId = getUserId()
     if (!userId || hasCompletedOnboarding(userId)) return
     let active = true
@@ -82,22 +105,15 @@ export default function MainLayout({ children }: Readonly<{ children: React.Reac
     return () => {
       active = false
     }
-  }, [mounted])
+  }, [])
 
-  if (!mounted) return null
-  if (!isAuthenticated()) return null
-
+  if (!showOnboarding) return null
   return (
-    <>
-      <AppShell>{children}</AppShell>
-      {showOnboarding && (
-        <OnboardingFlow
-          onDone={() => {
-            markOnboardingComplete(getUserId())
-            setShowOnboarding(false)
-          }}
-        />
-      )}
-    </>
+    <OnboardingFlow
+      onDone={() => {
+        markOnboardingComplete(getUserId())
+        setShowOnboarding(false)
+      }}
+    />
   )
 }

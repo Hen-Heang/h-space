@@ -11,6 +11,11 @@
 
 export type CspEnv = {
   supabaseUrl?: string
+  /**
+   * h-space-api, only while the Auth V2 Inbox pilot is switched on
+   * (lib/auth-v2.ts resolveHubApiConfig). Absent = not allowed.
+   */
+  hubApiUrl?: string
   /** `next dev`: React needs eval and the dev server a websocket. */
   development?: boolean
   /** Vercel preview deployments inject the Vercel toolbar. */
@@ -48,6 +53,7 @@ export function buildContentSecurityPolicy(env: CspEnv): string {
       "'self'",
       supabase,
       supabase && supabase.replace(/^https:/, "wss:"),
+      origin(env.hubApiUrl),
       GOOGLE_SIGN_IN,
       // Voice coach (WebRTC session set-up) and the calendar's weather badge.
       "https://api.openai.com",
