@@ -1,10 +1,6 @@
 # Auth V2 in the web app
 
-Status (2026-11-27, branch `feat/auth-v2-web`): **implemented and tested locally
-with synthetic data; every new path is OFF by default.** Nothing applied to the
-shared Supabase project, no provider configured, nothing deployed. Backend half:
-h-space-api `docs/auth-v2.md` (branch `feat/auth-v2-backend`). Design: the
-owner's vault notes "API Migration" 10/11/05/08.
+Status (2026-11-27): **merged to `main` (#148, `15ad78e`) and deployed by Vercel with every new path OFF.** Checked on production: admission isn't called, the Inbox still reads Supabase, `/auth/callback` refuses with "GitHub sign-in isn't enabled". The `kori_app_access` migration is in the repo but **not applied**; no provider is configured. Backend half: h-space-api #58 (`docs/auth-v2.md` there). Design: the owner's vault notes "API Migration" 10/11/05/08.
 
 Login itself is unchanged: password, non-creating email code, Google ID token
 with nonce, Supabase TOTP with device choice and recovery, `koriai-auth`
